@@ -1,0 +1,21 @@
+changelog:
+  categories:
+    - title: Application Updates
+      labels:
+        - app
+        - feature
+    - title: Infrastructure Changes
+      labels:
+        - infra
+        - terraform
+    - title: Bug Fixes
+      labels:
+        - bug
+        - fix
+    - title: Documentation
+      labels:
+        - doc
+  exclude:
+    labels:
+      - ignore
+

@@ -33,7 +33,6 @@ describe("SharedStack", () => {
       "run.googleapis.com",
       "compute.googleapis.com",
       "iam.googleapis.com",
-      "dns.googleapis.com",
       "cloudresourcemanager.googleapis.com",
       "artifactregistry.googleapis.com",
       "iap.googleapis.com",
@@ -262,6 +261,8 @@ describe("SharedStack", () => {
       "roles/monitoring.admin",
       "roles/resourcemanager.projectIamAdmin",
       "roles/iam.serviceAccountUser",
+      "roles/iam.serviceAccountAdmin",
+      "roles/iam.workloadIdentityPoolAdmin",
       "roles/serviceusage.serviceUsageAdmin",
       "roles/storage.objectAdmin",
     ]
@@ -286,38 +287,5 @@ describe("SharedStack", () => {
     expect(certManagerKey).toBeDefined()
   })
 
-  it("should create DNS A record for root domain", () => {
-    const synthesized = Testing.synth(stack)
-    const resources = JSON.parse(synthesized).resource
-    const dnsRecords = resources.google_dns_record_set
-
-    const rootRecordKey = Object.keys(dnsRecords).find((key) => key.includes("dns-root-a"))
-    expect(rootRecordKey).toBeDefined()
-    expect(dnsRecords[rootRecordKey].name).toBe("koborin.ai.")
-    expect(dnsRecords[rootRecordKey].type).toBe("A")
-    expect(dnsRecords[rootRecordKey].ttl).toBe(300)
-    expect(dnsRecords[rootRecordKey].managed_zone).toContain("data.google_dns_managed_zone.dns-zone")
-  })
-
-  it("should create DNS A record for dev subdomain", () => {
-    const synthesized = Testing.synth(stack)
-    const resources = JSON.parse(synthesized).resource
-    const dnsRecords = resources.google_dns_record_set
-
-    const devRecordKey = Object.keys(dnsRecords).find((key) => key.includes("dns-dev-a"))
-    expect(devRecordKey).toBeDefined()
-    expect(dnsRecords[devRecordKey].name).toBe("dev.koborin.ai.")
-    expect(dnsRecords[devRecordKey].type).toBe("A")
-    expect(dnsRecords[devRecordKey].ttl).toBe(300)
-    expect(dnsRecords[devRecordKey].managed_zone).toContain("data.google_dns_managed_zone.dns-zone")
-  })
-
-  it("should reference existing DNS managed zone", () => {
-    const synthesized = Testing.synth(stack)
-    const dataSources = JSON.parse(synthesized).data
-    const dnsZones = dataSources.google_dns_managed_zone
-
-    const zoneKey = Object.keys(dnsZones)[0]
-    expect(dnsZones[zoneKey].name).toBe("koborin-ai")
-  })
+  // DNS is managed in Cloudflare outside of Terraform.
 })

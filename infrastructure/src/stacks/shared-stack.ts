@@ -6,8 +6,6 @@ import { ComputeManagedSslCertificate } from "@cdktf/provider-google/lib/compute
 import { ComputeRegionNetworkEndpointGroup } from "@cdktf/provider-google/lib/compute-region-network-endpoint-group"
 import { ComputeTargetHttpsProxy } from "@cdktf/provider-google/lib/compute-target-https-proxy"
 import { ComputeUrlMap } from "@cdktf/provider-google/lib/compute-url-map"
-import { DataGoogleDnsManagedZone } from "@cdktf/provider-google/lib/data-google-dns-managed-zone"
-import { DnsRecordSet } from "@cdktf/provider-google/lib/dns-record-set"
 import { IamWorkloadIdentityPool } from "@cdktf/provider-google/lib/iam-workload-identity-pool"
 import { IamWorkloadIdentityPoolProvider } from "@cdktf/provider-google/lib/iam-workload-identity-pool-provider"
 import { IapWebBackendServiceIamBinding } from "@cdktf/provider-google/lib/iap-web-backend-service-iam-binding"
@@ -22,13 +20,12 @@ import { Construct } from "constructs"
 import { createSharedStackConfig } from "../config/stack-config"
 
 /**
- * APIs required for Cloud Run, Artifact Registry, Load Balancing, DNS, and IAM.
+ * APIs required for Cloud Run, Artifact Registry, Load Balancing, and IAM.
  */
 const REQUIRED_APIS = [
   "run.googleapis.com",
   "compute.googleapis.com",
   "iam.googleapis.com",
-  "dns.googleapis.com",
   "cloudresourcemanager.googleapis.com",
   "artifactregistry.googleapis.com",
   "iap.googleapis.com",
@@ -49,10 +46,8 @@ const REQUIRED_APIS = [
  * - Target HTTPS Proxy
  * - Global Forwarding Rule
  *
- * Resources to be added later (via import):
- * - DNS managed zone (koborin-ai)
- * - Workload Identity Pool & Provider
- * - Terraform deployer service account
+ * Additional resources handled outside Terraform:
+ * - DNS hosted in Cloudflare (A records managed manually)
  */
 export class SharedStack extends TerraformStack {
   constructor(scope: Construct, id: string) {
@@ -339,7 +334,6 @@ export class SharedStack extends TerraformStack {
       "roles/iam.workloadIdentityPoolAdmin",
       "roles/serviceusage.serviceUsageAdmin",
       "roles/storage.objectAdmin",
-      "roles/dns.admin",
     ]
 
     terraformRoles.forEach((role) => {
@@ -348,36 +342,6 @@ export class SharedStack extends TerraformStack {
         role: role,
         member: `serviceAccount:${terraformSa.email}`,
       })
-    })
-
-    // ========================================
-    // DNS Records
-    // ========================================
-
-    // Reference existing DNS zone (created via Cloud Domains)
-    const dnsZone = new DataGoogleDnsManagedZone(this, "dns-zone", {
-      project: config.projectId,
-      name: "koborin-ai",
-    })
-
-    // A record for root domain (koborin.ai → Static IP)
-    new DnsRecordSet(this, "dns-root-a", {
-      project: config.projectId,
-      managedZone: dnsZone.name,
-      name: "koborin.ai.",
-      type: "A",
-      ttl: 300,
-      rrdatas: [staticIp.address],
-    })
-
-    // A record for dev subdomain (dev.koborin.ai → Static IP)
-    new DnsRecordSet(this, "dns-dev-a", {
-      project: config.projectId,
-      managedZone: dnsZone.name,
-      name: "dev.koborin.ai.",
-      type: "A",
-      ttl: 300,
-      rrdatas: [staticIp.address],
     })
 
   }

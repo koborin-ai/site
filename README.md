@@ -26,12 +26,11 @@ flowchart LR
         APIS["APIs"]
         ARTIFACT["Artifact Registry"]
         WIF["Workload Identity<br/>Pool/Provider"]
-        DNS_ZONE["DNS Zone<br/>koborin-ai"]
     end
     
-    subgraph DNS["DNS A Records"]
-        DEV_DOMAIN["dev.koborin.ai"]
-        PROD_DOMAIN["koborin.ai"]
+    subgraph DNS["Cloudflare DNS (manual)"]
+        DEV_DOMAIN["dev.koborin.ai<br/>A record"]
+        PROD_DOMAIN["koborin.ai<br/>A record"]
     end
     
     subgraph LB["Unified HTTPS LB - shared"]
@@ -89,7 +88,6 @@ flowchart LR
     style APIS fill:#9E9E9E,color:#fff
     style ARTIFACT fill:#9E9E9E,color:#fff
     style WIF fill:#9E9E9E,color:#fff
-    style DNS_ZONE fill:#9E9E9E,color:#fff
     style STATIC_IP fill:#00B6AC,color:#fff
     style SSL_CERT fill:#00B6AC,color:#fff
     style URL_MAP fill:#00B6AC,color:#fff
@@ -100,6 +98,8 @@ flowchart LR
     style GH_WIF fill:#FFB74D,color:#000
     style TF_SA fill:#FFB74D,color:#000
 ```
+
+> DNS is hosted in Cloudflare. Terraform does **not** manage DNS records; add/update `koborin.ai` / `dev.koborin.ai` A records manually whenever the load balancer IP changes.
 
 **Key Differences by Environment:**
 
@@ -164,7 +164,7 @@ npm run test:infra --prefix infrastructure
 
 ### Shared Stack (✅ Implemented)
 
-- **API enablement**: Run, Compute, IAM, DNS, Artifact Registry, IAP, Monitoring, Logging, Certificate Manager.
+- **API enablement**: Run, Compute, IAM, Artifact Registry, IAP, Monitoring, Logging, Certificate Manager.
 - **Artifact Registry**: Container images repository (`koborin-ai-web`).
 - **Global static IP**: PREMIUM tier for HTTPS load balancer.
 - **Managed SSL Certificate**: Multi-domain (`koborin.ai`, `dev.koborin.ai`).
@@ -181,10 +181,8 @@ npm run test:infra --prefix infrastructure
   - Provider: `actions-firebase-provider` (OIDC issuer: `https://token.actions.githubusercontent.com`).
   - Service Account: `github-actions-service@{project}.iam.gserviceaccount.com`.
   - IAM binding: Subject-based binding for repository `nozomi-koborinai/koborin-ai`.
-  - 12 Project IAM roles granted to Terraform SA.
-- **DNS Configuration**:
-  - DNS zone reference: `koborin-ai` (data source).
-  - A records: `koborin.ai.` and `dev.koborin.ai.` pointing to static IP (TTL: 300).
+  - Project IAM roles (Artifact Registry, Run, Compute, IAM, etc.) granted to the Terraform SA.
+- **DNS**: Records live in Cloudflare and are managed manually (A records point to the LB IP).
 
 ### Dev Stack (✅ Implemented)
 
@@ -223,7 +221,7 @@ npm run test:infra --prefix infrastructure
 ## Current Status
 
 - ✅ **Infrastructure**:
-  - Shared stack: HTTPS LB, Artifact Registry, Workload Identity, DNS A records.
+  - Shared stack: HTTPS LB, Artifact Registry, Workload Identity (DNS handled via Cloudflare manually).
   - Dev stack: Cloud Run service (`koborin-ai-web-dev`).
   - Prod stack: Cloud Run service (`koborin-ai-web-prod`).
 - ✅ **CI/CD**: GitHub Actions workflows for plan/apply (shared/dev/prod) with Workload Identity Federation.

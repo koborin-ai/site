@@ -67,6 +67,12 @@ This document is a quick guide for any contributors or AI agents that touch the 
   - Service account created in `shared` stack (`terraform-deployer@<project>.iam.gserviceaccount.com`).
   - Principal string: `principalSet://.../attribute.repository/<org>/<repo>` (see `shared-stack.ts`).
 
+## Release Process
+
+- Tag infra releases as `infra-v*` to force `release-infra.yml` to apply shared/dev/prod stacks ahead of app rollouts.
+- Tag app releases as `app-v*` once `main` includes the desired content; this runs `app-release.yml`, builds a new Artifact Registry image, and updates the Cloud Run service.
+- GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `terraform`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
+
 ## Contact Flow & Analytics
 
 - `/docs/contact-flow.md` captures the agreed design: Astro API route + Cloud Logging + SendGrid (notify). Use reCAPTCHA v3 + rate limiting.

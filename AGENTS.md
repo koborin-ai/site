@@ -5,7 +5,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 ## Mission
 
 - Personal site + technical garden for `koborin.ai`.
-- Next.js (App Router) with MDX content under `content/`.
+- Astro (Content Collections + MDX) with Markdown content under `content/`.
 - Google Cloud Run (dev / prod) fronted by a single global HTTPS load balancer.
 - Infrastructure managed via CDK for Terraform (CDKTF) 0.21.x with TypeScript.
 - CI/CD and Terraform plan/apply executed only through GitHub Actions using Workload Identity Federation.
@@ -14,7 +14,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 | Path | Purpose |
 | --- | --- |
-| `app/` | Next.js app (TypeScript, Tailwind, MDX helpers, Vitest). |
+| `app/` | Astro app (TypeScript, Tailwind, MDX helpers, Vitest). |
 | `content/` | MDX pages/articles. Drafts live under `content/drafts/`. |
 | `infrastructure/` | CDKTF stacks (`shared`, `dev`, `prod`). |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
@@ -50,16 +50,17 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 1. **MDX workflow**:
    - Author pages under `content/`. Use YAML frontmatter with `title`, `summary`, `published`, `date`.
-   - Drafts belong in `content/drafts/` and are excluded from prod navigation by default (the App Router checks `published !== false`).
+   - Drafts belong in `content/drafts/` and are excluded from navigation by default (Astro build filters items where `published !== false`, so drafts never appear in dev or prod).
 2. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
 3. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
 
 ## CI/CD Expectations
 
-- Workflows (coming soon):
-  - `infra-shared.yml`: synth + plan + apply for shared stack (manual dispatch).
-  - `infra-dev.yml` / `infra-prod.yml`: triggered on `develop` / `main`.
-  - `app-deploy.yml`: builds Next.js Docker image, pushes to Artifact Registry, kicks off Terraform apply.
+- Workflows:
+  - `plan-infra.yml`: synth + plan for shared/dev/prod stacks (no apply).
+  - `release-infra.yml`: authenticated apply for shared/dev/prod stacks (manual dispatch or tag based).
+  - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`) on PRs touching `app/` or `content/`.
+  - `app-release.yml`: builds/pushes the Astro container with Cloud Build and feeds the resulting `image_uri` into CDKTF for dev/prod deploys.
 - Workload Identity:
   - Pool ID: `github-actions`
   - Provider ID: `github`
@@ -68,7 +69,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 ## Contact Flow & Analytics
 
-- `/docs/contact-flow.md` captures the agreed design: Next.js route handler + Cloud Logging + SendGrid (notify). Use reCAPTCHA v3 + rate limiting.
+- `/docs/contact-flow.md` captures the agreed design: Astro API route + Cloud Logging + SendGrid (notify). Use reCAPTCHA v3 + rate limiting.
 - Analytics baseline uses GA4; `/api/track` endpoint will later forward custom events to Logging/BigQuery.
 
 ## Documentation Standards
@@ -103,7 +104,7 @@ All three commands must complete successfully with no errors.
 ### Application (`app/`)
 
 ```bash
-npm run build      # Next.js build
+npm run build      # Astro build
 npm run lint       # ESLint checks
 npm run typecheck  # TypeScript type checking
 npm run test       # Vitest unit tests

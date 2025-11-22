@@ -28,6 +28,7 @@ const REQUIRED_APIS = [
   "iam.googleapis.com",
   "cloudresourcemanager.googleapis.com",
   "artifactregistry.googleapis.com",
+  "cloudbuild.googleapis.com",
   "iap.googleapis.com",
   "monitoring.googleapis.com",
   "logging.googleapis.com",

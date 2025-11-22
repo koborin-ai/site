@@ -1,11 +1,11 @@
 # koborin.ai
 
 Personal website + engineering playground for `koborin.ai`.  
-The repository hosts both the Next.js application and the Google Cloud infrastructure (managed via CDK for Terraform 0.21.x).
+The repository hosts both the Astro-powered application (MDX-first) and the Google Cloud infrastructure (managed via CDK for Terraform 0.21.x).
 
 ## Project Goals
 
-- Deliver a fast personal site with MDX-based content, deployable to Cloud Run (dev/prod) via a shared HTTPS load balancer.
+- Deliver a fast personal site with MDX-based content (Astro Content Collections), deployable to Cloud Run (dev/prod) via a shared HTTPS load balancer.
 - Keep every change (infra + app) under version control and shipped only through GitHub Actions using Workload Identity Federation.
 - Maintain o11y: Cloud Logging/Monitoring/Trace, structured logging, PV tracking, and a secure contact flow.
 
@@ -43,12 +43,12 @@ flowchart LR
     subgraph DEV_BACKEND["Dev Backend"]
         DEV_IAP["IAP<br/>+ X-Robots-Tag"]
         DEV_NEG["Serverless NEG"]
-        DEV_CR["Cloud Run<br/>koborin-ai-web-dev<br/>(LB-only ingress)"]
+        DEV_CR["Cloud Run<br/>koborin-ai-web-dev (Astro)<br/>(LB-only ingress)"]
     end
     
     subgraph PROD_BACKEND["Prod Backend"]
         PROD_NEG["Serverless NEG"]
-        PROD_CR["Cloud Run<br/>koborin-ai-web-prod<br/>(LB-only ingress)"]
+        PROD_CR["Cloud Run<br/>koborin-ai-web-prod (Astro)<br/>(LB-only ingress)"]
     end
     
     subgraph CICD["GitHub Actions"]
@@ -110,26 +110,26 @@ flowchart LR
 | Ingress | `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` | `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` |
 | Scaling | Min: 0, Max: 1 | Min: 0, Max: 10 |
 | Env Vars | `NODE_ENV=development`, `NEXT_PUBLIC_ENV=dev` | `NODE_ENV=production`, `NEXT_PUBLIC_ENV=prod` |
-| Content | Same MDX; may include drafts | Reviewed content only |
+| Content | Same MDX content (no env-specific filtering) | Same MDX content (no env-specific filtering) |
 | Analytics | GA4 (debug view) + optional server events | GA4 + server events + Cloud Monitoring |
 
 ## Tech Stack
 
-- **Frontend**: Next.js (App Router), MDX, Tailwind CSS, TypeScript.
-- **Content Management**: MDX stored under `content/` within git. No separate CMS or admin UI; PR reviews gate any publication. Drafts reside in `content/drafts` and can be excluded from prod builds.
+- **Frontend**: Astro (Content Collections + MDX), TypeScript, Tailwind CSS.
+- **Content Management**: Markdown/MDX stored under `content/` within git. Frontmatter is validated via Zod schemas to keep metadata type-safe. Drafts reside in `content/drafts` and are excluded from prod builds by default.
 - **Analytics & o11y**:
   - Google Analytics 4 for baseline PV/engagement.
   - Optional custom `/api/track` endpoint writing to Cloud Logging → BigQuery for privacy-friendly metrics.
   - Cloud Monitoring dashboards + alert policies (via Terraform) for Cloud Run metrics.
 - **Infrastructure**: CDK for Terraform 0.21.x (TypeScript) targeting Google Cloud.
-- **CI/CD**: GitHub Actions (Workload Identity), separate workflows per `shared` / `dev` / `prod`.
+- **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra, `app-ci.yml` / `app-release.yml` handle the Astro app.
 - **Testing**: Vite + Vitest (shared config across app and infra), Playwright for future E2E if needed.
 
 ## Repository Layout (planned)
 
 ```text
 .
-├── app/                    # Next.js application (to be created)
+├── app/                    # Astro application (to be created)
 ├── content/                # MDX articles/pages, versioned with git
 ├── docs/                   # Architecture notes, contact-flow specs, etc.
 ├── infrastructure/         # CDKTF project (shared/dev/prod stacks)
@@ -141,7 +141,7 @@ flowchart LR
 ## Workflow Overview
 
 1. **Infra changes**: edit CDKTF stacks → `npm run test:infra` → open PR → GitHub Actions runs synth/plan → reviewer approves → merge triggers apply on the right environment.
-2. **App changes**: edit Next.js/MDX → `npm run test` + `npm run lint` → PR → CI builds container, pushes to Artifact Registry, and updates Cloud Run via Terraform apply.
+2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to CDKTF.
 3. **Content-only updates**: modify MDX, include frontmatter (`title`, `slug`, `published`, etc.), run `npm run content:lint`, open PR. Draft pieces stay under `content/drafts`.
 
 ## Local Setup (once the app repo is initialized)
@@ -150,7 +150,7 @@ flowchart LR
 # Node.js >= 20, npm 10 recommended
 npm install
 
-# Run Next.js dev server (app directory)
+# Run Astro dev server (app directory)
 npm run dev --prefix app
 
 # Run infrastructure unit tests
@@ -206,7 +206,7 @@ npm run test:infra --prefix infrastructure
 
 ## Contact & Analytics Design (planned)
 
-- Contact form will post to `/api/contact` (Next.js Route Handler) with:
+- Contact form will post to `/api/contact` (Astro API Route) with:
   - Payload validation (Zod), reCAPTCHA enforcement, structured logging to Cloud Logging.
   - Notification via SendGrid or Gmail API (configured via Secret Manager).
 - `/api/track` endpoint will receive custom events and forward to Cloud Logging/BigQuery.
@@ -227,5 +227,5 @@ npm run test:infra --prefix infrastructure
 - ✅ **CI/CD**: GitHub Actions workflows for plan/apply (shared/dev/prod) with Workload Identity Federation.
 - ✅ **Documentation**: README with architecture diagram, AGENTS.md with coding standards and IaC philosophy.
 - ✅ **Testing**: Unit tests with 100% coverage for infrastructure code.
-- ⏳ **Application**: Next.js app to be scaffolded.
+- ⏳ **Application**: Astro app to be scaffolded.
 - ⏳ **Content**: MDX authoring workflow to be established.

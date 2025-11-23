@@ -92,10 +92,33 @@ jobs:
         run: |
           IMAGE_TAG="${GITHUB_SHA}"
           IMAGE_URI="asia-northeast1-docker.pkg.dev/${{ env.PROJECT_ID }}/koborin-ai-web/app:${IMAGE_TAG}"
-          gcloud builds submit "./app" \
+
+          BUILD_ID=$(gcloud builds submit "./app" \
             --tag="${IMAGE_URI}" \
             --project="${{ env.PROJECT_ID }}" \
-            --region="${{ env.REGION }}"
+            --region="${{ env.REGION }}" \
+            --async \
+            --format="value(name)")
+
+          echo "Build started with ID: ${BUILD_ID}"
+
+          while true; do
+            STATUS=$(gcloud builds describe "${BUILD_ID}" \
+              --project="${{ env.PROJECT_ID }}" \
+              --region="${{ env.REGION }}" \
+              --format="value(status)")
+
+            if [[ "${STATUS}" == "SUCCESS" ]]; then
+              echo "Build completed successfully"
+              break
+            elif [[ "${STATUS}" == "FAILURE" || "${STATUS}" == "INTERNAL_ERROR" || "${STATUS}" == "TIMEOUT" || "${STATUS}" == "CANCELLED" ]]; then
+              echo "Build failed with status: ${STATUS}"
+              exit 1
+            fi
+
+            sleep 5
+          done
+
           echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
 
   deploy:

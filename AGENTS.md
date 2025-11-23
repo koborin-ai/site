@@ -5,7 +5,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 ## Mission
 
 - Personal site + technical garden for `koborin.ai`.
-- Astro (Content Collections + MDX) with Markdown content under `content/`.
+- Astro with Starlight (documentation-focused theme) for MDX content under `app/src/content/docs/`.
 - Google Cloud Run (dev / prod) fronted by a single global HTTPS load balancer.
 - Infrastructure managed via CDK for Terraform (CDKTF) 0.21.x with TypeScript.
 - CI/CD and Terraform plan/apply executed only through GitHub Actions using Workload Identity Federation.
@@ -14,8 +14,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 | Path | Purpose |
 | --- | --- |
-| `app/` | Astro app (TypeScript, Tailwind, MDX helpers, Vitest). |
-| `content/` | MDX pages/articles. Drafts live under `content/drafts/`. |
+| `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
+| `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
+| `app/src/content/config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
 | `infrastructure/` | CDKTF stacks (`shared`, `dev`, `prod`). |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
 | `.github/workflows/` | CI/CD definitions (to be added). |
@@ -49,17 +50,29 @@ This document is a quick guide for any contributors or AI agents that touch the 
 ## Application Rules
 
 1. **MDX workflow**:
-   - Author pages under `content/`. Use YAML frontmatter with `title`, `summary`, `published`, `date`.
-   - Drafts belong in `content/drafts/` and are excluded from navigation by default (Astro build filters items where `published !== false`, so drafts never appear in dev or prod).
-2. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
-3. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
+   - Author pages under `app/src/content/docs/`. Use YAML frontmatter with `title`, `description`.
+   - Mark drafts with `draft: true` in frontmatter to exclude from navigation.
+   - Starlight automatically generates navigation from the directory structure and sidebar config in `astro.config.mjs`.
+2. **Adding new content**:
+   - Create `.mdx` file under `app/src/content/docs/` (or subdirectory for categories like `blog/`, `guides/`).
+   - Add frontmatter: `title` (required), `description` (required), `draft` (optional, boolean).
+   - Update `app/src/sidebar.ts` to add navigation entry:
+     - Single page: `{ label: "Page Title", slug: "page-name" }`
+     - Categorized: `{ label: "Category", items: [{ label: "Post", slug: "category/post" }] }`
+   - Folder structure maps to URL structure: `docs/blog/post.mdx` → `/blog/post/`
+3. **Starlight Features**:
+   - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
+   - Customize appearance via CSS variables or override components as needed.
+   - Social links and sidebar are configured in `astro.config.mjs`.
+4. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
+5. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
 
 ## CI/CD Expectations
 
 - Workflows:
   - `plan-infra.yml`: synth + plan for shared/dev/prod stacks (no apply).
   - `release-infra.yml`: authenticated apply for shared/dev/prod stacks (manual dispatch or tag based).
-  - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`) on PRs touching `app/` or `content/`.
+  - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`) on PRs touching `app/`.
   - `app-release.yml`: builds/pushes the Astro container with Cloud Build and feeds the resulting `image_uri` into CDKTF for dev/prod deploys.
 - Workload Identity:
   - Pool ID: `github-actions`

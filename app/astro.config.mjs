@@ -1,11 +1,46 @@
 import { defineConfig } from "astro/config";
 import node from "@astrojs/node";
+import starlight from "@astrojs/starlight";
+import { sidebar } from "./src/sidebar.ts";
 
-// https://docs.astro.build/en/install-and-setup/
 export default defineConfig({
+  site: "https://koborin.ai",
   srcDir: "src",
   output: "server",
   adapter: node({
     mode: "standalone",
   }),
+  integrations: [
+    starlight({
+      title: "koborin.ai",
+      description: "Personal site + technical garden",
+      social: [
+        {
+          label: "GitHub",
+          icon: "github",
+          href: "https://github.com/nozomi-koborinai",
+        },
+        {
+          label: "LinkedIn",
+          icon: "linkedin",
+          href: "https://linkedin.com/in/nozomi-koborinai",
+        },
+        {
+          label: "X",
+          icon: "x.com",
+          href: "https://x.com/fender_kn",
+        },
+        {
+          label: "Medium",
+          icon: "document",
+          href: "https://medium.com/@nozomi-koborinai",
+        },
+      ],
+      sidebar,
+      customCss: [
+        // Add custom styles here if needed
+        // './src/styles/custom.css',
+      ],
+    }),
+  ],
 });

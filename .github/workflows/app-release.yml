@@ -86,7 +86,7 @@ jobs:
       - name: Build and push Docker image
         id: build-image
         run: |
-          IMAGE_TAG="${GITHUB_SHA}"
+          IMAGE_TAG="${GITHUB_SHA}-${GITHUB_RUN_ID}"
           IMAGE_URI="asia-northeast1-docker.pkg.dev/${{ env.PROJECT_ID }}/koborin-ai-web/app:${IMAGE_TAG}"
 
           BUILD_ID=$(gcloud builds submit "./app" \

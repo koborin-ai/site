@@ -150,18 +150,18 @@ jobs:
           npx cdktf synth
 
       - name: Check Terraform format
-        working-directory: infrastructure/cdktf.out/stacks/${TARGET_ENV}
+        working-directory: infrastructure/cdktf.out/stacks/${{ env.TARGET_ENV }}
         run: terraform fmt -check -diff -recursive
 
       - name: Initialize Terraform
-        working-directory: infrastructure/cdktf.out/stacks/${TARGET_ENV}
+        working-directory: infrastructure/cdktf.out/stacks/${{ env.TARGET_ENV }}
         run: |
           terraform init -input=false \
             -backend-config="bucket=${BUCKET_NAME}" \
             -backend-config="prefix=$TARGET_ENV"
 
       - name: Terraform Plan
-        working-directory: infrastructure/cdktf.out/stacks/${TARGET_ENV}
+        working-directory: infrastructure/cdktf.out/stacks/${{ env.TARGET_ENV }}
         run: |
           terraform plan -no-color -lock=false -input=false \
             -var=project_id=${PROJECT_ID} \
@@ -170,7 +170,7 @@ jobs:
             -var=image_uri=${IMAGE_URI}
 
       - name: Terraform Apply
-        working-directory: infrastructure/cdktf.out/stacks/${TARGET_ENV}
+        working-directory: infrastructure/cdktf.out/stacks/${{ env.TARGET_ENV }}
         run: |
           terraform apply -auto-approve -input=false \
             -var=project_id=${PROJECT_ID} \

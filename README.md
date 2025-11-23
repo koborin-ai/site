@@ -1,15 +1,11 @@
 # koborin.ai
 
 Personal website + engineering playground for `koborin.ai`.  
-The repository hosts both the Astro-powered application (MDX-first) and the Google Cloud infrastructure (managed via CDK for Terraform 0.21.x).
+Astro (MDX-first) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with CDK for Terraform 0.21.x.
 
-## Project Goals
+## Architecture
 
-- Deliver a fast personal site with MDX-based content (Astro Content Collections), deployable to Cloud Run (dev/prod) via a shared HTTPS load balancer.
-- Keep every change (infra + app) under version control and shipped only through GitHub Actions using Workload Identity Federation.
-- Maintain o11y: Cloud Logging/Monitoring/Trace, structured logging, PV tracking, and a secure contact flow.
-
-## Architecture Snapshot
+Dev/Prod share the same HTTPS load balancer and Artifact Registry; only Cloud Run scaling/access policies differ.
 
 ```mermaid
 ---
@@ -101,7 +97,7 @@ flowchart LR
 
 > DNS is hosted in Cloudflare. Terraform does **not** manage DNS records; add/update `koborin.ai` / `dev.koborin.ai` A records manually whenever the load balancer IP changes.
 
-**Key Differences by Environment:**
+### Environment matrix
 
 | Layer | Dev (`dev.koborin.ai`) | Prod (`koborin.ai`) |
 | --- | --- | --- |
@@ -112,6 +108,42 @@ flowchart LR
 | Env Vars | `NODE_ENV=development`, `NEXT_PUBLIC_ENV=dev` | `NODE_ENV=production`, `NEXT_PUBLIC_ENV=prod` |
 | Content | Same MDX content (no env-specific filtering) | Same MDX content (no env-specific filtering) |
 | Analytics | GA4 (debug view) + optional server events | GA4 + server events + Cloud Monitoring |
+
+## CI/CD
+
+Infrastructure and application deploys are each handled by dedicated GitHub Actions workflows using Workload Identity Federation.
+
+```mermaid
+flowchart LR
+    subgraph GitHub Actions
+        planInfra[plan-infra.yml]
+        releaseInfra[release-infra.yml]
+        appCI[app-ci.yml]
+        appRelease[app-release.yml]
+    end
+
+    subgraph Cloud Build
+        buildApp[Docker Build\n+ Artifact Registry]
+    end
+
+    subgraph Terraform
+        sharedStack[Shared Stack]
+        envStacks[Dev/Prod Stacks]
+    end
+
+    planInfra --> sharedStack
+    releaseInfra --> sharedStack
+    releaseInfra --> envStacks
+    appCI -->|PR validation| GitHub
+    appRelease --> buildApp --> envStacks
+```
+
+| Workflow | Trigger | Purpose | Notes |
+| --- | --- | --- | --- |
+| `plan-infra.yml` | PRs touching infra | Synth + plan for shared/dev/prod stacks | No apply; reviewers inspect plan output |
+| `release-infra.yml` | `infra-v*` tags or manual dispatch | Applies shared/dev/prod stacks via CDKTF | Workload Identity SA has infra IAM roles |
+| `app-ci.yml` | PRs touching `app/` or `content/` | Runs Astro lint/typecheck/test/build | Blocks merges that break the app |
+| `app-release.yml` | Merge to `main` or `app-v*` tags | One job builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}`) and applies Terraform to update Cloud Run | Cloud Build runs asynchronously; CDKTF consumes the new image URI |
 
 ## Tech Stack
 
@@ -129,8 +161,8 @@ flowchart LR
 
 ```text
 .
-├── app/                    # Astro application (to be created)
-├── content/                # MDX articles/pages, versioned with git
+├── app/                    # Astro application (SSR, Docker)
+├── content/                # MDX articles/pages (mounted via Content Collections)
 ├── docs/                   # Architecture notes, contact-flow specs, etc.
 ├── infrastructure/         # CDKTF project (shared/dev/prod stacks)
 ├── .github/workflows/      # CI pipelines (plan/apply, app deploy)
@@ -168,7 +200,7 @@ npm run test:infra --prefix infrastructure
 - CDKTF `cdktf.json` uses `node lib/main.js` and pins `google` / `google-beta` providers to `~> 6.50`.
 - Each stack configures `GcsBackend` with the same bucket but different prefixes (`shared`, `dev`, `prod`).
 
-### Shared Stack (✅ Implemented)
+### Shared Stack
 
 - **API enablement**: Run, Compute, IAM, Artifact Registry, IAP, Monitoring, Logging, Certificate Manager.
 - **Artifact Registry**: Container images repository (`koborin-ai-web`).
@@ -190,7 +222,7 @@ npm run test:infra --prefix infrastructure
   - Project IAM roles (Artifact Registry, Run, Compute, IAM, etc.) granted to the Terraform SA.
 - **DNS**: Records live in Cloudflare and are managed manually (A records point to the LB IP).
 
-### Dev Stack (✅ Implemented)
+### Dev Stack
 
 - **Cloud Run Service**: `koborin-ai-web-dev`.
   - Ingress: `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` (LB-only access).
@@ -200,7 +232,7 @@ npm run test:infra --prefix infrastructure
     - `NEXT_PUBLIC_ENV=dev` (client-side environment identifier).
   - Scaling: Min 0, Max 1.
 
-### Prod Stack (✅ Implemented)
+### Prod Stack
 
 - **Cloud Run Service**: `koborin-ai-web-prod`.
   - Ingress: `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` (LB-only access).
@@ -222,16 +254,3 @@ npm run test:infra --prefix infrastructure
 
 - `README.md`: quickstart + architectural highlights (this file).
 - `AGENTS.md`: contribution workflow, review checklist, release rules, IaC philosophy.
-- `docs/`: deeper specs (contact API design, observability runbooks, MDX authoring tips).
-
-## Current Status
-
-- ✅ **Infrastructure**:
-  - Shared stack: HTTPS LB, Artifact Registry, Workload Identity (DNS handled via Cloudflare manually).
-  - Dev stack: Cloud Run service (`koborin-ai-web-dev`).
-  - Prod stack: Cloud Run service (`koborin-ai-web-prod`).
-- ✅ **CI/CD**: GitHub Actions workflows for plan/apply (shared/dev/prod) with Workload Identity Federation.
-- ✅ **Documentation**: README with architecture diagram, AGENTS.md with coding standards and IaC philosophy.
-- ✅ **Testing**: Unit tests with 100% coverage for infrastructure code.
-- ⏳ **Application**: Astro app to be scaffolded.
-- ⏳ **Content**: MDX authoring workflow to be established.

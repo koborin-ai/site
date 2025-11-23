@@ -23,13 +23,13 @@ on:
           - prod
 
 jobs:
-  build:
-    name: Build and Push Container Image
+  release:
+    name: Build, Package, and Deploy
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     environment: ${{ (startsWith(github.ref, 'refs/tags/app-v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')) && 'production (app)' || 'development (app)' }}
 
@@ -39,11 +39,7 @@ jobs:
       REGION: asia-northeast1
       WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
       SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
-
-    outputs:
-      image_uri: ${{ steps.build-image.outputs.IMAGE_URI }}
-      target_env: ${{ steps.decide-env.outputs.TARGET_ENV }}
-      service_name: ${{ steps.decide-env.outputs.SERVICE_NAME }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
 
     steps:
       - name: Checkout
@@ -66,8 +62,8 @@ jobs:
               SERVICE_NAME="koborin-ai-web-prod"
             fi
           fi
-          echo "TARGET_ENV=${TARGET_ENV}" >> "$GITHUB_OUTPUT"
-          echo "SERVICE_NAME=${SERVICE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "TARGET_ENV=${TARGET_ENV}" >> "$GITHUB_ENV"
+          echo "SERVICE_NAME=${SERVICE_NAME}" >> "$GITHUB_ENV"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -119,48 +115,7 @@ jobs:
             sleep 5
           done
 
-          echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
-
-  deploy:
-    name: Deploy via CDKTF
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write
-      contents: read
-    timeout-minutes: 30
-
-    environment: ${{ (startsWith(github.ref, 'refs/tags/app-v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')) && 'production (app)' || 'development (app)' }}
-
-    env:
-      PROJECT_ID: ${{ secrets.PROJECT_ID }}
-      PROJECT_NUMBER: ${{ secrets.PROJECT_NUMBER }}
-      REGION: asia-northeast1
-      WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-      SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
-      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ env.SERVICE_ACCOUNT }}
-          create_credentials_file: true
-          export_environment_variables: true
-
-      - name: Setup Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          version: latest
-
-      - name: Configure gcloud defaults
-        run: |
-          gcloud config set project "${{ env.PROJECT_ID }}"
-          gcloud config set run/region "${{ env.REGION }}"
+          echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -190,49 +145,45 @@ jobs:
 
       - name: Synthesize Terraform configuration
         working-directory: infrastructure
-        env:
-          TF_TARGET_ENV: ${{ needs.build.outputs.target_env }}
         run: |
-          echo "Synthesizing for environment: $TF_TARGET_ENV"
+          echo "Synthesizing for environment: $TARGET_ENV"
           npx cdktf synth
 
       - name: Check Terraform format
-        working-directory: infrastructure/cdktf.out/stacks/${{ needs.build.outputs.target_env }}
+        working-directory: infrastructure/cdktf.out/stacks/${TARGET_ENV}
         run: terraform fmt -check -diff -recursive
 
       - name: Initialize Terraform
-        working-directory: infrastructure/cdktf.out/stacks/${{ needs.build.outputs.target_env }}
-        env:
-          BACKEND_PREFIX: ${{ needs.build.outputs.target_env }}
+        working-directory: infrastructure/cdktf.out/stacks/${TARGET_ENV}
         run: |
           terraform init -input=false \
-            -backend-config="bucket=${{ env.BUCKET_NAME }}" \
-            -backend-config="prefix=$BACKEND_PREFIX"
+            -backend-config="bucket=${BUCKET_NAME}" \
+            -backend-config="prefix=$TARGET_ENV"
 
       - name: Terraform Plan
-        working-directory: infrastructure/cdktf.out/stacks/${{ needs.build.outputs.target_env }}
+        working-directory: infrastructure/cdktf.out/stacks/${TARGET_ENV}
         run: |
           terraform plan -no-color -lock=false -input=false \
-            -var=project_id=${{ env.PROJECT_ID }} \
-            -var=project_number=${{ env.PROJECT_NUMBER }} \
-            -var=bucket_name=${{ env.BUCKET_NAME }} \
-            -var=image_uri=${{ needs.build.outputs.image_uri }}
+            -var=project_id=${PROJECT_ID} \
+            -var=project_number=${PROJECT_NUMBER} \
+            -var=bucket_name=${BUCKET_NAME} \
+            -var=image_uri=${IMAGE_URI}
 
       - name: Terraform Apply
-        working-directory: infrastructure/cdktf.out/stacks/${{ needs.build.outputs.target_env }}
+        working-directory: infrastructure/cdktf.out/stacks/${TARGET_ENV}
         run: |
           terraform apply -auto-approve -input=false \
-            -var=project_id=${{ env.PROJECT_ID }} \
-            -var=project_number=${{ env.PROJECT_NUMBER }} \
-            -var=bucket_name=${{ env.BUCKET_NAME }} \
-            -var=image_uri=${{ needs.build.outputs.image_uri }}
+            -var=project_id=${PROJECT_ID} \
+            -var=project_number=${PROJECT_NUMBER} \
+            -var=bucket_name=${BUCKET_NAME} \
+            -var=image_uri=${IMAGE_URI}
 
       - name: Retrieve deployed service URL
         id: service-url
         run: |
-          URL=$(gcloud run services describe ${{ needs.build.outputs.service_name }} \
-            --region=${{ env.REGION }} \
-            --project=${{ env.PROJECT_ID }} \
+          URL=$(gcloud run services describe ${SERVICE_NAME} \
+            --region=${REGION} \
+            --project=${PROJECT_ID} \
             --format='value(status.url)')
           echo "SERVICE_URL=${URL}" >> "$GITHUB_OUTPUT"
           echo "Deployed to: ${URL}"
@@ -241,9 +192,9 @@ jobs:
         run: |
           echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: ${{ needs.build.outputs.target_env }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Service**: ${{ needs.build.outputs.service_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image**: ${{ needs.build.outputs.image_uri }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Region**: ${{ env.REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${TARGET_ENV}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service**: ${SERVICE_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${IMAGE_URI}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region**: ${REGION}" >> $GITHUB_STEP_SUMMARY
           echo "- **Service URL**: ${{ steps.service-url.outputs.SERVICE_URL }}" >> $GITHUB_STEP_SUMMARY
 

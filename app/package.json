@@ -17,6 +17,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@astrojs/starlight": "^0.36.2",
     "astro": "^5.16.0"
   },
   "devDependencies": {

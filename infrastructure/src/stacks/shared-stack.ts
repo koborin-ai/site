@@ -323,6 +323,7 @@ export class SharedStack extends TerraformStack {
     const terraformRoles = [
       "roles/artifactregistry.admin",
       "roles/cloudbuild.builds.builder",
+      "roles/cloudbuild.builds.viewer",
       "roles/run.admin",
       "roles/compute.admin",
       "roles/iap.admin",

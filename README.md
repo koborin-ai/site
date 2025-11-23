@@ -1,7 +1,7 @@
 # koborin.ai
 
 Personal website + engineering playground for `koborin.ai`.  
-Astro (MDX-first) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with CDK for Terraform 0.21.x.
+Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with CDK for Terraform 0.21.x.
 
 ## Architecture
 
@@ -147,8 +147,8 @@ flowchart LR
 
 ## Tech Stack
 
-- **Frontend**: Astro (Content Collections + MDX), TypeScript, Tailwind CSS.
-- **Content Management**: Markdown/MDX stored under `content/` within git. Frontmatter is validated via Zod schemas to keep metadata type-safe. Drafts reside in `content/drafts` and are excluded from prod builds by default.
+- **Frontend**: Astro with Starlight (documentation theme), TypeScript, Tailwind CSS.
+- **Content Management**: MDX stored under `app/src/content/docs/` within git. Frontmatter is validated via Zod schemas (from Starlight) to keep metadata type-safe. Drafts can be marked with `draft: true` in frontmatter.
 - **Analytics & o11y**:
   - Google Analytics 4 for baseline PV/engagement.
   - Optional custom `/api/track` endpoint writing to Cloud Logging → BigQuery for privacy-friendly metrics.
@@ -161,20 +161,65 @@ flowchart LR
 
 ```text
 .
-├── app/                    # Astro application (SSR, Docker)
-├── content/                # MDX articles/pages (mounted via Content Collections)
-├── docs/                   # Architecture notes, contact-flow specs, etc.
-├── infrastructure/         # CDKTF project (shared/dev/prod stacks)
-├── .github/workflows/      # CI pipelines (plan/apply, app deploy)
-├── README.md               # This file
-└── AGENTS.md               # English operations guide for collaborators
+├── app/                           # Astro + Starlight application (SSR, Docker)
+│   ├── src/
+│   │   ├── content/
+│   │   │   ├── docs/             # MDX documentation pages (Starlight)
+│   │   │   └── config.ts         # Content Collections schema
+│   │   └── pages/                # Custom Astro pages (if needed)
+│   ├── Dockerfile
+│   └── astro.config.mjs          # Starlight integration config
+├── docs/                          # Architecture notes, contact-flow specs, etc.
+├── infrastructure/                # CDKTF project (shared/dev/prod stacks)
+├── .github/workflows/             # CI pipelines (plan/apply, app deploy)
+├── README.md                      # This file
+└── AGENTS.md                      # English operations guide for collaborators
 ```
 
 ## Workflow Overview
 
 1. **Infra changes**: edit CDKTF stacks → `npm run test:infra` → open PR → GitHub Actions runs synth/plan → reviewer approves → merge triggers apply on the right environment.
 2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to CDKTF.
-3. **Content-only updates**: modify MDX, include frontmatter (`title`, `slug`, `published`, etc.), run `npm run content:lint`, open PR. Draft pieces stay under `content/drafts`.
+3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `npm run lint`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
+
+### Adding New Content
+
+To add a new article or page:
+
+1. **Create MDX file** under `app/src/content/docs/` (or subdirectory for categories):
+
+```bash
+# Single page
+app/src/content/docs/my-article.mdx
+
+# Categorized page
+app/src/content/docs/blog/my-post.mdx
+```
+
+2. **Add frontmatter** with required fields:
+
+```yaml
+---
+title: My Article Title
+description: Brief description of the article
+---
+```
+
+3. **Update sidebar** in `app/src/sidebar.ts`:
+
+```typescript
+export const sidebar = [
+  // ... existing items
+  {
+    label: "Blog",
+    items: [
+      { label: "My Post", slug: "blog/my-post" },
+    ],
+  },
+];
+```
+
+4. **Build and test** locally before pushing.
 
 ## Release Strategy
 

@@ -18,7 +18,9 @@
   "type": "module",
   "dependencies": {
     "@astrojs/starlight": "^0.36.2",
-    "astro": "^5.16.0"
+    "@vercel/og": "^0.8.5",
+    "astro": "^5.16.0",
+    "react": "^19.2.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.5",

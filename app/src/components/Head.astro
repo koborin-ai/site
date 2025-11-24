@@ -1,0 +1,18 @@
+---
+import Default from '@astrojs/starlight/components/Head.astro';
+
+// Generate OG image URL based on current page entry ID
+// Remove file extension from ID for cleaner URLs
+const entryId = Astro.props.entry?.id || 'index';
+const slug = entryId.replace(/\.(mdx?|md)$/, '');
+const ogImageUrl = `${Astro.site}og/${slug}.png`;
+---
+
+<Default {...Astro.props}>
+  <slot />
+</Default>
+
+<!-- Override OG image for each page -->
+<meta property="og:image" content={ogImageUrl} />
+<meta name="twitter:image" content={ogImageUrl} />
+

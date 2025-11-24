@@ -73,12 +73,19 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Hero Images**: Place in `app/src/assets/`. Reference from MDX frontmatter (`hero.image.file` property with relative path).
    - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
-4. **Starlight Features**:
+4. **OG Image Generation**:
+   - Dynamic OG images are automatically generated for each page using `@vercel/og`.
+   - OG images are created at build time via `app/src/pages/og/[...slug].png.ts`.
+   - Each page generates a 1200x630px PNG based on its title and description.
+   - Custom `Head.astro` component (`app/src/components/Head.astro`) overrides default OG meta tags with page-specific URLs.
+   - Images are served at `/og/{slug}.png` (e.g., `/og/index.png` for homepage).
+   - OG meta tags include: `og:image`, `og:image:width`, `og:image:height`, `twitter:card`, `twitter:image`.
+5. **Starlight Features**:
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.
    - Social links and sidebar are configured in `astro.config.mjs`.
-5. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
-6. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
+6. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
+7. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
 
 ## CI/CD Expectations
 

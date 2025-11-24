@@ -27,20 +27,27 @@ This document is a quick guide for any contributors or AI agents that touch the 
 2. **State buckets**: single GCS bucket with prefixes `shared`, `dev`, `prod`. Do not rename without migrating state.
 3. **Providers**: `google` and `google-beta` pinned to `~> 6.50` (see `cdktf.json`). Run `npm run build && npm run test` inside `infrastructure/` before opening a PR.
 4. **Environments**:
+
    - `shared`: APIs, Artifact Registry, static IP, Managed SSL cert, HTTPS LB (NEG, Backend Service, URL Map, Target Proxy, Forwarding Rule), IAP configuration for dev.
-  - `dev`: Cloud Run service `koborin-ai-web-dev` (to be created).
-  - `prod`: Cloud Run service `koborin-ai-web-prod` (to be created).
+   - `dev`: Cloud Run service `koborin-ai-web-dev` (to be created).
+   - `prod`: Cloud Run service `koborin-ai-web-prod` (to be created).
+
 5. **Architecture Design**:
+
    - `shared` stack creates the entire HTTPS load balancer including Serverless NEGs and Backend Services for both dev/prod.
    - NEGs reference Cloud Run services by name (string), so Cloud Run services can be created later in dev/prod stacks without circular dependencies.
    - Dev Backend Service has IAP enabled with allowlist, prod has no IAP.
    - Dev Backend Service adds `X-Robots-Tag: noindex, nofollow` response header.
+
 6. **Variable Management**:
+
    - All hardcoded values (region, domain names, service names, IP names, etc.) are defined as constants directly in `shared-stack.ts`.
    - Only truly variable values (project ID, OAuth credentials, IAP user email) are exposed as TerraformVariables.
    - Never add default values to TerraformVariables - all values must be explicitly passed from GitHub Actions.
    - Variable names in `stack-config.ts` must exactly match the `-var=` arguments in GitHub Actions workflows.
+
 7. **IaC Philosophy - Code as Documentation**:
+
    - IaC differs fundamentally from application code: **the code itself is the design document**.
    - Prioritize readability and explicitness over abstraction. Hard-code all fixed values directly in stack files.
    - Avoid unnecessary variables, constants, or helper functions that obscure the actual infrastructure being created.
@@ -60,12 +67,18 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Single page: `{ label: "Page Title", slug: "page-name" }`
      - Categorized: `{ label: "Category", items: [{ label: "Post", slug: "category/post" }] }`
    - Folder structure maps to URL structure: `docs/blog/post.mdx` → `/blog/post/`
-3. **Starlight Features**:
+3. **Brand Assets Management**:
+   - **Favicon**: Place in `app/public/favicon.png`. Configured in `astro.config.mjs` (`favicon` property).
+   - **Header Logo**: Place in `app/src/assets/`. Configured in `astro.config.mjs` (`logo.src` property). Set `replacesTitle: true` to hide text title.
+   - **Hero Images**: Place in `app/src/assets/`. Reference from MDX frontmatter (`hero.image.file` property with relative path).
+   - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
+   - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
+4. **Starlight Features**:
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.
    - Social links and sidebar are configured in `astro.config.mjs`.
-4. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
-5. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
+5. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
+6. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
 
 ## CI/CD Expectations
 

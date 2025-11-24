@@ -1,0 +1,13 @@
+/* Adjust logo size */
+.site-title img {
+  height: 5rem;
+  width: auto;
+}
+
+/* Appropriate size for mobile display */
+@media (max-width: 768px) {
+  .site-title img {
+    height: 4.5rem;
+  }
+}
+

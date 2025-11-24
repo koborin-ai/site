@@ -19,7 +19,8 @@
   "dependencies": {
     "@astrojs/starlight": "^0.36.2",
     "@vercel/og": "^0.8.5",
-    "astro": "^5.16.0"
+    "astro": "^5.16.0",
+    "react": "^19.2.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.5",

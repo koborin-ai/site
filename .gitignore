@@ -10,6 +10,8 @@ pnpm-debug.log*
 out/
 build/
 dist/
+# Astro content cache
+app/.astro/
 
 # Environment variables
 .env

@@ -45,6 +45,47 @@ export default defineConfig({
       customCss: [
         './src/styles/custom.css',
       ],
+      components: {
+        Head: './src/components/Head.astro',
+      },
+      head: [
+        // Default OG image for pages without custom images
+        {
+          tag: 'meta',
+          attrs: {
+            property: 'og:image',
+            content: 'https://koborin.ai/og/index.png',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            property: 'og:image:width',
+            content: '1200',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            property: 'og:image:height',
+            content: '630',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'twitter:card',
+            content: 'summary_large_image',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'twitter:image',
+            content: 'https://koborin.ai/og/index.png',
+          },
+        },
+      ],
     }),
   ],
 });

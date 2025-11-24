@@ -1,6 +1,9 @@
 # koborin.ai
 
-Personal website + engineering playground for `koborin.ai`.  
+![koborin-ai](./app/src/assets/koborin-ai-header.png)
+
+Technical garden for exploring AI, cloud architecture, and continuous learning.
+
 Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with CDK for Terraform 0.21.x.
 
 ## Architecture
@@ -163,10 +166,18 @@ flowchart LR
 .
 ├── app/                           # Astro + Starlight application (SSR, Docker)
 │   ├── src/
+│   │   ├── assets/               # Images and static assets
+│   │   │   ├── koborin-ai-header.png  # Header logo
+│   │   │   └── koborin-ai-hero.jpeg   # Hero image for index page
 │   │   ├── content/
 │   │   │   ├── docs/             # MDX documentation pages (Starlight)
 │   │   │   └── config.ts         # Content Collections schema
-│   │   └── pages/                # Custom Astro pages (if needed)
+│   │   ├── pages/                # Custom Astro pages (if needed)
+│   │   └── styles/
+│   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
+│   ├── public/
+│   │   ├── favicon.png           # Browser tab icon
+│   │   └── robots.txt
 │   ├── Dockerfile
 │   └── astro.config.mjs          # Starlight integration config
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
@@ -175,6 +186,16 @@ flowchart LR
 ├── README.md                      # This file
 └── AGENTS.md                      # English operations guide for collaborators
 ```
+
+### Brand Assets
+
+| Asset | Location | Usage | Notes |
+| --- | --- | --- | --- |
+| Favicon | `app/public/favicon.png` | Browser tab icon | PNG format, transparent background recommended |
+| Header Logo | `app/src/assets/koborin-ai-header.png` | Site header (replaces title text) | Horizontal layout, optimized for dark backgrounds |
+| Hero Image | `app/src/assets/koborin-ai-hero.jpeg` | Landing page hero section | 16:9 aspect ratio recommended |
+
+Logo sizing is customized via `app/src/styles/custom.css` (`.site-title img` selector).
 
 ## Workflow Overview
 
@@ -188,36 +209,36 @@ To add a new article or page:
 
 1. **Create MDX file** under `app/src/content/docs/` (or subdirectory for categories):
 
-```bash
-# Single page
-app/src/content/docs/my-article.mdx
+   ```bash
+   # Single page
+   app/src/content/docs/my-article.mdx
 
-# Categorized page
-app/src/content/docs/blog/my-post.mdx
-```
+   # Categorized page
+   app/src/content/docs/blog/my-post.mdx
+   ```
 
 2. **Add frontmatter** with required fields:
 
-```yaml
----
-title: My Article Title
-description: Brief description of the article
----
-```
+   ```yaml
+   ---
+   title: My Article Title
+   description: Brief description of the article
+   ---
+   ```
 
 3. **Update sidebar** in `app/src/sidebar.ts`:
 
-```typescript
-export const sidebar = [
-  // ... existing items
-  {
-    label: "Blog",
-    items: [
-      { label: "My Post", slug: "blog/my-post" },
-    ],
-  },
-];
-```
+   ```typescript
+   export const sidebar = [
+     // ... existing items
+     {
+       label: "Blog",
+       items: [
+         { label: "My Post", slug: "blog/my-post" },
+       ],
+     },
+   ];
+   ```
 
 4. **Build and test** locally before pushing.
 

@@ -14,6 +14,11 @@ export default defineConfig({
     starlight({
       title: "koborin.ai",
       description: "Personal site + technical garden",
+      favicon: "/favicon.png",
+      logo: {
+        src: "./src/assets/koborin-ai-header.png",
+        replacesTitle: true,
+      },
       social: [
         {
           label: "GitHub",
@@ -38,8 +43,7 @@ export default defineConfig({
       ],
       sidebar,
       customCss: [
-        // Add custom styles here if needed
-        // './src/styles/custom.css',
+        './src/styles/custom.css',
       ],
     }),
   ],

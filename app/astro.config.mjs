@@ -86,6 +86,8 @@ export default defineConfig({
           },
         },
       ],
+      // Disable Starlight's default 404 page to allow custom pages
+      disable404Route: true,
     }),
   ],
 });

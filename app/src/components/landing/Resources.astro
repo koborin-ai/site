@@ -1,0 +1,194 @@
+---
+interface Resource {
+  icon: string;
+  title: string;
+  description: string;
+  href: string;
+}
+
+const resources: Resource[] = [
+  {
+    icon: 'github',
+    title: 'GitHub',
+    description: 'Source code, open source projects, and contributions',
+    href: 'https://github.com/nozomi-koborinai',
+  },
+  {
+    icon: 'linkedin',
+    title: 'LinkedIn',
+    description: 'Professional profile and networking',
+    href: 'https://linkedin.com/in/nozomi-koborinai',
+  },
+  {
+    icon: 'x',
+    title: 'X (Twitter)',
+    description: 'Thoughts, updates, and tech discussions',
+    href: 'https://x.com/fender_kn',
+  },
+  {
+    icon: 'medium',
+    title: 'Medium',
+    description: 'Technical articles and blog posts',
+    href: 'https://medium.com/@nozomi-koborinai',
+  },
+];
+---
+
+<section id="resources" class="landing-section resources-section">
+  <div class="landing-container">
+    <div class="section-header">
+      <span class="section-tag">Connect</span>
+      <h2 class="landing-section-title">Resources & Links</h2>
+      <p class="section-description">
+        Find me across the web and let's connect.
+      </p>
+    </div>
+    
+    <div class="resources-grid">
+      {resources.map((resource) => (
+        <a href={resource.href} target="_blank" rel="noopener noreferrer" class="resource-card">
+          <div class="resource-icon">
+            {resource.icon === 'github' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              </svg>
+            )}
+            {resource.icon === 'linkedin' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+              </svg>
+            )}
+            {resource.icon === 'x' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            )}
+            {resource.icon === 'medium' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/>
+              </svg>
+            )}
+          </div>
+          <div class="resource-content">
+            <h3 class="resource-title">{resource.title}</h3>
+            <p class="resource-description">{resource.description}</p>
+          </div>
+          <svg class="resource-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .resources-section {
+    background: var(--color-bg-secondary);
+  }
+  
+  .section-header {
+    text-align: center;
+    margin-bottom: var(--space-3xl);
+  }
+  
+  .section-tag {
+    display: inline-block;
+    padding: 0.375rem 0.875rem;
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--color-accent);
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-md);
+  }
+  
+  .section-description {
+    font-size: 1.125rem;
+    color: var(--color-text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .resources-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  @media (min-width: 640px) {
+    .resources-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .resource-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    transition: all var(--transition-normal);
+    color: var(--color-text-primary);
+  }
+  
+  .resource-card:hover {
+    background: var(--color-bg-card-hover);
+    border-color: var(--color-border-hover);
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+    color: var(--color-text-primary);
+  }
+  
+  .resource-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    flex-shrink: 0;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+  }
+  
+  .resource-card:hover .resource-icon {
+    background: var(--color-accent);
+    color: white;
+  }
+  
+  .resource-content {
+    flex-grow: 1;
+  }
+  
+  .resource-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  .resource-description {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+  
+  .resource-arrow {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all var(--transition-fast);
+  }
+  
+  .resource-card:hover .resource-arrow {
+    opacity: 1;
+    transform: translateX(0);
+    color: var(--color-accent);
+  }
+</style>

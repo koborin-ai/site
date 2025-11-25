@@ -1,7 +1,7 @@
 export const sidebar = [
   {
-    label: "Home",
-    slug: "index",
+    label: "About",
+    slug: "about",
   },
 ];
 

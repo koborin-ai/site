@@ -1,0 +1,320 @@
+---
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="canonical" href={canonicalURL} />
+    <meta name="generator" content={Astro.generator} />
+    
+    <!-- Primary Meta Tags -->
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="https://koborin.ai/og/index.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalURL} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content="https://koborin.ai/og/index.png" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <slot />
+    
+    <script>
+      // Theme initialization - sync with Starlight's theme
+      function initTheme() {
+        const storedTheme = localStorage.getItem('starlight-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = storedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+      
+      initTheme();
+      
+      // Listen for theme changes from other tabs/windows
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'starlight-theme') {
+          document.documentElement.setAttribute('data-theme', e.newValue || 'dark');
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  /* CSS Variables for theming */
+  :root {
+    /* Common colors */
+    --color-accent: #4285f4;
+    --color-accent-hover: #5a9bff;
+    --color-success: #34a853;
+    --color-warning: #fbbc04;
+    --color-error: #ea4335;
+    
+    /* Gradients */
+    --gradient-accent: linear-gradient(135deg, #4285f4, #34a853);
+    --gradient-hero: linear-gradient(180deg, rgba(66, 133, 244, 0.1) 0%, transparent 50%);
+    
+    /* Typography */
+    --font-sans: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+    
+    /* Spacing */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+    
+    /* Border radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+    
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 350ms ease;
+    
+    /* Container */
+    --container-max: 1200px;
+    --container-padding: 1.5rem;
+  }
+  
+  /* Dark theme (default) */
+  [data-theme="dark"] {
+    --color-bg-primary: #0a0a0f;
+    --color-bg-secondary: #12121a;
+    --color-bg-tertiary: #1a1a25;
+    --color-bg-card: #16161f;
+    --color-bg-card-hover: #1e1e2a;
+    
+    --color-text-primary: #f5f5f7;
+    --color-text-secondary: #a1a1aa;
+    --color-text-muted: #71717a;
+    
+    --color-border: #27272a;
+    --color-border-hover: #3f3f46;
+    
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(66, 133, 244, 0.3);
+  }
+  
+  /* Light theme */
+  [data-theme="light"] {
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f8f9fa;
+    --color-bg-tertiary: #f1f3f5;
+    --color-bg-card: #ffffff;
+    --color-bg-card-hover: #f8f9fa;
+    
+    --color-text-primary: #1a1a2e;
+    --color-text-secondary: #4a4a5a;
+    --color-text-muted: #6b6b7b;
+    
+    --color-border: #e5e7eb;
+    --color-border-hover: #d1d5db;
+    
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 20px rgba(66, 133, 244, 0.15);
+  }
+  
+  /* Reset and base styles */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+  
+  a:hover {
+    color: var(--color-accent-hover);
+  }
+  
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Container utility */
+  .landing-container {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: 0 var(--container-padding);
+  }
+  
+  /* Section spacing */
+  .landing-section {
+    padding: var(--space-3xl) 0;
+  }
+  
+  @media (min-width: 768px) {
+    .landing-section {
+      padding: 5rem 0;
+    }
+  }
+  
+  /* Typography utilities */
+  .landing-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  
+  .landing-subtitle {
+    font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+  
+  .landing-section-title {
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 600;
+    margin-bottom: var(--space-lg);
+  }
+  
+  /* Button base */
+  .landing-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 0.75rem 1.5rem;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: var(--radius-lg);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+  }
+  
+  .landing-btn-primary {
+    background: var(--gradient-accent);
+    color: white;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .landing-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    color: white;
+  }
+  
+  .landing-btn-secondary {
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+  }
+  
+  .landing-btn-secondary:hover {
+    background: var(--color-bg-card-hover);
+    border-color: var(--color-border-hover);
+    color: var(--color-text-primary);
+  }
+  
+  /* Card base */
+  .landing-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    transition: all var(--transition-normal);
+  }
+  
+  .landing-card:hover {
+    background: var(--color-bg-card-hover);
+    border-color: var(--color-border-hover);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Animation utilities */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease forwards;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease forwards;
+  }
+  
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
+</style>
+

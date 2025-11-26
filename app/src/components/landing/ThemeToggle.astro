@@ -1,10 +1,12 @@
 ---
 // Theme toggle component that syncs with Starlight's theme system
 // Dropdown style matching Starlight's theme selector
+// Icons change based on selected option: Auto=laptop, Light=sun, Dark=moon
 ---
 
-<div class="theme-toggle-container">
+<div class="theme-toggle-container" data-theme-choice="auto">
   <span class="theme-label" aria-hidden="true">Select theme</span>
+  {/* Sun icon for Light mode */}
   <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <circle cx="12" cy="12" r="5"></circle>
     <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"></line>
@@ -16,8 +18,14 @@
     <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"></line>
     <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"></line>
   </svg>
+  {/* Moon icon for Dark mode */}
   <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+  </svg>
+  {/* Laptop icon for Auto mode */}
+  <svg class="icon-laptop" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+    <line x1="2" y1="20" x2="22" y2="20"></line>
   </svg>
   <select class="theme-select" aria-label="Select theme">
     <option value="dark">Dark</option>
@@ -32,7 +40,8 @@
 <script>
   function initThemeToggle() {
     const select = document.querySelector('.theme-select') as HTMLSelectElement;
-    if (!select) return;
+    const container = document.querySelector('.theme-toggle-container') as HTMLElement;
+    if (!select || !container) return;
     
     function getStoredTheme() {
       return localStorage.getItem('starlight-theme');
@@ -47,15 +56,21 @@
       document.documentElement.setAttribute('data-theme', resolvedTheme);
     }
     
+    function updateIcon(theme: string) {
+      container.setAttribute('data-theme-choice', theme);
+    }
+    
     function setTheme(theme: string) {
       localStorage.setItem('starlight-theme', theme);
       applyTheme(theme);
+      updateIcon(theme);
     }
     
     // Initialize select value and apply theme
     const storedTheme = getStoredTheme() || 'auto';
     select.value = storedTheme;
     applyTheme(storedTheme);
+    updateIcon(storedTheme);
     
     select.addEventListener('change', () => {
       setTheme(select.value);
@@ -108,23 +123,22 @@
   }
   
   .icon-sun,
-  .icon-moon {
+  .icon-moon,
+  .icon-laptop {
     flex-shrink: 0;
+    display: none;
   }
   
-  :global([data-theme="dark"]) .icon-sun {
+  /* Show icon based on selected theme choice (data-theme-choice attribute) */
+  .theme-toggle-container[data-theme-choice="light"] .icon-sun {
     display: block;
   }
   
-  :global([data-theme="dark"]) .icon-moon {
-    display: none;
+  .theme-toggle-container[data-theme-choice="dark"] .icon-moon {
+    display: block;
   }
   
-  :global([data-theme="light"]) .icon-sun {
-    display: none;
-  }
-  
-  :global([data-theme="light"]) .icon-moon {
+  .theme-toggle-container[data-theme-choice="auto"] .icon-laptop {
     display: block;
   }
   

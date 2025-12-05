@@ -3,22 +3,42 @@ import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import React from 'react';
 
+// Minimal type for OG image generation props
+interface OGPageData {
+  title?: string;
+  description?: string;
+}
+
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
-  return docs.map((doc) => {
-    // Remove file extension from ID for cleaner URLs
+  
+  // Generate paths for all docs pages
+  const paths: Array<{ params: { slug: string }; props: { pageData: OGPageData } }> = docs.map((doc) => {
     const slug = doc.id.replace(/\.(mdx?|md)$/, '');
     return {
       params: { slug },
-      props: { doc },
+      props: { pageData: { title: doc.data.title, description: doc.data.description } },
     };
   });
+  
+  // Add index page (Landing page) - not part of docs collection
+  paths.push({
+    params: { slug: 'index' },
+    props: {
+      pageData: {
+        title: 'Welcome to koborin.ai',
+        description: 'Personal site and technical garden by Nozomi Koborinai',
+      },
+    },
+  });
+  
+  return paths;
 }
 
 export const GET: APIRoute = async ({ props }) => {
-  const { doc } = props as { doc: any };
-  const title = doc.data.title || 'koborin.ai';
-  const description = doc.data.description || 'Personal site + technical garden';
+  const { pageData } = props as { pageData: OGPageData };
+  const title = pageData.title || 'koborin.ai';
+  const description = pageData.description || 'Personal site + technical garden';
 
   // Generate OG image with title and description using React.createElement
   return new ImageResponse(

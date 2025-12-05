@@ -1,15 +1,11 @@
 import { defineConfig } from "astro/config";
-import node from "@astrojs/node";
 import starlight from "@astrojs/starlight";
 import { sidebar } from "./src/sidebar.ts";
 
 export default defineConfig({
   site: "https://koborin.ai",
   srcDir: "src",
-  output: "server",
-  adapter: node({
-    mode: "standalone",
-  }),
+  // Static output mode (default) - all pages are pre-rendered at build time
   integrations: [
     starlight({
       title: "koborin.ai",

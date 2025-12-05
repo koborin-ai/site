@@ -93,6 +93,43 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - nginx configuration is at `app/nginx/nginx.conf` (port 8080 for Cloud Run compatibility).
    - All pages are pre-rendered at build time; no Node.js runtime required in production.
 
+## Astro Development Best Practices
+
+1. **Core Principles**
+   - **Minimal JavaScript**: Prioritize static generation. Use client-side JavaScript only when absolutely necessary.
+   - **Concise & Technical**: Write code that is easy to understand and maintain. Use descriptive variable names.
+
+2. **Component Development**
+   - **`.astro` First**: Use `.astro` components for UI structure and layout.
+   - **Props**: Use `Astro.props` (with TypeScript interfaces) to pass data to components.
+   - **Composition**: Break down complex UIs into smaller, reusable components.
+   - **Frameworks**: Use specific frameworks (React etc.) only when complex state management is required (`client:*` directives).
+
+3. **Styling**
+   - **Scoped CSS**: Use `<style>` tags within `.astro` components for scoped styling.
+   - **Variables**: Use CSS custom properties (defined in global styles) for consistent theming.
+   - **No Tailwind**: This project does not use Tailwind CSS. Stick to standard CSS.
+
+4. **Performance Optimization**
+   - **Partial Hydration**: Use `client:load`, `client:idle`, `client:visible` directives judiciously. Default to static.
+   - **Image Optimization**: Use `astro:assets` (`<Image />` component) for all local images.
+   - **Lazy Loading**: Ensure off-screen images and heavy components are lazy-loaded.
+
+5. **Routing (Custom Pages)**
+   - *Note: Documentation pages are managed by Starlight.*
+   - **File-based Routing**: Use `src/pages/` for custom landing pages or apps.
+   - **Dynamic Routes**: Use `[...slug].astro` and `getStaticPaths()` for dynamic static pages.
+   - **404**: Maintain a custom `404.astro` for proper error handling.
+
+6. **Accessibility**
+   - **Semantic HTML**: Use proper tags (`<main>`, `<nav>`, `<article>`, etc.).
+   - **ARIA**: Use ARIA attributes where semantic HTML is insufficient.
+   - **Keyboard Nav**: Ensure all interactive elements are keyboard accessible.
+
+7. **Type Safety**
+   - **TypeScript**: Always use TypeScript. Define interfaces for Props and data structures.
+   - **Strict Mode**: Adhere to strict type checking rules enabled in the project.
+
 ## CI/CD Expectations
 
 - Workflows:

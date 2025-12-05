@@ -3,9 +3,6 @@ import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import React from 'react';
 
-// Enable static prerendering for OG images
-export const prerender = true;
-
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
   return docs.map((doc) => {

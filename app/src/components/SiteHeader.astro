@@ -1,9 +1,19 @@
 ---
-import type { Props } from '@astrojs/starlight/props';
+/**
+ * SiteHeader - Unified header component for both Landing and Docs pages
+ * 
+ * Usage:
+ * - Landing page: <SiteHeader /> (no props needed)
+ * - Docs pages: Configured as Starlight Header override, receives StarlightRouteData
+ */
 import Search from '@astrojs/starlight/components/Search.astro';
 import MobileMenuToggle from '@astrojs/starlight/components/MobileMenuToggle.astro';
 import ThemeSelect from './ThemeSelect.astro';
 import headerLogo from '../assets/koborin-ai-header.png';
+
+// Props are optional - only provided when used as Starlight Header override
+// Landing page calls this without props
+const props = Astro.props;
 
 const isLanding = Astro.url.pathname === '/';
 
@@ -42,10 +52,10 @@ const navLinks = [
     </div>
     
     <div class="nav-actions">
-      {/* Search bar - only on non-landing pages */}
+      {/* Search bar - only on non-landing pages (Starlight provides props) */}
       {!isLanding && (
         <div class="nav-search">
-          <Search {...Astro.props} />
+          <Search {...props} />
         </div>
       )}
 
@@ -82,7 +92,7 @@ const navLinks = [
         </button>
       ) : (
         <div class="starlight-mobile-toggle">
-          <MobileMenuToggle {...Astro.props} />
+          <MobileMenuToggle {...props} />
         </div>
       )}
     </div>

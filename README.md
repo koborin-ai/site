@@ -164,7 +164,7 @@ flowchart LR
 
 ```text
 .
-├── app/                           # Astro + Starlight application (SSR, Docker)
+├── app/                           # Astro + Starlight application (Static, nginx)
 │   ├── src/
 │   │   ├── assets/               # Images and static assets
 │   │   │   ├── koborin-ai-header.png  # Header logo
@@ -172,13 +172,15 @@ flowchart LR
 │   │   ├── content/
 │   │   │   ├── docs/             # MDX documentation pages (Starlight)
 │   │   │   └── config.ts         # Content Collections schema
-│   │   ├── pages/                # Custom Astro pages (if needed)
+│   │   ├── pages/                # Custom Astro pages (landing, OG images)
 │   │   └── styles/
 │   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
 │   ├── public/
 │   │   ├── favicon.png           # Browser tab icon
 │   │   └── robots.txt
-│   ├── Dockerfile
+│   ├── nginx/
+│   │   └── nginx.conf            # nginx configuration for static serving
+│   ├── Dockerfile                # Multi-stage build (node → nginx:alpine)
 │   └── astro.config.mjs          # Starlight integration config
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
 ├── infrastructure/                # CDKTF project (shared/dev/prod stacks)

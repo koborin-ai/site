@@ -17,6 +17,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content/config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
+| `app/nginx/nginx.conf` | nginx configuration for static file serving (port 8080). |
 | `infrastructure/` | CDKTF stacks (`shared`, `dev`, `prod`). |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
 | `.github/workflows/` | CI/CD definitions (to be added). |
@@ -86,6 +87,11 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Social links and sidebar are configured in `astro.config.mjs`.
 6. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
 7. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
+8. **Docker & Deployment**:
+   - The app builds as a static site (`output: "static"` in Astro config) and is served via nginx.
+   - Dockerfile uses multi-stage build: `node:22-slim` for build, `nginx:alpine` for runtime.
+   - nginx configuration is at `app/nginx/nginx.conf` (port 8080 for Cloud Run compatibility).
+   - All pages are pre-rendered at build time; no Node.js runtime required in production.
 
 ## CI/CD Expectations
 

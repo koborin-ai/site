@@ -81,12 +81,12 @@ const navLinks = [
           </svg>
         </a>
       </div>
-      {/* Divider and ThemeSelect - only on non-landing pages (Starlight/Docs pages) */}
+      {/* Divider and ThemeSelect - only on non-landing pages, desktop only (mobile uses Starlight's sidebar theme selector) */}
       {!isLanding && (
-        <>
+        <div class="nav-theme-select">
           <span class="nav-divider" aria-hidden="true"></span>
           <ThemeSelect />
-        </>
+        </div>
       )}
       
       {/* Mobile Toggle: Custom for Landing, Starlight's for others */}
@@ -264,9 +264,12 @@ const navLinks = [
   }
   .nav-social-link:hover { color: var(--color-text-primary); background: var(--color-bg-tertiary); }
 
+  /* Theme Select wrapper - hide on mobile (Starlight's mobile menu has its own theme selector) */
+  .nav-theme-select { display: none; align-items: center; }
+  @media (min-width: 1024px) { .nav-theme-select { display: flex; } }
+
   /* Divider */
-  .nav-divider { display: none; width: 1px; height: 1.5rem; background: var(--color-border); margin: 0 0.25rem; }
-  @media (min-width: 768px) { .nav-divider { display: block; } }
+  .nav-divider { width: 1px; height: 1.5rem; background: var(--color-border); margin: 0 0.25rem; }
 
   /* Mobile Toggle (Custom) */
   .nav-mobile-toggle { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; padding: 0; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; transition: color var(--transition-fast); }

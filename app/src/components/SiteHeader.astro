@@ -81,8 +81,13 @@ const navLinks = [
           </svg>
         </a>
       </div>
-      <span class="nav-divider" aria-hidden="true"></span>
-      <ThemeSelect />
+      {/* Divider and ThemeSelect - only on non-landing pages (Starlight/Docs pages) */}
+      {!isLanding && (
+        <>
+          <span class="nav-divider" aria-hidden="true"></span>
+          <ThemeSelect />
+        </>
+      )}
       
       {/* Mobile Toggle: Custom for Landing, Starlight's for others */}
       {isLanding ? (

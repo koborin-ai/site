@@ -148,47 +148,100 @@
 }
 
 /* ==========================================================================
-   Fixed Header Offset for Starlight Content
+   Fixed Header Offset for Starlight Content - genkit.dev style
    ========================================================================== */
 
 /* Push entire Starlight page below fixed header */
-body:has(.nav-header) .page,
-body:has(.nav-header) .sl-container {
-  padding-top: 4.5rem !important; /* Same as header height */
-}
-
-/* Alternative: target the main wrapper directly */
 .sl-layout {
-  padding-top: 4.5rem !important;
+  padding-top: var(--sl-nav-height) !important;
 }
 
-/* Right sidebar (On this page) - add top margin for spacing */
-.right-sidebar,
+/* Content panel - genkit.dev style */
+.content-panel {
+  padding: 1rem;
+}
+
+/* Right sidebar (On this page) */
+.right-sidebar {
+  border-inline-start: 0;
+}
+
 .right-sidebar-panel {
-  padding-top: 1rem !important;
+  margin-top: 1rem;
 }
 
-/* Mobile-specific: ensure "On this page" panel doesn't overlap header */
+.right-sidebar-panel a {
+  padding-left: 0;
+}
+
+/* Mobile-specific */
 @media (max-width: 767px) {
   /* Mobile TOC bar at top */
   mobile-starlight-toc,
   .mobile-starlight-toc {
-    margin-top: 4.5rem !important;
-  }
-  
-  /* Main content area */
-  .sl-layout,
-  .content-panel {
-    padding-top: 4.5rem !important;
+    margin-top: var(--sl-nav-height) !important;
   }
 }
 
 /* ==========================================================================
-   Starlight Mobile Sidebar Overrides
-   Match Hero page's mobile menu design
+   Starlight Sidebar Overrides - genkit.dev style
    ========================================================================== */
 
-/* Mobile sidebar container */
+/* Sidebar pane - transparent background, no border */
+.sidebar-pane {
+  border-inline-end: 0;
+  --sl-color-bg-sidebar: transparent;
+}
+
+/* Sidebar links - genkit.dev style */
+.sidebar-content a {
+  color: var(--sl-color-gray-3, var(--color-text-secondary));
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+}
+
+/* Active page - text color only, no background */
+.sidebar-content a[aria-current="page"] {
+  background-color: transparent !important;
+  color: var(--sl-color-accent-high, var(--color-accent)) !important;
+  font-weight: 400;
+}
+
+[data-theme="light"] .sidebar-content a[aria-current="page"] {
+  color: var(--sl-color-accent, var(--color-accent)) !important;
+}
+
+[data-theme="light"] .sidebar-content a[aria-current="page"]:hover {
+  color: var(--sl-color-accent, var(--color-accent)) !important;
+}
+
+/* Sidebar list items */
+.sidebar-content li {
+  border: 0;
+  --sl-sidebar-item-padding-inline: 0.25rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Section headers (summary elements) */
+.sidebar-content summary {
+  display: flex;
+  flex-direction: row;
+  font-weight: 500;
+  gap: 0.25rem;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  margin-top: 1rem;
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+/* Top level items */
+.sidebar-content .top-level > * {
+  margin-block: 0;
+}
+
+/* Mobile sidebar specific styles */
 @media (max-width: 767px) {
   /* Sidebar background */
   .sidebar {
@@ -198,65 +251,8 @@ body:has(.nav-header) .sl-container {
   [data-theme="dark"] .sidebar {
     background: var(--color-bg-primary, #0a0a0f) !important;
   }
-  
-  /* Sidebar content padding */
-  .sidebar-content {
-    padding: var(--space-lg, 1.5rem) !important;
-  }
-  
-  /* Sidebar navigation links - match Hero page's .mobile-nav-link style */
-  .sidebar-content a,
-  .sidebar-content .top-level > li > details > summary,
-  nav.sidebar ul li a {
-    display: block;
-    padding: 1rem !important;
-    font-size: 1.125rem !important;
-    font-weight: 500 !important;
-    color: var(--color-text-primary, #1a1a2e) !important;
-    border-radius: var(--radius-md, 0.5rem) !important;
-    transition: background 150ms ease !important;
-    text-decoration: none !important;
-    background: transparent !important;
-    border: none !important;
-  }
-  
-  [data-theme="dark"] .sidebar-content a,
-  [data-theme="dark"] .sidebar-content .top-level > li > details > summary,
-  [data-theme="dark"] nav.sidebar ul li a {
-    color: var(--color-text-primary, #f5f5f7) !important;
-  }
-  
-  /* Hover state */
-  .sidebar-content a:hover,
-  .sidebar-content .top-level > li > details > summary:hover,
-  nav.sidebar ul li a:hover {
-    background: var(--color-bg-tertiary, #f1f3f5) !important;
-    color: var(--color-text-primary) !important;
-  }
-  
-  [data-theme="dark"] .sidebar-content a:hover,
-  [data-theme="dark"] .sidebar-content .top-level > li > details > summary:hover,
-  [data-theme="dark"] nav.sidebar ul li a:hover {
-    background: var(--color-bg-tertiary, #1a1a25) !important;
-  }
-  
-  /* Remove blue highlight from current page - use subtle background instead */
-  .sidebar-content a[aria-current="page"],
-  .sidebar-content a[aria-current="true"],
-  nav.sidebar ul li a[aria-current="page"] {
-    background: var(--color-bg-tertiary, #f1f3f5) !important;
-    color: var(--color-text-primary) !important;
-    font-weight: 600 !important;
-  }
-  
-  [data-theme="dark"] .sidebar-content a[aria-current="page"],
-  [data-theme="dark"] .sidebar-content a[aria-current="true"],
-  [data-theme="dark"] nav.sidebar ul li a[aria-current="page"] {
-    background: var(--color-bg-tertiary, #1a1a25) !important;
-    color: var(--color-text-primary, #f5f5f7) !important;
-  }
-  
-  /* Social icons in mobile sidebar - match Hero page's .mobile-social-link style */
+
+  /* Social icons in mobile sidebar */
   .sidebar .social-icons,
   .mobile-preferences .social-icons {
     display: flex !important;

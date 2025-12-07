@@ -234,12 +234,23 @@ const heroContent = {
   }
 
   .hero-stats {
-    display: flex;
-    gap: var(--space-2xl);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
     padding: var(--space-md) 0;
+    width: 100%;
+    max-width: 400px;
     /* Minimal style */
     background: transparent;
     border: none;
+  }
+
+  /* Small mobile: 2 column grid */
+  @media (max-width: 480px) {
+    .hero-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-md);
+    }
   }
 
   .stat-item {
@@ -260,7 +271,6 @@ const heroContent = {
     font-size: 0.875rem;
     color: var(--color-text-muted);
     margin-top: var(--space-xs);
-    white-space: nowrap;
     font-weight: 500;
   }
 

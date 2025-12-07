@@ -214,7 +214,7 @@ const navLinks = [
   }
 
   /* Logo - unified size for both Landing and Docs */
-  .nav-logo { display: flex; align-items: center; flex-shrink: 0; }
+  .nav-logo { display: flex; align-items: center; flex-shrink: 0; margin-left: -0.25rem; }
   .nav-logo img { height: 4.5rem; width: auto; }
   @media (max-width: 768px) { 
     .nav-logo img { height: 4rem; }
@@ -273,8 +273,8 @@ const navLinks = [
   /* Divider */
   .nav-divider { width: 1px; height: 1.5rem; background: var(--color-border); margin: 0 0.25rem; }
 
-  /* Mobile Toggle (Custom) */
-  .nav-mobile-toggle { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; padding: 0; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; transition: color var(--transition-fast); }
+  /* Mobile Toggle (Custom) - sized for visual balance with logo */
+  .nav-mobile-toggle { display: flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; padding: 0; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; transition: color var(--transition-fast); }
   .nav-mobile-toggle:hover { color: var(--color-text-primary); }
   @media (min-width: 768px) { .nav-mobile-toggle { display: none; } }
   

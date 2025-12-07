@@ -147,6 +147,18 @@
   padding: 0 var(--container-padding);
 }
 
+/* Extra-small devices: tighten horizontal padding */
+@media (max-width: 480px) {
+  :root {
+    --container-padding: 1rem;
+  }
+
+  .nav-container.is-landing,
+  .nav-container.is-docs {
+    padding: 0 var(--container-padding);
+  }
+}
+
 /* ==========================================================================
    Fixed Header Offset for Starlight Content - genkit.dev style
    ========================================================================== */
@@ -305,4 +317,28 @@
   .sidebar starlight-theme-select {
     margin-top: var(--space-md, 1rem) !important;
   }
+}
+
+/* ==========================================================================
+   Starlight Page Hero (Docs) - mobile centering
+   ========================================================================== */
+
+.sl-container .hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg, 1rem);
+  text-align: center;
+}
+
+.sl-container .hero img {
+  margin: 0 auto;
+  width: min(100%, 420px);
+  height: auto;
+}
+
+.sl-container .hero .copy,
+.sl-container .hero .tagline {
+  text-align: center;
+  align-items: center;
 }

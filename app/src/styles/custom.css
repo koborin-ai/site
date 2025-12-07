@@ -320,8 +320,30 @@
 }
 
 /* ==========================================================================
-   Starlight Page Hero (Docs) - mobile centering only
+   Starlight Page Hero (Docs) - responsive layout
    ========================================================================== */
+
+/* Tablet and above: force horizontal hero layout */
+@media (min-width: 768px) {
+  .sl-container .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: var(--space-xl, 2rem);
+  }
+
+  .sl-container .hero .copy {
+    text-align: left;
+  }
+
+  .sl-container .hero img {
+    width: 100%;
+    max-width: none;
+    height: auto;
+  }
+}
+
+/* Mobile: vertical layout with centered content */
 @media (max-width: 767px) {
   .sl-container .hero {
     display: flex;
@@ -333,7 +355,7 @@
 
   .sl-container .hero img {
     margin: 0 auto;
-    width: min(100%, 420px);
+    width: min(100%, 280px);  /* Reduced from 420px for better mobile proportion */
     height: auto;
   }
 

@@ -143,3 +143,131 @@
   margin: 0 auto;
   padding: 0 var(--container-padding);
 }
+
+/* ==========================================================================
+   Starlight Mobile Sidebar Overrides
+   Match Hero page's mobile menu design
+   ========================================================================== */
+
+/* Mobile sidebar container */
+@media (max-width: 767px) {
+  /* Sidebar background */
+  .sidebar {
+    background: var(--color-bg-primary, #ffffff) !important;
+  }
+  
+  [data-theme="dark"] .sidebar {
+    background: var(--color-bg-primary, #0a0a0f) !important;
+  }
+  
+  /* Sidebar content padding */
+  .sidebar-content {
+    padding: var(--space-lg, 1.5rem) !important;
+  }
+  
+  /* Sidebar navigation links - match Hero page's .mobile-nav-link style */
+  .sidebar-content a,
+  .sidebar-content .top-level > li > details > summary,
+  nav.sidebar ul li a {
+    display: block;
+    padding: 1rem !important;
+    font-size: 1.125rem !important;
+    font-weight: 500 !important;
+    color: var(--color-text-primary, #1a1a2e) !important;
+    border-radius: var(--radius-md, 0.5rem) !important;
+    transition: background 150ms ease !important;
+    text-decoration: none !important;
+    background: transparent !important;
+    border: none !important;
+  }
+  
+  [data-theme="dark"] .sidebar-content a,
+  [data-theme="dark"] .sidebar-content .top-level > li > details > summary,
+  [data-theme="dark"] nav.sidebar ul li a {
+    color: var(--color-text-primary, #f5f5f7) !important;
+  }
+  
+  /* Hover state */
+  .sidebar-content a:hover,
+  .sidebar-content .top-level > li > details > summary:hover,
+  nav.sidebar ul li a:hover {
+    background: var(--color-bg-tertiary, #f1f3f5) !important;
+    color: var(--color-text-primary) !important;
+  }
+  
+  [data-theme="dark"] .sidebar-content a:hover,
+  [data-theme="dark"] .sidebar-content .top-level > li > details > summary:hover,
+  [data-theme="dark"] nav.sidebar ul li a:hover {
+    background: var(--color-bg-tertiary, #1a1a25) !important;
+  }
+  
+  /* Remove blue highlight from current page - use subtle background instead */
+  .sidebar-content a[aria-current="page"],
+  .sidebar-content a[aria-current="true"],
+  nav.sidebar ul li a[aria-current="page"] {
+    background: var(--color-bg-tertiary, #f1f3f5) !important;
+    color: var(--color-text-primary) !important;
+    font-weight: 600 !important;
+  }
+  
+  [data-theme="dark"] .sidebar-content a[aria-current="page"],
+  [data-theme="dark"] .sidebar-content a[aria-current="true"],
+  [data-theme="dark"] nav.sidebar ul li a[aria-current="page"] {
+    background: var(--color-bg-tertiary, #1a1a25) !important;
+    color: var(--color-text-primary, #f5f5f7) !important;
+  }
+  
+  /* Social icons in mobile sidebar - match Hero page's .mobile-social-link style */
+  .sidebar .social-icons,
+  .mobile-preferences .social-icons {
+    display: flex !important;
+    justify-content: center !important;
+    gap: var(--space-lg, 1.5rem) !important;
+    padding: var(--space-lg, 1.5rem) 0 !important;
+    border-top: 1px solid var(--color-border, #e5e7eb) !important;
+    margin-top: var(--space-lg, 1.5rem) !important;
+  }
+  
+  [data-theme="dark"] .sidebar .social-icons,
+  [data-theme="dark"] .mobile-preferences .social-icons {
+    border-top-color: var(--color-border, #27272a) !important;
+  }
+  
+  .sidebar .social-icons a,
+  .mobile-preferences .social-icons a {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    color: var(--color-text-secondary, #4a4a5a) !important;
+    border-radius: 9999px !important;
+    background: var(--color-bg-secondary, #f8f9fa) !important;
+    transition: all 150ms ease !important;
+    padding: 0 !important;
+  }
+  
+  [data-theme="dark"] .sidebar .social-icons a,
+  [data-theme="dark"] .mobile-preferences .social-icons a {
+    color: var(--color-text-secondary, #a1a1aa) !important;
+    background: var(--color-bg-secondary, #12121a) !important;
+  }
+  
+  .sidebar .social-icons a:hover,
+  .mobile-preferences .social-icons a:hover {
+    color: var(--color-accent, #4285f4) !important;
+    background: var(--color-bg-tertiary, #f1f3f5) !important;
+    transform: translateY(-2px) !important;
+  }
+  
+  [data-theme="dark"] .sidebar .social-icons a:hover,
+  [data-theme="dark"] .mobile-preferences .social-icons a:hover {
+    background: var(--color-bg-tertiary, #1a1a25) !important;
+  }
+  
+  /* Theme selector in mobile sidebar */
+  .mobile-preferences starlight-theme-select,
+  .sidebar starlight-theme-select {
+    margin-top: var(--space-md, 1rem) !important;
+  }
+}

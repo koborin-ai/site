@@ -45,11 +45,14 @@ const navLinks = [
       <img src={headerLogo.src} alt="koborin.ai" />
     </a>
     
-    <div class="nav-links">
-      {navLinks.map((link) => (
-        <a href={link.href} class="nav-link">{link.label}</a>
-      ))}
-    </div>
+    {/* Navigation links - only on landing page (these are section anchors) */}
+    {isLanding && (
+      <div class="nav-links">
+        {navLinks.map((link) => (
+          <a href={link.href} class="nav-link">{link.label}</a>
+        ))}
+      </div>
+    )}
     
     <div class="nav-actions">
       {/* Search bar - only on non-landing pages (Starlight provides props) */}
@@ -202,24 +205,18 @@ const navLinks = [
     justify-content: space-between; 
     gap: var(--space-md); 
   }
-  /* Landing page: taller header with more breathing room */
-  .nav-container.is-landing {
+  /* Header height - unified for both Landing and Docs */
+  .nav-container.is-landing,
+  .nav-container.is-docs {
     height: 4.5rem;
     padding: 0 var(--container-padding);
   }
-  /* Docs/Blog: compact header */
-  .nav-container.is-docs {
-    height: 3.5rem;
-    padding: 0 1.25rem;
-  }
 
-  /* Logo */
+  /* Logo - unified size for both Landing and Docs */
   .nav-logo { display: flex; align-items: center; flex-shrink: 0; }
   .nav-logo img { height: 4.5rem; width: auto; }
-  .nav-container.is-docs .nav-logo img { height: 3.5rem; }
   @media (max-width: 768px) { 
     .nav-logo img { height: 4rem; }
-    .nav-container.is-docs .nav-logo img { height: 3rem; }
   }
 
   /* Links */
@@ -243,14 +240,18 @@ const navLinks = [
 
   /* Actions Area */
   .nav-actions { display: flex; align-items: center; gap: var(--space-sm); }
+  /* On docs pages, actions area expands to fill available space */
+  .nav-container.is-docs .nav-actions { flex: 1; justify-content: flex-end; }
   
-  /* Search (Starlight) */
+  /* Search (Starlight) - expanded on docs pages */
   .nav-search { display: none; }
-  @media (min-width: 768px) { .nav-search { display: block; } }
+  @media (min-width: 768px) { 
+    .nav-search { display: block; flex: 1; max-width: 400px; }
+  }
 
-  /* Social Links */
+  /* Social Links - show on tablet and desktop */
   .nav-social-links { display: none; align-items: center; gap: 0.25rem; }
-  @media (min-width: 1024px) { .nav-social-links { display: flex; } } /* Hide earlier on smaller screens to fit search */
+  @media (min-width: 768px) { .nav-social-links { display: flex; } }
   
   .nav-social-link { 
     display: flex; 
@@ -264,9 +265,9 @@ const navLinks = [
   }
   .nav-social-link:hover { color: var(--color-text-primary); background: var(--color-bg-tertiary); }
 
-  /* Theme Select wrapper - hide on mobile (Starlight's mobile menu has its own theme selector) */
+  /* Theme Select wrapper - show on tablet and desktop */
   .nav-theme-select { display: none; align-items: center; }
-  @media (min-width: 1024px) { .nav-theme-select { display: flex; } }
+  @media (min-width: 768px) { .nav-theme-select { display: flex; } }
 
   /* Divider */
   .nav-divider { width: 1px; height: 1.5rem; background: var(--color-border); margin: 0 0.25rem; }
@@ -280,12 +281,16 @@ const navLinks = [
   .nav-mobile-toggle[aria-expanded="true"] .icon-menu { display: none; }
   .nav-mobile-toggle[aria-expanded="true"] .icon-close { display: block; }
 
-  /* Mobile Toggle (Starlight) */
+  /* Mobile Toggle (Starlight) - show only on mobile (< 768px) */
   .starlight-mobile-toggle {
     display: block;
   }
-  @media (min-width: 1024px) { /* Starlight usually hides mobile menu above some breakpoint */
+  .starlight-mobile-toggle :global(button) {
+    display: flex !important;
+  }
+  @media (min-width: 768px) {
     .starlight-mobile-toggle { display: none; }
+    .starlight-mobile-toggle :global(button) { display: none !important; }
   }
 
   /* Mobile Menu Overlay (Custom) */

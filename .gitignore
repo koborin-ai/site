@@ -32,6 +32,9 @@ terraform.tfstate.backup
 lib/
 *.js.map
 
+# Generated OG images (copied from src/assets at build time)
+app/public/og/
+
 # Testing
 coverage/
 .nyc_output/

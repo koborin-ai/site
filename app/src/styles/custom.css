@@ -50,6 +50,9 @@
 /* --- Common Styles & Variables (Shared between Landing & Starlight) --- */
 
 :root {
+  /* Starlight header height variable - tells Starlight to offset content */
+  --sl-nav-height: 4.5rem;
+  
   /* Header tokens */
   --header-blur: 16px;
   --header-bg-dark: rgba(10, 10, 15, 0.6);
@@ -142,4 +145,164 @@
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 var(--container-padding);
+}
+
+/* ==========================================================================
+   Fixed Header Offset for Starlight Content - genkit.dev style
+   ========================================================================== */
+
+/* Push entire Starlight page below fixed header */
+.sl-layout {
+  padding-top: var(--sl-nav-height) !important;
+}
+
+/* Content panel - genkit.dev style */
+.content-panel {
+  padding: 1rem;
+}
+
+/* Right sidebar (On this page) */
+.right-sidebar {
+  border-inline-start: 0;
+}
+
+.right-sidebar-panel {
+  margin-top: 1rem;
+}
+
+.right-sidebar-panel a {
+  padding-left: 0;
+}
+
+/* Mobile-specific */
+@media (max-width: 767px) {
+  /* Mobile TOC bar at top */
+  mobile-starlight-toc,
+  .mobile-starlight-toc {
+    margin-top: var(--sl-nav-height) !important;
+  }
+}
+
+/* ==========================================================================
+   Starlight Sidebar Overrides - genkit.dev style
+   ========================================================================== */
+
+/* Sidebar pane - transparent background, no border */
+.sidebar-pane {
+  border-inline-end: 0;
+  --sl-color-bg-sidebar: transparent;
+}
+
+/* Sidebar links - genkit.dev style */
+.sidebar-content a {
+  color: var(--sl-color-gray-3, var(--color-text-secondary));
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+}
+
+/* Active page - text color only, no background */
+.sidebar-content a[aria-current="page"] {
+  background-color: transparent !important;
+  color: var(--sl-color-accent-high, var(--color-accent)) !important;
+  font-weight: 400;
+}
+
+[data-theme="light"] .sidebar-content a[aria-current="page"] {
+  color: var(--sl-color-accent, var(--color-accent)) !important;
+}
+
+[data-theme="light"] .sidebar-content a[aria-current="page"]:hover {
+  color: var(--sl-color-accent, var(--color-accent)) !important;
+}
+
+/* Sidebar list items */
+.sidebar-content li {
+  border: 0;
+  --sl-sidebar-item-padding-inline: 0.25rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Section headers (summary elements) */
+.sidebar-content summary {
+  display: flex;
+  flex-direction: row;
+  font-weight: 500;
+  gap: 0.25rem;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  margin-top: 1rem;
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+/* Top level items */
+.sidebar-content .top-level > * {
+  margin-block: 0;
+}
+
+/* Mobile sidebar specific styles */
+@media (max-width: 767px) {
+  /* Sidebar background */
+  .sidebar {
+    background: var(--color-bg-primary, #ffffff) !important;
+  }
+  
+  [data-theme="dark"] .sidebar {
+    background: var(--color-bg-primary, #0a0a0f) !important;
+  }
+
+  /* Social icons in mobile sidebar */
+  .sidebar .social-icons,
+  .mobile-preferences .social-icons {
+    display: flex !important;
+    justify-content: center !important;
+    gap: var(--space-lg, 1.5rem) !important;
+    padding: var(--space-lg, 1.5rem) 0 !important;
+    border-top: 1px solid var(--color-border, #e5e7eb) !important;
+    margin-top: var(--space-lg, 1.5rem) !important;
+  }
+  
+  [data-theme="dark"] .sidebar .social-icons,
+  [data-theme="dark"] .mobile-preferences .social-icons {
+    border-top-color: var(--color-border, #27272a) !important;
+  }
+  
+  .sidebar .social-icons a,
+  .mobile-preferences .social-icons a {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    color: var(--color-text-secondary, #4a4a5a) !important;
+    border-radius: 9999px !important;
+    background: var(--color-bg-secondary, #f8f9fa) !important;
+    transition: all 150ms ease !important;
+    padding: 0 !important;
+  }
+  
+  [data-theme="dark"] .sidebar .social-icons a,
+  [data-theme="dark"] .mobile-preferences .social-icons a {
+    color: var(--color-text-secondary, #a1a1aa) !important;
+    background: var(--color-bg-secondary, #12121a) !important;
+  }
+  
+  .sidebar .social-icons a:hover,
+  .mobile-preferences .social-icons a:hover {
+    color: var(--color-accent, #4285f4) !important;
+    background: var(--color-bg-tertiary, #f1f3f5) !important;
+    transform: translateY(-2px) !important;
+  }
+  
+  [data-theme="dark"] .sidebar .social-icons a:hover,
+  [data-theme="dark"] .mobile-preferences .social-icons a:hover {
+    background: var(--color-bg-tertiary, #1a1a25) !important;
+  }
+  
+  /* Theme selector in mobile sidebar */
+  .mobile-preferences starlight-theme-select,
+  .sidebar starlight-theme-select {
+    margin-top: var(--space-md, 1rem) !important;
+  }
 }

@@ -75,12 +75,11 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
 4. **OG Image Generation**:
-   - Dynamic OG images are automatically generated for each page using `@vercel/og`.
-   - OG images are created at build time via `app/src/pages/og/[...slug].png.ts`.
-   - Each page generates a 1200x630px PNG based on its title and description.
-   - Custom `Head.astro` component (`app/src/components/Head.astro`) overrides default OG meta tags with page-specific URLs.
-   - Images are served at `/og/{slug}.png` (e.g., `/og/index.png` for homepage).
-   - OG meta tags include: `og:image`, `og:image:width`, `og:image:height`, `twitter:card`, `twitter:image`.
+   - **Hero Image Priority**: If a page has a hero image (`hero.image.file` in frontmatter), it is used as the OG image.
+   - **Fallback**: Pages without hero images fall back to `/og/index.png` (static default).
+   - **Static Files**: Default OG images are placed in `app/public/og/`. This directory is gitignored (images are copied at build time).
+   - Custom `Head.astro` component (`app/src/components/Head.astro`) handles the logic to select hero image or fallback.
+   - OG meta tags set: `og:image`, `twitter:image`.
 5. **Starlight Features**:
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.

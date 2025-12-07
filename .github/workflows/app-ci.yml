@@ -33,6 +33,10 @@ jobs:
         working-directory: app
         run: npm ci
 
+      - name: Security audit
+        working-directory: app
+        run: npm audit
+
       - name: Lint
         working-directory: app
         run: npm run lint

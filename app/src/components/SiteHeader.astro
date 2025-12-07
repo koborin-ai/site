@@ -27,8 +27,8 @@ const baseLinks = [
   { label: 'Projects', href: '#projects' },
 ];
 
-// Garden link always points to /about/ (or /docs/ depending on setup, here it seems /about/ is the docs entry)
-const gardenLink = { label: 'Garden', href: '/about/' };
+// Garden link points to the docs entry (About Me > Overview)
+const gardenLink = { label: 'Garden', href: '/about-me/overview/' };
 
 const navLinks = [
   ...baseLinks.map(link => ({
@@ -40,16 +40,19 @@ const navLinks = [
 ---
 
 <header class={`nav-header ${isLanding ? 'is-landing' : 'is-docs'}`}>
-  <nav class={`nav-container landing-container ${isLanding ? 'is-landing' : 'is-docs'}`}>
+  <nav class={`nav-container ${isLanding ? 'is-landing' : 'is-docs'}`}>
     <a href="/" class="nav-logo" aria-label="koborin.ai home">
       <img src={headerLogo.src} alt="koborin.ai" />
     </a>
     
-    <div class="nav-links">
-      {navLinks.map((link) => (
-        <a href={link.href} class="nav-link">{link.label}</a>
-      ))}
-    </div>
+    {/* Navigation links - only on landing page (these are section anchors) */}
+    {isLanding && (
+      <div class="nav-links">
+        {navLinks.map((link) => (
+          <a href={link.href} class="nav-link">{link.label}</a>
+        ))}
+      </div>
+    )}
     
     <div class="nav-actions">
       {/* Search bar - only on non-landing pages (Starlight provides props) */}
@@ -81,8 +84,13 @@ const navLinks = [
           </svg>
         </a>
       </div>
-      <span class="nav-divider" aria-hidden="true"></span>
-      <ThemeSelect />
+      {/* Divider and ThemeSelect - only on non-landing pages, desktop only (mobile uses Starlight's sidebar theme selector) */}
+      {!isLanding && (
+        <div class="nav-theme-select">
+          <span class="nav-divider" aria-hidden="true"></span>
+          <ThemeSelect />
+        </div>
+      )}
       
       {/* Mobile Toggle: Custom for Landing, Starlight's for others */}
       {isLanding ? (
@@ -197,24 +205,19 @@ const navLinks = [
     justify-content: space-between; 
     gap: var(--space-md); 
   }
-  /* Landing page: taller header with more breathing room */
-  .nav-container.is-landing {
-    height: 4.5rem;
-    padding: 0 var(--container-padding);
-  }
-  /* Docs/Blog: compact header */
+  /* Header layout - full width with logo at left edge */
+  .nav-container.is-landing,
   .nav-container.is-docs {
-    height: 3.5rem;
-    padding: 0 1.25rem;
+    height: 4.5rem;
+    /* Minimal left padding for logo, standard right padding for balance */
+    padding: 0 var(--container-padding) 0 1rem;
   }
 
-  /* Logo */
+  /* Logo - unified size for both Landing and Docs */
   .nav-logo { display: flex; align-items: center; flex-shrink: 0; }
   .nav-logo img { height: 4.5rem; width: auto; }
-  .nav-container.is-docs .nav-logo img { height: 3.5rem; }
   @media (max-width: 768px) { 
     .nav-logo img { height: 4rem; }
-    .nav-container.is-docs .nav-logo img { height: 3rem; }
   }
 
   /* Links */
@@ -238,14 +241,18 @@ const navLinks = [
 
   /* Actions Area */
   .nav-actions { display: flex; align-items: center; gap: var(--space-sm); }
+  /* On docs pages, actions area expands to fill available space */
+  .nav-container.is-docs .nav-actions { flex: 1; justify-content: flex-end; }
   
-  /* Search (Starlight) */
+  /* Search (Starlight) - expanded on docs pages */
   .nav-search { display: none; }
-  @media (min-width: 768px) { .nav-search { display: block; } }
+  @media (min-width: 768px) { 
+    .nav-search { display: block; flex: 1; max-width: 400px; }
+  }
 
-  /* Social Links */
+  /* Social Links - show on tablet and desktop */
   .nav-social-links { display: none; align-items: center; gap: 0.25rem; }
-  @media (min-width: 1024px) { .nav-social-links { display: flex; } } /* Hide earlier on smaller screens to fit search */
+  @media (min-width: 768px) { .nav-social-links { display: flex; } }
   
   .nav-social-link { 
     display: flex; 
@@ -259,9 +266,12 @@ const navLinks = [
   }
   .nav-social-link:hover { color: var(--color-text-primary); background: var(--color-bg-tertiary); }
 
+  /* Theme Select wrapper - show on tablet and desktop */
+  .nav-theme-select { display: none; align-items: center; }
+  @media (min-width: 768px) { .nav-theme-select { display: flex; } }
+
   /* Divider */
-  .nav-divider { display: none; width: 1px; height: 1.5rem; background: var(--color-border); margin: 0 0.25rem; }
-  @media (min-width: 768px) { .nav-divider { display: block; } }
+  .nav-divider { width: 1px; height: 1.5rem; background: var(--color-border); margin: 0 0.25rem; }
 
   /* Mobile Toggle (Custom) */
   .nav-mobile-toggle { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; padding: 0; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; transition: color var(--transition-fast); }
@@ -272,12 +282,16 @@ const navLinks = [
   .nav-mobile-toggle[aria-expanded="true"] .icon-menu { display: none; }
   .nav-mobile-toggle[aria-expanded="true"] .icon-close { display: block; }
 
-  /* Mobile Toggle (Starlight) */
+  /* Mobile Toggle (Starlight) - show only on mobile (< 768px) */
   .starlight-mobile-toggle {
     display: block;
   }
-  @media (min-width: 1024px) { /* Starlight usually hides mobile menu above some breakpoint */
+  .starlight-mobile-toggle :global(button) {
+    display: flex !important;
+  }
+  @media (min-width: 768px) {
     .starlight-mobile-toggle { display: none; }
+    .starlight-mobile-toggle :global(button) { display: none !important; }
   }
 
   /* Mobile Menu Overlay (Custom) */

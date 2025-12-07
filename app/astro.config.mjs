@@ -45,6 +45,7 @@ export default defineConfig({
         Head: './src/components/Head.astro',
         ThemeSelect: './src/components/ThemeSelect.astro',
         Header: './src/components/SiteHeader.astro',
+        Sidebar: './src/components/Sidebar.astro',
       },
       head: [
         // Default OG image for pages without custom images

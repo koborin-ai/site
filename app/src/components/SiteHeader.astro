@@ -40,7 +40,7 @@ const navLinks = [
 ---
 
 <header class={`nav-header ${isLanding ? 'is-landing' : 'is-docs'}`}>
-  <nav class={`nav-container landing-container ${isLanding ? 'is-landing' : 'is-docs'}`}>
+  <nav class={`nav-container ${isLanding ? 'is-landing' : 'is-docs'}`}>
     <a href="/" class="nav-logo" aria-label="koborin.ai home">
       <img src={headerLogo.src} alt="koborin.ai" />
     </a>
@@ -205,11 +205,12 @@ const navLinks = [
     justify-content: space-between; 
     gap: var(--space-md); 
   }
-  /* Header height - unified for both Landing and Docs */
+  /* Header layout - full width with logo at left edge */
   .nav-container.is-landing,
   .nav-container.is-docs {
     height: 4.5rem;
-    padding: 0 var(--container-padding);
+    /* Minimal left padding for logo, standard right padding for balance */
+    padding: 0 var(--container-padding) 0 1rem;
   }
 
   /* Logo - unified size for both Landing and Docs */

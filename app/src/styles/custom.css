@@ -50,6 +50,9 @@
 /* --- Common Styles & Variables (Shared between Landing & Starlight) --- */
 
 :root {
+  /* Starlight header height variable - tells Starlight to offset content */
+  --sl-nav-height: 4.5rem;
+  
   /* Header tokens */
   --header-blur: 16px;
   --header-bg-dark: rgba(10, 10, 15, 0.6);
@@ -142,6 +145,42 @@
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 var(--container-padding);
+}
+
+/* ==========================================================================
+   Fixed Header Offset for Starlight Content
+   ========================================================================== */
+
+/* Push entire Starlight page below fixed header */
+body:has(.nav-header) .page,
+body:has(.nav-header) .sl-container {
+  padding-top: 4.5rem !important; /* Same as header height */
+}
+
+/* Alternative: target the main wrapper directly */
+.sl-layout {
+  padding-top: 4.5rem !important;
+}
+
+/* Right sidebar (On this page) - add top margin for spacing */
+.right-sidebar,
+.right-sidebar-panel {
+  padding-top: 1rem !important;
+}
+
+/* Mobile-specific: ensure "On this page" panel doesn't overlap header */
+@media (max-width: 767px) {
+  /* Mobile TOC bar at top */
+  mobile-starlight-toc,
+  .mobile-starlight-toc {
+    margin-top: 4.5rem !important;
+  }
+  
+  /* Main content area */
+  .sl-layout,
+  .content-panel {
+    padding-top: 4.5rem !important;
+  }
 }
 
 /* ==========================================================================

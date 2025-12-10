@@ -20,6 +20,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/nginx/nginx.conf` | nginx configuration for static file serving (port 8080). |
 | `infrastructure/` | CDKTF stacks (`shared`, `dev`, `prod`). |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
+| `docs/assets/{article}/` | Mermaid sources and generated images for each spec document. |
 | `.github/workflows/` | CI/CD definitions (to be added). |
 
 ## Infrastructure Rules
@@ -152,6 +153,35 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 - `/docs/contact-flow.md` captures the agreed design: Astro API route + Cloud Logging + SendGrid (notify). Use reCAPTCHA v3 + rate limiting.
 - Analytics baseline uses GA4; `/api/track` endpoint will later forward custom events to Logging/BigQuery.
+
+## Diagram Guidelines
+
+1. **Directory Structure**:
+   - Mermaid source: `docs/assets/{article-name}/diagrams/{diagram-name}.md`
+   - Generated images: `docs/assets/{article-name}/images/{diagram-name}.png`
+   - Article filename maps to folder name (e.g., `contact-flow.md` → `assets/contact-flow/`)
+
+2. **Mermaid Code Standards**:
+   - Use `flowchart LR` (left-to-right) layout. Avoid `TB` (top-to-bottom).
+   - New diagram files contain Mermaid code only (no explanatory text).
+
+3. **PNG Generation**:
+   - Use `mmdc` (mermaid-cli) to generate high-quality PNG:
+
+   ```bash
+   mmdc -i docs/assets/{article}/diagrams/{name}.md \
+        -o docs/assets/{article}/images/{name}.png \
+        -b transparent -s 3
+   ```
+
+   - Options: `-b transparent` (transparent background), `-s 3` (3x scale for high quality)
+
+4. **Referencing in Documents**:
+   - Use relative image references in article body:
+
+   ```markdown
+   ![Description](./assets/{article-name}/images/{diagram-name}.png)
+   ```
 
 ## Documentation Standards
 

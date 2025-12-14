@@ -264,7 +264,7 @@ Goal: Run the application and infrastructure test suites and summarize the resul
 # /test-all
 
 ## Overview
-Runs both the application (Next.js) and infrastructure (CDKTF) test suites in one go and prints an aggregated result. When any suite fails, the command surfaces the failing suite and error output for quick triage.
+Runs both the application (Astro) test suites and infrastructure (Terraform) validation in one go and prints an aggregated result. When any suite fails, the command surfaces the failing suite and error output for quick triage.
 
 ## Usage
 
@@ -276,7 +276,7 @@ No arguments or options.
 
 ## Prerequisites
 - Run from the repository root `./koborin-ai/`.
-- Dependencies are installed (`npm install` already ran in both `app/` and `infrastructure/`).
+- Dependencies are installed (`npm install` already ran in `app/` and Terraform is initialized in `infra/`).
 
 ## Execution Flow (steps)
 

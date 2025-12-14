@@ -1,20 +1,20 @@
-name: CDKTF Release
+name: Terraform Release
 
 on:
   push:
     branches:
       - main
     paths:
-      - "infrastructure/**"
+      - "infra/**"
       - ".github/workflows/release-infra.yml"
     tags:
-      - 'infra-v*'
+      - "infra-v*"
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to release infra to'
+        description: "Environment to release infra to"
         required: true
-        default: 'dev'
+        default: "dev"
         type: choice
         options:
           - dev
@@ -22,12 +22,12 @@ on:
           - shared
 
 jobs:
-  cdktf-release:
+  terraform-release:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    timeout-minutes: 60
+    timeout-minutes: 30
 
     environment: ${{ github.event.inputs.environment == 'shared' && 'shared (infra)' || ((startsWith(github.ref, 'refs/tags/infra-v') || github.event.inputs.environment == 'prod') && 'production (infra)' || 'development (infra)') }}
 
@@ -51,70 +51,38 @@ jobs:
         run: |
           if [[ "$GITHUB_REF" == refs/tags/infra-v* ]]; then
             echo "TF_TARGET_ENV=prod" >> "$GITHUB_ENV"
-            echo "BACKEND_PREFIX=prod" >> "$GITHUB_ENV"
           elif [ "${{ github.ref_name }}" = "main" ] && [ "${{ github.event_name }}" = "push" ]; then
             echo "TF_TARGET_ENV=dev" >> "$GITHUB_ENV"
-            echo "BACKEND_PREFIX=dev" >> "$GITHUB_ENV"
           else
             echo "TF_TARGET_ENV=${{ github.event.inputs.environment }}" >> "$GITHUB_ENV"
-            echo "BACKEND_PREFIX=${{ github.event.inputs.environment }}" >> "$GITHUB_ENV"
           fi
 
-      - name: "Authenticate to Google Cloud"
-        uses: "google-github-actions/auth@v2"
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
           create_credentials_file: true
           export_environment_variables: true
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: infrastructure/package-lock.json
-
-      - name: Install CDKTF dependencies
-        working-directory: infrastructure
-        run: npm ci
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_wrapper: false
-
-      - name: Generate CDKTF providers
-        working-directory: infrastructure
-        run: npx cdktf get
-
-      - name: Build CDKTF project
-        working-directory: infrastructure
-        run: |
-          rm -rf lib cdktf.out
-          npm run build
-
-      - name: Run unit tests
-        working-directory: infrastructure
-        run: npm test
-
-      - name: Generate Terraform code with CDKTF
-        working-directory: infrastructure
-        env:
-          TF_VAR_environment: ${{ env.TF_TARGET_ENV }}
-        run: |
-          echo "Synthesizing for environment: $TF_TARGET_ENV"
-          npx cdktf synth
+          terraform_version: "1.14.2"
 
       - name: Check Terraform Format
-        working-directory: infrastructure/cdktf.out/stacks/${{ env.TF_TARGET_ENV }}
+        working-directory: infra/${{ env.TF_TARGET_ENV }}
         run: terraform fmt -check -diff -recursive
 
       - name: Initialize Terraform
-        working-directory: infrastructure/cdktf.out/stacks/${{ env.TF_TARGET_ENV }}
+        working-directory: infra/${{ env.TF_TARGET_ENV }}
         run: |
-          echo "Initializing Terraform with prefix: $BACKEND_PREFIX"
-          terraform init -input=false -backend-config="bucket=${{ env.BUCKET_NAME }}" -backend-config="prefix=$BACKEND_PREFIX"
+          echo "Initializing Terraform for environment: $TF_TARGET_ENV"
+          terraform init -input=false -backend-config="bucket=${{ env.BUCKET_NAME }}"
+
+      - name: Validate Terraform
+        working-directory: infra/${{ env.TF_TARGET_ENV }}
+        run: terraform validate
 
       - name: Get current Cloud Run image (if exists)
         if: env.TF_TARGET_ENV != 'shared'
@@ -133,42 +101,38 @@ jobs:
           echo "Current image: ${CURRENT_IMAGE}"
 
       - name: Run Terraform Plan (Pre-Apply Check)
-        working-directory: infrastructure/cdktf.out/stacks/${{ env.TF_TARGET_ENV }}
+        working-directory: infra/${{ env.TF_TARGET_ENV }}
         run: |
           PLAN_ARGS="-no-color -lock=false -input=false"
           PLAN_ARGS="$PLAN_ARGS -var=project_id=${{ env.PROJECT_ID }}"
-          PLAN_ARGS="$PLAN_ARGS -var=bucket_name=${{ env.BUCKET_NAME }}"
+          PLAN_ARGS="$PLAN_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
           
           if [ "$TF_TARGET_ENV" = "shared" ]; then
             # Shared stack needs OAuth credentials and IAP user for dev backend IAP configuration
-            PLAN_ARGS="$PLAN_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
             PLAN_ARGS="$PLAN_ARGS -var=iap_user=${{ env.IAP_USER }}"
             PLAN_ARGS="$PLAN_ARGS -var=oauth_client_id=${{ env.OAUTH_CLIENT_ID }}"
             PLAN_ARGS="$PLAN_ARGS -var=oauth_client_secret=${{ env.OAUTH_CLIENT_SECRET }}"
           else
-            # Dev/Prod stacks need project number for IAP service agent and image URI
-            PLAN_ARGS="$PLAN_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
+            # Dev/Prod stacks need image URI
             PLAN_ARGS="$PLAN_ARGS -var=image_uri=${{ steps.current-image.outputs.CURRENT_IMAGE }}"
           fi
           
           terraform plan $PLAN_ARGS
 
       - name: Run Terraform Apply
-        working-directory: infrastructure/cdktf.out/stacks/${{ env.TF_TARGET_ENV }}
+        working-directory: infra/${{ env.TF_TARGET_ENV }}
         run: |
           APPLY_ARGS="-auto-approve -input=false"
           APPLY_ARGS="$APPLY_ARGS -var=project_id=${{ env.PROJECT_ID }}"
-          APPLY_ARGS="$APPLY_ARGS -var=bucket_name=${{ env.BUCKET_NAME }}"
+          APPLY_ARGS="$APPLY_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
           
           if [ "$TF_TARGET_ENV" = "shared" ]; then
             # Shared stack needs OAuth credentials and IAP user for dev backend IAP configuration
-            APPLY_ARGS="$APPLY_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
             APPLY_ARGS="$APPLY_ARGS -var=iap_user=${{ env.IAP_USER }}"
             APPLY_ARGS="$APPLY_ARGS -var=oauth_client_id=${{ env.OAUTH_CLIENT_ID }}"
             APPLY_ARGS="$APPLY_ARGS -var=oauth_client_secret=${{ env.OAUTH_CLIENT_SECRET }}"
           else
-            # Dev/Prod stacks need project number for IAP service agent and image URI
-            APPLY_ARGS="$APPLY_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
+            # Dev/Prod stacks need image URI
             APPLY_ARGS="$APPLY_ARGS -var=image_uri=${{ steps.current-image.outputs.CURRENT_IMAGE }}"
           fi
           
@@ -190,24 +154,26 @@ jobs:
           echo "CURRENT_IMAGE=${CURRENT_IMAGE}" >> $GITHUB_OUTPUT
           echo "Using image for plan verification: ${CURRENT_IMAGE}"
 
-      - name: Run Terraform Plan (Check State)
+      - name: Run Terraform Plan (Verify No Drift)
         if: always()
-        working-directory: infrastructure/cdktf.out/stacks/${{ env.TF_TARGET_ENV }}
+        working-directory: infra/${{ env.TF_TARGET_ENV }}
         run: |
-          PLAN_ARGS="-no-color -lock=false -input=false"
+          PLAN_ARGS="-no-color -lock=false -input=false -detailed-exitcode"
           PLAN_ARGS="$PLAN_ARGS -var=project_id=${{ env.PROJECT_ID }}"
-          PLAN_ARGS="$PLAN_ARGS -var=bucket_name=${{ env.BUCKET_NAME }}"
+          PLAN_ARGS="$PLAN_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
           
           if [ "$TF_TARGET_ENV" = "shared" ]; then
             # Shared stack needs OAuth credentials and IAP user for dev backend IAP configuration
-            PLAN_ARGS="$PLAN_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
             PLAN_ARGS="$PLAN_ARGS -var=iap_user=${{ env.IAP_USER }}"
             PLAN_ARGS="$PLAN_ARGS -var=oauth_client_id=${{ env.OAUTH_CLIENT_ID }}"
             PLAN_ARGS="$PLAN_ARGS -var=oauth_client_secret=${{ env.OAUTH_CLIENT_SECRET }}"
           else
-            # Dev/Prod stacks need project number for IAP service agent and image URI
-            PLAN_ARGS="$PLAN_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
+            # Dev/Prod stacks need image URI
             PLAN_ARGS="$PLAN_ARGS -var=image_uri=${{ steps.current-image-verify.outputs.CURRENT_IMAGE }}"
           fi
           
-          terraform plan $PLAN_ARGS
+          # Exit code 0 = no changes, 1 = error, 2 = changes present
+          terraform plan $PLAN_ARGS || exit_code=$?
+          if [ "${exit_code:-0}" -eq 2 ]; then
+            echo "::warning::Drift detected after apply. Review the plan output above."
+          fi

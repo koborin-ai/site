@@ -117,65 +117,39 @@ jobs:
 
           echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_ENV"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: infrastructure/package-lock.json
-
-      - name: Install CDKTF dependencies
-        working-directory: infrastructure
-        run: npm ci
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_wrapper: false
-
-      - name: Generate CDKTF providers
-        working-directory: infrastructure
-        run: npx cdktf get
-
-      - name: Build CDKTF project
-        working-directory: infrastructure
-        run: |
-          rm -rf lib cdktf.out
-          npm run build
-
-      - name: Synthesize Terraform configuration
-        working-directory: infrastructure
-        run: |
-          echo "Synthesizing for environment: $TARGET_ENV"
-          npx cdktf synth
+          terraform_version: "1.14.2"
 
       - name: Check Terraform format
-        working-directory: infrastructure/cdktf.out/stacks/${{ env.TARGET_ENV }}
+        working-directory: infra/${{ env.TARGET_ENV }}
         run: terraform fmt -check -diff -recursive
 
       - name: Initialize Terraform
-        working-directory: infrastructure/cdktf.out/stacks/${{ env.TARGET_ENV }}
+        working-directory: infra/${{ env.TARGET_ENV }}
         run: |
           terraform init -input=false \
-            -backend-config="bucket=${BUCKET_NAME}" \
-            -backend-config="prefix=$TARGET_ENV"
+            -backend-config="bucket=${BUCKET_NAME}"
+
+      - name: Validate Terraform
+        working-directory: infra/${{ env.TARGET_ENV }}
+        run: terraform validate
 
       - name: Terraform Plan
-        working-directory: infrastructure/cdktf.out/stacks/${{ env.TARGET_ENV }}
+        working-directory: infra/${{ env.TARGET_ENV }}
         run: |
           terraform plan -no-color -lock=false -input=false \
             -var=project_id=${PROJECT_ID} \
             -var=project_number=${PROJECT_NUMBER} \
-            -var=bucket_name=${BUCKET_NAME} \
             -var=image_uri=${IMAGE_URI}
 
       - name: Terraform Apply
-        working-directory: infrastructure/cdktf.out/stacks/${{ env.TARGET_ENV }}
+        working-directory: infra/${{ env.TARGET_ENV }}
         run: |
           terraform apply -auto-approve -input=false \
             -var=project_id=${PROJECT_ID} \
             -var=project_number=${PROJECT_NUMBER} \
-            -var=bucket_name=${BUCKET_NAME} \
             -var=image_uri=${IMAGE_URI}
 
       - name: Retrieve deployed service URL
@@ -197,4 +171,3 @@ jobs:
           echo "- **Image**: ${IMAGE_URI}" >> $GITHUB_STEP_SUMMARY
           echo "- **Region**: ${REGION}" >> $GITHUB_STEP_SUMMARY
           echo "- **Service URL**: ${{ steps.service-url.outputs.SERVICE_URL }}" >> $GITHUB_STEP_SUMMARY
-

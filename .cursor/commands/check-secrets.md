@@ -45,7 +45,7 @@ Use `git ls-files` to get tracked files and apply grep patterns:
 ```bash
 # Get all tracked files excluding binary and generated files
 git ls-files | grep -v -E '\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico|pdf)$' | \
-  grep -v -E '^(node_modules|\.next|dist|build|coverage|cdktf\.out)/'
+  grep -v -E '^(node_modules|\.next|dist|build|coverage)/'
 ```
 
 For each pattern, run:
@@ -82,7 +82,7 @@ Present findings in this format:
 
 ```
 🔴 CRITICAL: Potential private key detected
-  File: infrastructure/src/config/secrets.ts
+  File: infra/shared/main.tf
   Line: 42
   Match: -----BEGIN PRIVATE KEY-----
 
@@ -117,7 +117,7 @@ Review these findings before committing. Use environment variables or Secret Man
 
 ### Repository-specific customization
 For `koborin-ai`:
-- Allow `koborin-ai` in `infrastructure/` and `README.md` (expected)
+- Allow `koborin-ai` in `infra/` and `README.md` (expected)
 - Flag it in `app/src/` unless it's from an environment variable
 - Allow email addresses in documentation and contact forms
 - Flag GCP project IDs when hardcoded outside of Terraform variable definitions
@@ -125,7 +125,7 @@ For `koborin-ai`:
 ### Handling edge cases
 - Large files: scan in chunks to avoid memory issues
 - Binary files: skip automatically via `git ls-files`
-- Generated code: exclude `cdktf.out/`, `.next/`, `node_modules/`
+- Generated code: exclude `.next/`, `node_modules/`
 
 ## Notes
 - This command performs static analysis only; it cannot detect secrets loaded at runtime
@@ -144,7 +144,7 @@ Output:
 ✅ No critical secrets detected.
 
 ⚠️  WARNING: Hardcoded project ID
-  File: infrastructure/src/stacks/shared-stack.ts
+  File: infra/shared/main.tf
   Line: 62
   Match: project: "koborin-ai"
   Note: This is acceptable in infrastructure code when used as a variable default.

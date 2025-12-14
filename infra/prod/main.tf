@@ -61,7 +61,7 @@ resource "google_cloud_run_v2_service" "web-prod" {
 # IAM - Allow public access
 # =============================================================================
 
-resource "google_cloud_run_v2_service_iam_member" "web-prod-public" {
+resource "google_cloud_run_v2_service_iam_member" "web-prod-invoker" {
   project  = var.project_id
   location = local.region
   name     = google_cloud_run_v2_service.web-prod.name

@@ -120,7 +120,7 @@ resource "google_artifact_registry_repository" "artifact-registry" {
 # Global Static IP
 # =============================================================================
 
-resource "google_compute_global_address" "lb" {
+resource "google_compute_global_address" "global-ip" {
   project      = var.project_id
   name         = "koborin-ai-global-ip"
   address_type = "EXTERNAL"
@@ -138,7 +138,7 @@ resource "google_compute_global_address" "lb" {
 # Dev Environment Backend
 # =============================================================================
 
-resource "google_compute_region_network_endpoint_group" "dev" {
+resource "google_compute_region_network_endpoint_group" "dev-neg" {
   project               = var.project_id
   region                = local.region
   name                  = "koborin-ai-dev-neg"
@@ -159,7 +159,7 @@ resource "google_compute_region_network_endpoint_group" "dev" {
   ]
 }
 
-resource "google_compute_backend_service" "dev" {
+resource "google_compute_backend_service" "dev-backend" {
   project               = var.project_id
   name                  = "koborin-ai-dev-backend"
   protocol              = "HTTP"
@@ -170,7 +170,7 @@ resource "google_compute_backend_service" "dev" {
   custom_response_headers = ["X-Robots-Tag: noindex, nofollow"]
 
   backend {
-    group           = google_compute_region_network_endpoint_group.dev.id
+    group           = google_compute_region_network_endpoint_group.dev-neg.id
     balancing_mode  = "UTILIZATION"
     capacity_scaler = 1.0
   }
@@ -186,9 +186,9 @@ resource "google_compute_backend_service" "dev" {
   }
 }
 
-resource "google_iap_web_backend_service_iam_binding" "dev" {
+resource "google_iap_web_backend_service_iam_binding" "dev-iap-access" {
   project             = var.project_id
-  web_backend_service = google_compute_backend_service.dev.name
+  web_backend_service = google_compute_backend_service.dev-backend.name
   role                = "roles/iap.httpsResourceAccessor"
   members             = ["user:${var.iap_user}"]
 }
@@ -197,7 +197,7 @@ resource "google_iap_web_backend_service_iam_binding" "dev" {
 # Prod Environment Backend
 # =============================================================================
 
-resource "google_compute_region_network_endpoint_group" "prod" {
+resource "google_compute_region_network_endpoint_group" "prod-neg" {
   project               = var.project_id
   region                = local.region
   name                  = "koborin-ai-prod-neg"
@@ -218,7 +218,7 @@ resource "google_compute_region_network_endpoint_group" "prod" {
   ]
 }
 
-resource "google_compute_backend_service" "prod" {
+resource "google_compute_backend_service" "prod-backend" {
   project               = var.project_id
   name                  = "koborin-ai-prod-backend"
   protocol              = "HTTP"
@@ -226,7 +226,7 @@ resource "google_compute_backend_service" "prod" {
   timeout_sec           = 30
 
   backend {
-    group           = google_compute_region_network_endpoint_group.prod.id
+    group           = google_compute_region_network_endpoint_group.prod-neg.id
     balancing_mode  = "UTILIZATION"
     capacity_scaler = 1.0
   }
@@ -264,11 +264,11 @@ resource "google_compute_managed_ssl_certificate" "managed-cert" {
   ]
 }
 
-resource "google_compute_url_map" "lb" {
+resource "google_compute_url_map" "url-map" {
   project         = var.project_id
   name            = "koborin-ai-url-map"
   description     = "Routes traffic to dev/prod backends based on host header"
-  default_service = google_compute_backend_service.prod.id
+  default_service = google_compute_backend_service.prod-backend.id
 
   host_rule {
     hosts        = ["koborin.ai"]
@@ -282,12 +282,12 @@ resource "google_compute_url_map" "lb" {
 
   path_matcher {
     name            = "prod-matcher"
-    default_service = google_compute_backend_service.prod.id
+    default_service = google_compute_backend_service.prod-backend.id
   }
 
   path_matcher {
     name            = "dev-matcher"
-    default_service = google_compute_backend_service.dev.id
+    default_service = google_compute_backend_service.dev-backend.id
   }
 
   lifecycle {
@@ -298,7 +298,7 @@ resource "google_compute_url_map" "lb" {
 resource "google_compute_target_https_proxy" "https-proxy" {
   project          = var.project_id
   name             = "koborin-ai-https-proxy"
-  url_map          = google_compute_url_map.lb.id
+  url_map          = google_compute_url_map.url-map.id
   ssl_certificates = [google_compute_managed_ssl_certificate.managed-cert.id]
 
   lifecycle {
@@ -314,7 +314,7 @@ resource "google_compute_global_forwarding_rule" "forwarding-rule" {
   ip_protocol           = "TCP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   network_tier          = "PREMIUM"
-  ip_address            = google_compute_global_address.lb.address
+  ip_address            = google_compute_global_address.global-ip.address
 }
 
 # =============================================================================
@@ -330,7 +330,7 @@ resource "google_compute_global_forwarding_rule" "forwarding-rule" {
 # - Running workflows from the koborin-ai repository
 # This follows Google's Workload Identity Federation design where IDs are public-safe.
 
-resource "google_iam_workload_identity_pool" "github_actions" {
+resource "google_iam_workload_identity_pool" "github-actions-pool" {
   project                   = var.project_id
   workload_identity_pool_id = "github-actions-pool"
   display_name              = "github-actions-pool"
@@ -339,7 +339,7 @@ resource "google_iam_workload_identity_pool" "github_actions" {
 
 resource "google_iam_workload_identity_pool_provider" "github-provider" {
   project                            = var.project_id
-  workload_identity_pool_id          = google_iam_workload_identity_pool.github_actions.workload_identity_pool_id
+  workload_identity_pool_id          = google_iam_workload_identity_pool.github-actions-pool.workload_identity_pool_id
   workload_identity_pool_provider_id = "actions-firebase-provider"
   display_name                       = "github-actions-provider"
   description                        = "GitHub Actions OIDC provider"
@@ -371,7 +371,7 @@ resource "google_service_account" "github-actions-sa" {
 resource "google_service_account_iam_member" "github-wif-user" {
   service_account_id = google_service_account.github-actions-sa.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principal://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.github_actions.workload_identity_pool_id}/subject/nozomi-koborinai/koborin-ai"
+  member             = "principal://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.github-actions-pool.workload_identity_pool_id}/subject/nozomi-koborinai/koborin-ai"
 }
 
 # Grant necessary roles to the GitHub Actions service account
@@ -471,7 +471,7 @@ resource "google_project_iam_member" "terraform-sa-roles-storage-objectAdmin" {
 
 output "global_ip_address" {
   description = "The global static IP address for the load balancer"
-  value       = google_compute_global_address.lb.address
+  value       = google_compute_global_address.global-ip.address
 }
 
 output "github_actions_sa_email" {

@@ -16,7 +16,7 @@
 
 ## Prerequisites
 
-- Local quality checks already ran manually (app: `npm run lint`, `npm run test`, `npm run typecheck`; infra: `npm run build --prefix infrastructure`, `npm run lint --prefix infrastructure`, `npm run test --prefix infrastructure`). This command will not block on failures.
+- Local quality checks already ran manually (app: `npm run lint`, `npm run test`, `npm run typecheck`; infra: `terraform fmt -check && terraform validate` in each stack under `infra/`). This command will not block on failures.
 - GitHub CLI (`gh`) is installed and authenticated (`gh auth status`).
 - Run the command from the base branch (usually `main`) with your worktree containing uncommitted changes, or from an existing feature branch if you want to reuse it.
 
@@ -97,7 +97,7 @@ Display the link returned by `gh pr create` so the user can review or share it i
 
 - **Frontend:** files under `app/` or `app/src`.
 - **Backend / server:** route handlers, API logic.
-- **Infrastructure:** `infrastructure/src/**`.
+- **Infrastructure:** `infra/**`.
 - **Documentation:** `docs/`, `AGENTS.md`, `README.md`.
 - **Tests:** `*.test.ts`, `tests/`, Playwright specs.
 
@@ -114,7 +114,7 @@ Display the link returned by `gh pr create` so the user can review or share it i
 
 - Database schema changes (e.g., Prisma, SQL files).
 - API contract changes under `app/api`.
-- Infrastructure modifications (Terraform/CDKTF files).
+- Infrastructure modifications (Terraform HCL files).
 - Security-sensitive updates (auth, IAM, secrets).
 
 ## Notes

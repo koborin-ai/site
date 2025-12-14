@@ -4,7 +4,7 @@
 
 Technical garden for exploring AI, cloud architecture, and continuous learning.
 
-Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with CDK for Terraform 0.21.x.
+Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with standard Terraform HCL.
 
 ## Architecture
 
@@ -144,9 +144,9 @@ flowchart LR
 | Workflow | Trigger | Purpose | Notes |
 | --- | --- | --- | --- |
 | `plan-infra.yml` | PRs touching infra | Synth + plan for shared/dev/prod stacks | No apply; reviewers inspect plan output |
-| `release-infra.yml` | `infra-v*` tags or manual dispatch | Applies shared/dev/prod stacks via CDKTF | Workload Identity SA has infra IAM roles |
+| `release-infra.yml` | `infra-v*` tags or manual dispatch | Applies shared/dev/prod stacks via Terraform | Workload Identity SA has infra IAM roles |
 | `app-ci.yml` | PRs touching `app/` or `content/` | Runs Astro lint/typecheck/test/build | Blocks merges that break the app |
-| `app-release.yml` | Merge to `main` or `app-v*` tags | One job builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}`) and applies Terraform to update Cloud Run | Cloud Build runs asynchronously; CDKTF consumes the new image URI |
+| `app-release.yml` | Merge to `main` or `app-v*` tags | One job builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}`) and applies Terraform to update Cloud Run | Cloud Build runs asynchronously; Terraform consumes the new image URI |
 
 ## Tech Stack
 
@@ -156,9 +156,9 @@ flowchart LR
   - Google Analytics 4 for baseline PV/engagement.
   - Optional custom `/api/track` endpoint writing to Cloud Logging → BigQuery for privacy-friendly metrics.
   - Cloud Monitoring dashboards + alert policies (via Terraform) for Cloud Run metrics.
-- **Infrastructure**: CDK for Terraform 0.21.x (TypeScript) targeting Google Cloud.
+- **Infrastructure**: Standard Terraform HCL targeting Google Cloud.
 - **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra, `app-ci.yml` / `app-release.yml` handle the Astro app.
-- **Testing**: Vite + Vitest (shared config across app and infra), Playwright for future E2E if needed.
+- **Testing**: Vitest for app tests, `terraform validate` for infra, Playwright for future E2E if needed.
 
 ## Repository Layout (planned)
 
@@ -183,7 +183,7 @@ flowchart LR
 │   ├── Dockerfile                # Multi-stage build (node → nginx:alpine)
 │   └── astro.config.mjs          # Starlight integration config
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
-├── infrastructure/                # CDKTF project (shared/dev/prod stacks)
+├── infra/                         # Terraform HCL stacks (shared/dev/prod)
 ├── .github/workflows/             # CI pipelines (plan/apply, app deploy)
 ├── README.md                      # This file
 └── AGENTS.md                      # English operations guide for collaborators
@@ -201,8 +201,8 @@ Logo sizing is customized via `app/src/styles/custom.css` (`.site-title img` sel
 
 ## Workflow Overview
 
-1. **Infra changes**: edit CDKTF stacks → `npm run test:infra` → open PR → GitHub Actions runs synth/plan → reviewer approves → merge triggers apply on the right environment.
-2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to CDKTF.
+1. **Infra changes**: edit Terraform HCL stacks → `terraform fmt && terraform validate` → open PR → GitHub Actions runs plan → reviewer approves → merge triggers apply on the right environment.
+2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to Terraform.
 3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `npm run lint`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
 
 ### Adding New Content
@@ -247,7 +247,7 @@ To add a new article or page:
 ## Release Strategy
 
 - Infra applies use `infra-v*` tags to trigger `release-infra.yml`. Tag the repo after merging infra PRs even if app work is still ongoing; this ensures the latest load balancer/stateful resources are deployed before app images roll out.
-- App deploys use `app-v*` tags to drive `app-release.yml`. Tagging after a successful `main` merge guarantees that the latest container image is built and the Cloud Run service is updated via CDKTF.
+- App deploys use `app-v*` tags to drive `app-release.yml`. Tagging after a successful `main` merge guarantees that the latest container image is built and the Cloud Run service is updated via Terraform.
 - GitHub release notes are generated via `.github/release.yml`. Label each PR with `app`, `infra`, `terraform`, `feature`, `bug`, or `doc` so the notes stay segmented by domain; apply the `ignore` label to omit a PR entirely.
 
 ## Local Setup (once the app repo is initialized)
@@ -259,14 +259,15 @@ npm install
 # Run Astro dev server (app directory)
 npm run dev --prefix app
 
-# Run infrastructure unit tests
-npm run test:infra --prefix infrastructure
+# Validate infrastructure
+cd infra/shared && terraform init -backend=false && terraform validate
 ```
 
 ## Infrastructure Dev Notes
 
-- CDKTF `cdktf.json` uses `node lib/main.js` and pins `google` / `google-beta` providers to `~> 6.50`.
-- Each stack configures `GcsBackend` with the same bucket but different prefixes (`shared`, `dev`, `prod`).
+- Terraform stacks are located in `infra/{shared,dev,prod}/`.
+- Provider version is pinned to `~> 6.50` in `versions.tf`.
+- Each stack uses a GCS backend with the same bucket but different prefixes (`shared`, `dev`, `prod`).
 
 ### Shared Stack
 

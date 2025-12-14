@@ -7,7 +7,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 - Personal site + technical garden for `koborin.ai`.
 - Astro with Starlight (documentation-focused theme) for MDX content under `app/src/content/docs/`.
 - Google Cloud Run (dev / prod) fronted by a single global HTTPS load balancer.
-- Infrastructure managed via CDK for Terraform (CDKTF) 0.21.x with TypeScript.
+- Infrastructure managed via standard Terraform (HCL) with three stacks: `shared`, `dev`, `prod`.
 - CI/CD and Terraform plan/apply executed only through GitHub Actions using Workload Identity Federation.
 
 ## Repository Layout
@@ -18,21 +18,24 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content/config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
 | `app/nginx/nginx.conf` | nginx configuration for static file serving (port 8080). |
-| `infrastructure/` | CDKTF stacks (`shared`, `dev`, `prod`). |
+| `infra/` | Standard Terraform HCL stacks (`shared`, `dev`, `prod`). |
+| `infra/shared/` | Shared resources: APIs, Artifact Registry, HTTPS LB, Workload Identity. |
+| `infra/dev/` | Dev Cloud Run service. |
+| `infra/prod/` | Prod Cloud Run service. |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
 | `docs/assets/{article}/` | Mermaid sources and generated images for each spec document. |
 | `.github/workflows/` | CI/CD definitions (to be added). |
 
 ## Infrastructure Rules
 
-1. **Plan/Apply**: never run Terraform/CDKTF applies locally. All infra changes go through GitHub Actions with Workload Identity Federation.
+1. **Plan/Apply**: never run Terraform applies locally. All infra changes go through GitHub Actions with Workload Identity Federation.
 2. **State buckets**: single GCS bucket with prefixes `shared`, `dev`, `prod`. Do not rename without migrating state.
-3. **Providers**: `google` and `google-beta` pinned to `~> 6.50` (see `cdktf.json`). Run `npm run build && npm run test` inside `infrastructure/` before opening a PR.
+3. **Providers**: `hashicorp/google` pinned to `~> 6.50`. Run `terraform fmt` and `terraform validate` before opening a PR.
 4. **Environments**:
 
-   - `shared`: APIs, Artifact Registry, static IP, Managed SSL cert, HTTPS LB (NEG, Backend Service, URL Map, Target Proxy, Forwarding Rule), IAP configuration for dev.
-   - `dev`: Cloud Run service `koborin-ai-web-dev` (to be created).
-   - `prod`: Cloud Run service `koborin-ai-web-prod` (to be created).
+   - `shared`: APIs, Artifact Registry, static IP, Managed SSL cert, HTTPS LB (NEG, Backend Service, URL Map, Target Proxy, Forwarding Rule), IAP configuration for dev, Workload Identity for GitHub Actions.
+   - `dev`: Cloud Run service `koborin-ai-web-dev`.
+   - `prod`: Cloud Run service `koborin-ai-web-prod`.
 
 5. **Architecture Design**:
 
@@ -43,18 +46,23 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 6. **Variable Management**:
 
-   - All hardcoded values (region, domain names, service names, IP names, etc.) are defined as constants directly in `shared-stack.ts`.
-   - Only truly variable values (project ID, OAuth credentials, IAP user email) are exposed as TerraformVariables.
-   - Never add default values to TerraformVariables - all values must be explicitly passed from GitHub Actions.
-   - Variable names in `stack-config.ts` must exactly match the `-var=` arguments in GitHub Actions workflows.
+   - All hardcoded values (region, domain names, service names, IP names, etc.) are defined as locals directly in `main.tf`.
+   - Only truly variable values (project ID, OAuth credentials, IAP user email, image URI) are exposed as Terraform variables.
+   - Never add default values to variables - all values must be explicitly passed via `-var` or `-var-file` from GitHub Actions.
+   - Backend bucket is configured via `-backend-config="bucket=<BUCKET_NAME>"` at `terraform init`.
 
 7. **IaC Philosophy - Code as Documentation**:
 
    - IaC differs fundamentally from application code: **the code itself is the design document**.
-   - Prioritize readability and explicitness over abstraction. Hard-code all fixed values directly in stack files.
-   - Avoid unnecessary variables, constants, or helper functions that obscure the actual infrastructure being created.
-   - A reviewer should be able to understand the entire infrastructure by reading the stack file alone, without jumping between multiple abstraction layers.
-   - Only extract to variables/functions when values genuinely vary across environments or need to be injected at runtime.
+   - Prioritize readability and explicitness over abstraction. Hard-code all fixed values directly in `.tf` files.
+   - Avoid unnecessary variables, locals, or modules that obscure the actual infrastructure being created.
+   - A reviewer should be able to understand the entire infrastructure by reading the stack files alone, without jumping between multiple abstraction layers.
+   - Only extract to variables when values genuinely vary across environments or need to be injected at runtime.
+
+8. **File Organization**:
+
+   - Each stack has separate files: `versions.tf`, `backend.tf`, `providers.tf`, `variables.tf`, `main.tf`.
+   - Lock files (`.terraform.lock.hcl`) should be committed to ensure reproducible provider versions.
 
 ## Application Rules
 
@@ -133,15 +141,15 @@ This document is a quick guide for any contributors or AI agents that touch the 
 ## CI/CD Expectations
 
 - Workflows:
-  - `plan-infra.yml`: synth + plan for shared/dev/prod stacks (no apply).
-  - `release-infra.yml`: authenticated apply for shared/dev/prod stacks (manual dispatch or tag based).
+  - `plan-infra.yml`: `terraform init` + `terraform plan` for shared/dev/prod stacks (no apply).
+  - `release-infra.yml`: authenticated `terraform apply` for shared/dev/prod stacks (manual dispatch or tag based).
   - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`) on PRs touching `app/`.
-  - `app-release.yml`: builds/pushes the Astro container with Cloud Build and feeds the resulting `image_uri` into CDKTF for dev/prod deploys.
+  - `app-release.yml`: builds/pushes the Astro container with Cloud Build and feeds the resulting `image_uri` into Terraform for dev/prod deploys.
 - Workload Identity:
-  - Pool ID: `github-actions`
-  - Provider ID: `github`
-  - Service account created in `shared` stack (`terraform-deployer@<project>.iam.gserviceaccount.com`).
-  - Principal string: `principalSet://.../attribute.repository/<org>/<repo>` (see `shared-stack.ts`).
+  - Pool ID: `github-actions-pool`
+  - Provider ID: `actions-firebase-provider`
+  - Service account created in `shared` stack (`github-actions-service@<project>.iam.gserviceaccount.com`).
+  - Principal string: `principal://iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github-actions-pool/subject/nozomi-koborinai/koborin-ai`.
 
 ## Release Process
 
@@ -202,15 +210,15 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 Before committing any code changes, ensure all quality checks pass:
 
-### Infrastructure (`infrastructure/`)
+### Infrastructure (`infra/`)
 
 ```bash
-npm run build   # TypeScript compilation
-npm run lint    # ESLint checks
-npm run test    # Vitest unit tests
+cd infra/<stack>
+terraform fmt -check     # Check formatting
+terraform validate       # Validate configuration
 ```
 
-All three commands must complete successfully with no errors.
+Both commands must complete successfully with no errors for each stack (shared, dev, prod).
 
 ### Application (`app/`)
 
@@ -226,7 +234,7 @@ All four commands must complete successfully with no errors.
 ## Pull Request Checklist
 
 1. Update relevant docs (`README.md`, `AGENTS.md`, or files under `docs/`) when changing behavior.
-2. For infra: `npm run build && npm run lint && npm run test` in `infrastructure/` - all must pass.
+2. For infra: `terraform fmt -check && terraform validate` in each stack (`infra/<stack>`) - all must pass.
 3. For app: `npm run build && npm run lint && npm run typecheck && npm run test` in `app/` - all must pass.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual GCP steps (e.g., DNS imports, current gaps like IAP enablement) in the PR description.

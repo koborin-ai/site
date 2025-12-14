@@ -12,7 +12,7 @@ locals {
 # Cloud Run Service
 # =============================================================================
 
-resource "google_cloud_run_v2_service" "web" {
+resource "google_cloud_run_v2_service" "web-dev" {
   project  = var.project_id
   location = local.region
   name     = "koborin-ai-web-dev"
@@ -62,10 +62,10 @@ resource "google_cloud_run_v2_service" "web" {
 # =============================================================================
 # IAP uses this service account to invoke the Cloud Run service after authentication
 
-resource "google_cloud_run_v2_service_iam_member" "iap_invoker" {
+resource "google_cloud_run_v2_service_iam_member" "web-dev-iap-invoker" {
   project  = var.project_id
   location = local.region
-  name     = google_cloud_run_v2_service.web.name
+  name     = google_cloud_run_v2_service.web-dev.name
   role     = "roles/run.invoker"
   member   = "serviceAccount:service-${var.project_number}@gcp-sa-iap.iam.gserviceaccount.com"
 }
@@ -76,11 +76,11 @@ resource "google_cloud_run_v2_service_iam_member" "iap_invoker" {
 
 output "service_url" {
   description = "The URL of the Cloud Run service"
-  value       = google_cloud_run_v2_service.web.uri
+  value       = google_cloud_run_v2_service.web-dev.uri
 }
 
 output "service_name" {
   description = "The name of the Cloud Run service"
-  value       = google_cloud_run_v2_service.web.name
+  value       = google_cloud_run_v2_service.web-dev.name
 }
 

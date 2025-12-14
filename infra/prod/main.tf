@@ -12,7 +12,7 @@ locals {
 # Cloud Run Service
 # =============================================================================
 
-resource "google_cloud_run_v2_service" "web" {
+resource "google_cloud_run_v2_service" "web-prod" {
   project  = var.project_id
   location = local.region
   name     = "koborin-ai-web-prod"
@@ -61,10 +61,10 @@ resource "google_cloud_run_v2_service" "web" {
 # IAM - Allow public access
 # =============================================================================
 
-resource "google_cloud_run_v2_service_iam_member" "public" {
+resource "google_cloud_run_v2_service_iam_member" "web-prod-public" {
   project  = var.project_id
   location = local.region
-  name     = google_cloud_run_v2_service.web.name
+  name     = google_cloud_run_v2_service.web-prod.name
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
@@ -75,11 +75,11 @@ resource "google_cloud_run_v2_service_iam_member" "public" {
 
 output "service_url" {
   description = "The URL of the Cloud Run service"
-  value       = google_cloud_run_v2_service.web.uri
+  value       = google_cloud_run_v2_service.web-prod.uri
 }
 
 output "service_name" {
   description = "The name of the Cloud Run service"
-  value       = google_cloud_run_v2_service.web.name
+  value       = google_cloud_run_v2_service.web-prod.name
 }
 

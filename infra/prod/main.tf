@@ -50,11 +50,6 @@ resource "google_cloud_run_v2_service" "web-prod" {
     percent = 100
   }
 
-  lifecycle {
-    ignore_changes = [
-      template[0].containers[0].image, # Allow manual image updates
-    ]
-  }
 }
 
 # =============================================================================

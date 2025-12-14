@@ -18,50 +18,78 @@
 
 locals {
   region = "asia-northeast1"
-
-  # APIs required for Cloud Run, Artifact Registry, Load Balancing, and IAM
-  required_apis = [
-    "run.googleapis.com",
-    "compute.googleapis.com",
-    "iam.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "artifactregistry.googleapis.com",
-    "cloudbuild.googleapis.com",
-    "iap.googleapis.com",
-    "monitoring.googleapis.com",
-    "logging.googleapis.com",
-    "certificatemanager.googleapis.com",
-  ]
-
-  # Roles granted to the GitHub Actions service account
-  terraform_sa_roles = [
-    "roles/artifactregistry.admin",
-    "roles/cloudbuild.builds.builder",
-    "roles/cloudbuild.builds.viewer",
-    "roles/run.admin",
-    "roles/compute.admin",
-    "roles/iap.admin",
-    "roles/logging.admin",
-    "roles/logging.viewer",
-    "roles/monitoring.admin",
-    "roles/resourcemanager.projectIamAdmin",
-    "roles/iam.serviceAccountUser",
-    "roles/iam.serviceAccountAdmin",
-    "roles/iam.workloadIdentityPoolAdmin",
-    "roles/serviceusage.serviceUsageAdmin",
-    "roles/storage.objectAdmin",
-  ]
 }
 
 # =============================================================================
 # API Enablement
 # =============================================================================
 
-resource "google_project_service" "apis" {
-  for_each = toset(local.required_apis)
-
+resource "google_project_service" "api-run-googleapis-com" {
   project                    = var.project_id
-  service                    = each.value
+  service                    = "run.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
+resource "google_project_service" "api-compute-googleapis-com" {
+  project                    = var.project_id
+  service                    = "compute.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
+resource "google_project_service" "api-iam-googleapis-com" {
+  project                    = var.project_id
+  service                    = "iam.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
+resource "google_project_service" "api-cloudresourcemanager-googleapis-com" {
+  project                    = var.project_id
+  service                    = "cloudresourcemanager.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
+resource "google_project_service" "api-artifactregistry-googleapis-com" {
+  project                    = var.project_id
+  service                    = "artifactregistry.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
+resource "google_project_service" "api-cloudbuild-googleapis-com" {
+  project                    = var.project_id
+  service                    = "cloudbuild.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
+resource "google_project_service" "api-iap-googleapis-com" {
+  project                    = var.project_id
+  service                    = "iap.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
+resource "google_project_service" "api-monitoring-googleapis-com" {
+  project                    = var.project_id
+  service                    = "monitoring.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
+resource "google_project_service" "api-logging-googleapis-com" {
+  project                    = var.project_id
+  service                    = "logging.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
+resource "google_project_service" "api-certificatemanager-googleapis-com" {
+  project                    = var.project_id
+  service                    = "certificatemanager.googleapis.com"
   disable_dependent_services = false
   disable_on_destroy         = false
 }
@@ -70,7 +98,7 @@ resource "google_project_service" "apis" {
 # Artifact Registry
 # =============================================================================
 
-resource "google_artifact_registry_repository" "web" {
+resource "google_artifact_registry_repository" "artifact-registry" {
   project       = var.project_id
   location      = local.region
   repository_id = "koborin-ai-web"
@@ -81,7 +109,11 @@ resource "google_artifact_registry_repository" "web" {
     immutable_tags = true
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.api-run-googleapis-com,
+    google_project_service.api-compute-googleapis-com,
+    google_project_service.api-artifactregistry-googleapis-com,
+  ]
 }
 
 # =============================================================================
@@ -95,7 +127,11 @@ resource "google_compute_global_address" "lb" {
   ip_version   = "IPV4"
   description  = "Static IP for koborin.ai HTTPS load balancer"
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.api-run-googleapis-com,
+    google_project_service.api-compute-googleapis-com,
+    google_project_service.api-artifactregistry-googleapis-com,
+  ]
 }
 
 # =============================================================================
@@ -116,7 +152,11 @@ resource "google_compute_region_network_endpoint_group" "dev" {
     create_before_destroy = true
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.api-run-googleapis-com,
+    google_project_service.api-compute-googleapis-com,
+    google_project_service.api-artifactregistry-googleapis-com,
+  ]
 }
 
 resource "google_compute_backend_service" "dev" {
@@ -171,7 +211,11 @@ resource "google_compute_region_network_endpoint_group" "prod" {
     create_before_destroy = true
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.api-run-googleapis-com,
+    google_project_service.api-compute-googleapis-com,
+    google_project_service.api-artifactregistry-googleapis-com,
+  ]
 }
 
 resource "google_compute_backend_service" "prod" {
@@ -201,7 +245,7 @@ resource "google_compute_backend_service" "prod" {
 # HTTPS Load Balancer
 # =============================================================================
 
-resource "google_compute_managed_ssl_certificate" "lb" {
+resource "google_compute_managed_ssl_certificate" "managed-cert" {
   project = var.project_id
   name    = "koborin-ai-cert"
 
@@ -213,7 +257,11 @@ resource "google_compute_managed_ssl_certificate" "lb" {
     create_before_destroy = true
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.api-run-googleapis-com,
+    google_project_service.api-compute-googleapis-com,
+    google_project_service.api-artifactregistry-googleapis-com,
+  ]
 }
 
 resource "google_compute_url_map" "lb" {
@@ -247,21 +295,21 @@ resource "google_compute_url_map" "lb" {
   }
 }
 
-resource "google_compute_target_https_proxy" "lb" {
+resource "google_compute_target_https_proxy" "https-proxy" {
   project          = var.project_id
   name             = "koborin-ai-https-proxy"
   url_map          = google_compute_url_map.lb.id
-  ssl_certificates = [google_compute_managed_ssl_certificate.lb.id]
+  ssl_certificates = [google_compute_managed_ssl_certificate.managed-cert.id]
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
-resource "google_compute_global_forwarding_rule" "lb" {
+resource "google_compute_global_forwarding_rule" "forwarding-rule" {
   project               = var.project_id
   name                  = "koborin-ai-forwarding-rule"
-  target                = google_compute_target_https_proxy.lb.id
+  target                = google_compute_target_https_proxy.https-proxy.id
   port_range            = "443"
   ip_protocol           = "TCP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
@@ -289,7 +337,7 @@ resource "google_iam_workload_identity_pool" "github_actions" {
   description               = "Workload Identity Pool for GitHub Actions workflows"
 }
 
-resource "google_iam_workload_identity_pool_provider" "github" {
+resource "google_iam_workload_identity_pool_provider" "github-provider" {
   project                            = var.project_id
   workload_identity_pool_id          = google_iam_workload_identity_pool.github_actions.workload_identity_pool_id
   workload_identity_pool_provider_id = "actions-firebase-provider"
@@ -309,7 +357,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   }
 }
 
-resource "google_service_account" "github_actions" {
+resource "google_service_account" "github-actions-sa" {
   project      = var.project_id
   account_id   = "github-actions-service"
   display_name = "github-actions-service"
@@ -320,19 +368,101 @@ resource "google_service_account" "github_actions" {
 # Uses subject-based binding to restrict access to this specific repository only
 # (nozomi-koborinai/koborin-ai). This is more restrictive than attribute-based
 # principalSet binding which would allow all repos owned by nozomi-koborinai.
-resource "google_service_account_iam_member" "github_wif" {
-  service_account_id = google_service_account.github_actions.name
+resource "google_service_account_iam_member" "github-wif-user" {
+  service_account_id = google_service_account.github-actions-sa.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "principal://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.github_actions.workload_identity_pool_id}/subject/nozomi-koborinai/koborin-ai"
 }
 
 # Grant necessary roles to the GitHub Actions service account
-resource "google_project_iam_member" "github_actions" {
-  for_each = toset(local.terraform_sa_roles)
-
+resource "google_project_iam_member" "terraform-sa-roles-artifactregistry-admin" {
   project = var.project_id
-  role    = each.value
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
+  role    = "roles/artifactregistry.admin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-cloudbuild-builds-builder" {
+  project = var.project_id
+  role    = "roles/cloudbuild.builds.builder"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-cloudbuild-builds-viewer" {
+  project = var.project_id
+  role    = "roles/cloudbuild.builds.viewer"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-run-admin" {
+  project = var.project_id
+  role    = "roles/run.admin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-compute-admin" {
+  project = var.project_id
+  role    = "roles/compute.admin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-iap-admin" {
+  project = var.project_id
+  role    = "roles/iap.admin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-logging-admin" {
+  project = var.project_id
+  role    = "roles/logging.admin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-logging-viewer" {
+  project = var.project_id
+  role    = "roles/logging.viewer"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-monitoring-admin" {
+  project = var.project_id
+  role    = "roles/monitoring.admin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-resourcemanager-projectIamAdmin" {
+  project = var.project_id
+  role    = "roles/resourcemanager.projectIamAdmin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-iam-serviceAccountUser" {
+  project = var.project_id
+  role    = "roles/iam.serviceAccountUser"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-iam-serviceAccountAdmin" {
+  project = var.project_id
+  role    = "roles/iam.serviceAccountAdmin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-iam-workloadIdentityPoolAdmin" {
+  project = var.project_id
+  role    = "roles/iam.workloadIdentityPoolAdmin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-serviceusage-serviceUsageAdmin" {
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageAdmin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
+}
+
+resource "google_project_iam_member" "terraform-sa-roles-storage-objectAdmin" {
+  project = var.project_id
+  role    = "roles/storage.objectAdmin"
+  member  = "serviceAccount:${google_service_account.github-actions-sa.email}"
 }
 
 # =============================================================================
@@ -346,11 +476,11 @@ output "global_ip_address" {
 
 output "github_actions_sa_email" {
   description = "Email of the GitHub Actions service account"
-  value       = google_service_account.github_actions.email
+  value       = google_service_account.github-actions-sa.email
 }
 
 output "workload_identity_provider" {
   description = "Full resource name of the Workload Identity Provider"
-  value       = google_iam_workload_identity_pool_provider.github.name
+  value       = google_iam_workload_identity_pool_provider.github-provider.name
 }
 

@@ -7,8 +7,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 - Personal site + technical garden for `koborin.ai`.
 - Astro with Starlight (documentation-focused theme) for MDX content under `app/src/content/docs/`.
 - Google Cloud Run (dev / prod) fronted by a single global HTTPS load balancer.
-- Infrastructure managed via standard Terraform (HCL) with three stacks: `shared`, `dev`, `prod`.
-- CI/CD and Terraform plan/apply executed only through GitHub Actions using Workload Identity Federation.
+- Infrastructure managed via Pulumi (TypeScript) with three stacks: `shared`, `dev`, `prod`.
+- CI/CD and Pulumi preview/up executed only through GitHub Actions using Workload Identity Federation.
 
 ## Repository Layout
 
@@ -18,19 +18,19 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content/config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
 | `app/nginx/nginx.conf` | nginx configuration for static file serving (port 8080). |
-| `infra/` | Standard Terraform HCL stacks (`shared`, `dev`, `prod`). |
-| `infra/shared/` | Shared resources: APIs, Artifact Registry, HTTPS LB, Workload Identity. |
-| `infra/dev/` | Dev Cloud Run service. |
-| `infra/prod/` | Prod Cloud Run service. |
+| `infra/` | Pulumi TypeScript stacks (`shared`, `dev`, `prod`). |
+| `infra/src/stacks/shared.ts` | Shared resources: APIs, Artifact Registry, HTTPS LB, Workload Identity. |
+| `infra/src/stacks/dev.ts` | Dev Cloud Run service. |
+| `infra/src/stacks/prod.ts` | Prod Cloud Run service. |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
 | `docs/assets/{article}/` | Mermaid sources and generated images for each spec document. |
-| `.github/workflows/` | CI/CD definitions (to be added). |
+| `.github/workflows/` | CI/CD definitions. |
 
 ## Infrastructure Rules
 
-1. **Plan/Apply**: never run Terraform applies locally. All infra changes go through GitHub Actions with Workload Identity Federation.
-2. **State buckets**: single GCS bucket with prefixes `shared`, `dev`, `prod`. Do not rename without migrating state.
-3. **Providers**: `hashicorp/google` pinned to `~> 6.50`. Run `terraform fmt` and `terraform validate` before opening a PR.
+1. **Preview/Up**: never run Pulumi applies locally. All infra changes go through GitHub Actions with Workload Identity Federation.
+2. **State backend**: GCS bucket with Pulumi's automatic stack-based state management. Backend URL: `gs://<BUCKET_NAME>/pulumi`.
+3. **Stacks**: Pulumi stacks (`shared`, `dev`, `prod`) are managed via `pulumi stack select`. Each stack has its own state file.
 4. **Environments**:
 
    - `shared`: APIs, Artifact Registry, static IP, Managed SSL cert, HTTPS LB (NEG, Backend Service, URL Map, Target Proxy, Forwarding Rule), IAP configuration for dev, Workload Identity for GitHub Actions.
@@ -44,25 +44,25 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Dev Backend Service has IAP enabled with allowlist, prod has no IAP.
    - Dev Backend Service adds `X-Robots-Tag: noindex, nofollow` response header.
 
-6. **Variable Management**:
+6. **Configuration Management**:
 
-   - All hardcoded values (region, domain names, service names, IP names, etc.) are defined as locals directly in `main.tf`.
-   - Only truly variable values (project ID, OAuth credentials, IAP user email, image URI) are exposed as Terraform variables.
-   - Never add default values to variables - all values must be explicitly passed via `-var` or `-var-file` from GitHub Actions.
-   - Backend bucket is configured via `-backend-config="bucket=<BUCKET_NAME>"` at `terraform init`.
+   - All configuration values are set dynamically via `pulumi config set` in GitHub Actions.
+   - Secrets (OAuth credentials, passphrase) are stored in GitHub Secrets and passed at runtime.
+   - Stack configuration files (`Pulumi.*.yaml`) are gitignored - CI/CD sets all values.
 
 7. **IaC Philosophy - Code as Documentation**:
 
    - IaC differs fundamentally from application code: **the code itself is the design document**.
-   - Prioritize readability and explicitness over abstraction. Hard-code all fixed values directly in `.tf` files.
-   - Avoid unnecessary variables, locals, or modules that obscure the actual infrastructure being created.
-   - A reviewer should be able to understand the entire infrastructure by reading the stack files alone, without jumping between multiple abstraction layers.
-   - Only extract to variables when values genuinely vary across environments or need to be injected at runtime.
+   - Prioritize readability and explicitness over abstraction.
+   - A reviewer should be able to understand the entire infrastructure by reading the stack files alone.
+   - Only extract to configuration when values genuinely vary across environments or need to be injected at runtime.
 
 8. **File Organization**:
 
-   - Each stack has separate files: `versions.tf`, `backend.tf`, `providers.tf`, `variables.tf`, `main.tf`.
-   - Lock files (`.terraform.lock.hcl`) should be committed to ensure reproducible provider versions.
+   - `infra/src/index.ts`: Entry point that loads the appropriate stack.
+   - `infra/src/config.ts`: Configuration helper functions.
+   - `infra/src/stacks/*.ts`: Stack definitions (shared, dev, prod).
+   - `infra/Pulumi.yaml`: Project configuration.
 
 ## Application Rules
 
@@ -141,10 +141,10 @@ This document is a quick guide for any contributors or AI agents that touch the 
 ## CI/CD Expectations
 
 - Workflows:
-  - `plan-infra.yml`: `terraform init` + `terraform plan` for shared/dev/prod stacks (no apply).
-  - `release-infra.yml`: authenticated `terraform apply` for shared/dev/prod stacks (manual dispatch or tag based).
+  - `plan-infra.yml`: `pulumi preview` for shared/dev/prod stacks (no apply).
+  - `release-infra.yml`: authenticated `pulumi up` for shared/dev/prod stacks (manual dispatch or tag based).
   - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`) on PRs touching `app/`.
-  - `app-release.yml`: builds/pushes the Astro container with Cloud Build and feeds the resulting `image_uri` into Terraform for dev/prod deploys.
+  - `app-release.yml`: builds/pushes the Astro container with Cloud Build and feeds the resulting `image_uri` into Pulumi for dev/prod deploys.
 - Workload Identity:
   - Pool ID: `github-actions-pool`
   - Provider ID: `actions-firebase-provider`
@@ -155,7 +155,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 - Tag infra releases as `infra-v*` to force `release-infra.yml` to apply shared/dev/prod stacks ahead of app rollouts.
 - Tag app releases as `app-v*` once `main` includes the desired content; this runs `app-release.yml`, builds a new Artifact Registry image, and updates the Cloud Run service.
-- GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `terraform`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
+- GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `pulumi`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
 
 ## Contact Flow & Analytics
 
@@ -213,16 +213,18 @@ Before committing any code changes, ensure all quality checks pass:
 ### Infrastructure (`infra/`)
 
 ```bash
-cd infra/<stack>
-terraform fmt -check     # Check formatting
-terraform validate       # Validate configuration
+cd infra
+npm run build      # TypeScript compilation
+npm run lint       # ESLint checks
+npm run typecheck  # TypeScript type checking
 ```
 
-Both commands must complete successfully with no errors for each stack (shared, dev, prod).
+All commands must complete successfully with no errors.
 
 ### Application (`app/`)
 
 ```bash
+cd app
 npm run build      # Astro build
 npm run lint       # ESLint checks
 npm run typecheck  # TypeScript type checking
@@ -234,7 +236,7 @@ All four commands must complete successfully with no errors.
 ## Pull Request Checklist
 
 1. Update relevant docs (`README.md`, `AGENTS.md`, or files under `docs/`) when changing behavior.
-2. For infra: `terraform fmt -check && terraform validate` in each stack (`infra/<stack>`) - all must pass.
+2. For infra: `npm run build && npm run lint && npm run typecheck` in `infra/` - all must pass.
 3. For app: `npm run build && npm run lint && npm run typecheck && npm run test` in `app/` - all must pass.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual GCP steps (e.g., DNS imports, current gaps like IAP enablement) in the PR description.

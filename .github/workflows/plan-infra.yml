@@ -1,4 +1,4 @@
-name: Terraform Plan
+name: Infrastructure Plan
 
 on:
   pull_request:
@@ -10,23 +10,25 @@ on:
       - ".github/workflows/plan-infra.yml"
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Environment to plan infra for"
+      stack:
+        description: "Stack to preview"
         required: true
         default: "dev"
         type: choice
         options:
+          - shared
           - dev
           - prod
-          - shared
 
 jobs:
-  terraform-plan:
+  pulumi-preview:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
+      pull-requests: write
     timeout-minutes: 30
+
     env:
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
       PROJECT_NUMBER: ${{ secrets.PROJECT_NUMBER }}
@@ -37,18 +39,34 @@ jobs:
       IAP_USER: ${{ secrets.IAP_USER }}
       OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
       OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+      PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Decide target environment
-        id: decide-env
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: infra/package-lock.json
+
+      - name: Install dependencies
+        working-directory: infra
+        run: npm ci
+
+      - name: Build TypeScript
+        working-directory: infra
+        run: npm run build
+
+      - name: Decide target stack
+        id: decide-stack
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "TF_TARGET_ENV=dev" >> "$GITHUB_ENV"
+            echo "PULUMI_STACK=dev" >> "$GITHUB_ENV"
           else
-            echo "TF_TARGET_ENV=${{ github.event.inputs.environment }}" >> "$GITHUB_ENV"
+            echo "PULUMI_STACK=${{ github.event.inputs.stack }}" >> "$GITHUB_ENV"
           fi
 
       - name: Authenticate to Google Cloud
@@ -59,30 +77,16 @@ jobs:
           create_credentials_file: true
           export_environment_variables: true
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Pulumi
+        uses: pulumi/actions@v6
         with:
-          terraform_version: "1.14.2"
-
-      - name: Check Terraform Format
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
-        run: terraform fmt -check -diff -recursive
-
-      - name: Initialize Terraform
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
-        run: |
-          echo "Initializing Terraform for environment: $TF_TARGET_ENV"
-          terraform init -input=false -backend-config="bucket=${{ env.BUCKET_NAME }}"
-
-      - name: Validate Terraform
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
-        run: terraform validate
+          command: version
 
       - name: Get current Cloud Run image (if exists)
-        if: env.TF_TARGET_ENV != 'shared'
+        if: env.PULUMI_STACK != 'shared'
         id: current-image
         run: |
-          if [ "$TF_TARGET_ENV" = "prod" ]; then
+          if [ "$PULUMI_STACK" = "prod" ]; then
             SERVICE_NAME="koborin-ai-web-prod"
           else
             SERVICE_NAME="koborin-ai-web-dev"
@@ -94,21 +98,34 @@ jobs:
           echo "CURRENT_IMAGE=${CURRENT_IMAGE}" >> $GITHUB_OUTPUT
           echo "Current image: ${CURRENT_IMAGE}"
 
-      - name: Run Terraform Plan
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
+      - name: Configure Pulumi Stack
+        working-directory: infra
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
         run: |
-          PLAN_ARGS="-no-color -lock=false -input=false"
-          PLAN_ARGS="$PLAN_ARGS -var=project_id=${{ env.PROJECT_ID }}"
-          PLAN_ARGS="$PLAN_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
+          # Select or create stack
+          pulumi stack select ${{ env.PULUMI_STACK }} --create --non-interactive || true
           
-          if [ "$TF_TARGET_ENV" = "shared" ]; then
-            # Shared stack needs OAuth credentials and IAP user for dev backend IAP configuration
-            PLAN_ARGS="$PLAN_ARGS -var=iap_user=${{ env.IAP_USER }}"
-            PLAN_ARGS="$PLAN_ARGS -var=oauth_client_id=${{ env.OAUTH_CLIENT_ID }}"
-            PLAN_ARGS="$PLAN_ARGS -var=oauth_client_secret=${{ env.OAUTH_CLIENT_SECRET }}"
+          # Set common config
+          pulumi config set gcp:project ${{ env.PROJECT_ID }} --non-interactive
+          pulumi config set gcp:region ${{ env.REGION }} --non-interactive
+          pulumi config set projectNumber ${{ env.PROJECT_NUMBER }} --non-interactive
+          
+          if [ "$PULUMI_STACK" = "shared" ]; then
+            pulumi config set iapUser ${{ env.IAP_USER }} --non-interactive
+            pulumi config set oauthClientId ${{ env.OAUTH_CLIENT_ID }} --non-interactive
+            pulumi config set --secret oauthClientSecret ${{ env.OAUTH_CLIENT_SECRET }} --non-interactive
           else
-            # Dev/Prod stacks need image URI
-            PLAN_ARGS="$PLAN_ARGS -var=image_uri=${{ steps.current-image.outputs.CURRENT_IMAGE }}"
+            pulumi config set imageUri ${{ steps.current-image.outputs.CURRENT_IMAGE }} --non-interactive
           fi
-          
-          terraform plan $PLAN_ARGS
+
+      - name: Pulumi Preview
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          stack-name: ${{ env.PULUMI_STACK }}
+          work-dir: infra
+          comment-on-pr: true
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
+

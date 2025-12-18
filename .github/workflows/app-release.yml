@@ -134,9 +134,7 @@ jobs:
         run: npm run build
 
       - name: Setup Pulumi
-        uses: pulumi/actions@v6
-        with:
-          command: version
+        uses: pulumi/setup-pulumi@v2
 
       - name: Configure Pulumi Stack
         working-directory: infra

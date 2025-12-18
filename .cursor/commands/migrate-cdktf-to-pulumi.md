@@ -79,25 +79,182 @@ const webDev = new gcp.cloudrunv2.Service("web-dev", {
 });
 ```
 
-### 5. Import Existing Resources
+### 5. Import Existing Resources (CLI Method - Recommended)
 
-Pulumi uses a different state format than Terraform, so you must import existing resources:
+Pulumi uses a different state format than Terraform, so you must import existing resources.
+
+**⚠️ Important: Use CLI-based import, NOT code-based import options.**
+
+#### Why CLI-based Import?
+
+| Method | Description | Recommendation |
+|--------|-------------|----------------|
+| **CLI (`pulumi import`)** | One-time command, imports to state | ✅ Recommended |
+| **Code (`import` option)** | Added to resource definition | ❌ Avoid |
+
+Code-based import options cause issues:
+- `[diff: ~protect]` warnings in every preview
+- Confusion about which resources are imported
+- Hard to know if import already happened
+
+#### Step-by-Step Import Process
+
+1. **Login to Pulumi Backend**
 
 ```bash
-# Initialize stacks
+cd infra
+export PULUMI_BACKEND_URL=gs://${BUCKET_NAME}/pulumi
+export PULUMI_CONFIG_PASSPHRASE=""
+pulumi login $PULUMI_BACKEND_URL
+```
+
+2. **Initialize Stacks**
+
+```bash
 pulumi stack init shared
 pulumi stack init dev
 pulumi stack init prod
-
-# Import resources
-pulumi import gcp:cloudrunv2/service:Service web-dev projects/{project}/locations/{region}/services/{service-name}
 ```
+
+3. **Configure Stacks**
+
+```bash
+# For each stack
+pulumi stack select <stack-name>
+pulumi config set gcp:project $PROJECT_ID
+pulumi config set projectId $PROJECT_ID
+pulumi config set projectNumber $PROJECT_NUMBER
+# Add other required config...
+```
+
+4. **Import Resources by Stack**
+
+**Dev Stack:**
+
+```bash
+pulumi stack select dev
+
+# Cloud Run Service
+pulumi import gcp:cloudrunv2/service:Service web-dev \
+  "projects/${PROJECT_ID}/locations/asia-northeast1/services/koborin-ai-web-dev" --yes
+
+# Cloud Run IAM Member
+pulumi import gcp:cloudrunv2/serviceIamMember:ServiceIamMember web-dev-iap-invoker \
+  "projects/${PROJECT_ID}/locations/asia-northeast1/services/koborin-ai-web-dev roles/run.invoker serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-iap.iam.gserviceaccount.com" --yes
+```
+
+**Prod Stack:**
+
+```bash
+pulumi stack select prod
+
+# Cloud Run Service
+pulumi import gcp:cloudrunv2/service:Service web-prod \
+  "projects/${PROJECT_ID}/locations/asia-northeast1/services/koborin-ai-web-prod" --yes
+
+# Cloud Run IAM Member (allUsers)
+pulumi import gcp:cloudrunv2/serviceIamMember:ServiceIamMember web-prod-invoker \
+  "projects/${PROJECT_ID}/locations/asia-northeast1/services/koborin-ai-web-prod roles/run.invoker allUsers" --yes
+```
+
+**Shared Stack:**
+
+```bash
+pulumi stack select shared
+
+# API Services (loop)
+for api in run.googleapis.com compute.googleapis.com iam.googleapis.com cloudresourcemanager.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com iap.googleapis.com monitoring.googleapis.com logging.googleapis.com certificatemanager.googleapis.com; do
+  name=$(echo $api | tr '.' '-')
+  pulumi import "gcp:projects/service:Service" "api-${name}" "${PROJECT_ID}/${api}" --yes
+done
+
+# Artifact Registry
+pulumi import gcp:artifactregistry/repository:Repository artifact-registry \
+  "projects/${PROJECT_ID}/locations/asia-northeast1/repositories/koborin-ai-web" --yes
+
+# Global IP
+pulumi import gcp:compute/globalAddress:GlobalAddress global-ip \
+  "projects/${PROJECT_ID}/global/addresses/koborin-ai-global-ip" --yes
+
+# NEGs
+pulumi import gcp:compute/regionNetworkEndpointGroup:RegionNetworkEndpointGroup dev-neg \
+  "projects/${PROJECT_ID}/regions/asia-northeast1/networkEndpointGroups/koborin-ai-dev-neg" --yes
+pulumi import gcp:compute/regionNetworkEndpointGroup:RegionNetworkEndpointGroup prod-neg \
+  "projects/${PROJECT_ID}/regions/asia-northeast1/networkEndpointGroups/koborin-ai-prod-neg" --yes
+
+# Backend Services
+pulumi import gcp:compute/backendService:BackendService dev-backend \
+  "projects/${PROJECT_ID}/global/backendServices/koborin-ai-dev-backend" --yes
+pulumi import gcp:compute/backendService:BackendService prod-backend \
+  "projects/${PROJECT_ID}/global/backendServices/koborin-ai-prod-backend" --yes
+
+# SSL Certificate
+pulumi import gcp:compute/managedSslCertificate:ManagedSslCertificate managed-cert \
+  "projects/${PROJECT_ID}/global/sslCertificates/koborin-ai-cert" --yes
+
+# URL Map
+pulumi import gcp:compute/uRLMap:URLMap url-map \
+  "projects/${PROJECT_ID}/global/urlMaps/koborin-ai-url-map" --yes
+
+# HTTPS Proxy
+pulumi import gcp:compute/targetHttpsProxy:TargetHttpsProxy https-proxy \
+  "projects/${PROJECT_ID}/global/targetHttpsProxies/koborin-ai-https-proxy" --yes
+
+# Forwarding Rule
+pulumi import gcp:compute/globalForwardingRule:GlobalForwardingRule forwarding-rule \
+  "projects/${PROJECT_ID}/global/forwardingRules/koborin-ai-forwarding-rule" --yes
+
+# Workload Identity
+pulumi import gcp:iam/workloadIdentityPool:WorkloadIdentityPool github-actions-pool \
+  "projects/${PROJECT_ID}/locations/global/workloadIdentityPools/github-actions-pool" --yes
+pulumi import gcp:iam/workloadIdentityPoolProvider:WorkloadIdentityPoolProvider github-provider \
+  "projects/${PROJECT_ID}/locations/global/workloadIdentityPools/github-actions-pool/providers/actions-firebase-provider" --yes
+
+# Service Account
+pulumi import gcp:serviceaccount/account:Account github-actions-sa \
+  "projects/${PROJECT_ID}/serviceAccounts/github-actions-service@${PROJECT_ID}.iam.gserviceaccount.com" --yes
+
+# Service Account IAM
+pulumi import gcp:serviceaccount/iAMMember:IAMMember github-wif-user \
+  "projects/${PROJECT_ID}/serviceAccounts/github-actions-service@${PROJECT_ID}.iam.gserviceaccount.com roles/iam.workloadIdentityUser principal://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-actions-pool/subject/nozomi-koborinai/koborin-ai" --yes
+
+# Project IAM Roles (loop)
+SA_EMAIL="github-actions-service@${PROJECT_ID}.iam.gserviceaccount.com"
+for role in roles/artifactregistry.admin roles/cloudbuild.builds.builder roles/cloudbuild.builds.viewer roles/run.admin roles/compute.admin roles/iap.admin roles/logging.admin roles/logging.viewer roles/monitoring.admin roles/resourcemanager.projectIamAdmin roles/iam.serviceAccountUser roles/iam.serviceAccountAdmin roles/iam.workloadIdentityPoolAdmin roles/serviceusage.serviceUsageAdmin roles/storage.objectAdmin; do
+  name="deployer-sa-$(echo $role | tr '.' '-' | tr '/' '-')"
+  pulumi import "gcp:projects/iAMMember:IAMMember" "${name}" "${PROJECT_ID} ${role} serviceAccount:${SA_EMAIL}" --yes
+done
+```
+
+5. **Verify Import**
+
+```bash
+pulumi stack ls
+# Should show resource counts for each stack
+
+pulumi preview
+# Should show minimal changes (only new resources or config diffs)
+```
+
+#### Import ID Formats Reference
+
+| Resource Type | Import ID Format |
+|---------------|------------------|
+| `gcp:cloudrunv2/service:Service` | `projects/{project}/locations/{region}/services/{name}` |
+| `gcp:cloudrunv2/serviceIamMember:ServiceIamMember` | `projects/{project}/locations/{region}/services/{name} {role} {member}` |
+| `gcp:projects/service:Service` | `{project}/{api}` |
+| `gcp:compute/globalAddress:GlobalAddress` | `projects/{project}/global/addresses/{name}` |
+| `gcp:compute/backendService:BackendService` | `projects/{project}/global/backendServices/{name}` |
+| `gcp:iap/webBackendServiceIamBinding:WebBackendServiceIamBinding` | `projects/{project}/iap_web/compute/services/{service}` |
+| `gcp:iam/workloadIdentityPool:WorkloadIdentityPool` | `projects/{project}/locations/global/workloadIdentityPools/{pool}` |
+| `gcp:serviceaccount/account:Account` | `projects/{project}/serviceAccounts/{email}` |
+| `gcp:projects/iAMMember:IAMMember` | `{project} {role} {member}` |
 
 ### 6. Update GitHub Actions Workflows
 
 #### Required Changes
 
-1. `hashicorp/setup-terraform` → `pulumi/actions@v6`
+1. `hashicorp/setup-terraform` → `pulumi/setup-pulumi@v2`
 2. `terraform init/plan/apply` → `pulumi stack select/preview/up`
 3. `infra/${{ env.TARGET_ENV }}` → `infra/` (single directory)
 
@@ -109,9 +266,7 @@ pulumi import gcp:cloudrunv2/service:Service web-dev projects/{project}/location
 
 ```yaml
 - name: Setup Pulumi
-  uses: pulumi/actions@v6
-  with:
-    command: version
+  uses: pulumi/setup-pulumi@v2
 
 - name: Configure Pulumi Stack
   working-directory: infra
@@ -150,7 +305,7 @@ After migration is complete, delete:
 
 - [ ] Create Pulumi project structure
 - [ ] Convert CDKTF code to Pulumi TypeScript
-- [ ] Import existing resources (`pulumi import`)
+- [ ] **Import existing resources via CLI (`pulumi import`)**
 - [ ] Verify no diff with `pulumi preview`
 - [ ] Update GitHub Actions workflows
 - [ ] Add `PULUMI_CONFIG_PASSPHRASE` to GitHub Secrets
@@ -161,9 +316,13 @@ After migration is complete, delete:
 
 1. **No State Compatibility**: Terraform `.tfstate` and Pulumi state are not compatible. You must import resources.
 
-2. **Passphrase Management**: When using GCS backend, `PULUMI_CONFIG_PASSPHRASE` is required. An empty string works but a proper value is recommended for security.
+2. **CLI Import Only**: Always use `pulumi import` command. Never use code-based `import` options in resource definitions.
 
-3. **CI/CD Only**: Avoid running `pulumi up` locally. Execute all changes through GitHub Actions.
+3. **Passphrase Management**: When using GCS backend, `PULUMI_CONFIG_PASSPHRASE` is required. An empty string works but a proper value is recommended for security.
+
+4. **CI/CD Only**: Avoid running `pulumi up` locally. Execute all changes through GitHub Actions.
+
+5. **Resource Not Found on Import**: If `pulumi import` fails with "resource does not exist", the resource was not created by CDKTF. It will be created as a new resource on `pulumi up`.
 
 ## References
 

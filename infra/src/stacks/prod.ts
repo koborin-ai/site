@@ -59,7 +59,8 @@ const _webProdInvoker = new gcp.cloudrunv2.ServiceIamMember(
   },
   {
     // Import existing IAM binding from CDKTF state
-    import: `projects/${config.projectId}/locations/asia-northeast1/services/koborin-ai-web-prod/roles/run.invoker/allUsers`,
+    // Format: {project}/{location}/{service} {role} {member}
+    import: `projects/${config.projectId}/locations/asia-northeast1/services/koborin-ai-web-prod roles/run.invoker allUsers`,
   }
 )
 

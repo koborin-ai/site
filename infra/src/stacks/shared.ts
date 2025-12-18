@@ -273,12 +273,12 @@ const workloadIdentityProvider = new gcp.iam.WorkloadIdentityPoolProvider(
   }
 )
 
-// Service Account for Terraform deployment
+// Service Account for Pulumi deployment
 const githubActionsSa = new gcp.serviceaccount.Account("github-actions-sa", {
   project: config.projectId,
   accountId: "github-actions-service",
   displayName: "github-actions-service",
-  description: "Service account for GitHub Actions to deploy via Terraform",
+  description: "Service account for GitHub Actions to deploy via Pulumi",
 })
 
 // Allow Workload Identity Pool to impersonate the service account

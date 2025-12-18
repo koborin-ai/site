@@ -149,11 +149,8 @@ const _devIapAccess = new gcp.iap.WebBackendServiceIamBinding(
     role: "roles/iap.httpsResourceAccessor",
     members: [`user:${config.iapUser}`],
   },
-  {
-    dependsOn: [devBackend],
-    // Import existing IAP binding from CDKTF state
-    import: `projects/${config.projectId}/iap_web/compute/services/koborin-ai-dev-backend/roles/iap.httpsResourceAccessor`,
-  }
+  { dependsOn: [devBackend] }
+  // Note: This is a new resource, not imported from CDKTF
 )
 
 // ========================================

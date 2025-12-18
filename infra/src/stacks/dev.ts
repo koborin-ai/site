@@ -58,11 +58,9 @@ const _webDevIapInvoker = new gcp.cloudrunv2.ServiceIamMember(
     name: webDev.name,
     role: "roles/run.invoker",
     member: pulumi.interpolate`serviceAccount:service-${config.projectNumber}@gcp-sa-iap.iam.gserviceaccount.com`,
-  },
-  {
-    // Import existing IAM binding from CDKTF state
-    import: `projects/${config.projectId}/locations/asia-northeast1/services/koborin-ai-web-dev/roles/run.invoker/serviceAccount:service-${config.projectNumber}@gcp-sa-iap.iam.gserviceaccount.com`,
   }
+  // Note: This resource is new (not imported from CDKTF) - IAP Service Agent needs
+  // Cloud Run Invoker role to forward authenticated requests to the service
 )
 
 // ========================================

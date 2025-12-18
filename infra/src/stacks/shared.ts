@@ -149,8 +149,12 @@ const _devIapAccess = new gcp.iap.WebBackendServiceIamBinding(
     role: "roles/iap.httpsResourceAccessor",
     members: [`user:${config.iapUser}`],
   },
-  { dependsOn: [devBackend] }
-  // Note: This is a new resource, not imported from CDKTF
+  {
+    dependsOn: [devBackend],
+    // Import existing IAP binding from CDKTF state
+    // Format: projects/{project}/iap_web/compute/services/{web_backend_service}
+    import: `projects/${config.projectId}/iap_web/compute/services/koborin-ai-dev-backend`,
+  }
 )
 
 // ========================================
@@ -336,7 +340,7 @@ const githubActionsSa = new gcp.serviceaccount.Account(
     project: config.projectId,
     accountId: "github-actions-service",
     displayName: "github-actions-service",
-    description: "Service account for GitHub Actions to deploy via Pulumi",
+    description: "Service account for GitHub Actions to deploy via Terraform",
   },
   {
     // Import existing Service Account from CDKTF state

@@ -9,43 +9,36 @@ const config = getEnvironmentStackConfig()
  */
 
 // Cloud Run V2 Service for dev
-const webDev = new gcp.cloudrunv2.Service(
-  "web-dev",
-  {
-    project: config.projectId,
-    location: "asia-northeast1",
-    name: "koborin-ai-web-dev",
-    ingress: "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER",
-    template: {
-      executionEnvironment: "EXECUTION_ENVIRONMENT_GEN2",
-      containers: [
-        {
-          image: config.imageUri,
-          envs: [
-            // NODE_ENV: server-side environment detection
-            { name: "NODE_ENV", value: "development" },
-            // NEXT_PUBLIC_ENV: client-side environment detection (legacy, kept for compatibility)
-            { name: "NEXT_PUBLIC_ENV", value: "dev" },
-          ],
-        },
-      ],
-      scaling: {
-        minInstanceCount: 0,
-        maxInstanceCount: 1,
-      },
-    },
-    traffics: [
+const webDev = new gcp.cloudrunv2.Service("web-dev", {
+  project: config.projectId,
+  location: "asia-northeast1",
+  name: "koborin-ai-web-dev",
+  ingress: "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER",
+  template: {
+    executionEnvironment: "EXECUTION_ENVIRONMENT_GEN2",
+    containers: [
       {
-        type: "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST",
-        percent: 100,
+        image: config.imageUri,
+        envs: [
+          // NODE_ENV: server-side environment detection
+          { name: "NODE_ENV", value: "development" },
+          // NEXT_PUBLIC_ENV: client-side environment detection (legacy, kept for compatibility)
+          { name: "NEXT_PUBLIC_ENV", value: "dev" },
+        ],
       },
     ],
+    scaling: {
+      minInstanceCount: 0,
+      maxInstanceCount: 1,
+    },
   },
-  {
-    // Import existing Cloud Run service from CDKTF state
-    import: `projects/${config.projectId}/locations/asia-northeast1/services/koborin-ai-web-dev`,
-  }
-)
+  traffics: [
+    {
+      type: "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST",
+      percent: 100,
+    },
+  ],
+})
 
 // Grant Cloud Run Invoker role to IAP Service Agent
 // IAP uses this service account to invoke the Cloud Run service after authentication
@@ -57,11 +50,6 @@ const _webDevIapInvoker = new gcp.cloudrunv2.ServiceIamMember(
     name: webDev.name,
     role: "roles/run.invoker",
     member: `serviceAccount:service-${config.projectNumber}@gcp-sa-iap.iam.gserviceaccount.com`,
-  },
-  {
-    // Import existing IAM binding from CDKTF state
-    // Format: {project}/{location}/{service} {role} {member}
-    import: `projects/${config.projectId}/locations/asia-northeast1/services/koborin-ai-web-dev roles/run.invoker serviceAccount:service-${config.projectNumber}@gcp-sa-iap.iam.gserviceaccount.com`,
   }
 )
 

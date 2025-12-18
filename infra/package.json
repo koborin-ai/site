@@ -1,0 +1,25 @@
+{
+  "name": "koborin-ai-infra",
+  "version": "1.0.0",
+  "description": "Pulumi infrastructure for koborin.ai",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@pulumi/gcp": "^9.6.0",
+    "@pulumi/pulumi": "^3.212.0"
+  }
+}
+

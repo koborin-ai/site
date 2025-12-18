@@ -4,7 +4,7 @@
 
 Technical garden for exploring AI, cloud architecture, and continuous learning.
 
-Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with standard Terraform HCL.
+Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with Pulumi (TypeScript).
 
 ## Architecture
 
@@ -15,7 +15,7 @@ Dev/Prod share the same HTTPS load balancer and Artifact Registry; only Cloud Ru
 title: "Google Cloud Project"
 ---
 flowchart LR
-    subgraph TF_STATE["TF Backend State - GCS"]
+    subgraph PULUMI_STATE["Pulumi Backend State - GCS"]
         STATE_SHARED["shared"]
         STATE_DEV["dev"]
         STATE_PROD["prod"]
@@ -52,7 +52,7 @@ flowchart LR
     
     subgraph CICD["GitHub Actions"]
         GH_WIF["Workload Identity<br/>Federation"]
-        TF_SA["Terraform SA"]
+        PULUMI_SA["Pulumi SA"]
     end
     
     STATE_SHARED -.-> SHARED
@@ -77,10 +77,10 @@ flowchart LR
     PROD_NEG --> PROD_CR
     
     GH_WIF -.->|"Authenticate"| WIF
-    WIF -.->|"Impersonate"| TF_SA
-    TF_SA -.->|"Plan/Apply"| TF_STATE
+    WIF -.->|"Impersonate"| PULUMI_SA
+    PULUMI_SA -.->|"Preview/Up"| PULUMI_STATE
     
-    style TF_STATE fill:#E8E8E8,color:#000,stroke:#666,stroke-width:2px
+    style PULUMI_STATE fill:#E8E8E8,color:#000,stroke:#666,stroke-width:2px
     style STATE_SHARED fill:#F5F5F5,color:#000
     style STATE_DEV fill:#F5F5F5,color:#000
     style STATE_PROD fill:#F5F5F5,color:#000
@@ -95,10 +95,10 @@ flowchart LR
     style DEV_CR fill:#4A90E2,color:#fff
     style PROD_CR fill:#4A90E2,color:#fff
     style GH_WIF fill:#FFB74D,color:#000
-    style TF_SA fill:#FFB74D,color:#000
+    style PULUMI_SA fill:#FFB74D,color:#000
 ```
 
-> DNS is hosted in Cloudflare. Terraform does **not** manage DNS records; add/update `koborin.ai` / `dev.koborin.ai` A records manually whenever the load balancer IP changes.
+> DNS is hosted in Cloudflare. Pulumi does **not** manage DNS records; add/update `koborin.ai` / `dev.koborin.ai` A records manually whenever the load balancer IP changes.
 
 ### Environment matrix
 
@@ -129,7 +129,7 @@ flowchart LR
         buildApp[Docker Build\n+ Artifact Registry]
     end
 
-    subgraph Terraform
+    subgraph Pulumi
         sharedStack[Shared Stack]
         envStacks[Dev/Prod Stacks]
     end
@@ -143,10 +143,10 @@ flowchart LR
 
 | Workflow | Trigger | Purpose | Notes |
 | --- | --- | --- | --- |
-| `plan-infra.yml` | PRs touching infra | Synth + plan for shared/dev/prod stacks | No apply; reviewers inspect plan output |
-| `release-infra.yml` | `infra-v*` tags or manual dispatch | Applies shared/dev/prod stacks via Terraform | Workload Identity SA has infra IAM roles |
+| `plan-infra.yml` | PRs touching infra | Pulumi preview for shared/dev/prod stacks | No apply; reviewers inspect preview output |
+| `release-infra.yml` | `infra-v*` tags or manual dispatch | Applies shared/dev/prod stacks via Pulumi | Workload Identity SA has infra IAM roles |
 | `app-ci.yml` | PRs touching `app/` or `content/` | Runs Astro lint/typecheck/test/build | Blocks merges that break the app |
-| `app-release.yml` | Merge to `main` or `app-v*` tags | One job builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}`) and applies Terraform to update Cloud Run | Cloud Build runs asynchronously; Terraform consumes the new image URI |
+| `app-release.yml` | Merge to `main` or `app-v*` tags | One job builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}`) and applies Pulumi to update Cloud Run | Cloud Build runs asynchronously; Pulumi consumes the new image URI |
 
 ## Tech Stack
 
@@ -155,10 +155,10 @@ flowchart LR
 - **Analytics & o11y**:
   - Google Analytics 4 for baseline PV/engagement.
   - Optional custom `/api/track` endpoint writing to Cloud Logging → BigQuery for privacy-friendly metrics.
-  - Cloud Monitoring dashboards + alert policies (via Terraform) for Cloud Run metrics.
-- **Infrastructure**: Standard Terraform HCL targeting Google Cloud.
+  - Cloud Monitoring dashboards + alert policies (via Pulumi) for Cloud Run metrics.
+- **Infrastructure**: Pulumi (TypeScript) targeting Google Cloud.
 - **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra, `app-ci.yml` / `app-release.yml` handle the Astro app.
-- **Testing**: Vitest for app tests, `terraform validate` for infra, Playwright for future E2E if needed.
+- **Testing**: Vitest for app tests, TypeScript compilation for infra, Playwright for future E2E if needed.
 
 ## Repository Layout (planned)
 
@@ -183,7 +183,17 @@ flowchart LR
 │   ├── Dockerfile                # Multi-stage build (node → nginx:alpine)
 │   └── astro.config.mjs          # Starlight integration config
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
-├── infra/                         # Terraform HCL stacks (shared/dev/prod)
+├── infra/                         # Pulumi TypeScript stacks (shared/dev/prod)
+│   ├── src/
+│   │   ├── index.ts              # Entry point
+│   │   ├── config.ts             # Configuration helpers
+│   │   └── stacks/               # Stack definitions
+│   │       ├── shared.ts         # Shared resources (LB, APIs, WIF)
+│   │       ├── dev.ts            # Dev Cloud Run
+│   │       └── prod.ts           # Prod Cloud Run
+│   ├── Pulumi.yaml               # Project configuration
+│   ├── package.json              # Dependencies
+│   └── tsconfig.json             # TypeScript config
 ├── .github/workflows/             # CI pipelines (plan/apply, app deploy)
 ├── README.md                      # This file
 └── AGENTS.md                      # English operations guide for collaborators
@@ -201,8 +211,8 @@ Logo sizing is customized via `app/src/styles/custom.css` (`.site-title img` sel
 
 ## Workflow Overview
 
-1. **Infra changes**: edit Terraform HCL stacks → `terraform fmt && terraform validate` → open PR → GitHub Actions runs plan → reviewer approves → merge triggers apply on the right environment.
-2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to Terraform.
+1. **Infra changes**: edit Pulumi TypeScript stacks → `npm run build && npm run lint` → open PR → GitHub Actions runs preview → reviewer approves → merge triggers apply on the right environment.
+2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to Pulumi.
 3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `npm run lint`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
 
 ### Adding New Content
@@ -247,8 +257,8 @@ To add a new article or page:
 ## Release Strategy
 
 - Infra applies use `infra-v*` tags to trigger `release-infra.yml`. Tag the repo after merging infra PRs even if app work is still ongoing; this ensures the latest load balancer/stateful resources are deployed before app images roll out.
-- App deploys use `app-v*` tags to drive `app-release.yml`. Tagging after a successful `main` merge guarantees that the latest container image is built and the Cloud Run service is updated via Terraform.
-- GitHub release notes are generated via `.github/release.yml`. Label each PR with `app`, `infra`, `terraform`, `feature`, `bug`, or `doc` so the notes stay segmented by domain; apply the `ignore` label to omit a PR entirely.
+- App deploys use `app-v*` tags to drive `app-release.yml`. Tagging after a successful `main` merge guarantees that the latest container image is built and the Cloud Run service is updated via Pulumi.
+- GitHub release notes are generated via `.github/release.yml`. Label each PR with `app`, `infra`, `pulumi`, `feature`, `bug`, or `doc` so the notes stay segmented by domain; apply the `ignore` label to omit a PR entirely.
 
 ## Local Setup (once the app repo is initialized)
 
@@ -259,15 +269,15 @@ npm install
 # Run Astro dev server (app directory)
 npm run dev --prefix app
 
-# Validate infrastructure
-cd infra/shared && terraform init -backend=false && terraform validate
+# Build infrastructure (infra directory)
+npm run build --prefix infra
 ```
 
 ## Infrastructure Dev Notes
 
-- Terraform stacks are located in `infra/{shared,dev,prod}/`.
-- Provider version is pinned to `~> 6.50` in `versions.tf`.
-- Each stack uses a GCS backend with the same bucket but different prefixes (`shared`, `dev`, `prod`).
+- Pulumi stacks are located in `infra/src/stacks/`.
+- GCP provider version is managed via `@pulumi/gcp` package.
+- Each stack uses a GCS backend with automatic state management per stack name.
 
 ### Shared Stack
 
@@ -288,7 +298,7 @@ cd infra/shared && terraform init -backend=false && terraform validate
   - Provider: `actions-firebase-provider` (OIDC issuer: `https://token.actions.githubusercontent.com`).
   - Service Account: `github-actions-service@{project}.iam.gserviceaccount.com`.
   - IAM binding: Subject-based binding for repository `nozomi-koborinai/koborin-ai`.
-  - Project IAM roles (Artifact Registry, Run, Compute, IAM, etc.) granted to the Terraform SA.
+  - Project IAM roles (Artifact Registry, Run, Compute, IAM, etc.) granted to the Pulumi SA.
 - **DNS**: Records live in Cloudflare and are managed manually (A records point to the LB IP).
 
 ### Dev Stack

@@ -1,4 +1,4 @@
-name: Terraform Release
+name: Infrastructure Release
 
 on:
   push:
@@ -11,25 +11,25 @@ on:
       - "infra-v*"
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Environment to release infra to"
+      stack:
+        description: "Stack to deploy"
         required: true
         default: "dev"
         type: choice
         options:
+          - shared
           - dev
           - prod
-          - shared
 
 jobs:
-  terraform-release:
+  pulumi-up:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     timeout-minutes: 30
 
-    environment: ${{ github.event.inputs.environment == 'shared' && 'shared (infra)' || ((startsWith(github.ref, 'refs/tags/infra-v') || github.event.inputs.environment == 'prod') && 'production (infra)' || 'development (infra)') }}
+    environment: ${{ github.event.inputs.stack == 'shared' && 'shared (infra)' || ((startsWith(github.ref, 'refs/tags/infra-v') || github.event.inputs.stack == 'prod') && 'production (infra)' || 'development (infra)') }}
 
     env:
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -41,20 +41,36 @@ jobs:
       IAP_USER: ${{ secrets.IAP_USER }}
       OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
       OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+      PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Decide target environment
-        id: decide-env
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: infra/package-lock.json
+
+      - name: Install dependencies
+        working-directory: infra
+        run: npm ci
+
+      - name: Build TypeScript
+        working-directory: infra
+        run: npm run build
+
+      - name: Decide target stack
+        id: decide-stack
         run: |
           if [[ "$GITHUB_REF" == refs/tags/infra-v* ]]; then
-            echo "TF_TARGET_ENV=prod" >> "$GITHUB_ENV"
+            echo "PULUMI_STACK=prod" >> "$GITHUB_ENV"
           elif [ "${{ github.ref_name }}" = "main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            echo "TF_TARGET_ENV=dev" >> "$GITHUB_ENV"
+            echo "PULUMI_STACK=dev" >> "$GITHUB_ENV"
           else
-            echo "TF_TARGET_ENV=${{ github.event.inputs.environment }}" >> "$GITHUB_ENV"
+            echo "PULUMI_STACK=${{ github.event.inputs.stack }}" >> "$GITHUB_ENV"
           fi
 
       - name: Authenticate to Google Cloud
@@ -65,30 +81,14 @@ jobs:
           create_credentials_file: true
           export_environment_variables: true
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.14.2"
-
-      - name: Check Terraform Format
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
-        run: terraform fmt -check -diff -recursive
-
-      - name: Initialize Terraform
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
-        run: |
-          echo "Initializing Terraform for environment: $TF_TARGET_ENV"
-          terraform init -input=false -backend-config="bucket=${{ env.BUCKET_NAME }}"
-
-      - name: Validate Terraform
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
-        run: terraform validate
+      - name: Setup Pulumi
+        uses: pulumi/setup-pulumi@v2
 
       - name: Get current Cloud Run image (if exists)
-        if: env.TF_TARGET_ENV != 'shared'
+        if: env.PULUMI_STACK != 'shared'
         id: current-image
         run: |
-          if [ "$TF_TARGET_ENV" = "prod" ]; then
+          if [ "$PULUMI_STACK" = "prod" ]; then
             SERVICE_NAME="koborin-ai-web-prod"
           else
             SERVICE_NAME="koborin-ai-web-dev"
@@ -100,80 +100,53 @@ jobs:
           echo "CURRENT_IMAGE=${CURRENT_IMAGE}" >> $GITHUB_OUTPUT
           echo "Current image: ${CURRENT_IMAGE}"
 
-      - name: Run Terraform Plan (Pre-Apply Check)
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
+      - name: Configure Pulumi Stack
+        working-directory: infra
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
         run: |
-          PLAN_ARGS="-no-color -lock=false -input=false"
-          PLAN_ARGS="$PLAN_ARGS -var=project_id=${{ env.PROJECT_ID }}"
-          PLAN_ARGS="$PLAN_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
+          # Select or create stack
+          pulumi stack select ${{ env.PULUMI_STACK }} --create --non-interactive || true
           
-          if [ "$TF_TARGET_ENV" = "shared" ]; then
-            # Shared stack needs OAuth credentials and IAP user for dev backend IAP configuration
-            PLAN_ARGS="$PLAN_ARGS -var=iap_user=${{ env.IAP_USER }}"
-            PLAN_ARGS="$PLAN_ARGS -var=oauth_client_id=${{ env.OAUTH_CLIENT_ID }}"
-            PLAN_ARGS="$PLAN_ARGS -var=oauth_client_secret=${{ env.OAUTH_CLIENT_SECRET }}"
+          # Set common config
+          pulumi config set gcp:project ${{ env.PROJECT_ID }} --non-interactive
+          pulumi config set gcp:region ${{ env.REGION }} --non-interactive
+          pulumi config set projectNumber ${{ env.PROJECT_NUMBER }} --non-interactive
+          
+          if [ "$PULUMI_STACK" = "shared" ]; then
+            pulumi config set iapUser ${{ env.IAP_USER }} --non-interactive
+            pulumi config set oauthClientId ${{ env.OAUTH_CLIENT_ID }} --non-interactive
+            pulumi config set --secret oauthClientSecret ${{ env.OAUTH_CLIENT_SECRET }} --non-interactive
           else
-            # Dev/Prod stacks need image URI
-            PLAN_ARGS="$PLAN_ARGS -var=image_uri=${{ steps.current-image.outputs.CURRENT_IMAGE }}"
+            pulumi config set imageUri ${{ steps.current-image.outputs.CURRENT_IMAGE }} --non-interactive
           fi
-          
-          terraform plan $PLAN_ARGS
 
-      - name: Run Terraform Apply
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
-        run: |
-          APPLY_ARGS="-auto-approve -input=false"
-          APPLY_ARGS="$APPLY_ARGS -var=project_id=${{ env.PROJECT_ID }}"
-          APPLY_ARGS="$APPLY_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
-          
-          if [ "$TF_TARGET_ENV" = "shared" ]; then
-            # Shared stack needs OAuth credentials and IAP user for dev backend IAP configuration
-            APPLY_ARGS="$APPLY_ARGS -var=iap_user=${{ env.IAP_USER }}"
-            APPLY_ARGS="$APPLY_ARGS -var=oauth_client_id=${{ env.OAUTH_CLIENT_ID }}"
-            APPLY_ARGS="$APPLY_ARGS -var=oauth_client_secret=${{ env.OAUTH_CLIENT_SECRET }}"
-          else
-            # Dev/Prod stacks need image URI
-            APPLY_ARGS="$APPLY_ARGS -var=image_uri=${{ steps.current-image.outputs.CURRENT_IMAGE }}"
-          fi
-          
-          terraform apply $APPLY_ARGS
+      - name: Pulumi Preview (Pre-Apply Check)
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          stack-name: ${{ env.PULUMI_STACK }}
+          work-dir: infra
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
 
-      - name: Get current Cloud Run image for verification
-        if: always() && env.TF_TARGET_ENV != 'shared'
-        id: current-image-verify
-        run: |
-          if [ "$TF_TARGET_ENV" = "prod" ]; then
-            SERVICE_NAME="koborin-ai-web-prod"
-          else
-            SERVICE_NAME="koborin-ai-web-dev"
-          fi
-          CURRENT_IMAGE=$(gcloud run services describe ${SERVICE_NAME} \
-            --region=${{ env.REGION }} \
-            --project=${{ env.PROJECT_ID }} \
-            --format='value(spec.template.spec.containers[0].image)' 2>/dev/null || echo "gcr.io/cloudrun/hello")
-          echo "CURRENT_IMAGE=${CURRENT_IMAGE}" >> $GITHUB_OUTPUT
-          echo "Using image for plan verification: ${CURRENT_IMAGE}"
+      - name: Pulumi Up
+        uses: pulumi/actions@v6
+        with:
+          command: up
+          stack-name: ${{ env.PULUMI_STACK }}
+          work-dir: infra
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
 
-      - name: Run Terraform Plan (Verify No Drift)
+      - name: Pulumi Preview (Verify No Drift)
         if: always()
-        working-directory: infra/${{ env.TF_TARGET_ENV }}
-        run: |
-          PLAN_ARGS="-no-color -lock=false -input=false -detailed-exitcode"
-          PLAN_ARGS="$PLAN_ARGS -var=project_id=${{ env.PROJECT_ID }}"
-          PLAN_ARGS="$PLAN_ARGS -var=project_number=${{ env.PROJECT_NUMBER }}"
-          
-          if [ "$TF_TARGET_ENV" = "shared" ]; then
-            # Shared stack needs OAuth credentials and IAP user for dev backend IAP configuration
-            PLAN_ARGS="$PLAN_ARGS -var=iap_user=${{ env.IAP_USER }}"
-            PLAN_ARGS="$PLAN_ARGS -var=oauth_client_id=${{ env.OAUTH_CLIENT_ID }}"
-            PLAN_ARGS="$PLAN_ARGS -var=oauth_client_secret=${{ env.OAUTH_CLIENT_SECRET }}"
-          else
-            # Dev/Prod stacks need image URI
-            PLAN_ARGS="$PLAN_ARGS -var=image_uri=${{ steps.current-image-verify.outputs.CURRENT_IMAGE }}"
-          fi
-          
-          # Exit code 0 = no changes, 1 = error, 2 = changes present
-          terraform plan $PLAN_ARGS || exit_code=$?
-          if [ "${exit_code:-0}" -eq 2 ]; then
-            echo "::warning::Drift detected after apply. Review the plan output above."
-          fi
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          stack-name: ${{ env.PULUMI_STACK }}
+          work-dir: infra
+          expect-no-changes: true
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
+

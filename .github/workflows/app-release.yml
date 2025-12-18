@@ -40,6 +40,7 @@ jobs:
       WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
       SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
     steps:
       - name: Checkout
@@ -117,40 +118,55 @@ jobs:
 
           echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_ENV"
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          terraform_version: "1.14.2"
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: infra/package-lock.json
 
-      - name: Check Terraform format
-        working-directory: infra/${{ env.TARGET_ENV }}
-        run: terraform fmt -check -diff -recursive
+      - name: Install dependencies
+        working-directory: infra
+        run: npm ci
 
-      - name: Initialize Terraform
-        working-directory: infra/${{ env.TARGET_ENV }}
+      - name: Build TypeScript
+        working-directory: infra
+        run: npm run build
+
+      - name: Setup Pulumi
+        uses: pulumi/setup-pulumi@v2
+
+      - name: Configure Pulumi Stack
+        working-directory: infra
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
         run: |
-          terraform init -input=false \
-            -backend-config="bucket=${BUCKET_NAME}"
+          # Select or create stack
+          pulumi stack select ${{ env.TARGET_ENV }} --create --non-interactive || true
+          
+          # Set config
+          pulumi config set gcp:project ${{ env.PROJECT_ID }} --non-interactive
+          pulumi config set gcp:region ${{ env.REGION }} --non-interactive
+          pulumi config set projectNumber ${{ env.PROJECT_NUMBER }} --non-interactive
+          pulumi config set imageUri ${{ env.IMAGE_URI }} --non-interactive
 
-      - name: Validate Terraform
-        working-directory: infra/${{ env.TARGET_ENV }}
-        run: terraform validate
+      - name: Pulumi Preview
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          stack-name: ${{ env.TARGET_ENV }}
+          work-dir: infra
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
 
-      - name: Terraform Plan
-        working-directory: infra/${{ env.TARGET_ENV }}
-        run: |
-          terraform plan -no-color -lock=false -input=false \
-            -var=project_id=${PROJECT_ID} \
-            -var=project_number=${PROJECT_NUMBER} \
-            -var=image_uri=${IMAGE_URI}
-
-      - name: Terraform Apply
-        working-directory: infra/${{ env.TARGET_ENV }}
-        run: |
-          terraform apply -auto-approve -input=false \
-            -var=project_id=${PROJECT_ID} \
-            -var=project_number=${PROJECT_NUMBER} \
-            -var=image_uri=${IMAGE_URI}
+      - name: Pulumi Up
+        uses: pulumi/actions@v6
+        with:
+          command: up
+          stack-name: ${{ env.TARGET_ENV }}
+          work-dir: infra
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
 
       - name: Retrieve deployed service URL
         id: service-url

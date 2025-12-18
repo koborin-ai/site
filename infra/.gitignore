@@ -1,18 +1,22 @@
-# Terraform directories
-.terraform/
-*.tfstate
-*.tfstate.*
-crash.log
-crash.*.log
-*.tfvars
-*.tfvars.json
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-.terraformrc
-terraform.rc
+# Dependencies
+node_modules/
 
-# Keep lock files
-!.terraform.lock.hcl
+# Build output
+dist/
+
+# Pulumi
+.pulumi/
+Pulumi.*.yaml
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
 

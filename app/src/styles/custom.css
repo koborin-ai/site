@@ -1,3 +1,50 @@
+/* ==========================================================================
+   Mermaid Diagram - Theme-aware styling
+   ========================================================================== */
+
+/* Dark mode: white text for visibility */
+[data-theme="dark"] svg[id^="mermaid"] text,
+[data-theme="dark"] svg[id^="mermaid"] .nodeLabel,
+[data-theme="dark"] svg[id^="mermaid"] .label,
+[data-theme="dark"] svg[id^="mermaid"] .messageText,
+[data-theme="dark"] svg[id^="mermaid"] .loopText,
+[data-theme="dark"] svg[id^="mermaid"] .loopText > tspan,
+[data-theme="dark"] svg[id^="mermaid"] .labelText,
+[data-theme="dark"] svg[id^="mermaid"] tspan {
+  fill: #ffffff !important;
+}
+
+/* Dark mode: darken actor boxes and keep text dark */
+[data-theme="dark"] svg[id^="mermaid"] .actor {
+  fill: #2a2a35 !important;
+}
+
+[data-theme="dark"] svg[id^="mermaid"] .actor-box,
+[data-theme="dark"] svg[id^="mermaid"] text.actor {
+  fill: #ffffff !important;
+}
+
+/* Dark mode: darken note boxes */
+[data-theme="dark"] svg[id^="mermaid"] .note {
+  fill: #3a3a45 !important;
+}
+
+[data-theme="dark"] svg[id^="mermaid"] .noteText {
+  fill: #ffffff !important;
+}
+
+/* Dark mode: label boxes */
+[data-theme="dark"] svg[id^="mermaid"] .labelBox {
+  fill: #2a2a35 !important;
+}
+
+/* Light mode: subtle background */
+[data-theme="light"] svg[id^="mermaid"] {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
 /* Adjust logo size */
 .site-title img {
   height: 5rem;

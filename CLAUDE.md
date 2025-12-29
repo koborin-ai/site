@@ -15,6 +15,7 @@ Skills are located in `.claude/skills/`:
 - **skill-creator**: Create new Claude Code skills
 - **import-command**: Convert Cursor commands to Claude Code skills
 - **import-pulumi**: Import existing GCP resources into Pulumi state
+- **evaluate-article**: Comprehensive blog article evaluation across 7 dimensions (defensibility, logical organization, practical applicability, structure, communication, controversy risk, human authenticity)
 
 ### Project-Specific Notes
 

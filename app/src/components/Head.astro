@@ -1,27 +1,14 @@
 ---
 import Default from '@astrojs/starlight/components/Head.astro';
 
-// Use hero image as OG image if available, otherwise fallback to default
-// Hero image is processed by Astro's image optimization, so we use its src property
-const heroImage = Astro.props.entry?.data?.hero?.image;
-const heroImageFile = heroImage?.file;
-
-// Build OG image URL from hero image or fallback to static default
-let ogImageUrl: string;
-if (heroImageFile?.src) {
-  // Hero image exists - use its optimized URL
-  ogImageUrl = new URL(heroImageFile.src, Astro.site).href;
-} else {
-  // Fallback to static OG image
-  ogImageUrl = `${Astro.site}og/index.png`;
-}
+const ogImage = (Astro.props.entry?.data as { ogImage?: string })?.ogImage;
+const ogImageUrl = ogImage ? new URL(ogImage, Astro.site).href : `${Astro.site}og/index.png`;
 ---
 
 <Default {...Astro.props}>
   <slot />
 </Default>
 
-<!-- Override OG image for each page -->
 <meta property="og:image" content={ogImageUrl} />
 <meta name="twitter:image" content={ogImageUrl} />
 

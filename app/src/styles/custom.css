@@ -385,45 +385,24 @@
    Starlight Page Hero (Docs) - responsive layout
    ========================================================================== */
 
-/* Tablet and above: force horizontal hero layout */
-@media (min-width: 768px) {
-  .sl-container .hero {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    gap: var(--space-xl, 2rem);
-  }
-
-  .sl-container .hero .copy {
-    text-align: left;
-  }
-
-  .sl-container .hero img {
-    width: 100%;
-    max-width: none;
-    height: auto;
-  }
+/* Hero layout: vertical stack with title on top, image below (all devices) */
+.sl-container .hero {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: var(--space-xl, 2rem) !important;
+  text-align: center !important;
 }
 
-/* Mobile: vertical layout with centered content */
-@media (max-width: 767px) {
-  .sl-container .hero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-lg, 1rem);
-    text-align: center;
-  }
+.sl-container .hero img {
+  width: 100% !important;
+  max-width: 800px !important;
+  height: auto !important;
+  border-radius: var(--radius-lg, 0.75rem) !important;
+  order: 1 !important;
+}
 
-  .sl-container .hero img {
-    margin: 0 auto;
-    width: min(100%, 280px);  /* Reduced from 420px for better mobile proportion */
-    height: auto;
-  }
-
-  .sl-container .hero .copy,
-  .sl-container .hero .tagline {
-    text-align: center;
-    align-items: center;
-  }
+.sl-container .hero .copy {
+  order: 0 !important;
+  text-align: center !important;
 }

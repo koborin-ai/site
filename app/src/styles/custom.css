@@ -225,6 +225,21 @@
   border-inline-start: 0;
 }
 
+/* TOC nested items - Genkit style vertical line */
+.right-sidebar ul li ul {
+  border-left: 2px solid var(--sl-color-hairline);
+  margin: 4px 0 8px 4px;
+  padding-left: 12px;
+}
+
+.right-sidebar ul li li:first-child a {
+  padding-top: 0;
+}
+
+.right-sidebar ul li li:last-child a {
+  padding-bottom: 0;
+}
+
 .right-sidebar-panel {
   margin-top: 1rem;
 }

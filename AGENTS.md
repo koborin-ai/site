@@ -85,12 +85,13 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Hero Images**: Place in `app/src/assets/`. Reference from MDX frontmatter (`hero.image.file` property with relative path).
    - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
-4. **OG Image Generation**:
-   - **Hero Image Priority**: If a page has a hero image (`hero.image.file` in frontmatter), it is used as the OG image.
-   - **Fallback**: Pages without hero images fall back to `/og/index.png` (static default).
-   - **Static Files**: Default OG images are placed in `app/public/og/`. This directory is gitignored (images are copied at build time).
-   - Custom `Head.astro` component (`app/src/components/Head.astro`) handles the logic to select hero image or fallback.
-   - OG meta tags set: `og:image`, `twitter:image`.
+4. **OG Image Management**:
+   - **Image Location**: Place OG images in `app/public/og/` (git-tracked, not optimized by Astro).
+   - **Frontmatter**: Set `ogImage: /og/xxx.png` in frontmatter for OGP meta tags.
+   - **Display in Article**: Add `![](/og/xxx.png)` at the beginning of the article content to display the image.
+   - **Japanese Articles**: Use the same `ogImage` path as the corresponding English article.
+   - **Default**: Pages without `ogImage` fall back to `/og/index.png`.
+   - Custom `Head.astro` component handles OGP meta tags (`og:image`, `twitter:image`).
 5. **Starlight Features**:
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.

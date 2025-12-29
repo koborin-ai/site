@@ -8,6 +8,7 @@
  */
 import Search from '@astrojs/starlight/components/Search.astro';
 import MobileMenuToggle from '@astrojs/starlight/components/MobileMenuToggle.astro';
+import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
 import ThemeSelect from './ThemeSelect.astro';
 import headerLogo from '../assets/koborin-ai-header.png';
 
@@ -84,10 +85,11 @@ const navLinks = [
           </svg>
         </a>
       </div>
-      {/* Divider and ThemeSelect - only on non-landing pages, desktop only (mobile uses Starlight's sidebar theme selector) */}
+      {/* Divider, LanguageSelect and ThemeSelect - only on non-landing pages, desktop only (mobile uses Starlight's sidebar) */}
       {!isLanding && (
-        <div class="nav-theme-select">
+        <div class="nav-header-controls">
           <span class="nav-divider" aria-hidden="true"></span>
+          <LanguageSelect {...props} />
           <ThemeSelect />
         </div>
       )}
@@ -266,9 +268,9 @@ const navLinks = [
   }
   .nav-social-link:hover { color: var(--color-text-primary); background: var(--color-bg-tertiary); }
 
-  /* Theme Select wrapper - show on tablet and desktop */
-  .nav-theme-select { display: none; align-items: center; }
-  @media (min-width: 768px) { .nav-theme-select { display: flex; } }
+  /* Header controls (Language + Theme) - show on tablet and desktop */
+  .nav-header-controls { display: none; align-items: center; gap: 0.25rem; }
+  @media (min-width: 768px) { .nav-header-controls { display: flex; } }
 
   /* Divider */
   .nav-divider { width: 1px; height: 1.5rem; background: var(--color-border); margin: 0 0.25rem; }

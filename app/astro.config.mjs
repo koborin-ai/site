@@ -1,11 +1,15 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import rehypeMermaid from "rehype-mermaid";
 import { sidebar } from "./src/sidebar.ts";
 
 export default defineConfig({
   site: "https://koborin.ai",
   srcDir: "src",
   // Static output mode (default) - all pages are pre-rendered at build time
+  markdown: {
+    rehypePlugins: [[rehypeMermaid, { mermaidConfig: { theme: "neutral" } }]],
+  },
   integrations: [
     starlight({
       title: "koborin.ai",

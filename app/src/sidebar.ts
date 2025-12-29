@@ -8,7 +8,7 @@ export const sidebar = [
   {
     label: "Tech",
     items: [
-      // Add tech articles here
+      { label: "Authentication Token Guide", slug: "tech/authentication-token-guide" },
     ],
   },
   {

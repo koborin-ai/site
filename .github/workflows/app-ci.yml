@@ -33,6 +33,10 @@ jobs:
         working-directory: app
         run: npm ci
 
+      - name: Install Playwright Chromium
+        working-directory: app
+        run: npx playwright install chromium
+
       - name: Security audit
         working-directory: app
         run: npm audit

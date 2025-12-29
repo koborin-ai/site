@@ -13,6 +13,11 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "koborin.ai",
+      defaultLocale: "root",
+      locales: {
+        root: { label: "English", lang: "en" },
+        ja: { label: "日本語" },
+      },
       description: "Personal site + technical garden",
       favicon: "/favicon.png",
       logo: {

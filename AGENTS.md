@@ -76,6 +76,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Update `app/src/sidebar.ts` to add navigation entry:
      - Single page: `{ label: "Page Title", slug: "page-name" }`
      - Categorized: `{ label: "Category", items: [{ label: "Post", slug: "category/post" }] }`
+     - For multilingual sites, add `translations` to show different labels per language:
+       - `{ label: "English Label", translations: { ja: "日本語ラベル" }, slug: "page-name" }`
    - Folder structure maps to URL structure: `docs/blog/post.mdx` → `/blog/post/`
 3. **Brand Assets Management**:
    - **Favicon**: Place in `app/public/favicon.png`. Configured in `astro.config.mjs` (`favicon` property).

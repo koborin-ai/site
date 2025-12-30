@@ -327,15 +327,7 @@ npm run build --prefix infra
   - Payload validation (Zod), reCAPTCHA enforcement, structured logging to Cloud Logging.
   - Notification via SendGrid or Gmail API (configured via Secret Manager).
 - `/api/track` endpoint will receive custom events and forward to Cloud Logging/BigQuery.
-- GA4 integration via gtag.js (injected at build time via `PUBLIC_GA_MEASUREMENT_ID` environment variable).
-
-## Environment Variables
-
-| Variable | Purpose | Where to Set |
-| --- | --- | --- |
-| `GA_MEASUREMENT_ID` | GA4 Measurement ID (e.g., `G-XXXXXXXXXX`) | GitHub Secrets |
-
-The workflow creates a `.env` file with `PUBLIC_GA_MEASUREMENT_ID` during CI/CD build. This value is embedded into the static HTML at build time via Astro's environment variable handling.
+- GA4 integration via Google Tag Manager (prod: standard measurement, dev: DebugView only).
 
 ## Documentation
 

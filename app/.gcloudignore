@@ -1,0 +1,22 @@
+# Cloud Build ignore file
+# Note: .env is NOT ignored here to allow GA_MEASUREMENT_ID injection during CI/CD
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+.astro/
+
+# Testing
+coverage/
+test-results/
+playwright-report/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log

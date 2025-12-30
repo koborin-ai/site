@@ -4,6 +4,7 @@ import Default from '@astrojs/starlight/components/Head.astro';
 const { entry } = Astro.locals.starlightRoute;
 const ogImage = (entry.data as { ogImage?: string })?.ogImage;
 const ogImageUrl = ogImage ? new URL(ogImage, Astro.site).href : `${Astro.site}og/index.png`;
+const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 ---
 
 <Default {...Astro.props}>
@@ -14,4 +15,16 @@ const ogImageUrl = ogImage ? new URL(ogImage, Astro.site).href : `${Astro.site}o
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:image" content={ogImageUrl} />
+
+{gaMeasurementId && (
+  <>
+    <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}></script>
+    <script is:inline define:vars={{ gaMeasurementId }}>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    </script>
+  </>
+)}
 

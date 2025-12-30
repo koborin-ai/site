@@ -41,6 +41,7 @@ jobs:
       SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
       PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+      GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
 
     steps:
       - name: Checkout
@@ -65,6 +66,11 @@ jobs:
           fi
           echo "TARGET_ENV=${TARGET_ENV}" >> "$GITHUB_ENV"
           echo "SERVICE_NAME=${SERVICE_NAME}" >> "$GITHUB_ENV"
+
+      - name: Create .env file for GA4 (prod only)
+        if: ${{ env.TARGET_ENV == 'prod' }}
+        run: |
+          echo "PUBLIC_GA_MEASUREMENT_ID=${{ env.GA_MEASUREMENT_ID }}" > ./app/.env
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2

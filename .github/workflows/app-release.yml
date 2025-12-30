@@ -41,10 +41,15 @@ jobs:
       SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
       PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+      GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Create .env file for GA4
+        run: |
+          echo "PUBLIC_GA_MEASUREMENT_ID=${{ env.GA_MEASUREMENT_ID }}" > ./app/.env
 
       - name: Decide deployment environment
         id: decide-env

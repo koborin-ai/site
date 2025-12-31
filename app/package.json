@@ -10,7 +10,8 @@
     "lint": "astro check",
     "typecheck": "astro check",
     "test": "astro check",
-    "ci": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "ci": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "new-article": "hygen article new"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.5",
+    "hygen": "^6.2.11",
     "typescript": "^5.9.3"
   }
 }

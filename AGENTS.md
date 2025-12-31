@@ -2,6 +2,11 @@
 
 This document is a quick guide for any contributors or AI agents that touch the `koborin.ai` repository.
 
+## Language Policy
+
+- **Conversation**: Always communicate with the user in **Japanese**.
+- **Code**: Write all code, comments, variable names, and commit messages in **English**.
+
 ## Mission
 
 - Personal site + technical garden for `koborin.ai`.

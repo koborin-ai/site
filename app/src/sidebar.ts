@@ -21,7 +21,11 @@ export const sidebar = [
     label: "Life",
     translations: { ja: "ライフ" },
     items: [
-      // Add life articles here
+      {
+        label: "2025",
+        translations: { ja: "2025 年のこと" },
+        slug: "life/2025",
+      },
     ],
   },
 ];

@@ -1,0 +1,4 @@
+name: koborin-ai-infra
+runtime: go
+description: Infrastructure for koborin.ai - Cloud Run + HTTPS Load Balancer on GCP
+

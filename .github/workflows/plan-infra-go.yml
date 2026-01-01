@@ -1,0 +1,128 @@
+name: Infrastructure Plan (Go)
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - "infra-go/**"
+      - ".github/workflows/plan-infra-go.yml"
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: "Stack to preview"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - shared
+          - dev
+          - prod
+
+concurrency:
+  group: pulumi-${{ github.event.inputs.stack || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  pulumi-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    timeout-minutes: 30
+
+    env:
+      PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      PROJECT_NUMBER: ${{ secrets.PROJECT_NUMBER }}
+      REGION: asia-northeast1
+      WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+      SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      IAP_USER: ${{ secrets.IAP_USER }}
+      OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+      OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+      PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: infra-go/go.sum
+
+      - name: Download Go dependencies
+        working-directory: infra-go
+        run: go mod download
+
+      - name: Decide target stack
+        id: decide-stack
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "PULUMI_STACK=dev" >> "$GITHUB_ENV"
+          else
+            echo "PULUMI_STACK=${{ github.event.inputs.stack }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Setup Pulumi
+        uses: pulumi/setup-pulumi@v2
+
+      - name: Get current Cloud Run image (if exists)
+        if: env.PULUMI_STACK != 'shared'
+        id: current-image
+        run: |
+          if [ "$PULUMI_STACK" = "prod" ]; then
+            SERVICE_NAME="koborin-ai-web-prod"
+          else
+            SERVICE_NAME="koborin-ai-web-dev"
+          fi
+          CURRENT_IMAGE=$(gcloud run services describe ${SERVICE_NAME} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --format='value(spec.template.spec.containers[0].image)' 2>/dev/null || echo "gcr.io/cloudrun/hello")
+          echo "CURRENT_IMAGE=${CURRENT_IMAGE}" >> $GITHUB_OUTPUT
+          echo "Current image: ${CURRENT_IMAGE}"
+
+      - name: Configure Pulumi Stack
+        working-directory: infra-go
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
+        run: |
+          # Select or create stack
+          pulumi stack select ${{ env.PULUMI_STACK }} --create --non-interactive || true
+          
+          # Set common config
+          pulumi config set gcp:project ${{ env.PROJECT_ID }} --non-interactive
+          pulumi config set gcp:region ${{ env.REGION }} --non-interactive
+          pulumi config set projectNumber ${{ env.PROJECT_NUMBER }} --non-interactive
+          
+          if [ "$PULUMI_STACK" = "shared" ]; then
+            pulumi config set iapUser ${{ env.IAP_USER }} --non-interactive
+            pulumi config set oauthClientId ${{ env.OAUTH_CLIENT_ID }} --non-interactive
+            pulumi config set --secret oauthClientSecret ${{ env.OAUTH_CLIENT_SECRET }} --non-interactive
+          else
+            pulumi config set imageUri ${{ steps.current-image.outputs.CURRENT_IMAGE }} --non-interactive
+          fi
+
+      - name: Pulumi Preview
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          stack-name: ${{ env.PULUMI_STACK }}
+          work-dir: infra-go
+          comment-on-pr: true
+        env:
+          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
+

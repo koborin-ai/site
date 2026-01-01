@@ -55,6 +55,7 @@ export default defineConfig({
         ThemeSelect: './src/components/ThemeSelect.astro',
         Header: './src/components/SiteHeader.astro',
         Sidebar: './src/components/Sidebar.astro',
+        Pagination: './src/components/Pagination.astro',
       },
       head: [
         // OG image is handled dynamically in Head.astro component

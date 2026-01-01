@@ -1,0 +1,46 @@
+---
+// Custom Pagination component that only shows prev/next links within the same category
+import Default from "@astrojs/starlight/components/Pagination.astro";
+
+const { id, pagination } = Astro.locals.starlightRoute;
+
+// Extract category from page ID (e.g., "life/2025.mdx" -> "life", "ja/life/2025.mdx" -> "life")
+function getCategory(pageId: string): string {
+  // Remove locale prefix if present (e.g., "ja/")
+  const withoutLocale = pageId.replace(/^[a-z]{2}\//, "");
+  // Get the first path segment as category
+  const category = withoutLocale.split("/")[0];
+  return category;
+}
+
+// Extract category from href (e.g., "/life/2025/" -> "life", "/ja/life/2025/" -> "life")
+function getCategoryFromHref(href: string): string {
+  // Remove leading slash and split
+  const segments = href.replace(/^\//, "").split("/");
+  // Check if first segment is a locale (2-letter code)
+  if (segments[0] && /^[a-z]{2}$/.test(segments[0])) {
+    return segments[1] || "";
+  }
+  return segments[0] || "";
+}
+
+const currentCategory = getCategory(id);
+
+// Filter prev/next to only show links within the same category
+const filteredPagination = {
+  prev:
+    pagination.prev && getCategoryFromHref(pagination.prev.href) === currentCategory
+      ? pagination.prev
+      : undefined,
+  next:
+    pagination.next && getCategoryFromHref(pagination.next.href) === currentCategory
+      ? pagination.next
+      : undefined,
+};
+
+// Override the pagination in starlightRoute
+Astro.locals.starlightRoute.pagination = filteredPagination;
+---
+
+<Default><slot /></Default>
+

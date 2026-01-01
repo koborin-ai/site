@@ -8,6 +8,7 @@ Refer to [AGENTS.md](./AGENTS.md) for AI agent behavior guidelines.
 
 Skills are located in `.claude/skills/`:
 
+- **change-type**: Classify changes as behavior vs structure and recommend labels/tests/CI expectations
 - **update-agents-md**: Update AGENTS.md with new rules
 - **astro-content**: Create Astro/Starlight MDX content
 - **check-secrets**: Scan codebase for secret leaks

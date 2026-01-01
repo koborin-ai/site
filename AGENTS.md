@@ -218,6 +218,37 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 Before committing any code changes, ensure all quality checks pass:
 
+## Change Types (Behavior vs Structure)
+
+This repo distinguishes between **behavior changes** (externally observable) and **structure changes** (internal-only).
+Use these change types to decide PR labels and the appropriate level of testing.
+
+### Definitions
+
+- **Behavior Change**: Any change that can affect what users/production systems observe.
+  - App: UI/UX changes, content changes under `app/src/content/docs/`, routing/sidebar changes, asset changes under `app/public/` or `app/src/assets/`, build/runtime config changes (e.g. `app/astro.config.mjs`, `app/nginx/nginx.conf`, `app/Dockerfile`).
+  - Infra: Any Pulumi change that could change the deployed resources/configuration.
+  - CI: Workflow changes that can change what checks run or how deployments happen.
+- **Structure Change**: Changes intended to preserve external behavior while improving maintainability.
+  - Examples: refactors, renames, formatting, comment-only changes, internal documentation updates, reorganization that does not change URLs/output.
+
+When in doubt, treat it as **Behavior Change**.
+
+### Required PR labels
+
+Add exactly one:
+
+- `change:behavior`
+- `change:structure`
+
+These are in addition to the existing domain labels (`app`, `infra`, `doc`, etc.).
+
+### How CI uses the change type
+
+- **App CI (`.github/workflows/app-ci.yml`)**:
+  - Default is **Behavior Change** (full checks).
+  - If the PR has `change:structure`, CI runs a **fast** check (skips `npm audit` and `npm run build`).
+
 ### Infrastructure (`infra/`)
 
 ```bash

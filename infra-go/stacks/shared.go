@@ -125,6 +125,7 @@ func Shared(ctx *pulumi.Context) error {
 			},
 		},
 		Iap: &compute.BackendServiceIapArgs{
+			Enabled:            pulumi.Bool(true),
 			Oauth2ClientId:     pulumi.String(oauthClientID),
 			Oauth2ClientSecret: oauthClientSecret,
 		},

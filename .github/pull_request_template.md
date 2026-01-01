@@ -1,55 +1,37 @@
-## Purpose / Background
+## Change type
 
-<!-- Why does this change exist? What problem does it solve? -->
+Select one and apply the matching GitHub label:
 
-## Summary of Changes
+- [ ] `change:behavior` (externally observable behavior changes)
+- [ ] `change:structure` (refactor / internal-only; no intended behavior change)
 
-<!-- List major modifications grouped by layer (infrastructure, app, docs, tests) -->
+## Areas
 
-### Infrastructure (`infrastructure/`)
+- [ ] `app`
+- [ ] `infra`
+- [ ] `docs/meta`
+- [ ] `ci`
 
-<!-- CDKTF stacks, configurations, resources -->
+## Summary
 
-### Application (`app/`)
+- What changed?
+- Why?
 
-<!-- Next.js components, API routes, MDX content -->
+## Verification
 
-### Documentation
+### App
 
-<!-- README, AGENTS, docs/ updates -->
+- Behavior change:
+  - `cd app && npm run lint && npm run build`
+- Structure change:
+  - `cd app && npm run lint`
 
-### Tests
+### Infra
 
-<!-- New or updated test files -->
+- `cd infra && npm run build && npm run lint && npm run typecheck`
 
-## Verification Steps
+## Review notes
 
-```bash
-# Commands to verify the changes
-```
-
-<!-- Expected results -->
-
-## Impact / Compatibility
-
-<!-- Note any breaking changes, API changes, schema migrations, or dependencies -->
-
-## Architecture Decisions
-
-<!-- Explain significant design choices or trade-offs -->
-
-## Related Documentation
-
-<!-- Link to relevant docs, issues, or design documents -->
-
-## Checklist
-
-- [ ] Conventional Commit in the commit message
-- [ ] Base branch: main (or specify if different)
-- [ ] Local quality checks executed:
-  - [ ] Infrastructure: `npm run build && npm run lint && npm run test` in `infrastructure/`
-  - [ ] Application: `npm run build && npm run lint && npm run typecheck && npm run test` in `app/`
-  - [ ] Markdown: All `.md` files pass linting (no MD0xx errors)
-- [ ] Documentation updated if behavior changed
-- [ ] Manual GCP steps documented (if any)
+- What could break?
+- Any manual GCP steps?
 

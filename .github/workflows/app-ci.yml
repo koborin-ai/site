@@ -22,6 +22,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Determine change type (labels)
+        id: change-type
+        run: |
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'change:structure') }}" == "true" ]]; then
+            echo "type=structure" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=behavior" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -34,26 +43,21 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Chromium
+        if: steps.change-type.outputs.type == 'behavior'
         working-directory: app
         run: npx playwright install chromium
 
       - name: Security audit
+        if: steps.change-type.outputs.type == 'behavior'
         working-directory: app
         run: npm audit
 
-      - name: Lint
+      - name: Astro check (lint/typecheck/tests)
         working-directory: app
         run: npm run lint
 
-      - name: Type check
-        working-directory: app
-        run: npm run typecheck
-
-      - name: Tests
-        working-directory: app
-        run: npm test
-
       - name: Build
+        if: steps.change-type.outputs.type == 'behavior'
         working-directory: app
         run: npm run build
 

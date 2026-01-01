@@ -10,7 +10,7 @@ import Search from '@astrojs/starlight/components/Search.astro';
 import MobileMenuToggle from '@astrojs/starlight/components/MobileMenuToggle.astro';
 import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
 import ThemeSelect from './ThemeSelect.astro';
-import headerLogo from '../assets/koborin-ai-header.png';
+import headerLogo from '../assets/koborin-ai-header.webp';
 
 // Props are optional - only provided when used as Starlight Header override
 // Landing page calls this without props
@@ -43,7 +43,7 @@ const navLinks = [
 <header class={`nav-header ${isLanding ? 'is-landing' : 'is-docs'}`}>
   <nav class={`nav-container ${isLanding ? 'is-landing' : 'is-docs'}`}>
     <a href="/" class="nav-logo" aria-label="koborin.ai home">
-      <img src={headerLogo.src} alt="koborin.ai" />
+      <img src={headerLogo.src} alt="koborin.ai" fetchpriority="high" />
     </a>
     
     {/* Navigation links - only on landing page (these are section anchors) */}

@@ -203,10 +203,27 @@ flowchart LR
 | Asset | Location | Usage | Notes |
 | --- | --- | --- | --- |
 | Favicon | `app/public/favicon.png` | Browser tab icon | PNG format, transparent background recommended |
-| Header Logo | `app/src/assets/koborin-ai-header.png` | Site header (replaces title text) | Horizontal layout, optimized for dark backgrounds |
+| Header Logo | `app/src/assets/koborin-ai-header.webp` | Site header (replaces title text) | Horizontal layout, optimized for dark backgrounds |
 | Hero Image | `app/src/assets/koborin-ai-hero.jpeg` | Landing page hero section | 16:9 aspect ratio recommended |
 
 Logo sizing is customized via `app/src/styles/custom.css` (`.site-title img` selector).
+
+### Image Optimization (Automatic)
+
+For performance, images are automatically converted to WebP format. **Authors can use PNG/JPEG normally** - optimization happens during build/deploy.
+
+| Image Type | Location | What You Do | What Happens Automatically |
+| --- | --- | --- | --- |
+| OG images | `app/public/og/` | Place PNG/JPEG, reference as `.png` | CI converts to WebP, nginx serves WebP |
+| Blog images | `app/src/assets/` | Place PNG/JPEG, use in MDX | Astro optimizes to WebP |
+
+**Example workflow for OG images**:
+
+1. Place image: `app/public/og/my-article.png`
+2. Frontmatter: `ogImage: /og/my-article.png`
+3. Article display: `![](/og/my-article.png)`
+
+That's it! The CI pipeline (`app/scripts/optimize-og-images.sh`) generates WebP versions, and nginx automatically serves them.
 
 ## Workflow Overview
 

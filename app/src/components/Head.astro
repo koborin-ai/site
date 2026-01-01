@@ -3,7 +3,12 @@ import Default from '@astrojs/starlight/components/Head.astro';
 
 const { entry } = Astro.locals.starlightRoute;
 const ogImage = (entry.data as { ogImage?: string })?.ogImage;
-const ogImageUrl = ogImage ? new URL(ogImage, Astro.site).href : `${Astro.site}og/index.png`;
+
+// Auto-convert .png/.jpg/.jpeg references to .webp (CI generates WebP versions)
+const normalizeToWebp = (path: string) => path.replace(/\.(png|jpe?g)$/i, '.webp');
+const ogImagePath = ogImage ? normalizeToWebp(ogImage) : '/og/index.webp';
+const ogImageUrl = new URL(ogImagePath, Astro.site).href;
+
 const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 ---
 

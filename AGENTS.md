@@ -92,12 +92,13 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
 4. **OG Image Management**:
-   - **Image Location**: Place OG images in `app/public/og/` (git-tracked, not optimized by Astro).
-   - **Frontmatter**: Set `ogImage: /og/xxx.png` in frontmatter for OGP meta tags.
-   - **Display in Article**: Add `![](/og/xxx.png)` at the beginning of the article content to display the image.
+   - **Image Location**: Place OG images in `app/public/og/` as PNG or JPEG.
+   - **Auto-optimization**: CI automatically converts images to WebP format during build. No manual optimization required.
+   - **Frontmatter**: Set `ogImage: /og/xxx.png` in frontmatter (`.png` reference is auto-converted to `.webp` by `Head.astro`).
+   - **Display in Article**: Add `![](/og/xxx.png)` at the beginning of the article content (nginx auto-serves WebP version).
    - **Japanese Articles**: Use the same `ogImage` path as the corresponding English article.
-   - **Default**: Pages without `ogImage` fall back to `/og/index.png`.
-   - Custom `Head.astro` component handles OGP meta tags (`og:image`, `twitter:image`).
+   - **Default**: Pages without `ogImage` fall back to `/og/index.webp`.
+   - **Optimization Script**: `app/scripts/optimize-og-images.sh` handles WebP conversion (runs in Dockerfile and app-ci.yml).
 5. **Starlight Features**:
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.

@@ -62,3 +62,6 @@ logs/
 # Miscellaneous
 *.tsbuildinfo
 .cache/
+
+# Python
+__pycache__/

@@ -146,6 +146,22 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **TypeScript**: Always use TypeScript. Define interfaces for Props and data structures.
    - **Strict Mode**: Adhere to strict type checking rules enabled in the project.
 
+## Dependency Version Policy
+
+When adding or updating dependencies (GitHub Actions, Go modules, npm packages, etc.):
+
+1. **Always check for the latest stable version** before adding a new dependency.
+2. **Use specific major versions** for GitHub Actions (e.g., `@v6` not `@main` or `@latest`).
+3. **Prefer `go-version-file`** over hardcoded Go versions to keep CI in sync with `go.mod`.
+4. **Verify compatibility** with existing dependencies before upgrading.
+5. **Document breaking changes** in PR descriptions when upgrading major versions.
+
+Examples:
+
+- GitHub Actions: Check the action's releases page (e.g., `actions/setup-go` → use `@v6` if latest).
+- Go modules: Use `go get <module>@latest` to fetch the latest version.
+- npm packages: Use `npm outdated` to check for updates.
+
 ## CI/CD Expectations
 
 - Workflows:

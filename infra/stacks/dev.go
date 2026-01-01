@@ -72,14 +72,6 @@ func Dev(ctx *pulumi.Context) error {
 		return err
 	}
 
-	// ========================================
-	// Exports
-	// ========================================
-
-	ctx.Export("serviceId", webDev.ID())
-	ctx.Export("serviceName", webDev.Name)
-	ctx.Export("serviceUri", webDev.Uri)
-
 	return nil
 }
 

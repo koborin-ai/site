@@ -62,7 +62,7 @@ func Shared(ctx *pulumi.Context) error {
 	// Artifact Registry
 	// ========================================
 
-	artifactRegistry, err := artifactregistry.NewRepository(ctx, "artifact-registry", &artifactregistry.RepositoryArgs{
+	_, err := artifactregistry.NewRepository(ctx, "artifact-registry", &artifactregistry.RepositoryArgs{
 		Project:      pulumi.String(projectID),
 		Location:     pulumi.String("asia-northeast1"),
 		RepositoryId: pulumi.String("koborin-ai-web"),
@@ -250,7 +250,7 @@ func Shared(ctx *pulumi.Context) error {
 	}
 
 	// Global Forwarding Rule
-	forwardingRule, err := compute.NewGlobalForwardingRule(ctx, "forwarding-rule", &compute.GlobalForwardingRuleArgs{
+	_, err = compute.NewGlobalForwardingRule(ctx, "forwarding-rule", &compute.GlobalForwardingRuleArgs{
 		Project:             pulumi.String(projectID),
 		Name:                pulumi.String("koborin-ai-forwarding-rule"),
 		Target:              httpsProxy.ID(),
@@ -280,7 +280,7 @@ func Shared(ctx *pulumi.Context) error {
 	}
 
 	// Workload Identity Provider (GitHub OIDC)
-	workloadIdentityProvider, err := iam.NewWorkloadIdentityPoolProvider(ctx, "github-provider", &iam.WorkloadIdentityPoolProviderArgs{
+	_, err = iam.NewWorkloadIdentityPoolProvider(ctx, "github-provider", &iam.WorkloadIdentityPoolProviderArgs{
 		Project:                        pulumi.String(projectID),
 		WorkloadIdentityPoolId:         workloadIdentityPool.WorkloadIdentityPoolId,
 		WorkloadIdentityPoolProviderId: pulumi.String("actions-firebase-provider"),
@@ -357,21 +357,6 @@ func Shared(ctx *pulumi.Context) error {
 			return err
 		}
 	}
-
-	// ========================================
-	// Exports
-	// ========================================
-
-	ctx.Export("artifactRegistryId", artifactRegistry.ID())
-	ctx.Export("staticIpAddress", staticIP.Address)
-	ctx.Export("devBackendId", devBackend.ID())
-	ctx.Export("prodBackendId", prodBackend.ID())
-	ctx.Export("urlMapId", urlMap.ID())
-	ctx.Export("httpsProxyId", httpsProxy.ID())
-	ctx.Export("forwardingRuleId", forwardingRule.ID())
-	ctx.Export("workloadIdentityPoolId", workloadIdentityPool.WorkloadIdentityPoolId)
-	ctx.Export("workloadIdentityProviderId", workloadIdentityProvider.WorkloadIdentityPoolProviderId)
-	ctx.Export("githubActionsServiceAccountEmail", githubActionsSA.Email)
 
 	return nil
 }

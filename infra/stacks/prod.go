@@ -68,14 +68,6 @@ func Prod(ctx *pulumi.Context) error {
 		return err
 	}
 
-	// ========================================
-	// Exports
-	// ========================================
-
-	ctx.Export("serviceId", webProd.ID())
-	ctx.Export("serviceName", webProd.Name)
-	ctx.Export("serviceUri", webProd.Uri)
-
 	return nil
 }
 

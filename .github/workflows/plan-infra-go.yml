@@ -62,8 +62,8 @@ jobs:
       - name: Decide target stack
         id: decide-stack
         run: |
-          # Temporarily hardcoded for prod validation
-          echo "PULUMI_STACK=prod" >> "$GITHUB_ENV"
+          # Temporarily hardcoded for shared validation
+          echo "PULUMI_STACK=shared" >> "$GITHUB_ENV"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2

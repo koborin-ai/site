@@ -12,7 +12,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 - Personal site + technical garden for `koborin.ai`.
 - Astro with Starlight (documentation-focused theme) for MDX content under `app/src/content/docs/`.
 - Google Cloud Run (dev / prod) fronted by a single global HTTPS load balancer.
-- Infrastructure managed via Pulumi (TypeScript) with three stacks: `shared`, `dev`, `prod`.
+- Infrastructure managed via Pulumi (Go) with three stacks: `shared`, `dev`, `prod`.
 - CI/CD and Pulumi preview/up executed only through GitHub Actions using Workload Identity Federation.
 
 ## Repository Layout
@@ -23,10 +23,10 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content/config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
 | `app/nginx/nginx.conf` | nginx configuration for static file serving (port 8080). |
-| `infra/` | Pulumi TypeScript stacks (`shared`, `dev`, `prod`). |
-| `infra/src/stacks/shared.ts` | Shared resources: APIs, Artifact Registry, HTTPS LB, Workload Identity. |
-| `infra/src/stacks/dev.ts` | Dev Cloud Run service. |
-| `infra/src/stacks/prod.ts` | Prod Cloud Run service. |
+| `infra/` | Pulumi Go stacks (`shared`, `dev`, `prod`). |
+| `infra/stacks/shared.go` | Shared resources: APIs, Artifact Registry, HTTPS LB, Workload Identity. |
+| `infra/stacks/dev.go` | Dev Cloud Run service. |
+| `infra/stacks/prod.go` | Prod Cloud Run service. |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
 | `docs/assets/{article}/` | Mermaid sources and generated images for each spec document. |
 | `.github/workflows/` | CI/CD definitions. |
@@ -64,10 +64,11 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 8. **File Organization**:
 
-   - `infra/src/index.ts`: Entry point that loads the appropriate stack.
-   - `infra/src/config.ts`: Configuration helper functions.
-   - `infra/src/stacks/*.ts`: Stack definitions (shared, dev, prod).
+   - `infra/main.go`: Entry point that loads the appropriate stack based on stack name.
+   - `infra/config.go`: Configuration helper functions.
+   - `infra/stacks/*.go`: Stack definitions (shared, dev, prod).
    - `infra/Pulumi.yaml`: Project configuration.
+   - `infra/go.mod` / `infra/go.sum`: Go module dependencies.
 
 ## Application Rules
 
@@ -269,9 +270,8 @@ These are in addition to the existing domain labels (`app`, `infra`, `doc`, etc.
 
 ```bash
 cd infra
-npm run build      # TypeScript compilation
-npm run lint       # ESLint checks
-npm run typecheck  # TypeScript type checking
+go build ./...     # Go compilation
+go vet ./...       # Go static analysis
 ```
 
 All commands must complete successfully with no errors.
@@ -291,7 +291,7 @@ All four commands must complete successfully with no errors.
 ## Pull Request Checklist
 
 1. Update relevant docs (`README.md`, `AGENTS.md`, or files under `docs/`) when changing behavior.
-2. For infra: `npm run build && npm run lint && npm run typecheck` in `infra/` - all must pass.
+2. For infra: `go build ./... && go vet ./...` in `infra/` - all must pass.
 3. For app: `npm run build && npm run lint && npm run typecheck && npm run test` in `app/` - all must pass.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual GCP steps (e.g., DNS imports, current gaps like IAP enablement) in the PR description.

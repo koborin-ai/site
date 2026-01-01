@@ -13,6 +13,9 @@ dist/
 # Astro content cache
 app/.astro/
 
+# CI-generated OG images (WebP versions are auto-generated during build)
+app/public/og/*.webp
+
 # Environment variables
 .env
 .env*.local

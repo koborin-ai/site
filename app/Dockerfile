@@ -2,7 +2,7 @@
 FROM node:22-slim AS build
 WORKDIR /app
 
-# Install Playwright dependencies for Chromium
+# Install Playwright dependencies for Chromium and image optimization tools
 RUN apt-get update && apt-get install -y \
     libnss3 \
     libnspr4 \
@@ -20,12 +20,19 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     libpango-1.0-0 \
     libcairo2 \
+    webp \
+    imagemagick \
+    file \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 RUN npm install
 RUN npx playwright install chromium
 COPY . .
+
+# Optimize OG images before build
+RUN ./scripts/optimize-og-images.sh
+
 RUN npm run build
 
 # Runtime stage - serve static files with nginx

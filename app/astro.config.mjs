@@ -21,7 +21,7 @@ export default defineConfig({
       description: "Personal site + technical garden",
       favicon: "/favicon.png",
       logo: {
-        src: "./src/assets/koborin-ai-header.png",
+        src: "./src/assets/koborin-ai-header.webp",
         replacesTitle: true,
       },
       social: [

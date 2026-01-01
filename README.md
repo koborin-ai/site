@@ -4,7 +4,7 @@
 
 Technical garden for exploring AI, cloud architecture, and continuous learning.
 
-Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with Pulumi (TypeScript).
+Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with Pulumi (Go).
 
 ## Architecture
 
@@ -156,7 +156,7 @@ flowchart LR
   - Google Analytics 4 for baseline PV/engagement.
   - Optional custom `/api/track` endpoint writing to Cloud Logging → BigQuery for privacy-friendly metrics.
   - Cloud Monitoring dashboards + alert policies (via Pulumi) for Cloud Run metrics.
-- **Infrastructure**: Pulumi (TypeScript) targeting Google Cloud.
+- **Infrastructure**: Pulumi (Go) targeting Google Cloud.
 - **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra, `app-ci.yml` / `app-release.yml` handle the Astro app.
 - **Testing**: Vitest for app tests, TypeScript compilation for infra, Playwright for future E2E if needed.
 
@@ -183,17 +183,16 @@ flowchart LR
 │   ├── Dockerfile                # Multi-stage build (node → nginx:alpine)
 │   └── astro.config.mjs          # Starlight integration config
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
-├── infra/                         # Pulumi TypeScript stacks (shared/dev/prod)
-│   ├── src/
-│   │   ├── index.ts              # Entry point
-│   │   ├── config.ts             # Configuration helpers
-│   │   └── stacks/               # Stack definitions
-│   │       ├── shared.ts         # Shared resources (LB, APIs, WIF)
-│   │       ├── dev.ts            # Dev Cloud Run
-│   │       └── prod.ts           # Prod Cloud Run
+├── infra/                         # Pulumi Go stacks (shared/dev/prod)
+│   ├── main.go                   # Entry point
+│   ├── config.go                 # Configuration helpers
+│   ├── stacks/                   # Stack definitions
+│   │   ├── shared.go             # Shared resources (LB, APIs, WIF)
+│   │   ├── dev.go                # Dev Cloud Run
+│   │   └── prod.go               # Prod Cloud Run
 │   ├── Pulumi.yaml               # Project configuration
-│   ├── package.json              # Dependencies
-│   └── tsconfig.json             # TypeScript config
+│   ├── go.mod                    # Go module dependencies
+│   └── go.sum                    # Go dependency checksums
 ├── .github/workflows/             # CI pipelines (plan/apply, app deploy)
 ├── README.md                      # This file
 └── AGENTS.md                      # English operations guide for collaborators
@@ -211,7 +210,7 @@ Logo sizing is customized via `app/src/styles/custom.css` (`.site-title img` sel
 
 ## Workflow Overview
 
-1. **Infra changes**: edit Pulumi TypeScript stacks → `npm run build && npm run lint` → open PR → GitHub Actions runs preview → reviewer approves → merge triggers apply on the right environment.
+1. **Infra changes**: edit Pulumi Go stacks → `go build ./... && go vet ./...` → open PR → GitHub Actions runs preview → reviewer approves → merge triggers apply on the right environment.
 2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to Pulumi.
 3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `npm run lint`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
 
@@ -270,13 +269,13 @@ npm install
 npm run dev --prefix app
 
 # Build infrastructure (infra directory)
-npm run build --prefix infra
+cd infra && go build ./...
 ```
 
 ## Infrastructure Dev Notes
 
-- Pulumi stacks are located in `infra/src/stacks/`.
-- GCP provider version is managed via `@pulumi/gcp` package.
+- Pulumi stacks are located in `infra/stacks/`.
+- GCP provider version is managed via `github.com/pulumi/pulumi-gcp/sdk` Go module.
 - Each stack uses a GCS backend with automatic state management per stack name.
 
 ### Shared Stack

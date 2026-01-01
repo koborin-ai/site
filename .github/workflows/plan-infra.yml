@@ -45,20 +45,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: infra/package-lock.json
+          go-version-file: infra/go.mod
+          cache-dependency-path: infra/go.sum
 
-      - name: Install dependencies
+      - name: Download Go dependencies
         working-directory: infra
-        run: npm ci
-
-      - name: Build TypeScript
-        working-directory: infra
-        run: npm run build
+        run: go mod download
 
       - name: Decide target stack
         id: decide-stack
@@ -126,4 +121,3 @@ jobs:
           comment-on-pr: true
         env:
           PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
-

@@ -22,6 +22,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content/config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
+| `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
+| `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
 | `app/nginx/nginx.conf` | nginx configuration for static file serving (port 8080). |
 | `infra/` | Pulumi Go stacks (`shared`, `dev`, `prod`). |
 | `infra/stacks/shared.go` | Shared resources: APIs, Artifact Registry, HTTPS LB, Workload Identity. |
@@ -110,6 +112,19 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Dockerfile uses multi-stage build: `node:22-slim` for build, `nginx:alpine` for runtime.
    - nginx configuration is at `app/nginx/nginx.conf` (port 8080 for Cloud Run compatibility).
    - All pages are pre-rendered at build time; no Node.js runtime required in production.
+9. **LLM Context Files (llms.txt)**:
+   - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
+   - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
+   - **Full content files**: `/llms-{lang}-full.txt` contains all articles with full Markdown body.
+   - **Category files**: `/llms-{lang}-{category}.txt` for filtered subsets (tech, life, about-me).
+   - Languages: `en` (English), `ja` (Japanese).
+   - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
+   - **Static files**: Generated at build time via Astro endpoints. Zero runtime overhead.
+   - **Implementation**: `app/src/utils/llms.ts` (shared logic), `app/src/pages/llms*.txt.ts` (endpoints).
+   - **When to modify endpoints**:
+     - Add a new category: Create `app/src/pages/llms-{lang}-{category}.txt.ts` and update `app/src/pages/llms.txt.ts` index.
+     - Change output format: Edit `app/src/utils/llms.ts`.
+     - Existing articles are auto-included; no endpoint changes needed for new content.
 
 ## Astro Development Best Practices
 

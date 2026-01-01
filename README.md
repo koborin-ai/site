@@ -159,6 +159,25 @@ flowchart LR
 - **Infrastructure**: Pulumi (Go) targeting Google Cloud.
 - **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra, `app-ci.yml` / `app-release.yml` handle the Astro app.
 - **Testing**: Vitest for app tests, TypeScript compilation for infra, Playwright for future E2E if needed.
+- **LLM Context**: Machine-readable `llms.txt` files for AI assistants. Auto-generated at build time.
+
+## LLM Context Files (llms.txt)
+
+The site provides structured context files for LLMs at `https://koborin.ai/llms.txt`.
+
+| File | Content |
+| --- | --- |
+| `/llms.txt` | Index with links to all variants |
+| `/llms-en-full.txt` | All English articles (full Markdown) |
+| `/llms-ja-full.txt` | All Japanese articles (full Markdown) |
+| `/llms-en-tech.txt` | English tech articles only |
+| `/llms-ja-tech.txt` | Japanese tech articles only |
+| `/llms-en-life.txt` | English life articles only |
+| `/llms-ja-life.txt` | Japanese life articles only |
+| `/llms-en-about-me.txt` | English about-me articles only |
+| `/llms-ja-about-me.txt` | Japanese about-me articles only |
+
+These files are **auto-generated** at build time from Content Collections. Articles with `draft: true` are excluded. No runtime overhead.
 
 ## Repository Layout (planned)
 
@@ -172,7 +191,9 @@ flowchart LR
 │   │   ├── content/
 │   │   │   ├── docs/             # MDX documentation pages (Starlight)
 │   │   │   └── config.ts         # Content Collections schema
-│   │   ├── pages/                # Custom Astro pages (landing, OG images)
+│   │   ├── utils/
+│   │   │   └── llms.ts           # Shared logic for llms.txt generation
+│   │   ├── pages/                # Custom Astro pages (landing, OG images, llms.txt)
 │   │   └── styles/
 │   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
 │   ├── public/

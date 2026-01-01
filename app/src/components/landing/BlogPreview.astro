@@ -2,32 +2,32 @@
 interface BlogPost {
   title: string;
   excerpt: string;
-  date: string;
   category: string;
   readTime: string;
+  href: string;
 }
 
 const posts: BlogPost[] = [
   {
-    title: 'Coming Soon: Getting Started with Genkit',
-    excerpt: 'An introduction to building AI-powered applications with Google\'s Genkit framework.',
-    date: 'Coming Soon',
-    category: 'AI',
+    title: 'Reflections on 2025',
+    excerpt: 'First time abroad, publishing a book, becoming a team leader. A record of a turbulent year where I discovered myself through connections with others.',
+    category: 'Life',
     readTime: '5 min read',
+    href: '/life/reflections-on-2025/',
   },
   {
-    title: 'Coming Soon: Serverless Architecture Patterns',
-    excerpt: 'Best practices for building scalable serverless applications on Google Cloud.',
-    date: 'Coming Soon',
-    category: 'Cloud',
-    readTime: '8 min read',
+    title: 'Understanding Authentication Tokens with Firebase Auth',
+    excerpt: 'A deep dive into authentication tokens comparing OAuth 2.0/OpenID Connect standards with Firebase Auth\'s unique approach.',
+    category: 'Tech',
+    readTime: '15 min read',
+    href: '/tech/firebase-auth-token-deep-dive/',
   },
   {
-    title: 'Coming Soon: Clean Architecture in Practice',
-    excerpt: 'Applying DDD and clean architecture principles to real-world projects.',
-    date: 'Coming Soon',
-    category: 'Architecture',
-    readTime: '10 min read',
+    title: 'Welcome to koborin.ai',
+    excerpt: 'Personal site and technical garden by Nozomi Koborinai. Exploring AI, cloud architecture, and continuous learning.',
+    category: 'About',
+    readTime: '3 min read',
+    href: '/about-me/overview/',
   },
 ];
 ---
@@ -44,24 +44,31 @@ const posts: BlogPost[] = [
     
     <div class="blog-grid">
       {posts.map((post) => (
-        <article class="blog-card">
-          <div class="blog-meta">
-            <span class="blog-category">{post.category}</span>
-            <span class="blog-date">{post.date}</span>
-          </div>
-          <h3 class="blog-title">{post.title}</h3>
-          <p class="blog-excerpt">{post.excerpt}</p>
-          <div class="blog-footer">
-            <span class="blog-read-time">{post.readTime}</span>
-          </div>
-        </article>
+        <a href={post.href} class="blog-card-link">
+          <article class="blog-card">
+            <div class="blog-meta">
+              <span class="blog-category">{post.category}</span>
+            </div>
+            <h3 class="blog-title">{post.title}</h3>
+            <p class="blog-excerpt">{post.excerpt}</p>
+            <div class="blog-footer">
+              <span class="blog-read-time">{post.readTime}</span>
+              <span class="blog-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+            </div>
+          </article>
+        </a>
       ))}
     </div>
     
     <div class="blog-cta">
       <p class="cta-message">
         <span class="cta-icon">🌱</span>
-        The garden is growing! Check back soon for new articles.
+        Explore the garden and discover more insights.
       </p>
       <a href="/about-me/overview/" class="landing-btn landing-btn-secondary">
         Explore the Garden
@@ -114,6 +121,12 @@ const posts: BlogPost[] = [
     }
   }
   
+  .blog-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  
   .blog-card {
     display: flex;
     flex-direction: column;
@@ -122,11 +135,10 @@ const posts: BlogPost[] = [
     border-radius: var(--radius-xl);
     padding: var(--space-xl);
     transition: all var(--transition-normal);
-    opacity: 0.7;
+    height: 100%;
   }
   
-  .blog-card:hover {
-    opacity: 1;
+  .blog-card-link:hover .blog-card {
     background: var(--color-bg-card-hover);
     border-color: var(--color-border-hover);
     transform: translateY(-4px);
@@ -135,7 +147,7 @@ const posts: BlogPost[] = [
   .blog-meta {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     margin-bottom: var(--space-md);
   }
   
@@ -146,11 +158,6 @@ const posts: BlogPost[] = [
     font-size: 0.75rem;
     font-weight: 600;
     border-radius: var(--radius-sm);
-  }
-  
-  .blog-date {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
   }
   
   .blog-title {
@@ -180,6 +187,18 @@ const posts: BlogPost[] = [
   .blog-read-time {
     font-size: 0.8125rem;
     color: var(--color-text-muted);
+  }
+  
+  .blog-arrow {
+    color: var(--color-accent);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all var(--transition-normal);
+  }
+  
+  .blog-card-link:hover .blog-arrow {
+    opacity: 1;
+    transform: translateX(0);
   }
   
   .blog-cta {

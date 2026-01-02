@@ -311,3 +311,14 @@ All four commands must complete successfully with no errors.
 3. For app: `npm run build && npm run lint && npm run typecheck && npm run test` in `app/` - all must pass.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual GCP steps (e.g., DNS imports, current gaps like IAP enablement) in the PR description.
+6. **Label the PR** based on the diff before requesting review:
+   - **Change type** (exactly one, required for CI behavior):
+     - `change:behavior` — URLs, output, UI, config, or infra changes that affect users/production.
+     - `change:structure` — Internal refactors, renames, or formatting with no external impact. CI skips `npm audit` and `npm run build`.
+   - **Domain labels** (one or more):
+     - `app` — Changes under `app/`.
+     - `infra` — Changes under `infra/`.
+     - `doc` — Documentation updates (`README.md`, `AGENTS.md`, `docs/`).
+     - `ci` — Workflow changes under `.github/workflows/`.
+   - **Category labels** (optional, for release notes):
+     - `feature`, `bug`, `pulumi`, `ignore`.

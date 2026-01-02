@@ -115,14 +115,14 @@ This document is a quick guide for any contributors or AI agents that touch the 
 9. **LLM Context Files (llms.txt)**:
    - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
    - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
-   - **Full content files**: `/llms-{lang}-full.txt` contains all articles with full Markdown body.
-   - **Category files**: `/llms-{lang}-{category}.txt` for filtered subsets (tech, life, about-me).
-   - Languages: `en` (English), `ja` (Japanese).
+   - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese) - all articles with full Markdown body.
+   - **Category files**: `/llms-{category}.txt` (English), `/llms-ja-{category}.txt` (Japanese) for filtered subsets (tech, life, about-me).
+   - English is the default language (no prefix), Japanese uses `ja` prefix.
    - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
    - **Static files**: Generated at build time via Astro endpoints. Zero runtime overhead.
    - **Implementation**: `app/src/utils/llms.ts` (shared logic), `app/src/pages/llms*.txt.ts` (endpoints).
    - **When to modify endpoints**:
-     - Add a new category: Create `app/src/pages/llms-{lang}-{category}.txt.ts` and update `app/src/pages/llms.txt.ts` index.
+     - Add a new category: Create `app/src/pages/llms-{category}.txt.ts` (English) and `app/src/pages/llms-ja-{category}.txt.ts` (Japanese), then update `app/src/pages/llms.txt.ts` index.
      - Change output format: Edit `app/src/utils/llms.ts`.
      - Existing articles are auto-included; no endpoint changes needed for new content.
 
@@ -311,3 +311,14 @@ All four commands must complete successfully with no errors.
 3. For app: `npm run build && npm run lint && npm run typecheck && npm run test` in `app/` - all must pass.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual GCP steps (e.g., DNS imports, current gaps like IAP enablement) in the PR description.
+6. **Label the PR** based on the diff before requesting review:
+   - **Change type** (exactly one, required for CI behavior):
+     - `change:behavior` — URLs, output, UI, config, or infra changes that affect users/production.
+     - `change:structure` — Internal refactors, renames, or formatting with no external impact. CI skips `npm audit` and `npm run build`.
+   - **Domain labels** (one or more):
+     - `app` — Changes under `app/`.
+     - `infra` — Changes under `infra/`.
+     - `doc` — Documentation updates (`README.md`, `AGENTS.md`, `docs/`).
+     - `ci` — Workflow changes under `.github/workflows/`.
+   - **Category labels** (optional, for release notes):
+     - `feature`, `bug`, `pulumi`, `ignore`.

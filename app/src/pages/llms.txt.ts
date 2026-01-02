@@ -11,21 +11,21 @@ export const GET: APIRoute = () => {
 > Last updated: ${today}
 
 ## Full (with article content)
-- ${SITE_URL}/llms-en-full.txt
+- ${SITE_URL}/llms-full.txt
 - ${SITE_URL}/llms-ja-full.txt
 
 ## By Category
 
 ### Tech
-- ${SITE_URL}/llms-en-tech.txt
+- ${SITE_URL}/llms-tech.txt
 - ${SITE_URL}/llms-ja-tech.txt
 
 ### Life
-- ${SITE_URL}/llms-en-life.txt
+- ${SITE_URL}/llms-life.txt
 - ${SITE_URL}/llms-ja-life.txt
 
 ### About Me
-- ${SITE_URL}/llms-en-about-me.txt
+- ${SITE_URL}/llms-about-me.txt
 - ${SITE_URL}/llms-ja-about-me.txt
 `;
 

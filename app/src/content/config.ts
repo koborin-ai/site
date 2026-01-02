@@ -6,6 +6,7 @@ export const collections = {
     schema: docsSchema({
       extend: z.object({
         ogImage: z.string().optional(),
+        publishedAt: z.coerce.date().optional(),
       }),
     }),
   }),

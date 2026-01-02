@@ -9,6 +9,10 @@ export const sidebar = [
     label: "Tech",
     items: [
       {
+        label: "koborin.ai Architecture",
+        slug: "tech/koborin-ai-architecture",
+      },
+      {
         label: "Firebase Auth Token Deep Dive",
         slug: "tech/firebase-auth-token-deep-dive",
       },

@@ -8,7 +8,15 @@ export default defineConfig({
   srcDir: "src",
   // Static output mode (default) - all pages are pre-rendered at build time
   markdown: {
-    rehypePlugins: [[rehypeMermaid, { mermaidConfig: { theme: "neutral" } }]],
+    rehypePlugins: [
+      [
+        rehypeMermaid,
+        {
+          strategy: "inline-svg",
+          mermaidConfig: { theme: "neutral" },
+        },
+      ],
+    ],
   },
   integrations: [
     starlight({
@@ -19,9 +27,10 @@ export default defineConfig({
         ja: { label: "日本語" },
       },
       description: "Personal site + technical garden",
+      lastUpdated: true,
       favicon: "/favicon.png",
       logo: {
-        src: "./src/assets/koborin-ai-header.webp",
+        src: "./src/assets/_shared/koborin-ai-header.webp",
         replacesTitle: true,
       },
       social: [
@@ -52,6 +61,7 @@ export default defineConfig({
       ],
       components: {
         Head: './src/components/Head.astro',
+        PageTitle: './src/components/PageTitle.astro',
         ThemeSelect: './src/components/ThemeSelect.astro',
         Header: './src/components/SiteHeader.astro',
         Sidebar: './src/components/Sidebar.astro',

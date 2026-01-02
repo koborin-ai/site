@@ -80,17 +80,16 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Starlight automatically generates navigation from the directory structure and sidebar config in `astro.config.mjs`.
 2. **Adding new content**:
    - Create `.mdx` file under `app/src/content/docs/` (or subdirectory for categories like `blog/`, `guides/`).
-   - Add frontmatter: `title` (required), `description` (required), `draft` (optional, boolean).
+   - Add frontmatter: `title` (required), `description` (required), `publishedAt` (required for articles, `YYYY-MM-DD`), `draft` (optional, boolean).
    - Update `app/src/sidebar.ts` to add navigation entry:
      - Single page: `{ label: "Page Title", slug: "page-name" }`
      - Categorized: `{ label: "Category", items: [{ label: "Post", slug: "category/post" }] }`
-     - For multilingual sites, add `translations` to show different labels per language:
-       - `{ label: "English Label", translations: { ja: "日本語ラベル" }, slug: "page-name" }`
+     - **Sidebar labels**: Use English labels only (no `translations`). This ensures consistent navigation across all language versions.
    - Folder structure maps to URL structure: `docs/blog/post.mdx` → `/blog/post/`
 3. **Brand Assets Management**:
    - **Favicon**: Place in `app/public/favicon.png`. Configured in `astro.config.mjs` (`favicon` property).
-   - **Header Logo**: Place in `app/src/assets/`. Configured in `astro.config.mjs` (`logo.src` property). Set `replacesTitle: true` to hide text title.
-   - **Hero Images**: Place in `app/src/assets/`. Reference from MDX frontmatter (`hero.image.file` property with relative path).
+   - **Header Logo**: Place in `app/src/assets/_shared/`. Configured in `astro.config.mjs` (`logo.src` property). Set `replacesTitle: true` to hide text title.
+   - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`). Reference with relative paths from MDX.
    - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
 4. **OG Image Management**:
@@ -101,18 +100,26 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Japanese Articles**: Use the same `ogImage` path as the corresponding English article.
    - **Default**: Pages without `ogImage` fall back to `/og/index.webp`.
    - **Optimization Script**: `app/scripts/optimize-og-images.sh` handles WebP conversion (runs in Dockerfile and app-ci.yml).
-5. **Starlight Features**:
+5. **Article Dates**:
+   - **Published Date**: Set `publishedAt: YYYY-MM-DD` in frontmatter when creating a new article.
+   - **Updated Date**: Automatically extracted from Git history at build time via Starlight's built-in `lastUpdated` feature.
+   - **Display**: Dates appear below the article title (e.g., `Published: Dec 1, 2024 · Updated: Jan 2, 2025`).
+   - **Localization**: English uses `Dec 1, 2024` format; Japanese uses `2024年12月1日` format.
+   - **Same-day Updates**: If `publishedAt` and `lastUpdated` are within 1 day, only the published date is shown.
+   - **CI/CD**: Uses `depth: 1` shallow clone (no fetch-depth changes needed). Only the latest commit date is required.
+   - **Local Development**: Updated date is shown for committed files. New uncommitted files show only the published date (if set).
+6. **Starlight Features**:
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.
    - Social links and sidebar are configured in `astro.config.mjs`.
-6. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
-7. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
-8. **Docker & Deployment**:
+7. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
+8. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
+9. **Docker & Deployment**:
    - The app builds as a static site (`output: "static"` in Astro config) and is served via nginx.
    - Dockerfile uses multi-stage build: `node:22-slim` for build, `nginx:alpine` for runtime.
    - nginx configuration is at `app/nginx/nginx.conf` (port 8080 for Cloud Run compatibility).
    - All pages are pre-rendered at build time; no Node.js runtime required in production.
-9. **LLM Context Files (llms.txt)**:
+10. **LLM Context Files (llms.txt)**:
    - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
    - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
    - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese) - all articles with full Markdown body.
@@ -125,6 +132,29 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Add a new category: Create `app/src/pages/llms-{category}.txt.ts` (English) and `app/src/pages/llms-ja-{category}.txt.ts` (Japanese), then update `app/src/pages/llms.txt.ts` index.
      - Change output format: Edit `app/src/utils/llms.ts`.
      - Existing articles are auto-included; no endpoint changes needed for new content.
+11. **RichLinkCard Component**:
+    - Use `RichLinkCard` instead of Starlight's built-in `LinkCard` for external links in MDX.
+    - **Location**: `app/src/components/RichLinkCard.astro`
+    - **Import**: `import RichLinkCard from '../../../../components/RichLinkCard.astro';`
+    - **Recommended usage** (always specify `title` and `description` for performance):
+      ```mdx
+      <RichLinkCard
+        href="https://example.com"
+        title="Page Title"
+        description="Page description text."
+      />
+      ```
+    - **Why manual specification is preferred**:
+      - In dev mode (`npm run dev`), OG metadata is fetched on every page request, causing slow page loads (1-2+ seconds).
+      - Some sites (O'Reilly, Google Cloud docs) have slow response times (up to 9 seconds).
+      - Manual specification skips all fetches, resulting in instant page loads in dev mode.
+    - **URL-only usage** (auto-fetches OG metadata - use sparingly):
+      ```mdx
+      <RichLinkCard href="https://example.com" />
+      ```
+      - Only use this for quick prototyping or when you don't know the page title/description.
+      - Always replace with manual specification before committing.
+    - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description), thumbnail (og:image → favicon).
 
 ## Astro Development Best Practices
 
@@ -232,6 +262,14 @@ Examples:
    ![Description](./assets/{article-name}/images/{diagram-name}.png)
    ```
 
+5. **Mermaid in MDX Articles**:
+   - Mermaid code blocks in MDX files are rendered via `rehype-mermaid` with `strategy: "inline-svg"`.
+   - Dark/light mode theming is handled by CSS in `app/src/styles/custom.css`.
+   - **Do not override Mermaid theme in code blocks** - the global CSS handles theme switching.
+   - Keep node labels short to avoid text overlap (especially in `flowchart LR` layouts).
+   - Use simple subgraph labels (avoid long strings like `"Pulumi Backend State - GCS"`).
+   - If diagrams look broken in dark mode, check that CSS selectors in `custom.css` cover the generated SVG structure.
+
 ## Documentation Standards
 
 1. **Markdown Formatting**:
@@ -242,6 +280,7 @@ Examples:
    - Always specify language for code blocks (e.g., `bash`, `typescript`, `text`).
    - Remove trailing spaces at the end of lines.
    - End files with a single newline (no multiple blank lines at EOF).
+   - Do not use backticks in headings (e.g., use `### infra/stacks/shared.go` instead of ``### `infra/stacks/shared.go` ``).
 2. **Content Structure**:
    - Use clear, descriptive headings that reflect the content hierarchy.
    - Keep lists concise and actionable.
@@ -307,6 +346,8 @@ All four commands must complete successfully with no errors.
 ## Pull Request Checklist
 
 1. Update relevant docs (`README.md`, `AGENTS.md`, or files under `docs/`) when changing behavior.
+   - **Directory structure changes** (e.g., `app/src/assets/`, `infra/stacks/`): Update "Repository Layout" sections in both `README.md` and `AGENTS.md`.
+   - **New conventions or rules**: Add to `AGENTS.md` under the appropriate section.
 2. For infra: `go build ./... && go vet ./...` in `infra/` - all must pass.
 3. For app: `npm run build && npm run lint && npm run typecheck && npm run test` in `app/` - all must pass.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
@@ -322,3 +363,16 @@ All four commands must complete successfully with no errors.
      - `ci` — Workflow changes under `.github/workflows/`.
    - **Category labels** (optional, for release notes):
      - `feature`, `bug`, `pulumi`, `ignore`.
+
+## Agent Execution Rules
+
+Rules for AI agents during task execution:
+
+1. **Process Lifecycle Management**:
+   - Any process started by the AI (dev server, background jobs, watchers, etc.) must be stopped by the AI when the task or verification ends.
+   - Before starting a new dev server, check if one is already running using the terminals folder.
+   - Use `pkill` or appropriate commands to terminate background processes after testing.
+
+2. **Resource Cleanup**:
+   - Close browser tabs opened for testing when verification is complete.
+   - Remove temporary files created during debugging.

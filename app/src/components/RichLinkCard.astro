@@ -1,0 +1,179 @@
+---
+interface Props {
+  href: string;
+  title?: string;
+  description?: string;
+  thumbnail?: string;
+  source?: string;
+}
+
+const { href, title, description, thumbnail, source } = Astro.props;
+
+// Extract domain info from URL
+const url = new URL(href);
+const domain = url.hostname.replace('www.', '');
+const displaySource = source || domain;
+
+// Fetch OG metadata from the target URL at build time
+async function fetchOgMetadata(targetUrl: string) {
+  try {
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; AstroBot/1.0)',
+      },
+    });
+    if (!response.ok) return null;
+    
+    const html = await response.text();
+    
+    // Extract OG tags using regex
+    const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i)?.[1]
+      || html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1];
+    
+    const ogDescription = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:description["']/i)?.[1]
+      || html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1];
+    
+    const ogImage = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i)?.[1];
+    
+    return { title: ogTitle, description: ogDescription, image: ogImage };
+  } catch {
+    return null;
+  }
+}
+
+// Fetch OG data (only if title or description not provided)
+const needsFetch = !title || !description;
+const ogData = needsFetch ? await fetchOgMetadata(href) : null;
+
+// Use provided values or fallback to OG data
+const displayTitle = title || ogData?.title || domain;
+const displayDescription = description || ogData?.description || '';
+const ogImage = ogData?.image;
+
+// Use provided thumbnail, OG image, or fallback to favicon
+const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+const displayThumbnail = thumbnail || ogImage || faviconUrl;
+const isFavicon = !thumbnail && !ogImage;
+---
+
+<a href={href} target="_blank" rel="noopener noreferrer" class="rich-link-card">
+  <div class="content">
+    <div class="title">{displayTitle}</div>
+    {displayDescription && <div class="description">{displayDescription}</div>}
+    {displaySource && (
+      <div class="source">
+        <span class="source-icon">🔗</span>
+        <span class="source-text">{displaySource}</span>
+      </div>
+    )}
+  </div>
+  <div class="thumbnail" class:list={[{ 'thumbnail--favicon': isFavicon }]}>
+    <img src={displayThumbnail} alt="" loading="lazy" />
+  </div>
+</a>
+
+<style>
+  .rich-link-card {
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    background: var(--sl-color-bg-nav);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    margin: 1rem 0;
+  }
+
+  .rich-link-card:hover {
+    border-color: var(--sl-color-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--sl-color-text);
+    line-height: 1.4;
+  }
+
+  .description {
+    font-size: 0.875rem;
+    color: var(--sl-color-gray-2);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .source {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--sl-color-gray-3);
+    margin-top: auto;
+  }
+
+  .source-icon {
+    font-size: 0.75rem;
+  }
+
+  .source-text {
+    opacity: 0.8;
+  }
+
+  .thumbnail {
+    flex-shrink: 0;
+    width: 120px;
+    height: 80px;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    background: var(--sl-color-gray-6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Favicon-only: smaller container, icon centered */
+  .thumbnail--favicon {
+    width: 64px;
+    height: 64px;
+    background: var(--sl-color-bg);
+    border: 1px solid var(--sl-color-gray-5);
+  }
+
+  .thumbnail--favicon img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+  }
+
+  /* Mobile: hide thumbnail on small screens */
+  @media (max-width: 480px) {
+    .thumbnail {
+      display: none;
+    }
+  }
+</style>
+

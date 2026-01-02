@@ -168,13 +168,13 @@ The site provides structured context files for LLMs at `https://koborin.ai/llms.
 | File | Content |
 | --- | --- |
 | `/llms.txt` | Index with links to all variants |
-| `/llms-en-full.txt` | All English articles (full Markdown) |
+| `/llms-full.txt` | All English articles (full Markdown) |
 | `/llms-ja-full.txt` | All Japanese articles (full Markdown) |
-| `/llms-en-tech.txt` | English tech articles only |
+| `/llms-tech.txt` | English tech articles only |
 | `/llms-ja-tech.txt` | Japanese tech articles only |
-| `/llms-en-life.txt` | English life articles only |
+| `/llms-life.txt` | English life articles only |
 | `/llms-ja-life.txt` | Japanese life articles only |
-| `/llms-en-about-me.txt` | English about-me articles only |
+| `/llms-about-me.txt` | English about-me articles only |
 | `/llms-ja-about-me.txt` | Japanese about-me articles only |
 
 These files are **auto-generated** at build time from Content Collections. Articles with `draft: true` are excluded. No runtime overhead.

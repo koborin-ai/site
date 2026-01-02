@@ -115,14 +115,14 @@ This document is a quick guide for any contributors or AI agents that touch the 
 9. **LLM Context Files (llms.txt)**:
    - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
    - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
-   - **Full content files**: `/llms-{lang}-full.txt` contains all articles with full Markdown body.
-   - **Category files**: `/llms-{lang}-{category}.txt` for filtered subsets (tech, life, about-me).
-   - Languages: `en` (English), `ja` (Japanese).
+   - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese) - all articles with full Markdown body.
+   - **Category files**: `/llms-{category}.txt` (English), `/llms-ja-{category}.txt` (Japanese) for filtered subsets (tech, life, about-me).
+   - English is the default language (no prefix), Japanese uses `ja` prefix.
    - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
    - **Static files**: Generated at build time via Astro endpoints. Zero runtime overhead.
    - **Implementation**: `app/src/utils/llms.ts` (shared logic), `app/src/pages/llms*.txt.ts` (endpoints).
    - **When to modify endpoints**:
-     - Add a new category: Create `app/src/pages/llms-{lang}-{category}.txt.ts` and update `app/src/pages/llms.txt.ts` index.
+     - Add a new category: Create `app/src/pages/llms-{category}.txt.ts` (English) and `app/src/pages/llms-ja-{category}.txt.ts` (Japanese), then update `app/src/pages/llms.txt.ts` index.
      - Change output format: Edit `app/src/utils/llms.ts`.
      - Existing articles are auto-included; no endpoint changes needed for new content.
 

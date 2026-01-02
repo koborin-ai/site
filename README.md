@@ -1,6 +1,6 @@
 # koborin.ai
 
-![koborin-ai](./app/src/assets/koborin-ai-header.png)
+![koborin-ai](./app/src/assets/_shared/koborin-ai-header.webp)
 
 Technical garden for exploring AI, cloud architecture, and continuous learning.
 
@@ -185,9 +185,11 @@ These files are **auto-generated** at build time from Content Collections. Artic
 .
 ├── app/                           # Astro + Starlight application (Static, nginx)
 │   ├── src/
-│   │   ├── assets/               # Images and static assets
-│   │   │   ├── koborin-ai-header.png  # Header logo
-│   │   │   └── koborin-ai-hero.jpeg   # Hero image for index page
+│   │   ├── assets/               # Images organized by category
+│   │   │   ├── _shared/          # Common assets (header logo)
+│   │   │   ├── tech/             # Tech article images
+│   │   │   ├── life/             # Life article images
+│   │   │   └── about-me/         # About me article images
 │   │   ├── content/
 │   │   │   ├── docs/             # MDX documentation pages (Starlight)
 │   │   │   └── config.ts         # Content Collections schema
@@ -224,8 +226,8 @@ These files are **auto-generated** at build time from Content Collections. Artic
 | Asset | Location | Usage | Notes |
 | --- | --- | --- | --- |
 | Favicon | `app/public/favicon.png` | Browser tab icon | PNG format, transparent background recommended |
-| Header Logo | `app/src/assets/koborin-ai-header.webp` | Site header (replaces title text) | Horizontal layout, optimized for dark backgrounds |
-| Hero Image | `app/src/assets/koborin-ai-hero.jpeg` | Landing page hero section | 16:9 aspect ratio recommended |
+| Header Logo | `app/src/assets/_shared/koborin-ai-header.webp` | Site header (replaces title text) | Horizontal layout, optimized for dark backgrounds |
+| Hero Image | `app/public/og/koborin-ai-hero.jpeg` | Landing page hero section | 16:9 aspect ratio recommended |
 
 Logo sizing is customized via `app/src/styles/custom.css` (`.site-title img` selector).
 
@@ -236,7 +238,7 @@ For performance, images are automatically converted to WebP format. **Authors ca
 | Image Type | Location | What You Do | What Happens Automatically |
 | --- | --- | --- | --- |
 | OG images | `app/public/og/` | Place PNG/JPEG, reference as `.png` | CI converts to WebP, nginx serves WebP |
-| Blog images | `app/src/assets/` | Place PNG/JPEG, use in MDX | Astro optimizes to WebP |
+| Blog images | `app/src/assets/{category}/{article}/` | Place PNG/JPEG in article folder | Astro optimizes to WebP |
 
 **Example workflow for OG images**:
 
@@ -272,8 +274,12 @@ To add a new article or page:
    ---
    title: My Article Title
    description: Brief description of the article
+   publishedAt: 2025-01-02
    ---
    ```
+
+   - `publishedAt`: Set the publish date manually (YYYY-MM-DD format).
+   - Updated date is automatically extracted from Git history at build time.
 
 3. **Update sidebar** in `app/src/sidebar.ts`:
 

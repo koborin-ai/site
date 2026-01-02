@@ -2,44 +2,148 @@
    Mermaid Diagram - Theme-aware styling
    ========================================================================== */
 
-/* Dark mode: white text for visibility */
-[data-theme="dark"] svg[id^="mermaid"] text,
-[data-theme="dark"] svg[id^="mermaid"] .nodeLabel,
-[data-theme="dark"] svg[id^="mermaid"] .label,
-[data-theme="dark"] svg[id^="mermaid"] .messageText,
-[data-theme="dark"] svg[id^="mermaid"] .loopText,
-[data-theme="dark"] svg[id^="mermaid"] .loopText > tspan,
-[data-theme="dark"] svg[id^="mermaid"] .labelText,
-[data-theme="dark"] svg[id^="mermaid"] tspan {
+/* Dark mode: base text styles */
+[data-theme="dark"] .sl-markdown-content svg text,
+[data-theme="dark"] .sl-markdown-content svg .nodeLabel,
+[data-theme="dark"] .sl-markdown-content svg .label,
+[data-theme="dark"] .sl-markdown-content svg .labelText,
+[data-theme="dark"] .sl-markdown-content svg tspan {
   fill: #ffffff !important;
 }
 
-/* Dark mode: darken actor boxes and keep text dark */
-[data-theme="dark"] svg[id^="mermaid"] .actor {
+/* Dark mode: sequence diagram message text with background */
+[data-theme="dark"] .sl-markdown-content svg .messageText {
+  fill: #ffffff !important;
+}
+
+/* Dark mode: sequence diagram - add background to message labels */
+[data-theme="dark"] .sl-markdown-content svg .labelBox {
   fill: #2a2a35 !important;
+  stroke: #4a4a55 !important;
 }
 
-[data-theme="dark"] svg[id^="mermaid"] .actor-box,
-[data-theme="dark"] svg[id^="mermaid"] text.actor {
+/* Dark mode: loop/alt boxes */
+[data-theme="dark"] .sl-markdown-content svg .loopText,
+[data-theme="dark"] .sl-markdown-content svg .loopText > tspan {
   fill: #ffffff !important;
 }
 
-/* Dark mode: darken note boxes */
-[data-theme="dark"] svg[id^="mermaid"] .note {
+[data-theme="dark"] .sl-markdown-content svg .loopLine {
+  stroke: #6a6a75 !important;
+}
+
+/* Dark mode: activation boxes */
+[data-theme="dark"] .sl-markdown-content svg .activation0,
+[data-theme="dark"] .sl-markdown-content svg .activation1,
+[data-theme="dark"] .sl-markdown-content svg .activation2 {
   fill: #3a3a45 !important;
 }
 
-[data-theme="dark"] svg[id^="mermaid"] .noteText {
+/* Dark mode: actor boxes */
+[data-theme="dark"] .sl-markdown-content svg .actor {
+  fill: #2a2a35 !important;
+  stroke: #5a5a65 !important;
+}
+
+[data-theme="dark"] .sl-markdown-content svg .actor-line {
+  stroke: #5a5a65 !important;
+}
+
+[data-theme="dark"] .sl-markdown-content svg text.actor {
   fill: #ffffff !important;
 }
 
-/* Dark mode: label boxes */
-[data-theme="dark"] svg[id^="mermaid"] .labelBox {
+/* Dark mode: note boxes */
+[data-theme="dark"] .sl-markdown-content svg .note {
+  fill: #3a3a45 !important;
+  stroke: #5a5a65 !important;
+}
+
+[data-theme="dark"] .sl-markdown-content svg .noteText {
+  fill: #ffffff !important;
+}
+
+/* Dark mode: flowchart nodes */
+[data-theme="dark"] .sl-markdown-content svg .node rect,
+[data-theme="dark"] .sl-markdown-content svg .node polygon,
+[data-theme="dark"] .sl-markdown-content svg .node circle {
+  fill: #2a2a35 !important;
+  stroke: #5a5a65 !important;
+}
+
+/* Dark mode: subgraph clusters */
+[data-theme="dark"] .sl-markdown-content svg .cluster rect {
+  fill: #1a1a25 !important;
+  stroke: #7a7a85 !important;
+}
+
+/* Dark mode: subgraph labels - multiple selectors for compatibility */
+[data-theme="dark"] .sl-markdown-content svg .cluster-label .nodeLabel,
+[data-theme="dark"] .sl-markdown-content svg .cluster-label text,
+[data-theme="dark"] .sl-markdown-content svg .cluster-label tspan,
+[data-theme="dark"] .sl-markdown-content svg .cluster-label span,
+[data-theme="dark"] .sl-markdown-content svg .cluster text,
+[data-theme="dark"] .sl-markdown-content svg .cluster tspan,
+[data-theme="dark"] .sl-markdown-content svg g.cluster text,
+[data-theme="dark"] .sl-markdown-content svg [class*="cluster"] text,
+[data-theme="dark"] .sl-markdown-content svg [class*="cluster"] tspan {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* Dark mode: foreignObject HTML text (used by some Mermaid versions) */
+[data-theme="dark"] .sl-markdown-content svg foreignObject div,
+[data-theme="dark"] .sl-markdown-content svg foreignObject span,
+[data-theme="dark"] .sl-markdown-content svg foreignObject p {
+  color: #ffffff !important;
+}
+
+/* Dark mode: diagram title */
+[data-theme="dark"] .sl-markdown-content svg .titleText,
+[data-theme="dark"] .sl-markdown-content svg .title-text,
+[data-theme="dark"] .sl-markdown-content svg text.title {
+  fill: #ffffff !important;
+}
+
+/* Dark mode: edges/arrows */
+[data-theme="dark"] .sl-markdown-content svg .edgePath path,
+[data-theme="dark"] .sl-markdown-content svg .messageLine0,
+[data-theme="dark"] .sl-markdown-content svg .messageLine1 {
+  stroke: #8a8a95 !important;
+  stroke-width: 2px !important;
+}
+
+[data-theme="dark"] .sl-markdown-content svg .edgePath marker path,
+[data-theme="dark"] .sl-markdown-content svg marker path {
+  fill: #8a8a95 !important;
+  stroke: #8a8a95 !important;
+}
+
+/* Edges/arrows stroke width - both themes */
+.sl-markdown-content svg .edgePath path,
+.sl-markdown-content svg .messageLine0,
+.sl-markdown-content svg .messageLine1,
+.sl-markdown-content svg .flowchart-link {
+  stroke-width: 2px !important;
+}
+
+/* Dark mode: edge labels */
+[data-theme="dark"] .sl-markdown-content svg .edgeLabel {
+  background-color: #2a2a35 !important;
+}
+
+[data-theme="dark"] .sl-markdown-content svg .edgeLabel rect {
   fill: #2a2a35 !important;
 }
 
+/* Dark mode: rect sections (alt/loop backgrounds) */
+[data-theme="dark"] .sl-markdown-content svg rect.rect {
+  fill: rgba(60, 60, 80, 0.3) !important;
+  stroke: #5a5a65 !important;
+}
+
 /* Light mode: subtle background */
-[data-theme="light"] svg[id^="mermaid"] {
+[data-theme="light"] .sl-markdown-content svg {
   background: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-md);
   padding: var(--space-md);
@@ -218,6 +322,50 @@
 /* Content panel - genkit.dev style */
 .content-panel {
   padding: 1rem;
+}
+
+/* ==========================================================================
+   Desktop content width adjustment - reduce right margin excess
+   ========================================================================== */
+
+/* Widen content area on desktop with sidebar to reduce excessive right gutter */
+@media (min-width: 72rem) {
+  html[data-has-sidebar] {
+    --sl-content-width: clamp(45rem, 55vw, 60rem);
+  }
+}
+
+/* ==========================================================================
+   Title divider - match content width instead of full panel width
+   ========================================================================== */
+
+/* Disable the full-width border between ContentPanels */
+.content-panel + .content-panel {
+  border-top: none;
+}
+
+/* Draw the divider within .sl-container to match content width */
+.content-panel + .content-panel > .sl-container {
+  position: relative;
+}
+
+.content-panel + .content-panel > .sl-container::before {
+  content: "";
+  position: absolute;
+  top: -1rem;
+  left: 0;
+  width: 100%;
+  max-width: var(--sl-content-width);
+  border-top: 1px solid var(--sl-color-hairline);
+}
+
+/* ==========================================================================
+   Content images - cap max-width to prevent oversized images
+   ========================================================================== */
+
+.sl-markdown-content img:not(:where(.not-content *)) {
+  max-width: min(100%, 800px);
+  margin-inline: auto;
 }
 
 /* Right sidebar (On this page) */
@@ -405,4 +553,36 @@
 .sl-container .hero .copy {
   order: 0 !important;
   text-align: center !important;
+}
+
+/* ==========================================================================
+   Article Dates - Published/Updated timestamps below title
+   ========================================================================== */
+
+.article-dates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--sl-color-gray-3);
+}
+
+.article-dates .date-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.article-dates .date-label {
+  color: var(--sl-color-gray-4);
+}
+
+.article-dates .date-separator {
+  color: var(--sl-color-gray-5);
+}
+
+.article-dates time {
+  color: var(--sl-color-gray-2);
 }

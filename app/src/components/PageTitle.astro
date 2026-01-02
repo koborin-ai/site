@@ -1,0 +1,108 @@
+---
+/**
+ * Custom PageTitle component that displays the article title
+ * followed by published and updated dates.
+ *
+ * - publishedAt: Set manually in frontmatter (YYYY-MM-DD)
+ * - updatedAt: Automatically provided by Starlight's lastUpdated feature from Git history
+ */
+import Default from '@astrojs/starlight/components/PageTitle.astro';
+
+interface FrontmatterData {
+  publishedAt?: Date;
+}
+
+const { entry, locale, lastUpdated } = Astro.locals.starlightRoute;
+const frontmatter = entry.data as FrontmatterData;
+const publishedAt = frontmatter.publishedAt;
+
+// lastUpdated is provided by Starlight when lastUpdated: true is set in config
+const updatedAt = lastUpdated;
+
+// Check if dates are meaningfully different (more than 1 day apart)
+const shouldShowUpdated = (() => {
+  if (!publishedAt || !updatedAt) return !!updatedAt;
+  const diffMs = Math.abs(updatedAt.getTime() - publishedAt.getTime());
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  return diffDays >= 1;
+})();
+
+// Format date based on locale
+function formatDate(date: Date, lang: string): string {
+  if (lang === 'ja') {
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  }
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+// Labels based on locale
+const labels = locale === 'ja'
+  ? { published: '公開', updated: '更新' }
+  : { published: 'Published', updated: 'Updated' };
+
+const lang = locale === 'ja' ? 'ja' : 'en';
+---
+
+<Default {...Astro.props}><slot /></Default>
+
+{(publishedAt || updatedAt) && (
+  <div class="article-dates">
+    {publishedAt && (
+      <span class="date-item">
+        <span class="date-label">{labels.published}:</span>
+        <time datetime={publishedAt.toISOString()}>
+          {formatDate(publishedAt, lang)}
+        </time>
+      </span>
+    )}
+    {publishedAt && shouldShowUpdated && updatedAt && (
+      <span class="date-separator">·</span>
+    )}
+    {shouldShowUpdated && updatedAt && (
+      <span class="date-item">
+        <span class="date-label">{labels.updated}:</span>
+        <time datetime={updatedAt.toISOString()}>
+          {formatDate(updatedAt, lang)}
+        </time>
+      </span>
+    )}
+  </div>
+)}
+
+<style>
+  .article-dates {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .date-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .date-label {
+    color: var(--sl-color-gray-4);
+  }
+
+  .date-separator {
+    color: var(--sl-color-gray-5);
+  }
+
+  time {
+    color: var(--sl-color-gray-2);
+  }
+</style>

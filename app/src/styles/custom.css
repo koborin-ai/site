@@ -142,11 +142,18 @@
   stroke: #5a5a65 !important;
 }
 
-/* Light mode: subtle background */
-[data-theme="light"] .sl-markdown-content svg {
+/* Light mode: subtle background for Mermaid diagrams only */
+[data-theme="light"] .sl-markdown-content svg:not(.sl-anchor-icon svg) {
   background: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-md);
   padding: var(--space-md);
+}
+
+/* Reset anchor icon SVG to prevent Mermaid styles from applying */
+[data-theme="light"] .sl-anchor-icon svg {
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
 }
 
 /* Adjust logo size */
@@ -585,4 +592,16 @@
 
 .article-dates time {
   color: var(--sl-color-gray-2);
+}
+
+/* ==========================================================================
+   Heading Anchor Link - Light mode visibility fix
+   ========================================================================== */
+
+/* Light mode: Ensure anchor link icon is visible with proper contrast */
+[data-theme="light"] .sl-anchor-link .sl-anchor-icon,
+[data-theme="light"] .sl-anchor-link .sl-anchor-icon svg,
+[data-theme="light"] .sl-anchor-link .sl-anchor-icon svg path {
+  color: var(--sl-color-accent) !important;
+  fill: currentcolor !important;
 }

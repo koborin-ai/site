@@ -24,6 +24,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/content/config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
+| `app/src/pages/rss.xml.ts` | RSS feed endpoint for English articles. |
+| `app/src/pages/ja/rss.xml.ts` | RSS feed endpoint for Japanese articles. |
 | `app/nginx/nginx.conf` | nginx configuration for static file serving (port 8080). |
 | `infra/` | Pulumi Go stacks (`shared`, `dev`, `prod`). |
 | `infra/stacks/shared.go` | Shared resources: APIs, Artifact Registry, HTTPS LB, Workload Identity. |
@@ -155,6 +157,15 @@ This document is a quick guide for any contributors or AI agents that touch the 
       - Only use this for quick prototyping or when you don't know the page title/description.
       - Always replace with manual specification before committing.
     - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description), thumbnail (og:image → favicon).
+12. **RSS Feeds**:
+    - The site provides RSS feeds for blog aggregation services.
+    - **English feed**: `/rss.xml` - includes `tech/` and `life/` categories.
+    - **Japanese feed**: `/ja/rss.xml` - includes `ja/tech/` and `ja/life/` categories.
+    - **Excluded**: `about-me/` pages are not included in RSS feeds (not blog articles).
+    - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
+    - **Static files**: Generated at build time via Astro endpoints using `@astrojs/rss`. Zero runtime overhead.
+    - **Implementation**: `app/src/pages/rss.xml.ts` (English), `app/src/pages/ja/rss.xml.ts` (Japanese).
+    - **Sorted by date**: Articles are sorted by `publishedAt` date (newest first).
 
 ## Astro Development Best Practices
 

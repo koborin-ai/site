@@ -18,6 +18,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@astrojs/rss": "^4.0.14",
     "@astrojs/starlight": "^0.37.1",
     "@vercel/og": "^0.8.5",
     "astro": "^5.16.0",

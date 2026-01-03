@@ -7,6 +7,7 @@ lastUpdated: false
 
 import { Image } from 'astro:assets';
 import profileImage from '../../assets/about-me/overview/nozomi-koborinai.jpeg';
+import bookCover from '../../assets/life/reflections-on-2025/book-cover.png';
 
 <img src="/og/koborin-ai-hero.png" alt="" fetchpriority="high" width="1200" height="634" style="width: 100%; height: auto;" />
 
@@ -14,52 +15,110 @@ import profileImage from '../../assets/about-me/overview/nozomi-koborinai.jpeg';
 
 This is a personal technical garden where I explore, document, and share my journey through modern software development. Like a garden that grows over time, this site continuously evolves with new insights, experiences, and learnings.
 
-Here, you'll find my explorations in:
-
-- **Cloud Architecture**: Serverless applications, Google Cloud Platform, Infrastructure as Code, DevOps, Identifier
-- **Developer Experience**: Tools and practices that make development more enjoyable and productive
-- **AI & Modern Development**: Genkit, Firebase, and emerging technologies
-- **Software Craftsmanship**: Design patterns, DDD, clean architecture, and quality practices
+---
 
 ## About Nozomi Koborinai
 
 <Image src={profileImage} alt="Nozomi Koborinai speaking at a tech conference" width={600} quality={80} style="border-radius: 8px; margin-bottom: 1.5rem; width: 100%; max-width: 600px; height: auto; display: block; margin-left: auto; margin-right: auto;" />
 
+- 🏢 Serverless Application Developer at a Google Cloud Partner company in Japan
+- 🏆 Google Cloud Partner Top Engineer 2025 & 2026 (Application Modernization)
+- 📖 Contributing to developer communities through Genkit books, OSS, and conference talks
+- 🎯 Specialized in DDD and Clean Architecture for quality assurance
+
+### Background
+
 I graduated from an IT technical college in March 2019, where I built my foundation in object-oriented programming with Java.
 
-Over my 6 years of experience, the first four were spent developing electronic medical record systems using C#, teaching at Flutter University (Japan's Flutter engineering community), and co-authoring books on Flutter design patterns. Currently, I work at a Google Cloud Partner company in Japan, specializing in **Serverless Application development** (Google Cloud, Firebase, DevOps, IaC, Identifier). My deep interest in software architecture has made me proficient in ensuring quality through DDD and clean architecture principles.
+During my first four years, I developed electronic medical record systems using C# / VB.NET, taught at App University (Japan's app development engineering community), and co-authored a book on Flutter design patterns.
 
-### Recognition & Community
+Currently, I specialize in **Serverless Application Development** (Google Cloud, Firebase, DevOps, IaC, Identity & Access Management).
 
-- **Google Cloud Partner Top Engineer (Serverless App Development) 2025 & 2026** - Japan-exclusive award program
-- Contributor to [**genkit-ai**](https://github.com/genkit-ai) organization, including developing the Dart client for Genkit
-- Author and maintainer of [**Mastering Genkit**](https://github.com/mastering-genkit) book series
-- Speaker at **Google I/O Extended Tokyo** and **GDG DevFest**
-- Former instructor and current 1-on-1 mentor at **Flutter University**
+---
 
-I believe that promoting good products is essential for energizing developer communities. Driven by my passion for great products and developer communities, I feel a strong mission to spread their value worldwide. Deeply impressed by Firebase's exceptional developer experience, I explored Genkit and was captivated by its innovative approach.
+### Book: Mastering Genkit
+
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1rem 0;">
+<a href="https://www.amazon.com/dp/B0G4HKJRPB">
+<Image src={bookCover} alt="Mastering Genkit: Go Edition Cover" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
+
+**Mastering Genkit: Go Edition**
+
+Co-authored with Xavier Portilla, AI Google Developer Expert (GDE) from Spain.
+
+Unlock the full potential of Genkit and Go—explore the journey from fundamentals to advanced AI systems.
+
+[Amazon](https://www.amazon.com/dp/B0G4HKJRPB) / [GitHub](https://github.com/mastering-genkit)
+</div>
+</div>
+
+---
+
+### Highlights
+
+| Item | Description | Link |
+|------|-------------|------|
+| Google Cloud Partner Top Engineer 2025 & 2026 | Selected for Application Modernization two years in a row | - |
+| Dart client for Genkit | Official OSS library co-developed with the Firebase team | [GitHub](https://github.com/genkit-ai/genkit-dart) |
+| Introduction to Flutter Design Patterns (co-author) | Covers layered / onion architecture | [Zenn](https://zenn.dev/flutteruniv/books/flutter-architechture-en) |
+| App University (formerly Flutter University) | Former instructor, current 1-on-1 mentor | [flutteruniv.com](https://flutteruniv.com) |
+
+---
+
+### Speaking & Events
+
+| Date | Event | Title | Attendees |
+|------|-------|-------|-----------|
+| 2025/07 | Google I/O Extended Tokyo 2025 | [Dart client for Genkit: Official Client for Using Genkit from Flutter](https://youtu.be/AakdczWQLzY?si=aiuon32lYmJ93TR6) | 434 |
+| 2025/02 | FlutterGakkai (7th) | [Accelerating Generative AI App Development with Flutter × Firebase Genkit](https://www.youtube.com/live/bLub7ytpKBA?si=rkyc3Ca76CVDn8Wa&t=518) | 191 |
+| 2024/12 | Genkit Hands-on (Organizer) | Technical supporter | 45 |
+| 2024/11 | GDG DevFest Tokyo 2024 | Orchestrating Firebase and AI: Genkit Architecture Example | 369 |
+| 2024/06 | TECH+ Seminar | Revolutionizing Logistics with Google Maps Platform | 246 |
+| 2024/06 | Map The Way Tokyo | Retail DX Strategy for Competitive Advantage | 75 |
+| 2024/04 | Retail DX | Retail DX Strategy for Competitive Advantage | 138 |
+| 2024/04 | Google Cloud RetailTech Recap Seminar | Integrating Google Maps, Firebase, and PaLM | 51 |
+| 2024/03 | RetailTech JAPAN | Enhancing Development Efficiency with Google Maps, Firebase, and PaLM Integration | 429 |
+| 2024/02 | GDG Tokyo Monthly Online Tech Talks | IaC and CI/CD Pipeline Construction in Firebase | 200 |
+| 2023/12 | Cloud Ace Webinar | Rapid Development of a Healthy Review App with Firebase × Google Maps API | 61 |
+
+---
+
+### Project Experience
+
+| Year | Project | Overview |
+|------|---------|----------|
+| 2025 | Full-scratch Business System Development | Secure architecture with Cloud Run + Cloud SQL Auth Proxy. Fully automated IaC with CDKTF. Solo full-stack TypeScript development |
+| 2025 | Platform Engineering Support | Supported a project struggling with dev environment differences and Firebase Authentication implementation. Standardized dev environments for 20+ engineers using Cloud Workstations and conducted Firebase Auth best practices workshops |
+| 2025 | Generative AI App Development Support (Won Competition) | Proposed Genkit and DB security architecture, winning the contract over 2 competitors. Also supported team building focused on Agentic AI coding |
+| 2025 | Google Cloud Next '25 Live Reporting App (Award Winner) | Developed an app using Genkit for speech-to-translation-to-draft generation. Team published 23 live reports in 3 days. Received award from Google Cloud Japan |
+| 2024 | Identity & Access Management Architecture | Introduced Identity Platform as IDaaS. Proposed dynamic authorization with Cloud Run sidecar + Open Policy Agent (OPA), supporting SAML auth providers |
+| 2024 | Firebase Architecture Support | Implemented IP restrictions for Cloud Functions deployment via VPC Service Controls. Designed auto-documentation pipeline with Gemini Code Assist |
+| 2023 | Tokyo Flutter Hackathon Winner | Participated with App University (formerly Flutter University) team. Developed real-time online game in 24 hours. Handled Firebase full-stack (Auth, Firestore, Hosting, Cloud Storage, Cloud Functions) |
+| 2023-24 | MoodTrend | Mood tracking app for bipolar disorder. As tech lead, designed Flutter software architecture and CI/CD pipeline (Workload Identity + GitHub Actions + Terraform), contributing to initial release. Currently off the project ([iOS](https://apps.apple.com/jp/app/%E6%B0%97%E5%88%86%E3%82%B0%E3%83%A9%E3%83%95-moodtrend-%E5%8F%8C%E6%A5%B5%E6%80%A7%E9%9A%9C%E5%AE%B3-%E8%BA%81%E9%AC%B1%E3%82%B0%E3%83%A9%E3%83%95/id6480364789) / [Android](https://play.google.com/store/apps/details?id=com.moodtrend.mood_trend_flutter)) |
+
+---
 
 ### Beyond Code
 
 When I'm not coding, I enjoy:
 
-- 🎸 **Music**: Guitar playing and beat-making
+- 🎸 **Music**: Guitar playing and beat-making ([YouTube](https://www.youtube.com/@cobo_poly))
 - 📚 **Reading**: Exploring new ideas and perspectives
-- 🌱 **Open Source**: Contributing to projects that improve developer experience
+- 🧖 **Digital Detox**: I value downtime in baths and saunas above all else
 
-**Improving developer experience is at the heart of my work and brings me the greatest joy.**
-
-## Why koborin.ai?
-
-The name **koborin.ai** carries a meaningful play on words:
-
-- **koborinai** - My family name, representing my personal identity
-- **koborin.ai** - The domain combining my nickname with the `.ai` TLD, symbolizing the intersection of personal journey and technology
-- **AI Explorer** - Reflecting my dedication to exploring and contributing to AI-powered products and frameworks like Genkit
-
-This dual meaning captures both who I am and what I'm passionate about: bridging traditional software craftsmanship with cutting-edge AI technologies, always with a focus on exceptional developer experience.
+**Work hard, rest well.**
 
 ---
 
-Feel free to explore this garden, and I hope you find something valuable here. This space is always growing, just like the technologies and practices we work with every day.
+## Why koborin.ai?
+
+- **koborinai** is my family name
+- **koborin** is my nickname
+- **koborin.ai** = nickname + `.ai` TLD
+
+I frequently work with AI-related products like Genkit, and with the rise of Agentic AI, the `.ai` domain feels like a natural fit.
+
+Feel free to explore this garden—I'll keep tending to it bit by bit.
 

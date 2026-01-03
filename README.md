@@ -174,8 +174,6 @@ The site provides structured context files for LLMs at `https://koborin.ai/llms.
 | `/llms-ja-tech.txt` | Japanese tech articles only |
 | `/llms-life.txt` | English life articles only |
 | `/llms-ja-life.txt` | Japanese life articles only |
-| `/llms-about-me.txt` | English about-me articles only |
-| `/llms-ja-about-me.txt` | Japanese about-me articles only |
 
 These files are **auto-generated** at build time from Content Collections. Articles with `draft: true` are excluded. No runtime overhead.
 
@@ -195,7 +193,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   │   └── config.ts         # Content Collections schema
 │   │   ├── utils/
 │   │   │   └── llms.ts           # Shared logic for llms.txt generation
-│   │   ├── pages/                # Custom Astro pages (landing, OG images, llms.txt)
+│   │   ├── pages/                # Astro endpoints (llms.txt, RSS feeds)
 │   │   └── styles/
 │   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
 │   ├── public/
@@ -227,7 +225,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 | --- | --- | --- | --- |
 | Favicon | `app/public/favicon.png` | Browser tab icon | PNG format, transparent background recommended |
 | Header Logo | `app/src/assets/_shared/koborin-ai-header.webp` | Site header (replaces title text) | Horizontal layout, optimized for dark backgrounds |
-| Hero Image | `app/public/og/koborin-ai-hero.jpeg` | Landing page hero section | 16:9 aspect ratio recommended |
+| Hero Image | `app/public/og/koborin-ai-hero.png` | Landing page hero section | 16:9 aspect ratio recommended |
 
 Logo sizing is customized via `app/src/styles/custom.css` (`.site-title img` selector).
 

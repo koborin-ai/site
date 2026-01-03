@@ -125,7 +125,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
    - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
    - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese) - all articles with full Markdown body.
-   - **Category files**: `/llms-{category}.txt` (English), `/llms-ja-{category}.txt` (Japanese) for filtered subsets (tech, life, about-me).
+   - **Category files**: `/llms-{category}.txt` (English), `/llms-ja-{category}.txt` (Japanese) for filtered subsets (tech, life).
    - English is the default language (no prefix), Japanese uses `ja` prefix.
    - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
    - **Static files**: Generated at build time via Astro endpoints. Zero runtime overhead.
@@ -191,7 +191,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 5. **Routing (Custom Pages)**
    - *Note: Documentation pages are managed by Starlight.*
-   - **File-based Routing**: Use `src/pages/` for custom landing pages or apps.
+   - **File-based Routing**: Use `src/pages/` for Astro endpoints (llms.txt, RSS feeds) or custom apps.
    - **Dynamic Routes**: Use `[...slug].astro` and `getStaticPaths()` for dynamic static pages.
    - **404**: Maintain a custom `404.astro` for proper error handling.
 

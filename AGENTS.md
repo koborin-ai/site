@@ -91,7 +91,28 @@ This document is a quick guide for any contributors or AI agents that touch the 
 3. **Brand Assets Management**:
    - **Favicon**: Place in `app/public/favicon.png`. Configured in `astro.config.mjs` (`favicon` property).
    - **Header Logo**: Place in `app/src/assets/_shared/`. Configured in `astro.config.mjs` (`logo.src` property). Set `replacesTitle: true` to hide text title.
-   - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`). Reference with relative paths from MDX.
+   - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`).
+     - **MANDATORY**: Use Astro's `<Image>` component for all local images in MDX files. NEVER use raw `<img>` tags with imported images.
+     - **Import pattern**:
+
+       ```mdx
+       import { Image } from 'astro:assets';
+       import myImage from '../../assets/category/article/image.png';
+
+       <Image src={myImage} alt="Description" width={600} quality={80} />
+       ```
+
+     - **Why**: Raw `<img src={image.src}>` bypasses Astro's image optimization, resulting in multi-MB images being served. The `<Image>` component automatically resizes, converts to WebP, and adds width/height attributes.
+     - **CI Check**: `app/scripts/check-image-usage.sh` validates proper usage during CI.
+   - **Image Location Rules** (important distinction):
+
+     | Location | Component | Optimization | Use Case |
+     |----------|-----------|--------------|----------|
+     | `src/assets/` | `<Image>` or `![](...)` | Astro auto-optimizes | Article content images |
+     | `public/og/` | `<img>` or `![](...)` | `optimize-og-images.sh` | OG/hero images |
+
+     - **`src/assets/`**: Use `<Image>` component (preferred) or Markdown `![](relative-path)`. Both are auto-optimized by Astro (WebP conversion, resizing).
+     - **`public/`**: Cannot use `<Image>` component (static files). Use `<img>` with explicit `width`/`height` for LCP images, or Markdown syntax for others. OG images are optimized by separate script.
    - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
 4. **OG Image Management**:

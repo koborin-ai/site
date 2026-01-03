@@ -5,9 +5,10 @@ ogImage: /og/koborin-ai-hero.png
 lastUpdated: false
 ---
 
+import { Image } from 'astro:assets';
 import profileImage from '../../../assets/about-me/overview/nozomi-koborinai.jpeg';
 
-![](/og/koborin-ai-hero.png)
+<img src="/og/koborin-ai-hero.png" alt="" fetchpriority="high" width="1200" height="634" style="width: 100%; height: auto;" />
 
 ## Technical Garden について
 
@@ -23,7 +24,7 @@ import profileImage from '../../../assets/about-me/overview/nozomi-koborinai.jpe
 
 ## Nozomi Koborinai について
 
-<img src={profileImage.src} alt="テックカンファレンスで登壇する Nozomi Koborinai" style="border-radius: 8px; margin-bottom: 1.5rem; width: 100%; max-width: 600px; height: auto; display: block; margin-left: auto; margin-right: auto;" />
+<Image src={profileImage} alt="テックカンファレンスで登壇する Nozomi Koborinai" width={600} quality={80} style="border-radius: 8px; margin-bottom: 1.5rem; width: 100%; max-width: 600px; height: auto; display: block; margin-left: auto; margin-right: auto;" />
 
 2019 年 3 月に IT 専門学校を卒業し、Java によるオブジェクト指向プログラミングの基礎を築きました。
 

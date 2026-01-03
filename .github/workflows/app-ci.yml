@@ -58,6 +58,11 @@ jobs:
         working-directory: app
         run: ./scripts/optimize-og-images.sh
 
+      - name: Check image usage in MDX
+        if: steps.change-type.outputs.type == 'behavior'
+        working-directory: app
+        run: ./scripts/check-image-usage.sh
+
       - name: Security audit
         if: steps.change-type.outputs.type == 'behavior'
         working-directory: app

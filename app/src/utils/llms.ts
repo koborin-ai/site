@@ -1,7 +1,7 @@
 import { getCollection } from 'astro:content';
 
 export type Lang = 'en' | 'ja';
-export type Category = 'tech' | 'life' | 'about-me' | 'all';
+export type Category = 'tech' | 'life' | 'all';
 
 const SITE_URL = 'https://koborin.ai';
 

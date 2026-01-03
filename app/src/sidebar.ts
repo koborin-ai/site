@@ -1,9 +1,7 @@
 export const sidebar = [
   {
-    label: "About Me",
-    items: [
-      { label: "Overview", slug: "about-me/overview" },
-    ],
+    label: "Home",
+    link: "/",
   },
   {
     label: "Tech",

@@ -1,10 +1,8 @@
 ---
 /**
- * SiteHeader - Unified header component for both Landing and Docs pages
+ * SiteHeader - Header component for Starlight docs pages
  * 
- * Usage:
- * - Landing page: <SiteHeader /> (no props needed)
- * - Docs pages: Configured as Starlight Header override, receives StarlightRouteData
+ * Configured as Starlight Header override, receives StarlightRouteData
  */
 import Search from '@astrojs/starlight/components/Search.astro';
 import MobileMenuToggle from '@astrojs/starlight/components/MobileMenuToggle.astro';
@@ -12,56 +10,23 @@ import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
 import ThemeSelect from './ThemeSelect.astro';
 import headerLogo from '../assets/_shared/koborin-ai-header.webp';
 
-// Props are optional - only provided when used as Starlight Header override
-// Landing page calls this without props
 const props = Astro.props;
 
-const isLanding = Astro.url.pathname === '/';
-
-// Navigation links
-// For landing page: anchor links
-// For other pages: absolute path to landing page anchors
-const baseLinks = [
-  { label: 'About', href: '#about' },
-  { label: 'Skills', href: '#skills' },
-  { label: 'Achievements', href: '#achievements' },
-  { label: 'Projects', href: '#projects' },
-];
-
-// Garden link points to the docs entry (About Me > Overview)
-const gardenLink = { label: 'Garden', href: '/about-me/overview/' };
-
-const navLinks = [
-  ...baseLinks.map(link => ({
-    ...link,
-    href: isLanding ? link.href : `/${link.href}`
-  })),
-  gardenLink
-];
+// Locale-aware home link
+const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
+const homeHref = isJapanese ? '/ja/' : '/';
 ---
 
-<header class={`nav-header ${isLanding ? 'is-landing' : 'is-docs'}`}>
-  <nav class={`nav-container ${isLanding ? 'is-landing' : 'is-docs'}`}>
-    <a href="/" class="nav-logo" aria-label="koborin.ai home">
+<header class="nav-header">
+  <nav class="nav-container">
+    <a href={homeHref} class="nav-logo" aria-label="koborin.ai home">
       <img src={headerLogo.src} alt="koborin.ai" fetchpriority="high" />
     </a>
     
-    {/* Navigation links - only on landing page (these are section anchors) */}
-    {isLanding && (
-      <div class="nav-links">
-        {navLinks.map((link) => (
-          <a href={link.href} class="nav-link">{link.label}</a>
-        ))}
-      </div>
-    )}
-    
     <div class="nav-actions">
-      {/* Search bar - only on non-landing pages (Starlight provides props) */}
-      {!isLanding && (
-        <div class="nav-search">
-          <Search {...props} />
-        </div>
-      )}
+      <div class="nav-search">
+        <Search {...props} />
+      </div>
 
       <div class="nav-social-links">
         <a href="https://github.com/nozomi-koborinai" class="nav-social-link" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
@@ -85,103 +50,19 @@ const navLinks = [
           </svg>
         </a>
       </div>
-      {/* Divider, LanguageSelect and ThemeSelect - only on non-landing pages, desktop only (mobile uses Starlight's sidebar) */}
-      {!isLanding && (
-        <div class="nav-header-controls">
-          <span class="nav-divider" aria-hidden="true"></span>
-          <LanguageSelect {...props} />
-          <ThemeSelect />
-        </div>
-      )}
+
+      <div class="nav-header-controls">
+        <span class="nav-divider" aria-hidden="true"></span>
+        <LanguageSelect {...props} />
+        <ThemeSelect />
+      </div>
       
-      {/* Mobile Toggle: Custom for Landing, Starlight's for others */}
-      {isLanding ? (
-        <button class="nav-mobile-toggle" aria-label="Toggle menu" aria-expanded="false">
-          <svg class="icon-menu" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-          <svg class="icon-close" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      ) : (
-        <div class="starlight-mobile-toggle">
-          <MobileMenuToggle {...props} />
-        </div>
-      )}
-    </div>
-  </nav>
-  
-  {/* Custom Mobile Menu (Only for Landing Page) */}
-  {isLanding && (
-    <div class="mobile-menu">
-      <div class="mobile-menu-content">
-        {navLinks.map((link) => (<a href={link.href} class="mobile-nav-link">{link.label}</a>))}
-        
-        <div class="mobile-social-section">
-          <div class="mobile-social-divider"></div>
-          <div class="mobile-social-links">
-            <a href="https://github.com/nozomi-koborinai" class="mobile-social-link" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-              </svg>
-            </a>
-            <a href="https://linkedin.com/in/nozomi-koborinai" class="mobile-social-link" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-              </svg>
-            </a>
-            <a href="https://x.com/fender_kn" class="mobile-social-link" target="_blank" rel="noopener noreferrer" aria-label="X">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-            </a>
-            <a href="https://medium.com/@nozomi-koborinai" class="mobile-social-link" target="_blank" rel="noopener noreferrer" aria-label="Medium">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/>
-              </svg>
-            </a>
-          </div>
-        </div>
+      <div class="starlight-mobile-toggle">
+        <MobileMenuToggle {...props} />
       </div>
     </div>
-  )}
+  </nav>
 </header>
-
-<script is:inline>
-  (function() {
-    function initMobileMenu() {
-      const toggle = document.querySelector('.nav-mobile-toggle');
-      const mobileMenu = document.querySelector('.mobile-menu');
-      const header = document.querySelector('.nav-header');
-      if (!toggle || !mobileMenu) return;
-      
-      // Remove existing listeners by cloning
-      const newToggle = toggle.cloneNode(true);
-      toggle.parentNode.replaceChild(newToggle, toggle);
-      
-      newToggle.addEventListener('click', () => {
-        const isExpanded = newToggle.getAttribute('aria-expanded') === 'true';
-        newToggle.setAttribute('aria-expanded', (!isExpanded).toString());
-        mobileMenu.classList.toggle('is-open');
-        header?.classList.toggle('menu-open');
-      });
-      mobileMenu.querySelectorAll('.mobile-nav-link').forEach((link) => {
-        link.addEventListener('click', () => {
-          newToggle.setAttribute('aria-expanded', 'false');
-          mobileMenu.classList.remove('is-open');
-          header?.classList.remove('menu-open');
-        });
-      });
-    }
-    
-    // Run on page load
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initMobileMenu);
-    } else {
-      initMobileMenu();
-    }
-    
-    // Run on Astro page transitions
-    document.addEventListener('astro:after-swap', initMobileMenu);
-  })();
-</script>
 
 <style>
   /* Header Layout */
@@ -194,59 +75,29 @@ const navLinks = [
     border-bottom: 1px solid var(--color-border); 
     backdrop-filter: blur(12px); 
   }
-  /* Starlight specific overrides to ensure it sits on top */
   :global([data-theme="light"]) .nav-header { background: rgba(255, 255, 255, 0.65); }
   :global([data-theme="dark"]) .nav-header { background: rgba(10, 10, 15, 0.6); }
-  /* Fallback/Landing specific */
-  [data-theme="dark"] .nav-header { background: rgba(10, 10, 15, 0.6); }
-  [data-theme="light"] .nav-header { background: rgba(255, 255, 255, 0.65); }
   
   .nav-container { 
     display: flex; 
     align-items: center; 
     justify-content: space-between; 
-    gap: var(--space-md); 
-  }
-  /* Header layout - full width with logo at left edge */
-  .nav-container.is-landing,
-  .nav-container.is-docs {
+    gap: var(--space-md);
     height: 4.5rem;
-    /* Symmetric padding for balanced layout */
     padding: 0 var(--container-padding);
   }
 
-  /* Logo - unified size for both Landing and Docs */
+  /* Logo */
   .nav-logo { display: flex; align-items: center; flex-shrink: 0; margin-left: -0.25rem; }
   .nav-logo img { height: 4.5rem; width: auto; }
   @media (max-width: 768px) { 
     .nav-logo img { height: 4rem; }
   }
 
-  /* Links */
-  .nav-links { display: none; align-items: center; gap: var(--space-xs); }
-  @media (min-width: 768px) { .nav-links { display: flex; } }
-  
-  .nav-link { 
-    display: inline-flex; 
-    align-items: center; 
-    gap: 0.25rem; 
-    padding: 0.5rem 0.9rem; 
-    font-size: 0.95rem; 
-    font-weight: 600; 
-    letter-spacing: -0.01em;
-    color: var(--color-text-secondary); 
-    border-radius: var(--radius-md); 
-    transition: all var(--transition-fast); 
-    text-decoration: none;
-  }
-  .nav-link:hover { color: var(--color-text-primary); background: var(--color-bg-tertiary); }
-
   /* Actions Area */
-  .nav-actions { display: flex; align-items: center; gap: var(--space-sm); }
-  /* On docs pages, actions area expands to fill available space */
-  .nav-container.is-docs .nav-actions { flex: 1; justify-content: flex-end; }
+  .nav-actions { display: flex; align-items: center; gap: var(--space-sm); flex: 1; justify-content: flex-end; }
   
-  /* Search (Starlight) - expanded on docs pages */
+  /* Search (Starlight) */
   .nav-search { display: none; }
   @media (min-width: 768px) { 
     .nav-search { display: block; flex: 1; max-width: 400px; }
@@ -275,15 +126,6 @@ const navLinks = [
   /* Divider */
   .nav-divider { width: 1px; height: 1.5rem; background: var(--color-border); margin: 0 0.25rem; }
 
-  /* Mobile Toggle (Custom) - sized for visual balance with logo */
-  .nav-mobile-toggle { display: flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; padding: 0; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; transition: color var(--transition-fast); }
-  .nav-mobile-toggle:hover { color: var(--color-text-primary); }
-  @media (min-width: 768px) { .nav-mobile-toggle { display: none; } }
-  
-  .icon-close { display: none; }
-  .nav-mobile-toggle[aria-expanded="true"] .icon-menu { display: none; }
-  .nav-mobile-toggle[aria-expanded="true"] .icon-close { display: block; }
-
   /* Mobile Toggle (Starlight) - show only on mobile (< 768px) */
   .starlight-mobile-toggle {
     display: block;
@@ -295,20 +137,4 @@ const navLinks = [
     .starlight-mobile-toggle { display: none; }
     .starlight-mobile-toggle :global(button) { display: none !important; }
   }
-
-  /* Mobile Menu Overlay (Custom) */
-  .mobile-menu { display: none; position: fixed; top: 4.5rem; left: 0; right: 0; height: calc(100vh - 4.5rem); background: var(--color-bg-primary); z-index: 99; overflow-y: auto; }
-  .mobile-menu.is-open { display: block; }
-  @media (min-width: 768px) { .mobile-menu { display: none !important; } }
-  
-  .mobile-menu-content { display: flex; flex-direction: column; padding: var(--space-lg); gap: var(--space-xs); }
-  .mobile-nav-link { display: block; padding: 1rem; font-size: 1.125rem; font-weight: 500; color: var(--color-text-primary); border-radius: var(--radius-md); transition: background var(--transition-fast); text-decoration: none;}
-  .mobile-nav-link:hover { background: var(--color-bg-tertiary); color: var(--color-text-primary); }
-
-  /* Mobile Social Links */
-  .mobile-social-section { margin-top: var(--space-lg); }
-  .mobile-social-divider { height: 1px; background: var(--color-border); margin-bottom: var(--space-lg); }
-  .mobile-social-links { display: flex; justify-content: center; gap: var(--space-lg); }
-  .mobile-social-link { display: flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; color: var(--color-text-secondary); border-radius: var(--radius-full); background: var(--color-bg-secondary); transition: all var(--transition-fast); }
-  .mobile-social-link:hover { color: var(--color-accent); background: var(--color-bg-tertiary); transform: translateY(-2px); }
 </style>

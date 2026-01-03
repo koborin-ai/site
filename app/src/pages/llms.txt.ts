@@ -23,10 +23,6 @@ export const GET: APIRoute = () => {
 ### Life
 - ${SITE_URL}/llms-life.txt
 - ${SITE_URL}/llms-ja-life.txt
-
-### About Me
-- ${SITE_URL}/llms-about-me.txt
-- ${SITE_URL}/llms-ja-about-me.txt
 `;
 
   return textResponse(body);

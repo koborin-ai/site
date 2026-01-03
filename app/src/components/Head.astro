@@ -21,6 +21,10 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 <meta property="og:image:height" content="630" />
 <meta name="twitter:image" content={ogImageUrl} />
 
+<!-- RSS feed auto-discovery -->
+<link rel="alternate" type="application/rss+xml" title="koborin.ai" href="/rss.xml" />
+<link rel="alternate" type="application/rss+xml" title="koborin.ai (日本語)" href="/ja/rss.xml" />
+
 {gaMeasurementId && (
   <>
     <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}></script>

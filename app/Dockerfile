@@ -1,8 +1,9 @@
 # Build stage
 FROM node:22-slim AS build
-WORKDIR /app
+WORKDIR /workspace
 
-# Install Playwright dependencies for Chromium and image optimization tools
+# Install Playwright dependencies for Chromium, image optimization tools, and git
+# Git is required for Starlight's lastUpdated feature to extract file modification dates
 RUN apt-get update && apt-get install -y \
     libnss3 \
     libnspr4 \
@@ -23,20 +24,29 @@ RUN apt-get update && apt-get install -y \
     webp \
     imagemagick \
     file \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
+# Copy .git directory first for Starlight's lastUpdated feature
+COPY .git ./.git
+
+# Copy app directory and install dependencies
+COPY app/package*.json ./app/
+WORKDIR /workspace/app
 RUN npm install
 RUN npx playwright install chromium
-COPY . .
+
+# Copy the rest of the app
+COPY app/ ./
 
 # Optimize OG images before build
 RUN ./scripts/optimize-og-images.sh
 
+# Build the app (Git history is available at /workspace/.git)
 RUN npm run build
 
 # Runtime stage - serve static files with nginx
 FROM nginx:alpine AS runtime
-COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY app/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /workspace/app/dist /usr/share/nginx/html
 EXPOSE 8080

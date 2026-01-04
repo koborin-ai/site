@@ -19,7 +19,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 | Path | Purpose |
 | --- | --- |
+| `.gcloudignore` | Excludes files from Cloud Build upload (infra/, docs/, etc.). |
 | `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
+| `app/cloudbuild.yaml` | Cloud Build configuration for Docker build from project root. |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content/config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
@@ -129,7 +131,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Display**: Dates appear below the article title (e.g., `Published: Dec 1, 2024 · Updated: Jan 2, 2025`).
    - **Localization**: English uses `Dec 1, 2024` format; Japanese uses `2024年12月1日` format.
    - **Same-day Updates**: If `publishedAt` and `lastUpdated` are within 1 day, only the published date is shown.
-   - **CI/CD**: Uses `depth: 1` shallow clone (no fetch-depth changes needed). Only the latest commit date is required.
+   - **CI/CD**: Uses `fetch-depth: 0` to clone full Git history. This is required because Cloud Build receives the project root (including `.git`) to enable `lastUpdated` feature.
    - **Local Development**: Updated date is shown for committed files. New uncommitted files show only the published date (if set).
 6. **Starlight Features**:
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
@@ -140,6 +142,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 9. **Docker & Deployment**:
    - The app builds as a static site (`output: "static"` in Astro config) and is served via nginx.
    - Dockerfile uses multi-stage build: `node:22-slim` for build, `nginx:alpine` for runtime.
+   - **Build context**: Cloud Build receives the project root (not just `app/`) so that `.git` is available for the `lastUpdated` feature. The `cloudbuild.yaml` specifies `app/Dockerfile` location.
    - nginx configuration is at `app/nginx/nginx.conf` (port 8080 for Cloud Run compatibility).
    - All pages are pre-rendered at build time; no Node.js runtime required in production.
 10. **LLM Context Files (llms.txt)**:

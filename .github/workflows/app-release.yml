@@ -54,6 +54,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Fetch full Git history for Starlight's lastUpdated feature
+          fetch-depth: 0
 
       - name: Decide deployment environment
         id: decide-env
@@ -116,8 +119,11 @@ jobs:
           IMAGE_TAG="${GITHUB_SHA}-${GITHUB_RUN_ID}"
           IMAGE_URI="asia-northeast1-docker.pkg.dev/${{ env.PROJECT_ID }}/koborin-ai-web/app:${IMAGE_TAG}"
 
-          BUILD_ID=$(gcloud builds submit "./app" \
-            --tag="${IMAGE_URI}" \
+          # Submit entire project (including .git) so Starlight can access Git history
+          # for the lastUpdated feature. The Dockerfile handles building from app/ subdirectory.
+          BUILD_ID=$(gcloud builds submit "." \
+            --config="./app/cloudbuild.yaml" \
+            --substitutions="_IMAGE_URI=${IMAGE_URI}" \
             --project="${{ env.PROJECT_ID }}" \
             --region="${{ env.REGION }}" \
             --async \

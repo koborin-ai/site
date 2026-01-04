@@ -249,7 +249,7 @@ That's it! The CI pipeline (`app/scripts/optimize-og-images.sh`) generates WebP 
 ## Workflow Overview
 
 1. **Infra changes**: edit Pulumi Go stacks → `go build ./... && go vet ./...` → open PR → GitHub Actions runs preview → reviewer approves → merge triggers apply on the right environment.
-2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to Pulumi.
+2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run check-images && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to Pulumi.
 3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `npm run lint`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
 
 ### Adding New Content

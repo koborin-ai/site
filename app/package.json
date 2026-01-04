@@ -10,6 +10,7 @@
     "lint": "astro check",
     "typecheck": "astro check",
     "test": "astro check",
+    "check-images": "./scripts/check-image-usage.sh",
     "ci": "npm run lint && npm run typecheck && npm run test && npm run build",
     "new-article": "hygen article new"
   },

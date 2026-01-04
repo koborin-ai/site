@@ -5,7 +5,13 @@ ogImage: /og/2025.png
 publishedAt: 2025-12-31
 ---
 
-![](/og/2025.png)
+import { Image } from 'astro:assets';
+import nextImage from '../../../assets/life/reflections-on-2025/next.png';
+import tourImage from '../../../assets/life/reflections-on-2025/office-tour.jpeg';
+import dmImage from '../../../assets/life/reflections-on-2025/dm.png';
+import bookCoverImage from '../../../assets/life/reflections-on-2025/book-cover.png';
+
+<img src="/og/2025.png" alt="og" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
 
 2025 was a turbulent year for me—someone who had mostly stayed at home until now.
 First trip abroad, a major life stage change, co-authoring a book with an engineer from overseas, publishing it, and getting promoted at my main job.
@@ -25,7 +31,7 @@ But I couldn't hide my excitement at meeting the product manager of products I u
 Still, maybe that feeling got through. At least, I want to believe it did.
 I was happy that [Dmitry Lyalin](https://www.linkedin.com/in/dmitrylyalin/), who worked on Google's AI development framework [Genkit](https://genkit.dev/) and now leads the Gemini CLI product, seemed to sense something from my broken English.
 
-![next](../../../assets/life/reflections-on-2025/next.png)
+<Image src={nextImage} alt="next" width={400} quality={80} />
 
 "Improving developer experience is my greatest joy and motivation."
 I desperately tried to convey this using a translation app.
@@ -33,7 +39,7 @@ That if I can contribute to OSS and spread technical articles to let engineers a
 
 Then I was introduced to [Sumit Chandel](https://www.linkedin.com/in/sumit-chandel-a273792/), a DevRel based in Japan, and after returning home, I was even invited to an office tour.
 
-![tour](../../../assets/life/reflections-on-2025/office-tour.jpeg)
+<Image src={tourImage} alt="tour" width={500} quality={80} />
 
 I realized that even if you can't speak the language well, you can still connect through emotion.
 After that, my passion didn't cool down, and I kept contributing to [Medium](https://medium.com/@nozomi-koborinai) and the [Awesome list](https://github.com/xavidop/awesome-genkit).
@@ -42,7 +48,7 @@ After that, my passion didn't cool down, and I kept contributing to [Medium](htt
 
 Then I got a direct message from [Xavi Portilla](https://www.linkedin.com/in/xavierportillaedo/), a GDE (Google Developer Experts) in the AI field based in Spain, asking if I wanted to write a book about Genkit together.
 
-![dm](../../../assets/life/reflections-on-2025/dm.png)
+<Image src={dmImage} alt="dm" width={500} quality={80} />
 
 The OSS world is really fascinating. I never expected it to lead to encounters and activities like this.
 
@@ -55,7 +61,7 @@ Especially "the attitude of taking time to deliver something good to people."
 No need to rush—when there are big changes, taking time leads to delivering better results.
 He gave me very straightforward advice on the structure of what I wrote and how to structure it as an English book.
 
-![book-cover](../../../assets/life/reflections-on-2025/book-cover.png)
+<Image src={bookCoverImage} alt="book-cover" width={600} quality={80} />
 
 [Mastering Genkit: Go Edition](https://www.amazon.com/dp/B0G4HKJRPB)
 

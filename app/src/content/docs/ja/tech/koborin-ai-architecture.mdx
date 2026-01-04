@@ -5,9 +5,14 @@ ogImage: /og/koborin-ai-architecture.png
 publishedAt: 2026-01-02
 ---
 
+import { Image } from 'astro:assets';
 import RichLinkCard from '../../../../components/RichLinkCard.astro';
+import gcsImage from '../../../../assets/tech/koborin-ai-architecture/gcs.png';
+import dnsImage from '../../../../assets/tech/koborin-ai-architecture/dns.png';
+import iap1Image from '../../../../assets/tech/koborin-ai-architecture/iap-1.png';
+import iap2Image from '../../../../assets/tech/koborin-ai-architecture/iap-2.png';
 
-![og](/og/koborin-ai-architecture.png)
+<img src="/og/koborin-ai-architecture.png" alt="og" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
 
 このサイト [koborin.ai](https://koborin.ai) は、自身の技術メモや思考を発信するための個人サイト (Technical Garden) です。
 
@@ -122,7 +127,7 @@ State は下記のような役割を持ちます:
 このサイトでは、Pulumi の State を GCS（Google Cloud Storage）に保存しています。
 スタックごとに別ファイルとして保存されるため、以下のような構成になっています。
 
-![gcs](../../../../assets/tech/koborin-ai-architecture/gcs.png)
+<Image src={gcsImage} alt="gcs" width={750} quality={80} />
 
 `shared.json`、`dev.json`、`prod.json` がそれぞれのスタックの State ファイルです。
 
@@ -172,7 +177,7 @@ Artifact Registry や Workload Identity Federation も同様に環境を跨い�
 ドメインはもともと Cloudflare で取得していたので、Cloudflare の A レコードで `koborin.ai` と `dev.koborin.ai` が Google Cloud 側の静的 IP を向くように設定しています。
 ※ DNS は Cloudflare のコンソールから手動で設定しています。
 
-![dns](../../../../assets/tech/koborin-ai-architecture/dns.png)
+<Image src={dnsImage} alt="dns" width={750} quality={80} />
 
 ### 2. Global HTTPS Load Balancer
 
@@ -192,10 +197,15 @@ LB は **URL Map** を使って、ホスト名に応じてトラフィックを�
 <RichLinkCard href="https://cloud.google.com/iap/docs/concepts-overview" title="IAP overview | Identity-Aware Proxy | Google Cloud" description="Identity-Aware Proxy (IAP) lets you establish a central authorization layer for applications accessed by HTTPS." />
 
 私の Google アカウントだけがアクセスを許可されており、それ以外のユーザーはブロックされます。
-| 状態 | イメージ |
-| --- | --- |
-| アクセス時 | ![iap-1](../../../../assets/tech/koborin-ai-architecture/iap-1.png) |
-| アクセス拒否時 | ![iap-2](../../../../assets/tech/koborin-ai-architecture/iap-2.png) |
+<table>
+  <thead>
+    <tr><th>状態</th><th>イメージ</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>アクセス時</td><td><Image src={iap1Image} alt="iap-1" width={400} quality={80} /></td></tr>
+    <tr><td>アクセス拒否時</td><td><Image src={iap2Image} alt="iap-2" width={400} quality={80} /></td></tr>
+  </tbody>
+</table>
 
 さらに、dev 環境のレスポンスには `X-Robots-Tag: noindex, nofollow` ヘッダーを付与しているため、万が一アクセスできたとしても検索エンジンにはインデックスされません。
 
@@ -1016,7 +1026,6 @@ http {
 | `/llms-ja-full.txt` | 日本語記事すべて (Markdown 本文込み) |
 | `/llms-tech.txt`, `/llms-ja-tech.txt` | Tech カテゴリのみ |
 | `/llms-life.txt`, `/llms-ja-life.txt` | Life カテゴリのみ |
-| `/llms-about-me.txt`, `/llms-ja-about-me.txt` | About Me のみ |
 
 ```text
 # koborin.ai
@@ -1035,10 +1044,6 @@ http {
 ### Life
 - https://koborin.ai/llms-life.txt
 - https://koborin.ai/llms-ja-life.txt
-
-### About Me
-- https://koborin.ai/llms-about-me.txt
-- https://koborin.ai/llms-ja-about-me.txt
 ```
 
 ### 個人サイトでの llms.txt

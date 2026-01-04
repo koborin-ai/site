@@ -135,7 +135,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.
    - Social links and sidebar are configured in `astro.config.mjs`.
-7. **Testing**: run `npm run lint && npm run test && npm run typecheck` in `app/` before committing.
+7. **Testing**: run `npm run lint && npm run test && npm run typecheck && npm run check-images` in `app/` before committing.
 8. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
 9. **Docker & Deployment**:
    - The app builds as a static site (`output: "static"` in Astro config) and is served via nginx.
@@ -246,7 +246,7 @@ Examples:
 - Workflows:
   - `plan-infra.yml`: `pulumi preview` for shared/dev/prod stacks (no apply).
   - `release-infra.yml`: authenticated `pulumi up` for shared/dev/prod stacks (manual dispatch or tag based).
-  - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`) on PRs touching `app/`.
+  - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run check-images`) on PRs touching `app/`.
   - `app-release.yml`: builds/pushes the Astro container with Cloud Build and feeds the resulting `image_uri` into Pulumi for dev/prod deploys.
 - Workload Identity:
   - Pool ID: `github-actions-pool`
@@ -367,13 +367,14 @@ All commands must complete successfully with no errors.
 
 ```bash
 cd app
-npm run build      # Astro build
-npm run lint       # ESLint checks
-npm run typecheck  # TypeScript type checking
-npm run test       # Vitest unit tests
+npm run build         # Astro build
+npm run lint          # ESLint checks
+npm run typecheck     # TypeScript type checking
+npm run test          # Vitest unit tests
+npm run check-images  # Image usage validation
 ```
 
-All four commands must complete successfully with no errors.
+All five commands must complete successfully with no errors.
 
 ## Pull Request Checklist
 
@@ -381,7 +382,7 @@ All four commands must complete successfully with no errors.
    - **Directory structure changes** (e.g., `app/src/assets/`, `infra/stacks/`): Update "Repository Layout" sections in both `README.md` and `AGENTS.md`.
    - **New conventions or rules**: Add to `AGENTS.md` under the appropriate section.
 2. For infra: `go build ./... && go vet ./...` in `infra/` - all must pass.
-3. For app: `npm run build && npm run lint && npm run typecheck && npm run test` in `app/` - all must pass.
+3. For app: `npm run build && npm run lint && npm run typecheck && npm run test && npm run check-images` in `app/` - all must pass.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual GCP steps (e.g., DNS imports, current gaps like IAP enablement) in the PR description.
 6. **Label the PR** based on the diff before requesting review:

@@ -4,6 +4,7 @@
  * 
  * Configured as Starlight Header override, receives StarlightRouteData
  */
+import { Image } from 'astro:assets';
 import Search from '@astrojs/starlight/components/Search.astro';
 import MobileMenuToggle from '@astrojs/starlight/components/MobileMenuToggle.astro';
 import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
@@ -20,8 +21,7 @@ const homeHref = isJapanese ? '/ja/' : '/';
 <header class="nav-header">
   <nav class="nav-container">
     <a href={homeHref} class="nav-logo" aria-label="koborin.ai home">
-      <img src={headerLogo.src} alt="koborin.ai" fetchpriority="high" />
-    </a>
+      <Image src={headerLogo} alt="koborin.ai" height={144} quality={85} loading="eager" />
     
     <div class="nav-actions">
       <div class="nav-search">

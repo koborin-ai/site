@@ -5,7 +5,13 @@ ogImage: /og/2025.png
 publishedAt: 2025-12-31
 ---
 
-![](/og/2025.png)
+import { Image } from 'astro:assets';
+import nextImage from '../../../../assets/life/reflections-on-2025/next.png';
+import tourImage from '../../../../assets/life/reflections-on-2025/office-tour.jpeg';
+import dmImage from '../../../../assets/life/reflections-on-2025/dm.png';
+import bookCoverImage from '../../../../assets/life/reflections-on-2025/book-cover.png';
+
+<img src="/og/2025.png" alt="og" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
 
 今年、2025 年は、今まで家に篭っていた私にとって激動の 1 年だった。
 初の海外旅行、ライフステージの変化、海外のエンジニアとの書籍共同執筆、出版、そしてメインのお仕事での昇格。
@@ -25,7 +31,7 @@ publishedAt: 2025-12-31
 それでも、その気持ちは伝わったのかもしれない。そう信じたい。
 Google の AI 開発フレームワーク [Genkit](https://genkit.dev/) に関わり、現在 Gemini CLI プロダクトリーダーを務める [Dmitry Lyalin](https://www.linkedin.com/in/dmitrylyalin/) さんが、私の拙い英語から何かを感じ取ってくれたことが嬉しかった。
 
-![next](../../../../assets/life/reflections-on-2025/next.png)
+<Image src={nextImage} alt="next" width={400} quality={80} />
 
 「私は、開発者体験の向上こそが最大の喜びであり、やりがいなんです」
 翻訳アプリを使いながら必死に伝えた。
@@ -33,7 +39,7 @@ OSS へのコントリビュートや、その技術記事を広めることで�
 
 そしたら日本に滞在する DevRel である [Sumit Chandel](https://www.linkedin.com/in/sumit-chandel-a273792/) さんまで紹介していただき、帰国後にオフィスツアーにまで招待してもらえた。
 
-![tour](../../../../assets/life/reflections-on-2025/office-tour.jpeg)
+<Image src={tourImage} alt="tour" width={500} quality={80} />
 
 言葉がうまく話せなくても、感情で繋がれることもあるんだなと実感した。
 その後も、その熱が冷めることはなく、[Medium](https://medium.com/@nozomi-koborinai) や [Awesome リスト](https://github.com/xavidop/awesome-genkit) への貢献を続けた。
@@ -42,7 +48,7 @@ OSS へのコントリビュートや、その技術記事を広めることで�
 
 そしたら、スペインで活躍している AI 領域の GDE (Google Developer Experts)、[Xavi Portilla](https://www.linkedin.com/in/xavierportillaedo/) さんから、一緒に Genkit に関する本を書かないかというダイレクトメッセージが届いた。
 
-![dm](../../../../assets/life/reflections-on-2025/dm.png)
+<Image src={dmImage} alt="dm" width={500} quality={80} />
 
 OSS の世界は本当に面白い。こんな出会いや活動につながるとは思っていなかった。
 
@@ -55,7 +61,7 @@ Xavi さんからは多くのことを学んだ。
 焦らなくていい、大きな変更がある時こそ時間をかけた方がいいものを届けられるということ。
 私が書いた内容の構成や、英語の本としての構成についても、非常にフラットにアドバイスをくれた。
 
-![book-cover](../../../../assets/life/reflections-on-2025/book-cover.png)
+<Image src={bookCoverImage} alt="book-cover" width={600} quality={80} />
 
 [Mastering Genkit: Go Edition](https://www.amazon.com/dp/B0G4HKJRPB)
 

@@ -5,9 +5,14 @@ ogImage: /og/koborin-ai-architecture.png
 publishedAt: 2026-01-02
 ---
 
+import { Image } from 'astro:assets';
 import RichLinkCard from '../../../components/RichLinkCard.astro';
+import gcsImage from '../../../assets/tech/koborin-ai-architecture/gcs.png';
+import dnsImage from '../../../assets/tech/koborin-ai-architecture/dns.png';
+import iap1Image from '../../../assets/tech/koborin-ai-architecture/iap-1.png';
+import iap2Image from '../../../assets/tech/koborin-ai-architecture/iap-2.png';
 
-![og](/og/koborin-ai-architecture.png)
+<img src="/og/koborin-ai-architecture.png" alt="og" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
 
 This site, [koborin.ai](https://koborin.ai), is my personal site (Technical Garden) for publishing technical notes and thoughts.
 
@@ -124,7 +129,7 @@ State serves the following purposes:
 
 For this site, I store Pulumi's State in GCS (Google Cloud Storage). Since each stack has its own separate file, the structure looks like this:
 
-![gcs](../../../assets/tech/koborin-ai-architecture/gcs.png)
+<Image src={gcsImage} alt="gcs" width={750} quality={80} />
 
 `shared.json`, `dev.json`, and `prod.json` are the State files for each stack.
 
@@ -178,7 +183,7 @@ The domain was originally acquired through Cloudflare, so I configured **Cloudfl
 
 > Note: DNS is configured manually in the Cloudflare console.
 
-![dns](../../../assets/tech/koborin-ai-architecture/dns.png)
+<Image src={dnsImage} alt="dns" width={750} quality={80} />
 
 ### 2. Global HTTPS Load Balancer
 
@@ -199,10 +204,15 @@ When accessing `dev.koborin.ai`, **Identity-Aware Proxy (IAP)** performs authent
 
 Only my Google account is allowed access; all other users are blocked.
 
-| State | Screenshot |
-| --- | --- |
-| `Dev access` | ![iap-1](../../../assets/tech/koborin-ai-architecture/iap-1.png) |
-| `Dev access denied` | ![iap-2](../../../assets/tech/koborin-ai-architecture/iap-2.png) |
+<table>
+  <thead>
+    <tr><th>State</th><th>Screenshot</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Dev access</code></td><td><Image src={iap1Image} alt="iap-1" width={400} quality={80} /></td></tr>
+    <tr><td><code>Dev access denied</code></td><td><Image src={iap2Image} alt="iap-2" width={400} quality={80} /></td></tr>
+  </tbody>
+</table>
 
 Additionally, dev environment responses include the `X-Robots-Tag: noindex, nofollow` header, so even if someone could access it, it wouldn't be indexed by search engines.
 
@@ -1031,7 +1041,6 @@ This site provides LLM context files at `/llms.txt`.
 | `/llms-ja-full.txt` | All Japanese articles (with full Markdown body) |
 | `/llms-tech.txt`, `/llms-ja-tech.txt` | Tech category only |
 | `/llms-life.txt`, `/llms-ja-life.txt` | Life category only |
-| `/llms-about-me.txt`, `/llms-ja-about-me.txt` | About Me only |
 
 Files are generated as static files at build time, so there's zero runtime overhead.
 

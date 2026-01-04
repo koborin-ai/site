@@ -1,0 +1,228 @@
+---
+/**
+ * Webmentions - Display webmentions fetched from webmention.io
+ * 
+ * Fetches mentions client-side to always show latest data.
+ * Groups by type: likes, reposts, replies, mentions.
+ * Fails silently if API is unavailable.
+ */
+
+interface Props {
+  url: string;
+}
+
+const { url } = Astro.props;
+
+// Locale detection for labels
+const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
+const labels = isJapanese
+  ? { likes: 'いいね', reposts: 'リポスト', replies: '返信', mentions: '言及', loading: '読み込み中...', noMentions: 'まだ言及はありません' }
+  : { likes: 'Likes', reposts: 'Reposts', replies: 'Replies', mentions: 'Mentions', loading: 'Loading...', noMentions: 'No mentions yet' };
+---
+
+<div class="webmentions" data-target-url={url}>
+  <div class="webmentions-loading" aria-live="polite">
+    <span class="loading-text">{labels.loading}</span>
+  </div>
+  
+  <div class="webmentions-content" hidden>
+    <div class="webmentions-stats">
+      <span class="wm-stat wm-likes" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span class="wm-count" data-type="likes">0</span>
+        <span class="wm-label">{labels.likes}</span>
+      </span>
+      
+      <span class="wm-stat wm-reposts" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="17 1 21 5 17 9"/>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+          <polyline points="7 23 3 19 7 15"/>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+        </svg>
+        <span class="wm-count" data-type="reposts">0</span>
+        <span class="wm-label">{labels.reposts}</span>
+      </span>
+      
+      <span class="wm-stat wm-replies" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span class="wm-count" data-type="replies">0</span>
+        <span class="wm-label">{labels.replies}</span>
+      </span>
+      
+      <span class="wm-stat wm-mentions" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>
+        </svg>
+        <span class="wm-count" data-type="mentions">0</span>
+        <span class="wm-label">{labels.mentions}</span>
+      </span>
+    </div>
+    
+    <div class="webmentions-empty" hidden>
+      <span>{labels.noMentions}</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  interface WebmentionAuthor {
+    name?: string;
+    photo?: string;
+    url?: string;
+  }
+  
+  interface WebmentionItem {
+    'wm-property': 'like-of' | 'repost-of' | 'in-reply-to' | 'mention-of' | 'bookmark-of';
+    author?: WebmentionAuthor;
+    url?: string;
+    content?: { text?: string };
+    published?: string;
+  }
+  
+  interface WebmentionResponse {
+    children: WebmentionItem[];
+  }
+  
+  async function fetchWebmentions(targetUrl: string): Promise<WebmentionItem[]> {
+    const apiUrl = `https://webmention.io/api/mentions.jf2?target=${encodeURIComponent(targetUrl)}&per-page=100`;
+    
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) return [];
+      
+      const data: WebmentionResponse = await response.json();
+      return data.children || [];
+    } catch {
+      return [];
+    }
+  }
+  
+  function categorizeWebmentions(mentions: WebmentionItem[]) {
+    const counts = { likes: 0, reposts: 0, replies: 0, mentions: 0 };
+    
+    for (const mention of mentions) {
+      switch (mention['wm-property']) {
+        case 'like-of':
+          counts.likes++;
+          break;
+        case 'repost-of':
+          counts.reposts++;
+          break;
+        case 'in-reply-to':
+          counts.replies++;
+          break;
+        case 'mention-of':
+        case 'bookmark-of':
+          counts.mentions++;
+          break;
+      }
+    }
+    
+    return counts;
+  }
+  
+  async function initWebmentions(container: HTMLElement) {
+    const targetUrl = container.getAttribute('data-target-url');
+    if (!targetUrl) return;
+    
+    const loadingEl = container.querySelector('.webmentions-loading');
+    const contentEl = container.querySelector('.webmentions-content');
+    const emptyEl = container.querySelector('.webmentions-empty');
+    
+    const mentions = await fetchWebmentions(targetUrl);
+    const counts = categorizeWebmentions(mentions);
+    const total = counts.likes + counts.reposts + counts.replies + counts.mentions;
+    
+    // Hide loading
+    if (loadingEl) loadingEl.setAttribute('hidden', '');
+    if (contentEl) contentEl.removeAttribute('hidden');
+    
+    if (total === 0) {
+      // Show empty state
+      if (emptyEl) emptyEl.removeAttribute('hidden');
+      return;
+    }
+    
+    // Update counts and show relevant stats
+    const statsTypes: Array<'likes' | 'reposts' | 'replies' | 'mentions'> = ['likes', 'reposts', 'replies', 'mentions'];
+    for (const type of statsTypes) {
+      if (counts[type] > 0) {
+        const statEl = container.querySelector(`.wm-${type}`);
+        const countEl = container.querySelector(`.wm-count[data-type="${type}"]`);
+        
+        if (statEl) statEl.removeAttribute('hidden');
+        if (countEl) countEl.textContent = String(counts[type]);
+      }
+    }
+  }
+  
+  // Initialize all webmention containers
+  document.querySelectorAll('.webmentions').forEach((container) => {
+    if (container instanceof HTMLElement) {
+      initWebmentions(container);
+    }
+  });
+</script>
+
+<style>
+  .webmentions {
+    padding: 1rem 0;
+  }
+  
+  .webmentions-loading {
+    color: var(--sl-color-gray-4);
+    font-size: 0.875rem;
+  }
+  
+  .webmentions-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .wm-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--sl-color-gray-3);
+  }
+  
+  .wm-stat svg {
+    color: var(--sl-color-gray-4);
+  }
+  
+  .wm-likes svg {
+    color: #ea4335;
+  }
+  
+  .wm-reposts svg {
+    color: #34a853;
+  }
+  
+  .wm-replies svg {
+    color: #4285f4;
+  }
+  
+  .wm-count {
+    font-weight: 600;
+    color: var(--sl-color-white);
+  }
+  
+  .wm-label {
+    color: var(--sl-color-gray-4);
+  }
+  
+  .webmentions-empty {
+    color: var(--sl-color-gray-4);
+    font-size: 0.875rem;
+    font-style: italic;
+  }
+</style>
+

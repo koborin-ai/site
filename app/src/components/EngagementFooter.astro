@@ -1,0 +1,79 @@
+---
+/**
+ * EngagementFooter - Container for engagement UI (Share, Webmentions, Giscus)
+ * 
+ * Combines all engagement components into a cohesive footer section.
+ * Displayed only on pages with publishedAt (articles).
+ */
+import ShareButtons from './ShareButtons.astro';
+import Webmentions from './Webmentions.astro';
+import Giscus from './Giscus.astro';
+
+// Get the current page URL
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
+
+// Get page title from frontmatter
+const { entry } = Astro.locals.starlightRoute;
+const title = entry.data.title || 'Untitled';
+---
+
+<aside class="engagement-footer" aria-label="Article engagement">
+  <div class="engagement-section share-section">
+    <ShareButtons url={canonicalUrl} title={title} />
+  </div>
+  
+  <div class="engagement-section webmentions-section">
+    <Webmentions url={canonicalUrl} />
+  </div>
+  
+  <div class="engagement-section giscus-section">
+    <Giscus />
+  </div>
+</aside>
+
+<style>
+  .engagement-footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--sl-color-gray-5);
+  }
+  
+  .engagement-section {
+    margin-bottom: 1.5rem;
+  }
+  
+  .engagement-section:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Share and Webmentions on same row on desktop */
+  @media (min-width: 768px) {
+    .engagement-footer {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 1.5rem;
+    }
+    
+    .share-section {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    
+    .webmentions-section {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    
+    .giscus-section {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-bottom: 0;
+    }
+    
+    .engagement-section {
+      margin-bottom: 0;
+    }
+  }
+</style>
+

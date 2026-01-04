@@ -42,6 +42,8 @@ jobs:
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
       PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
       GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
+      GISCUS_REPO_ID: ${{ secrets.GISCUS_REPO_ID }}
+      GISCUS_CATEGORY_ID: ${{ secrets.GISCUS_CATEGORY_ID }}
 
     steps:
       - name: Checkout
@@ -67,10 +69,22 @@ jobs:
           echo "TARGET_ENV=${TARGET_ENV}" >> "$GITHUB_ENV"
           echo "SERVICE_NAME=${SERVICE_NAME}" >> "$GITHUB_ENV"
 
-      - name: Create .env file for GA4 (prod only)
-        if: ${{ env.TARGET_ENV == 'prod' }}
+      - name: Create .env file
         run: |
-          echo "PUBLIC_GA_MEASUREMENT_ID=${{ env.GA_MEASUREMENT_ID }}" > ./app/.env
+          # Start with empty .env
+          : > ./app/.env
+          
+          # Add GA4 for prod only
+          if [[ "${{ env.TARGET_ENV }}" == "prod" ]]; then
+            echo "PUBLIC_GA_MEASUREMENT_ID=${{ env.GA_MEASUREMENT_ID }}" >> ./app/.env
+          fi
+          
+          # Add Giscus config (both dev and prod)
+          # Note: REPO and CATEGORY are hardcoded in Giscus.astro (public info)
+          if [[ -n "${{ env.GISCUS_REPO_ID }}" ]]; then
+            echo "PUBLIC_GISCUS_REPO_ID=${{ env.GISCUS_REPO_ID }}" >> ./app/.env
+            echo "PUBLIC_GISCUS_CATEGORY_ID=${{ env.GISCUS_CATEGORY_ID }}" >> ./app/.env
+          fi
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2

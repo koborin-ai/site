@@ -1,0 +1,152 @@
+---
+/**
+ * Giscus - GitHub Discussions-based comments and reactions
+ * 
+ * Only renders if PUBLIC_GISCUS_*_ID environment variables are set.
+ * Repo and category are hardcoded (public info).
+ * Syncs theme with Starlight's theme toggle.
+ * Switches lang based on locale (ja/en).
+ */
+
+// Hardcoded values (public info)
+const repo = 'nozomi-koborinai/koborin-ai';
+const category = 'Comments';
+
+// Get IDs from environment variables (set via GitHub Secrets in CI)
+const repoId = import.meta.env.PUBLIC_GISCUS_REPO_ID;
+const categoryId = import.meta.env.PUBLIC_GISCUS_CATEGORY_ID;
+
+// Check if Giscus is configured (only IDs need to be set)
+const isConfigured = repoId && categoryId;
+
+// Locale detection
+const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
+const lang = isJapanese ? 'ja' : 'en';
+
+// Labels
+const labels = isJapanese
+  ? { comments: 'コメント' }
+  : { comments: 'Comments' };
+---
+
+{isConfigured && (
+  <div class="giscus-container">
+    <h3 class="giscus-title">{labels.comments}</h3>
+    
+    <div 
+      class="giscus"
+      data-repo={repo}
+      data-repo-id={repoId}
+      data-category={category}
+      data-category-id={categoryId}
+      data-mapping="pathname"
+      data-strict="0"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="top"
+      data-theme="dark"
+      data-lang={lang}
+      data-loading="lazy"
+    ></div>
+    
+    <script is:inline src="https://giscus.app/client.js" 
+      data-repo={repo}
+      data-repo-id={repoId}
+      data-category={category}
+      data-category-id={categoryId}
+      data-mapping="pathname"
+      data-strict="0"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="top"
+      data-theme="dark"
+      data-lang={lang}
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async
+    ></script>
+  </div>
+)}
+
+<script>
+  // Sync Giscus theme with Starlight theme
+  function getGiscusTheme(): 'light' | 'dark' {
+    const theme = document.documentElement.dataset.theme;
+    return theme === 'light' ? 'light' : 'dark';
+  }
+  
+  function setGiscusTheme(theme: 'light' | 'dark') {
+    const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+    if (!iframe?.contentWindow) return;
+    
+    iframe.contentWindow.postMessage(
+      { giscus: { setConfig: { theme } } },
+      'https://giscus.app'
+    );
+  }
+  
+  // Listen for Giscus ready message
+  let giscusReady = false;
+  window.addEventListener('message', (event) => {
+    if (event.origin !== 'https://giscus.app') return;
+    if (typeof event.data !== 'object' || !event.data.giscus) return;
+    
+    if (!giscusReady) {
+      giscusReady = true;
+      // Giscus is ready, now set the theme
+      setGiscusTheme(getGiscusTheme());
+    }
+  });
+  
+  // Initial theme sync (wait for iframe to load, then wait for load event)
+  function initGiscusTheme() {
+    const observer = new MutationObserver((_mutations, obs) => {
+      const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+      if (iframe) {
+        // Listen for iframe load event
+        iframe.addEventListener('load', () => {
+          // Wait a bit more after load for Giscus to initialize
+          setTimeout(() => {
+            setGiscusTheme(getGiscusTheme());
+          }, 500);
+        });
+        obs.disconnect();
+      }
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+  
+  // Watch for theme changes
+  const themeObserver = new MutationObserver(() => {
+    setGiscusTheme(getGiscusTheme());
+  });
+  
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  });
+  
+  // Initialize
+  initGiscusTheme();
+</script>
+
+<style>
+  .giscus-container {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--sl-color-gray-5);
+  }
+  
+  .giscus-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--sl-color-white);
+    margin: 0 0 1rem 0;
+  }
+  
+  .giscus {
+    min-height: 150px;
+  }
+</style>
+

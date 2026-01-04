@@ -25,6 +25,10 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 <link rel="alternate" type="application/rss+xml" title="koborin.ai" href="/rss.xml" />
 <link rel="alternate" type="application/rss+xml" title="koborin.ai (日本語)" href="/ja/rss.xml" />
 
+<!-- Webmention endpoints -->
+<link rel="webmention" href="https://webmention.io/koborin.ai/webmention" />
+<link rel="pingback" href="https://webmention.io/koborin.ai/xmlrpc" />
+
 {gaMeasurementId && (
   <>
     <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}></script>

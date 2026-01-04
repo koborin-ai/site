@@ -1,0 +1,160 @@
+---
+/**
+ * ShareButtons - Social sharing links for articles
+ * 
+ * Generates share URLs for X, Bluesky, Mastodon, Hatena Bookmark, and copy link.
+ * Uses progressive enhancement for clipboard functionality.
+ */
+
+interface Props {
+  url: string;
+  title: string;
+}
+
+const { url, title } = Astro.props;
+
+// Locale detection for labels
+const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
+const labels = isJapanese
+  ? { share: 'シェア', copied: 'コピーしました！', copyLink: 'リンクをコピー' }
+  : { share: 'Share', copied: 'Copied!', copyLink: 'Copy link' };
+
+// Encode for URL parameters
+const encodedUrl = encodeURIComponent(url);
+const encodedTitle = encodeURIComponent(title);
+
+// Share URLs
+const shareUrls = {
+  x: `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+  bluesky: `https://bsky.app/intent/compose?text=${encodedTitle}%20${encodedUrl}`,
+  mastodon: `https://mastodonshare.com/?url=${encodedUrl}&text=${encodedTitle}`,
+  hatena: `https://b.hatena.ne.jp/entry/s/${url.replace(/^https?:\/\//, '')}`,
+};
+---
+
+<div class="share-buttons">
+  <span class="share-label">{labels.share}</span>
+  
+  <div class="share-links">
+    <!-- X (Twitter) -->
+    <a href={shareUrls.x} target="_blank" rel="noopener noreferrer" class="share-link" aria-label="Share on X">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+      </svg>
+    </a>
+    
+    <!-- Bluesky -->
+    <a href={shareUrls.bluesky} target="_blank" rel="noopener noreferrer" class="share-link" aria-label="Share on Bluesky">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 600 530" fill="currentColor" aria-hidden="true">
+        <path d="m135.72 44.03c66.496 49.921 138.02 151.14 164.28 205.46 26.262-54.316 97.782-155.54 164.28-205.46 47.98-36.021 125.72-63.892 125.72 24.795 0 17.712-10.155 148.79-16.111 170.07-20.703 73.984-96.144 92.854-163.25 81.433 117.3 19.964 147.14 86.092 82.697 152.22-122.39 125.59-175.91-31.511-189.63-71.766-2.514-7.3797-3.6904-10.832-3.7077-7.8964-0.0174-2.9357-1.1937 0.51669-3.7077 7.8964-13.714 40.255-67.233 197.36-189.63 71.766-64.444-66.128-34.605-132.26 82.697-152.22-67.108 11.421-142.55-7.4491-163.25-81.433-5.9562-21.282-16.111-152.36-16.111-170.07 0-88.687 77.742-60.816 125.72-24.795z"/>
+      </svg>
+    </a>
+    
+    <!-- Mastodon -->
+    <a href={shareUrls.mastodon} target="_blank" rel="noopener noreferrer" class="share-link" aria-label="Share on Mastodon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.668 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z"/>
+      </svg>
+    </a>
+    
+    <!-- Hatena Bookmark -->
+    <a href={shareUrls.hatena} target="_blank" rel="noopener noreferrer" class="share-link" aria-label="Share on Hatena Bookmark">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M20.47 0C22.42 0 24 1.58 24 3.53v16.94c0 1.95-1.58 3.53-3.53 3.53H3.53C1.58 24 0 22.42 0 20.47V3.53C0 1.58 1.58 0 3.53 0h16.94zm-3.705 14.47c-.78 0-1.41.63-1.41 1.41s.63 1.414 1.41 1.414 1.41-.634 1.41-1.414-.63-1.41-1.41-1.41zm.05-9.47h-2.36v6.74c.79.067 1.57.33 2.36.79V5zm-5.4 0H7.81v1.77h1.51v5.67c0 2.15 1.1 3.56 3.44 3.56.96 0 1.77-.192 2.36-.672v-1.99c-.45.39-1.11.58-1.77.58-.9 0-1.41-.39-1.99-.97V6.77h3.09V5z"/>
+      </svg>
+    </a>
+    
+    <!-- Copy Link -->
+    <button class="share-link copy-link-btn" aria-label={labels.copyLink} data-url={url} data-copied-text={labels.copied}>
+      <svg class="icon-link" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+      <svg class="icon-check" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  // Progressive enhancement for copy link functionality
+  document.querySelectorAll('.copy-link-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const url = btn.getAttribute('data-url');
+      if (!url) return;
+      
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.classList.add('copied');
+        
+        setTimeout(() => {
+          btn.classList.remove('copied');
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy URL:', err);
+      }
+    });
+  });
+</script>
+
+<style>
+  .share-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  
+  .share-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--sl-color-gray-3);
+  }
+  
+  .share-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .share-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--sl-color-gray-3);
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: var(--radius-md, 0.5rem);
+    transition: all 150ms ease;
+    cursor: pointer;
+  }
+  
+  .share-link:hover {
+    color: var(--sl-color-white);
+    background: var(--sl-color-gray-5);
+    border-color: var(--sl-color-gray-4);
+  }
+  
+  /* Copy button states */
+  .copy-link-btn .icon-check {
+    display: none;
+    color: var(--color-success, #34a853);
+  }
+  
+  .copy-link-btn.copied .icon-link {
+    display: none;
+  }
+  
+  .copy-link-btn.copied .icon-check {
+    display: block;
+  }
+  
+  .copy-link-btn.copied {
+    background: rgba(52, 168, 83, 0.15);
+    border-color: var(--color-success, #34a853);
+  }
+</style>
+

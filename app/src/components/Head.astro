@@ -1,5 +1,6 @@
 ---
 import Default from '@astrojs/starlight/components/Head.astro';
+import ImageZoom from './ImageZoom.astro';
 
 const { entry } = Astro.locals.starlightRoute;
 const ogImage = (entry.data as { ogImage?: string })?.ogImage;
@@ -40,4 +41,6 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
     </script>
   </>
 )}
+
+<ImageZoom />
 

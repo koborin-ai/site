@@ -1,0 +1,85 @@
+---
+// ImageZoom component - Enables click-to-zoom for images and Mermaid diagrams
+---
+
+<script>
+  import mediumZoom from 'medium-zoom';
+
+  function initZoom() {
+    // Initialize medium-zoom for content images
+    const zoom = mediumZoom('.sl-markdown-content img:not(.medium-zoom-image)', {
+      margin: 24,
+      background: 'rgba(0, 0, 0, 0.9)',
+      scrollOffset: 0,
+    });
+
+    // Custom zoom for Mermaid SVG diagrams
+    initMermaidZoom();
+  }
+
+  function initMermaidZoom() {
+    const mermaidSvgs = document.querySelectorAll('.sl-markdown-content svg:not(.sl-anchor-icon svg)');
+    
+    mermaidSvgs.forEach((svg) => {
+      // Skip if already processed
+      if (svg.hasAttribute('data-zoomable')) return;
+      svg.setAttribute('data-zoomable', 'true');
+      
+      svg.addEventListener('click', () => {
+        openSvgModal(svg as SVGElement);
+      });
+    });
+  }
+
+  function openSvgModal(svg: SVGElement) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'svg-zoom-overlay';
+    
+    // Clone SVG for modal display
+    const svgClone = svg.cloneNode(true) as SVGElement;
+    svgClone.classList.add('svg-zoom-content');
+    svgClone.removeAttribute('data-zoomable');
+    
+    overlay.appendChild(svgClone);
+    document.body.appendChild(overlay);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+    
+    // Animate in
+    requestAnimationFrame(() => {
+      overlay.classList.add('active');
+    });
+    
+    // Close on click or ESC
+    const close = () => {
+      overlay.classList.remove('active');
+      setTimeout(() => {
+        overlay.remove();
+        document.body.style.overflow = '';
+      }, 200);
+    };
+    
+    overlay.addEventListener('click', close);
+    
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        close();
+        document.removeEventListener('keydown', handleKeydown);
+      }
+    };
+    document.addEventListener('keydown', handleKeydown);
+  }
+
+  // Initialize on page load
+  document.addEventListener('astro:page-load', initZoom);
+  
+  // Also run on initial load for non-SPA navigation
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initZoom);
+  } else {
+    initZoom();
+  }
+</script>
+

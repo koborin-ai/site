@@ -23,6 +23,7 @@
     "@astrojs/starlight": "^0.37.1",
     "@vercel/og": "^0.8.5",
     "astro": "^5.16.0",
+    "medium-zoom": "^1.1.0",
     "playwright": "^1.57.0",
     "react": "^19.2.0",
     "rehype-mermaid": "^3.0.0"

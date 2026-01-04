@@ -373,6 +373,7 @@
 .sl-markdown-content img:not(:where(.not-content *)) {
   max-width: min(100%, 800px);
   margin-inline: auto;
+  border-radius: var(--radius-lg, 0.75rem);
 }
 
 /* Right sidebar (On this page) */
@@ -641,3 +642,81 @@
 [data-theme="light"] .giscus-container {
   border-top-color: var(--sl-color-gray-5);
 }
+
+/* ==========================================================================
+   Image Zoom - Click to expand images and Mermaid diagrams
+   ========================================================================== */
+
+/* Zoomable images - cursor hint */
+.sl-markdown-content img:not(.medium-zoom-image) {
+  cursor: zoom-in;
+}
+
+/* Mermaid SVG - zoomable cursor hint */
+.sl-markdown-content svg[data-zoomable] {
+  cursor: zoom-in;
+  transition: transform var(--transition-fast);
+}
+
+.sl-markdown-content svg[data-zoomable]:hover {
+  transform: scale(1.01);
+}
+
+/* SVG zoom modal overlay */
+.svg-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  background: rgba(0, 0, 0, 0);
+  cursor: zoom-out;
+  opacity: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  transition: background 200ms ease, opacity 200ms ease;
+}
+
+.svg-zoom-overlay.active {
+  background: rgba(0, 0, 0, 0.9);
+  opacity: 1;
+}
+
+/* SVG content in modal */
+.svg-zoom-content {
+  max-width: 95vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  transform: scale(0.9);
+  transition: transform 200ms ease;
+  background: var(--color-bg-primary, #ffffff);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+[data-theme="dark"] .svg-zoom-content {
+  background: var(--color-bg-secondary, #12121a);
+}
+
+.svg-zoom-overlay.active .svg-zoom-content {
+  transform: scale(1);
+}
+
+/* Mobile adjustments for SVG zoom */
+@media (max-width: 768px) {
+  .svg-zoom-overlay {
+    padding: var(--space-md);
+  }
+  
+  .svg-zoom-content {
+    max-width: 100vw;
+    max-height: 85vh;
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+  }
+}
+

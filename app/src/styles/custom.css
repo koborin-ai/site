@@ -574,7 +574,6 @@
   gap: 0.5rem;
   margin-top: 0.5rem;
   font-size: 0.875rem;
-  color: var(--sl-color-gray-3);
 }
 
 .article-dates .date-item {
@@ -583,16 +582,30 @@
   gap: 0.25rem;
 }
 
+/* Dark mode: lighter colors for visibility on dark background */
 .article-dates .date-label {
-  color: var(--sl-color-gray-4);
+  color: #a1a1aa;
 }
 
 .article-dates .date-separator {
-  color: var(--sl-color-gray-5);
+  color: #71717a;
 }
 
 .article-dates time {
-  color: var(--sl-color-gray-2);
+  color: #d4d4d8;
+}
+
+/* Light mode: darker colors for readability */
+[data-theme="light"] .article-dates .date-label {
+  color: #52525b;
+}
+
+[data-theme="light"] .article-dates .date-separator {
+  color: #a1a1aa;
+}
+
+[data-theme="light"] .article-dates time {
+  color: #3f3f46;
 }
 
 /* ==========================================================================

@@ -78,6 +78,7 @@ const lang = locale === 'ja' ? 'ja' : 'en';
 )}
 
 <style>
+  /* Layout styles only - colors are in custom.css for theme support */
   .article-dates {
     display: flex;
     flex-wrap: wrap;
@@ -85,24 +86,11 @@ const lang = locale === 'ja' ? 'ja' : 'en';
     gap: 0.5rem;
     margin-top: 0.5rem;
     font-size: 0.875rem;
-    color: var(--sl-color-gray-3);
   }
 
   .date-item {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-  }
-
-  .date-label {
-    color: var(--sl-color-gray-4);
-  }
-
-  .date-separator {
-    color: var(--sl-color-gray-5);
-  }
-
-  time {
-    color: var(--sl-color-gray-2);
   }
 </style>

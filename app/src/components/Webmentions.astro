@@ -172,7 +172,7 @@ const labels = isJapanese
 
 <style>
   .webmentions {
-    padding: 1rem 0;
+    padding: 0;
   }
   
   .webmentions-loading {
@@ -210,9 +210,15 @@ const labels = isJapanese
     color: #4285f4;
   }
   
+  /* Dark mode (default): white text */
   .wm-count {
     font-weight: 600;
-    color: var(--sl-color-white);
+    color: #ffffff;
+  }
+
+  /* Light mode: black text for visibility */
+  :global([data-theme="light"]) .wm-count {
+    color: #18181b;
   }
   
   .wm-label {

@@ -23,8 +23,8 @@ app/dist/
 # Infrastructure (not needed for app build)
 infra/
 
-# Documentation
-docs/
+# Documentation (root only, not app/src/content/docs/)
+/docs/
 
 # GitHub workflows
 .github/

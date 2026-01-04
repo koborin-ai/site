@@ -1,0 +1,34 @@
+---
+/**
+ * Custom Footer component that extends Starlight's default Footer.
+ * 
+ * - For pages with `publishedAt` (articles): Shows EngagementFooter + default Footer
+ * - For other pages: Shows only default Footer
+ */
+import Default from '@astrojs/starlight/components/Footer.astro';
+import EngagementFooter from './EngagementFooter.astro';
+
+interface FrontmatterData {
+  publishedAt?: Date;
+  engagement?: boolean;
+}
+
+const { entry } = Astro.locals.starlightRoute;
+const frontmatter = entry.data as FrontmatterData;
+
+// Show engagement UI if:
+// 1. Page has publishedAt (is an article), OR
+// 2. Page explicitly sets engagement: true
+// Hide if engagement: false is explicitly set
+const hasPublishedAt = !!frontmatter.publishedAt;
+const explicitEngagement = frontmatter.engagement;
+
+const showEngagement = explicitEngagement === true || (explicitEngagement !== false && hasPublishedAt);
+---
+
+{showEngagement && <EngagementFooter />}
+
+<Default {...Astro.props}>
+  <slot />
+</Default>
+

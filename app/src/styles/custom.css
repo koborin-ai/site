@@ -605,3 +605,39 @@
   color: var(--sl-color-accent) !important;
   fill: currentcolor !important;
 }
+
+/* ==========================================================================
+   Engagement Footer - Share, Webmentions, Giscus
+   ========================================================================== */
+
+/* Light mode adjustments for engagement UI */
+[data-theme="light"] .engagement-footer {
+  border-top-color: var(--sl-color-gray-5);
+}
+
+[data-theme="light"] .share-label {
+  color: var(--sl-color-gray-3);
+}
+
+[data-theme="light"] .share-link {
+  color: var(--sl-color-gray-3);
+  background: var(--sl-color-gray-6);
+  border-color: var(--sl-color-gray-5);
+}
+
+[data-theme="light"] .share-link:hover {
+  color: var(--sl-color-black);
+  background: var(--sl-color-gray-5);
+}
+
+[data-theme="light"] .wm-count {
+  color: var(--sl-color-black);
+}
+
+[data-theme="light"] .giscus-title {
+  color: var(--sl-color-black);
+}
+
+[data-theme="light"] .giscus-container {
+  border-top-color: var(--sl-color-gray-5);
+}

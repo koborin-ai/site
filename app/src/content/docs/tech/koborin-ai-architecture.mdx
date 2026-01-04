@@ -16,11 +16,13 @@ import iap2Image from '../../../assets/tech/koborin-ai-architecture/iap-2.png';
 
 This site, [koborin.ai](https://koborin.ai), is my personal site (Technical Garden) for publishing technical notes and thoughts.
 
-This article introduces the overall architecture of the site.
+This article introduces the overall architecture and design philosophy of the site. I'll explain why I chose this setup from both infrastructure and frontend perspectives.
 
 ---
 
 ## Overall Architecture
+
+Let's start with a bird's-eye view of the site's structure.
 
 ```mermaid
 ---
@@ -93,7 +95,16 @@ flowchart LR
     PULUMI_SA -.-> PULUMI_STATE
 ```
 
-Here are the key points:
+### Terminology
+
+| Abbreviation | Full Name | Description |
+| --- | --- | --- |
+| LB | Load Balancer | Distributes requests to appropriate backends |
+| NEG | Network Endpoint Group | Connection point to Cloud Run services |
+| WIF | Workload Identity Federation | Authentication from GitHub Actions to Google Cloud |
+| IAP | Identity-Aware Proxy | Access control using Google accounts |
+
+### Key Points
 
 - **Request path**: DNS (Cloudflare) → Global HTTPS LB → Cloud Run (dev/prod)
 - **Dev environment is protected by IAP** + `X-Robots-Tag: noindex` to prevent search engine indexing
@@ -101,9 +112,13 @@ Here are the key points:
 
 ---
 
-## Single Google Cloud Project + 3 Stacks
+## Design Philosophy
 
-### Why I Use a Single GCP Project
+Here's what I considered when building this site, from both infrastructure and frontend perspectives.
+
+### Infrastructure Design
+
+#### Single Google Cloud Project + 3 Stacks
 
 In healthcare or financial systems, strict requirements often apply, making it common to **separate GCP projects entirely**:
 
@@ -117,7 +132,7 @@ However, **as a developer, I still want a dev/prod distinction**. Testing direct
 
 So I chose to **keep costs and operational burden low by using a single GCP project**, while separating Cloud Run services into dev and prod.
 
-### What is State in IaC?
+#### State in IaC
 
 IaC tools like Pulumi and Terraform manage a **State** file to track "which resources are currently deployed."
 
@@ -133,7 +148,7 @@ For this site, I store Pulumi's State in GCS (Google Cloud Storage). Since each 
 
 `shared.json`, `dev.json`, and `prod.json` are the State files for each stack.
 
-### Responsibilities of shared / dev / prod
+#### Responsibilities of shared / dev / prod
 
 | Stack | Responsibility |
 | --- | --- |
@@ -145,11 +160,7 @@ Here, `shared` functions less as an "environment" and more as a **State boundary
 
 Since the LB handles host-based routing for both environments, it's naturally a shared resource. The same applies to Artifact Registry and Workload Identity Federation, which are used across environments.
 
----
-
-## IaC Framework Migration: CDKTF → Pulumi Go
-
-### Initial Choice: CDK for Terraform
+#### IaC Framework Migration: CDKTF → Pulumi Go
 
 The IaC for this site was originally written in **CDK for Terraform (CDKTF)**.
 
@@ -161,8 +172,6 @@ However, CDKTF was **sunset / archived** on December 10, 2025.
 
 > Terraform CDK (CDKTF) will sunset and be archived on December 10, 2025. HashiCorp, an IBM Company, will no longer maintain or develop the project after that date.
 
-### Migration to Pulumi Go
-
 I chose **Pulumi Go** as the migration target. Here's why:
 
 1. **I like Go**: I've been writing more Go lately, and it's nice to unify infrastructure code in Go as well
@@ -171,11 +180,46 @@ I chose **Pulumi Go** as the migration target. Here's why:
 
 <RichLinkCard href="https://www.pulumi.com/docs/iac/languages-sdks/go/" title="Go | Pulumi Docs" description="Pulumi supports writing your infrastructure as code using Go." />
 
+### Frontend Design
+
+#### No Need for Custom API / DB
+
+For a personal site, I considered the following requirements:
+
+- Write and publish technical notes and thoughts in Markdown (MDX)
+- No need for dynamic data fetching or user authentication
+- Keep operations as simple as possible
+
+With these requirements, **there's no need for a custom API server or database**. Static content generation is sufficient.
+
+#### GitHub as CMS
+
+As an engineer myself, I don't need a CMS (like WordPress or Notion). **Managing MDX files directly in a GitHub repository** is enough.
+
+- Article creation and editing are version-controlled with Git
+- PR-based reviews and previews are possible
+- CI/CD automatically builds and deploys
+
+This eliminates the need for a separate database, reducing operational costs.
+
+#### Adopting Starlight
+
+When selecting a framework, I referenced the site structure of [genkit.dev](https://genkit.dev). genkit.dev uses Starlight and provides a polished UX as a documentation site.
+
+<RichLinkCard href="https://starlight.astro.build/" title="Starlight" description="Build beautiful, accessible, high-performance documentation websites with Astro." />
+
+Reasons for choosing Starlight:
+
+- **Astro-based**: Specialized for static site generation with excellent performance
+- **Multilingual support**: Can provide content in both English and Japanese
+- **Documentation-focused features**: Sidebar, search, dark mode included by default
+- **MDX support**: Can use React components within Markdown
+
 ---
 
 ## Request Path
 
-Let me explain the flow when a user accesses the site.
+From here, I'll explain the flow when a user accesses the site.
 
 ### 1. DNS Resolution (Cloudflare)
 
@@ -218,821 +262,13 @@ Additionally, dev environment responses include the `X-Robots-Tag: noindex, nofo
 
 ---
 
-## Stack-Based Infrastructure Implementation
+## Site Features
 
-Let me explain which files create what resources.
+Here, I'll introduce the features this site provides.
 
-<RichLinkCard href="https://github.com/nozomi-koborinai/koborin-ai/tree/main/infra" title="koborin-ai/infra at main · nozomi-koborinai/koborin-ai" description="Pulumi Go stacks for koborin.ai infrastructure (shared, dev, prod)." />
-
-### infra/stacks/shared.go
-
-Defines common resources:
-
-- **API Enablement**: Cloud Run, Compute, IAM, Artifact Registry, IAP, etc.
-- **Artifact Registry**: Container image storage
-- **Global Static IP**: PREMIUM tier static IP
-- **Managed SSL Certificate**: Multi-domain certificate for `koborin.ai` and `dev.koborin.ai`
-- **URL Map**: Host-based routing
-- **Backend Services**: dev (IAP enabled) and prod (no IAP)
-- **Serverless NEG**: Connection to Cloud Run services (references service name as string to avoid circular dependencies)
-- **Workload Identity Federation**: For authentication from GitHub Actions
-
-<details>
-<summary>View `shared.go` code</summary>
-
-```go
-package stacks
-
-import (
-	"strings"
-
-	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/artifactregistry"
-	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/compute"
-	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/iam"
-	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/iap"
-	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/projects"
-	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/serviceaccount"
-	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
-	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
-)
-
-// Shared creates resources for the shared stack.
-func Shared(ctx *pulumi.Context) error {
-	cfg := config.New(ctx, "")
-	gcpCfg := config.New(ctx, "gcp")
-
-	projectID := gcpCfg.Require("project")
-	projectNumber := cfg.Require("projectNumber")
-	iapUser := cfg.Require("iapUser")
-	oauthClientID := cfg.Require("oauthClientId")
-	oauthClientSecret := cfg.RequireSecret("oauthClientSecret")
-
-	// ========================================
-	// Enable Required APIs
-	// ========================================
-
-	requiredAPIs := []string{
-		"run.googleapis.com",
-		"compute.googleapis.com",
-		"iam.googleapis.com",
-		"cloudresourcemanager.googleapis.com",
-		"artifactregistry.googleapis.com",
-		"cloudbuild.googleapis.com",
-		"iap.googleapis.com",
-		"monitoring.googleapis.com",
-		"logging.googleapis.com",
-		"certificatemanager.googleapis.com",
-	}
-
-	var apiServices []pulumi.Resource
-	for _, api := range requiredAPIs {
-		// Logical name: api-<api-with-dots-replaced-by-dashes>
-		// e.g., "api-run-googleapis-com"
-		logicalName := "api-" + strings.ReplaceAll(api, ".", "-")
-		svc, err := projects.NewService(ctx, logicalName, &projects.ServiceArgs{
-			Project:                  pulumi.String(projectID),
-			Service:                  pulumi.String(api),
-			DisableDependentServices: pulumi.Bool(false),
-			DisableOnDestroy:         pulumi.Bool(false),
-		})
-		if err != nil {
-			return err
-		}
-		apiServices = append(apiServices, svc)
-	}
-
-	// ========================================
-	// Artifact Registry
-	// ========================================
-
-	_, err := artifactregistry.NewRepository(ctx, "artifact-registry", &artifactregistry.RepositoryArgs{
-		Project:      pulumi.String(projectID),
-		Location:     pulumi.String("asia-northeast1"),
-		RepositoryId: pulumi.String("koborin-ai-web"),
-		Description:  pulumi.String("Container images for koborin.ai web application (dev/prod)"),
-		Format:       pulumi.String("DOCKER"),
-		DockerConfig: &artifactregistry.RepositoryDockerConfigArgs{
-			ImmutableTags: pulumi.Bool(true),
-		},
-	}, pulumi.DependsOn(apiServices))
-	if err != nil {
-		return err
-	}
-
-	// ========================================
-	// Global Static IP
-	// ========================================
-
-	staticIP, err := compute.NewGlobalAddress(ctx, "global-ip", &compute.GlobalAddressArgs{
-		Project:     pulumi.String(projectID),
-		Name:        pulumi.String("koborin-ai-global-ip"),
-		AddressType: pulumi.String("EXTERNAL"),
-		IpVersion:   pulumi.String("IPV4"),
-		Description: pulumi.String("Static IP for koborin.ai HTTPS load balancer"),
-	}, pulumi.DependsOn(apiServices))
-	if err != nil {
-		return err
-	}
-
-	// ========================================
-	// Dev Environment Backend
-	// ========================================
-
-	// Serverless NEG for dev Cloud Run
-	devNEG, err := compute.NewRegionNetworkEndpointGroup(ctx, "dev-neg", &compute.RegionNetworkEndpointGroupArgs{
-		Project:             pulumi.String(projectID),
-		Region:              pulumi.String("asia-northeast1"),
-		Name:                pulumi.String("koborin-ai-dev-neg"),
-		NetworkEndpointType: pulumi.String("SERVERLESS"),
-		CloudRun: &compute.RegionNetworkEndpointGroupCloudRunArgs{
-			Service: pulumi.String("koborin-ai-web-dev"),
-		},
-	}, pulumi.DependsOn(apiServices))
-	if err != nil {
-		return err
-	}
-
-	// Backend Service for dev (with IAP)
-	devBackend, err := compute.NewBackendService(ctx, "dev-backend", &compute.BackendServiceArgs{
-		Project:              pulumi.String(projectID),
-		Name:                 pulumi.String("koborin-ai-dev-backend"),
-		Protocol:             pulumi.String("HTTP"),
-		LoadBalancingScheme:  pulumi.String("EXTERNAL_MANAGED"),
-		TimeoutSec:           pulumi.Int(30),
-		CustomResponseHeaders: pulumi.StringArray{pulumi.String("X-Robots-Tag: noindex, nofollow")},
-		Backends: compute.BackendServiceBackendArray{
-			&compute.BackendServiceBackendArgs{
-				Group:          devNEG.ID(),
-				BalancingMode:  pulumi.String("UTILIZATION"),
-				CapacityScaler: pulumi.Float64(1.0),
-			},
-		},
-		Iap: &compute.BackendServiceIapArgs{
-			Enabled:            pulumi.Bool(true),
-			Oauth2ClientId:     pulumi.String(oauthClientID),
-			Oauth2ClientSecret: oauthClientSecret,
-		},
-	}, pulumi.DependsOn([]pulumi.Resource{devNEG}))
-	if err != nil {
-		return err
-	}
-
-	// IAP access control for dev
-	_, err = iap.NewWebBackendServiceIamBinding(ctx, "dev-iap-access", &iap.WebBackendServiceIamBindingArgs{
-		Project:           pulumi.String(projectID),
-		WebBackendService: devBackend.Name,
-		Role:              pulumi.String("roles/iap.httpsResourceAccessor"),
-		Members:           pulumi.StringArray{pulumi.Sprintf("user:%s", iapUser)},
-	}, pulumi.DependsOn([]pulumi.Resource{devBackend}))
-	if err != nil {
-		return err
-	}
-
-	// ========================================
-	// Prod Environment Backend
-	// ========================================
-
-	// Serverless NEG for prod Cloud Run
-	prodNEG, err := compute.NewRegionNetworkEndpointGroup(ctx, "prod-neg", &compute.RegionNetworkEndpointGroupArgs{
-		Project:             pulumi.String(projectID),
-		Region:              pulumi.String("asia-northeast1"),
-		Name:                pulumi.String("koborin-ai-prod-neg"),
-		NetworkEndpointType: pulumi.String("SERVERLESS"),
-		CloudRun: &compute.RegionNetworkEndpointGroupCloudRunArgs{
-			Service: pulumi.String("koborin-ai-web-prod"),
-		},
-	}, pulumi.DependsOn(apiServices))
-	if err != nil {
-		return err
-	}
-
-	// Backend Service for prod (no IAP)
-	prodBackend, err := compute.NewBackendService(ctx, "prod-backend", &compute.BackendServiceArgs{
-		Project:             pulumi.String(projectID),
-		Name:                pulumi.String("koborin-ai-prod-backend"),
-		Protocol:            pulumi.String("HTTP"),
-		LoadBalancingScheme: pulumi.String("EXTERNAL_MANAGED"),
-		TimeoutSec:          pulumi.Int(30),
-		Backends: compute.BackendServiceBackendArray{
-			&compute.BackendServiceBackendArgs{
-				Group:          prodNEG.ID(),
-				BalancingMode:  pulumi.String("UTILIZATION"),
-				CapacityScaler: pulumi.Float64(1.0),
-			},
-		},
-		LogConfig: &compute.BackendServiceLogConfigArgs{
-			Enable:     pulumi.Bool(true),
-			SampleRate: pulumi.Float64(1.0),
-		},
-	}, pulumi.DependsOn([]pulumi.Resource{prodNEG}))
-	if err != nil {
-		return err
-	}
-
-	// ========================================
-	// HTTPS Load Balancer
-	// ========================================
-
-	// Managed SSL Certificate (multi-domain)
-	sslCert, err := compute.NewManagedSslCertificate(ctx, "managed-cert", &compute.ManagedSslCertificateArgs{
-		Project: pulumi.String(projectID),
-		Name:    pulumi.String("koborin-ai-cert"),
-		Managed: &compute.ManagedSslCertificateManagedArgs{
-			Domains: pulumi.StringArray{
-				pulumi.String("koborin.ai"),
-				pulumi.String("dev.koborin.ai"),
-			},
-		},
-	}, pulumi.DependsOn(apiServices))
-	if err != nil {
-		return err
-	}
-
-	// URL Map (host-based routing)
-	urlMap, err := compute.NewURLMap(ctx, "url-map", &compute.URLMapArgs{
-		Project:        pulumi.String(projectID),
-		Name:           pulumi.String("koborin-ai-url-map"),
-		Description:    pulumi.String("Routes traffic to dev/prod backends based on host header"),
-		DefaultService: prodBackend.ID(),
-		HostRules: compute.URLMapHostRuleArray{
-			&compute.URLMapHostRuleArgs{
-				Hosts:       pulumi.StringArray{pulumi.String("koborin.ai")},
-				PathMatcher: pulumi.String("prod-matcher"),
-			},
-			&compute.URLMapHostRuleArgs{
-				Hosts:       pulumi.StringArray{pulumi.String("dev.koborin.ai")},
-				PathMatcher: pulumi.String("dev-matcher"),
-			},
-		},
-		PathMatchers: compute.URLMapPathMatcherArray{
-			&compute.URLMapPathMatcherArgs{
-				Name:           pulumi.String("prod-matcher"),
-				DefaultService: prodBackend.ID(),
-			},
-			&compute.URLMapPathMatcherArgs{
-				Name:           pulumi.String("dev-matcher"),
-				DefaultService: devBackend.ID(),
-			},
-		},
-	}, pulumi.DependsOn([]pulumi.Resource{devBackend, prodBackend}))
-	if err != nil {
-		return err
-	}
-
-	// Target HTTPS Proxy
-	httpsProxy, err := compute.NewTargetHttpsProxy(ctx, "https-proxy", &compute.TargetHttpsProxyArgs{
-		Project: pulumi.String(projectID),
-		Name:    pulumi.String("koborin-ai-https-proxy"),
-		UrlMap:  urlMap.ID(),
-		SslCertificates: pulumi.StringArray{
-			sslCert.ID(),
-		},
-	}, pulumi.DependsOn([]pulumi.Resource{urlMap, sslCert}))
-	if err != nil {
-		return err
-	}
-
-	// Global Forwarding Rule
-	_, err = compute.NewGlobalForwardingRule(ctx, "forwarding-rule", &compute.GlobalForwardingRuleArgs{
-		Project:             pulumi.String(projectID),
-		Name:                pulumi.String("koborin-ai-forwarding-rule"),
-		Target:              httpsProxy.ID(),
-		PortRange:           pulumi.String("443"),
-		IpProtocol:          pulumi.String("TCP"),
-		LoadBalancingScheme: pulumi.String("EXTERNAL_MANAGED"),
-		NetworkTier:         pulumi.String("PREMIUM"),
-		IpAddress:           staticIP.Address,
-	}, pulumi.DependsOn([]pulumi.Resource{httpsProxy, staticIP}))
-	if err != nil {
-		return err
-	}
-
-	// ========================================
-	// Workload Identity (for GitHub Actions)
-	// ========================================
-
-	// Workload Identity Pool
-	workloadIdentityPool, err := iam.NewWorkloadIdentityPool(ctx, "github-actions-pool", &iam.WorkloadIdentityPoolArgs{
-		Project:                pulumi.String(projectID),
-		WorkloadIdentityPoolId: pulumi.String("github-actions-pool"),
-		DisplayName:            pulumi.String("github-actions-pool"),
-		Description:            pulumi.String("Workload Identity Pool for GitHub Actions workflows"),
-	})
-	if err != nil {
-		return err
-	}
-
-	// Workload Identity Provider (GitHub OIDC)
-	_, err = iam.NewWorkloadIdentityPoolProvider(ctx, "github-provider", &iam.WorkloadIdentityPoolProviderArgs{
-		Project:                        pulumi.String(projectID),
-		WorkloadIdentityPoolId:         workloadIdentityPool.WorkloadIdentityPoolId,
-		WorkloadIdentityPoolProviderId: pulumi.String("actions-firebase-provider"),
-		DisplayName:                    pulumi.String("github-actions-provider"),
-		Description:                    pulumi.String("GitHub Actions OIDC provider"),
-		// Only allow workflows from repositories owned by nozomi-koborinai
-		AttributeCondition: pulumi.String(`assertion.repository_owner == "nozomi-koborinai"`),
-		AttributeMapping: pulumi.StringMap{
-			"google.subject":             pulumi.String("assertion.repository"),
-			"attribute.repository_owner": pulumi.String("assertion.repository_owner"),
-		},
-		Oidc: &iam.WorkloadIdentityPoolProviderOidcArgs{
-			IssuerUri: pulumi.String("https://token.actions.githubusercontent.com"),
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	// Service Account for Pulumi deployment
-	githubActionsSA, err := serviceaccount.NewAccount(ctx, "github-actions-sa", &serviceaccount.AccountArgs{
-		Project:     pulumi.String(projectID),
-		AccountId:   pulumi.String("github-actions-service"),
-		DisplayName: pulumi.String("github-actions-service"),
-		Description: pulumi.String("Service account for GitHub Actions to deploy via Pulumi"),
-	})
-	if err != nil {
-		return err
-	}
-
-	// Allow Workload Identity Pool to impersonate the service account
-	_, err = serviceaccount.NewIAMMember(ctx, "github-wif-user", &serviceaccount.IAMMemberArgs{
-		ServiceAccountId: githubActionsSA.Name,
-		Role:             pulumi.String("roles/iam.workloadIdentityUser"),
-		Member: pulumi.Sprintf(
-			"principal://iam.googleapis.com/projects/%s/locations/global/workloadIdentityPools/%s/subject/nozomi-koborinai/koborin-ai",
-			projectNumber,
-			workloadIdentityPool.WorkloadIdentityPoolId,
-		),
-	})
-	if err != nil {
-		return err
-	}
-
-	// Grant necessary roles to the deployer service account
-	deployerRoles := []string{
-		"roles/artifactregistry.admin",
-		"roles/cloudbuild.builds.builder",
-		"roles/cloudbuild.builds.viewer",
-		"roles/run.admin",
-		"roles/compute.admin",
-		"roles/iap.admin",
-		"roles/logging.admin",
-		"roles/logging.viewer",
-		"roles/monitoring.admin",
-		"roles/resourcemanager.projectIamAdmin",
-		"roles/iam.serviceAccountUser",
-		"roles/iam.serviceAccountAdmin",
-		"roles/iam.workloadIdentityPoolAdmin",
-		"roles/serviceusage.serviceUsageAdmin",
-		"roles/storage.objectAdmin",
-	}
-
-	for _, role := range deployerRoles {
-		// Logical name: deployer-sa-<role-with-dots-and-slashes-replaced-by-dashes>
-		// e.g., "deployer-sa-roles-artifactregistry-admin"
-		logicalName := "deployer-sa-" + strings.ReplaceAll(strings.ReplaceAll(role, ".", "-"), "/", "-")
-		_, err = projects.NewIAMMember(ctx, logicalName, &projects.IAMMemberArgs{
-			Project: pulumi.String(projectID),
-			Role:    pulumi.String(role),
-			Member:  pulumi.Sprintf("serviceAccount:%s", githubActionsSA.Email),
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-```
-
-</details>
-
-### infra/stacks/dev.go
-
-Defines the dev environment Cloud Run service:
-
-- **Cloud Run Service**: `koborin-ai-web-dev`
-- **IAM**: Grants `roles/run.invoker` to IAP Service Agent
-
-<details>
-<summary>View `dev.go` code</summary>
-
-```go
-package stacks
-
-import (
-	"fmt"
-
-	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/cloudrunv2"
-	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
-	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
-)
-
-// Dev creates Cloud Run service for the development environment.
-// The service is referenced by the Serverless NEG created in shared stack.
-func Dev(ctx *pulumi.Context) error {
-	cfg := config.New(ctx, "")
-	gcpCfg := config.New(ctx, "gcp")
-
-	projectID := gcpCfg.Require("project")
-	projectNumber := cfg.Require("projectNumber")
-	imageURI := cfg.Require("imageUri")
-
-	// Cloud Run V2 Service for dev
-	webDev, err := cloudrunv2.NewService(ctx, "web-dev", &cloudrunv2.ServiceArgs{
-		Project:  pulumi.String(projectID),
-		Location: pulumi.String("asia-northeast1"),
-		Name:     pulumi.String("koborin-ai-web-dev"),
-		Ingress:  pulumi.String("INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"),
-		Template: &cloudrunv2.ServiceTemplateArgs{
-			ExecutionEnvironment: pulumi.String("EXECUTION_ENVIRONMENT_GEN2"),
-			Containers: cloudrunv2.ServiceTemplateContainerArray{
-				&cloudrunv2.ServiceTemplateContainerArgs{
-					Image: pulumi.String(imageURI),
-					Envs: cloudrunv2.ServiceTemplateContainerEnvArray{
-						// NODE_ENV: server-side environment detection
-						&cloudrunv2.ServiceTemplateContainerEnvArgs{
-							Name:  pulumi.String("NODE_ENV"),
-							Value: pulumi.String("development"),
-						},
-						// NEXT_PUBLIC_ENV: client-side environment detection (legacy, kept for compatibility)
-						&cloudrunv2.ServiceTemplateContainerEnvArgs{
-							Name:  pulumi.String("NEXT_PUBLIC_ENV"),
-							Value: pulumi.String("dev"),
-						},
-					},
-				},
-			},
-			Scaling: &cloudrunv2.ServiceTemplateScalingArgs{
-				MinInstanceCount: pulumi.Int(0),
-				MaxInstanceCount: pulumi.Int(1),
-			},
-		},
-		Traffics: cloudrunv2.ServiceTrafficArray{
-			&cloudrunv2.ServiceTrafficArgs{
-				Type:    pulumi.String("TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"),
-				Percent: pulumi.Int(100),
-			},
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	// Grant Cloud Run Invoker role to IAP Service Agent
-	// IAP uses this service account to invoke the Cloud Run service after authentication
-	_, err = cloudrunv2.NewServiceIamMember(ctx, "web-dev-iap-invoker", &cloudrunv2.ServiceIamMemberArgs{
-		Project:  pulumi.String(projectID),
-		Location: pulumi.String("asia-northeast1"),
-		Name:     webDev.Name,
-		Role:     pulumi.String("roles/run.invoker"),
-		Member:   pulumi.String(fmt.Sprintf("serviceAccount:service-%s@gcp-sa-iap.iam.gserviceaccount.com", projectNumber)),
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-```
-
-</details>
-
-### infra/stacks/prod.go
-
-Defines the prod environment Cloud Run service:
-
-- **Cloud Run Service**: `koborin-ai-web-prod`
-- **IAM**: Grants `roles/run.invoker` to `allUsers` (public access)
-
-<details>
-<summary>View `prod.go` code</summary>
-
-```go
-package stacks
-
-import (
-	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/cloudrunv2"
-	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
-	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
-)
-
-// Prod creates Cloud Run service for the production environment.
-// The service is referenced by the Serverless NEG created in shared stack.
-func Prod(ctx *pulumi.Context) error {
-	cfg := config.New(ctx, "")
-	gcpCfg := config.New(ctx, "gcp")
-
-	projectID := gcpCfg.Require("project")
-	imageURI := cfg.Require("imageUri")
-
-	// Cloud Run V2 Service for prod
-	webProd, err := cloudrunv2.NewService(ctx, "web-prod", &cloudrunv2.ServiceArgs{
-		Project:  pulumi.String(projectID),
-		Location: pulumi.String("asia-northeast1"),
-		Name:     pulumi.String("koborin-ai-web-prod"),
-		Ingress:  pulumi.String("INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"),
-		Template: &cloudrunv2.ServiceTemplateArgs{
-			ExecutionEnvironment: pulumi.String("EXECUTION_ENVIRONMENT_GEN2"),
-			Containers: cloudrunv2.ServiceTemplateContainerArray{
-				&cloudrunv2.ServiceTemplateContainerArgs{
-					Image: pulumi.String(imageURI),
-					Envs: cloudrunv2.ServiceTemplateContainerEnvArray{
-						// NODE_ENV: server-side environment detection
-						&cloudrunv2.ServiceTemplateContainerEnvArgs{
-							Name:  pulumi.String("NODE_ENV"),
-							Value: pulumi.String("production"),
-						},
-						// NEXT_PUBLIC_ENV: client-side environment detection (legacy, kept for compatibility)
-						&cloudrunv2.ServiceTemplateContainerEnvArgs{
-							Name:  pulumi.String("NEXT_PUBLIC_ENV"),
-							Value: pulumi.String("prod"),
-						},
-					},
-				},
-			},
-			Scaling: &cloudrunv2.ServiceTemplateScalingArgs{
-				MinInstanceCount: pulumi.Int(0),
-				MaxInstanceCount: pulumi.Int(10),
-			},
-		},
-		Traffics: cloudrunv2.ServiceTrafficArray{
-			&cloudrunv2.ServiceTrafficArgs{
-				Type:    pulumi.String("TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"),
-				Percent: pulumi.Int(100),
-			},
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	// Grant public access to prod Cloud Run service
-	_, err = cloudrunv2.NewServiceIamMember(ctx, "web-prod-invoker", &cloudrunv2.ServiceIamMemberArgs{
-		Project:  pulumi.String(projectID),
-		Location: pulumi.String("asia-northeast1"),
-		Name:     webProd.Name,
-		Role:     pulumi.String("roles/run.invoker"),
-		Member:   pulumi.String("allUsers"),
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-```
-
-</details>
-
----
-
-## App Implementation
-
-Let me explain the application layer structure.
-
-<RichLinkCard href="https://github.com/nozomi-koborinai/koborin-ai/tree/main/app" title="koborin-ai/app at main · nozomi-koborinai/koborin-ai" description="Astro + Starlight application for koborin.ai." />
-
-### app/astro.config.mjs
-
-Configuration file for Astro and Starlight:
-
-- **Multilingual support**: `root` (English) and `ja` (Japanese)
-- **Sidebar**: Imported from `app/src/sidebar.ts`
-- **Custom components**: Head, ThemeSelect, Header, Sidebar, Pagination
-
-<details>
-<summary>View `astro.config.mjs` code</summary>
-
-```javascript
-import { defineConfig } from "astro/config";
-import starlight from "@astrojs/starlight";
-import rehypeMermaid from "rehype-mermaid";
-import { sidebar } from "./src/sidebar.ts";
-
-export default defineConfig({
-  site: "https://koborin.ai",
-  srcDir: "src",
-  // Static output mode (default) - all pages are pre-rendered at build time
-  markdown: {
-    rehypePlugins: [
-      [
-        rehypeMermaid,
-        {
-          strategy: "inline-svg",
-          mermaidConfig: { theme: "neutral" },
-        },
-      ],
-    ],
-  },
-  integrations: [
-    starlight({
-      title: "koborin.ai",
-      defaultLocale: "root",
-      locales: {
-        root: { label: "English", lang: "en" },
-        ja: { label: "日本語" },
-      },
-      description: "Personal site + technical garden",
-      favicon: "/favicon.png",
-      logo: {
-        src: "./src/assets/_shared/koborin-ai-header.webp",
-        replacesTitle: true,
-      },
-      social: [
-        {
-          label: "GitHub",
-          icon: "github",
-          href: "https://github.com/nozomi-koborinai",
-        },
-        {
-          label: "LinkedIn",
-          icon: "linkedin",
-          href: "https://linkedin.com/in/nozomi-koborinai",
-        },
-        {
-          label: "X",
-          icon: "x.com",
-          href: "https://x.com/fender_kn",
-        },
-        {
-          label: "Medium",
-          icon: "document",
-          href: "https://medium.com/@nozomi-koborinai",
-        },
-      ],
-      sidebar,
-      customCss: [
-        './src/styles/custom.css',
-      ],
-      components: {
-        Head: './src/components/Head.astro',
-        ThemeSelect: './src/components/ThemeSelect.astro',
-        Header: './src/components/SiteHeader.astro',
-        Sidebar: './src/components/Sidebar.astro',
-        Pagination: './src/components/Pagination.astro',
-      },
-      head: [
-        // OG image is handled dynamically in Head.astro component
-        {
-          tag: 'meta',
-          attrs: {
-            name: 'twitter:card',
-            content: 'summary_large_image',
-          },
-        },
-      ],
-      // Disable Starlight's default 404 page to allow custom pages
-      disable404Route: true,
-    }),
-  ],
-});
-```
-
-</details>
-
-### app/Dockerfile
-
-Multi-stage build that serves the static site via nginx:
-
-1. **Build stage**: Node.js for OG image optimization → `astro build`
-2. **Runtime stage**: Serve static files with `nginx:alpine`
-
-<details>
-<summary>View `Dockerfile` code</summary>
-
-```dockerfile
-# Build stage
-FROM node:22-slim AS build
-WORKDIR /app
-
-# Install Playwright dependencies for Chromium and image optimization tools
-RUN apt-get update && apt-get install -y \
-    libnss3 \
-    libnspr4 \
-    libdbus-1-3 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libgbm1 \
-    libasound2 \
-    libpango-1.0-0 \
-    libcairo2 \
-    webp \
-    imagemagick \
-    file \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY package*.json ./
-RUN npm install
-RUN npx playwright install chromium
-COPY . .
-
-# Optimize OG images before build
-RUN ./scripts/optimize-og-images.sh
-
-RUN npm run build
-
-# Runtime stage - serve static files with nginx
-FROM nginx:alpine AS runtime
-COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 8080
-```
-
-</details>
-
-### app/nginx/nginx.conf
-
-nginx configuration:
-
-- **Port 8080**: To meet Cloud Run requirements
-- **UTF-8 charset**: To prevent character encoding issues in `llms.txt`
-- **Cache settings**: `/_astro/` for 1 year, OG images for 7 days
-- **WebP auto-serving**: Resolves requests to `/og/*.png` to `.webp`
-
-<details>
-<summary>View `nginx.conf` code</summary>
-
-```nginx
-worker_processes  1;
-
-events {
-  worker_connections  1024;
-}
-
-http {
-  server {
-    listen 8080;
-    server_name   _;
-
-    root   /usr/share/nginx/html;
-    index  index.html index.htm;
-    include /etc/nginx/mime.types;
-
-    # UTF-8 charset for text files (fixes llms.txt encoding)
-    charset utf-8;
-    charset_types text/plain text/css application/json;
-
-    gzip on;
-    gzip_min_length 1000;
-    gzip_proxied expired no-cache no-store private auth;
-    gzip_types text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/xml+rss text/javascript;
-
-    error_page 404 /404.html;
-    location = /404.html {
-            root /usr/share/nginx/html;
-            internal;
-    }
-
-    # Static assets with content hash - cache for 1 year
-    location /_astro/ {
-            expires 1y;
-            add_header Cache-Control "public, immutable";
-    }
-
-    # OG images - serve WebP version when PNG/JPEG is requested
-    location ~ ^/og/(.+)\.(png|jpe?g)$ {
-            set $webp_file /og/$1.webp;
-            try_files $webp_file $uri =404;
-            expires 7d;
-            add_header Cache-Control "public";
-    }
-
-    # OG images - WebP files directly
-    location /og/ {
-            expires 7d;
-            add_header Cache-Control "public";
-    }
-
-    # Favicon - cache for 1 month
-    location = /favicon.png {
-            expires 30d;
-            add_header Cache-Control "public";
-    }
-
-    location / {
-            try_files $uri $uri/index.html =404;
-    }
-  }
-}
-```
-
-</details>
-
----
-
-## llms.txt
+### llms.txt
 
 This site provides LLM context files at `/llms.txt`.
-
-### Output Files
 
 | File | Content |
 | --- | --- |
@@ -1042,15 +278,62 @@ This site provides LLM context files at `/llms.txt`.
 | `/llms-tech.txt`, `/llms-ja-tech.txt` | Tech category only |
 | `/llms-life.txt`, `/llms-ja-life.txt` | Life category only |
 
-Files are generated as static files at build time, so there's zero runtime overhead.
+```text
+# koborin.ai
+> Personal site + technical garden.
 
-### llms.txt for a Personal Site
+## Full (with article content)
+- https://koborin.ai/llms-full.txt
+- https://koborin.ai/llms-ja-full.txt
+
+## By Category
+
+### Tech
+- https://koborin.ai/llms-tech.txt
+- https://koborin.ai/llms-ja-tech.txt
+
+### Life
+- https://koborin.ai/llms-life.txt
+- https://koborin.ai/llms-ja-life.txt
+```
 
 OSS projects often publish `llms.txt` to help LLMs understand "what the project is and how to use it." This is incredibly useful, providing context for LLMs to correctly work with libraries and frameworks.
 
 For a personal site, there's a different use case. As my thoughts and technical notes accumulate over time (at least that's the plan... I hope to keep it up...), it might be useful in the future to have an LLM reference "what I was thinking in the past."
 
 With that possibility in mind, I publish the full article body in this format.
+
+### Engagement Features
+
+Article pages include features to encourage engagement with readers.
+
+#### Giscus (Comments)
+
+[Giscus](https://giscus.app) is a comment system that uses GitHub Discussions as its backend.
+
+- Readers can log in with their GitHub account to comment and react
+- Comments are stored in GitHub Discussions, so no separate database is needed
+- Automatically syncs with the site's dark/light mode
+
+#### Webmention (External Mentions)
+
+[Webmention](https://webmention.io) is a W3C standard IndieWeb protocol.
+
+- Detects links to this article from other sites and blogs
+- Aggregates "likes" and "reposts" from SNS like Mastodon
+- Displays mention counts via an external service
+
+#### Share Buttons
+
+Buttons are provided for sharing articles on social media:
+
+- X (formerly Twitter)
+- Bluesky
+- Mastodon
+- Hatena Bookmark
+- Copy Link
+
+These features are displayed **only on article pages with `publishedAt` in the frontmatter**. They don't appear on index pages or general documentation pages.
 
 ---
 
@@ -1139,7 +422,7 @@ That project also separated `app` and `infra`, with a rule that CI would run whe
 
 The problem was that even for changes that clearly had no UI impact (like adding model fields or refactoring), full E2E tests would run every time. **The lesson learned: test scope should be adjusted based on the nature of the change.**
 
-#### Current Approach: Label-Based Branching
+#### Label-Based Branching
 
 Based on this experience, koborin.ai uses PR labels to branch CI execution steps.
 
@@ -1189,13 +472,702 @@ GitHub Actions uses OIDC tokens to authenticate with Google Cloud and impersonat
 
 ---
 
+## Implementation Details
+
+From here, I'll introduce specific implementation details. Those interested can expand the accordions to see the code.
+
+### Stack-Based Infrastructure Implementation
+
+<RichLinkCard href="https://github.com/nozomi-koborinai/koborin-ai/tree/main/infra" title="koborin-ai/infra at main · nozomi-koborinai/koborin-ai" description="Pulumi Go stacks for koborin.ai infrastructure (shared, dev, prod)." />
+
+#### infra/stacks/shared.go
+
+Defines common resources:
+
+- **API Enablement**: Cloud Run, Compute, IAM, Artifact Registry, IAP, etc.
+- **Artifact Registry**: Container image storage
+- **Global Static IP**: PREMIUM tier static IP
+- **Managed SSL Certificate**: Multi-domain certificate for `koborin.ai` and `dev.koborin.ai`
+- **URL Map**: Host-based routing
+- **Backend Services**: dev (IAP enabled) and prod (no IAP)
+- **Serverless NEG**: Connection to Cloud Run services (references service name as string to avoid circular dependencies)
+- **Workload Identity Federation**: For authentication from GitHub Actions
+
+<details>
+<summary>View `shared.go` code</summary>
+
+```go
+package stacks
+
+import (
+	"strings"
+
+	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/artifactregistry"
+	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/compute"
+	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/iam"
+	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/iap"
+	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/projects"
+	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/serviceaccount"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
+)
+
+func Shared(ctx *pulumi.Context) error {
+	cfg := config.New(ctx, "")
+	gcpCfg := config.New(ctx, "gcp")
+
+	projectID := gcpCfg.Require("project")
+	projectNumber := cfg.Require("projectNumber")
+	iapUser := cfg.Require("iapUser")
+	oauthClientID := cfg.Require("oauthClientId")
+	oauthClientSecret := cfg.RequireSecret("oauthClientSecret")
+
+	// Enable Required APIs
+	requiredAPIs := []string{
+		"run.googleapis.com",
+		"compute.googleapis.com",
+		"iam.googleapis.com",
+		"cloudresourcemanager.googleapis.com",
+		"artifactregistry.googleapis.com",
+		"cloudbuild.googleapis.com",
+		"iap.googleapis.com",
+		"monitoring.googleapis.com",
+		"logging.googleapis.com",
+		"certificatemanager.googleapis.com",
+	}
+
+	var apiServices []pulumi.Resource
+	for _, api := range requiredAPIs {
+		logicalName := "api-" + strings.ReplaceAll(api, ".", "-")
+		svc, err := projects.NewService(ctx, logicalName, &projects.ServiceArgs{
+			Project:                  pulumi.String(projectID),
+			Service:                  pulumi.String(api),
+			DisableDependentServices: pulumi.Bool(false),
+			DisableOnDestroy:         pulumi.Bool(false),
+		})
+		if err != nil {
+			return err
+		}
+		apiServices = append(apiServices, svc)
+	}
+
+	// Artifact Registry
+	_, err := artifactregistry.NewRepository(ctx, "artifact-registry", &artifactregistry.RepositoryArgs{
+		Project:      pulumi.String(projectID),
+		Location:     pulumi.String("asia-northeast1"),
+		RepositoryId: pulumi.String("koborin-ai-web"),
+		Description:  pulumi.String("Container images for koborin.ai web application (dev/prod)"),
+		Format:       pulumi.String("DOCKER"),
+		DockerConfig: &artifactregistry.RepositoryDockerConfigArgs{
+			ImmutableTags: pulumi.Bool(true),
+		},
+	}, pulumi.DependsOn(apiServices))
+	if err != nil {
+		return err
+	}
+
+	// Global Static IP
+	staticIP, err := compute.NewGlobalAddress(ctx, "global-ip", &compute.GlobalAddressArgs{
+		Project:     pulumi.String(projectID),
+		Name:        pulumi.String("koborin-ai-global-ip"),
+		AddressType: pulumi.String("EXTERNAL"),
+		IpVersion:   pulumi.String("IPV4"),
+		Description: pulumi.String("Static IP for koborin.ai HTTPS load balancer"),
+	}, pulumi.DependsOn(apiServices))
+	if err != nil {
+		return err
+	}
+
+	// Dev Environment Backend
+	devNEG, err := compute.NewRegionNetworkEndpointGroup(ctx, "dev-neg", &compute.RegionNetworkEndpointGroupArgs{
+		Project:             pulumi.String(projectID),
+		Region:              pulumi.String("asia-northeast1"),
+		Name:                pulumi.String("koborin-ai-dev-neg"),
+		NetworkEndpointType: pulumi.String("SERVERLESS"),
+		CloudRun: &compute.RegionNetworkEndpointGroupCloudRunArgs{
+			Service: pulumi.String("koborin-ai-web-dev"),
+		},
+	}, pulumi.DependsOn(apiServices))
+	if err != nil {
+		return err
+	}
+
+	devBackend, err := compute.NewBackendService(ctx, "dev-backend", &compute.BackendServiceArgs{
+		Project:              pulumi.String(projectID),
+		Name:                 pulumi.String("koborin-ai-dev-backend"),
+		Protocol:             pulumi.String("HTTP"),
+		LoadBalancingScheme:  pulumi.String("EXTERNAL_MANAGED"),
+		TimeoutSec:           pulumi.Int(30),
+		CustomResponseHeaders: pulumi.StringArray{pulumi.String("X-Robots-Tag: noindex, nofollow")},
+		Backends: compute.BackendServiceBackendArray{
+			&compute.BackendServiceBackendArgs{
+				Group:          devNEG.ID(),
+				BalancingMode:  pulumi.String("UTILIZATION"),
+				CapacityScaler: pulumi.Float64(1.0),
+			},
+		},
+		Iap: &compute.BackendServiceIapArgs{
+			Enabled:            pulumi.Bool(true),
+			Oauth2ClientId:     pulumi.String(oauthClientID),
+			Oauth2ClientSecret: oauthClientSecret,
+		},
+	}, pulumi.DependsOn([]pulumi.Resource{devNEG}))
+	if err != nil {
+		return err
+	}
+
+	_, err = iap.NewWebBackendServiceIamBinding(ctx, "dev-iap-access", &iap.WebBackendServiceIamBindingArgs{
+		Project:           pulumi.String(projectID),
+		WebBackendService: devBackend.Name,
+		Role:              pulumi.String("roles/iap.httpsResourceAccessor"),
+		Members:           pulumi.StringArray{pulumi.Sprintf("user:%s", iapUser)},
+	}, pulumi.DependsOn([]pulumi.Resource{devBackend}))
+	if err != nil {
+		return err
+	}
+
+	// Prod Environment Backend
+	prodNEG, err := compute.NewRegionNetworkEndpointGroup(ctx, "prod-neg", &compute.RegionNetworkEndpointGroupArgs{
+		Project:             pulumi.String(projectID),
+		Region:              pulumi.String("asia-northeast1"),
+		Name:                pulumi.String("koborin-ai-prod-neg"),
+		NetworkEndpointType: pulumi.String("SERVERLESS"),
+		CloudRun: &compute.RegionNetworkEndpointGroupCloudRunArgs{
+			Service: pulumi.String("koborin-ai-web-prod"),
+		},
+	}, pulumi.DependsOn(apiServices))
+	if err != nil {
+		return err
+	}
+
+	prodBackend, err := compute.NewBackendService(ctx, "prod-backend", &compute.BackendServiceArgs{
+		Project:             pulumi.String(projectID),
+		Name:                pulumi.String("koborin-ai-prod-backend"),
+		Protocol:            pulumi.String("HTTP"),
+		LoadBalancingScheme: pulumi.String("EXTERNAL_MANAGED"),
+		TimeoutSec:          pulumi.Int(30),
+		Backends: compute.BackendServiceBackendArray{
+			&compute.BackendServiceBackendArgs{
+				Group:          prodNEG.ID(),
+				BalancingMode:  pulumi.String("UTILIZATION"),
+				CapacityScaler: pulumi.Float64(1.0),
+			},
+		},
+		LogConfig: &compute.BackendServiceLogConfigArgs{
+			Enable:     pulumi.Bool(true),
+			SampleRate: pulumi.Float64(1.0),
+		},
+	}, pulumi.DependsOn([]pulumi.Resource{prodNEG}))
+	if err != nil {
+		return err
+	}
+
+	// HTTPS Load Balancer
+	sslCert, err := compute.NewManagedSslCertificate(ctx, "managed-cert", &compute.ManagedSslCertificateArgs{
+		Project: pulumi.String(projectID),
+		Name:    pulumi.String("koborin-ai-cert"),
+		Managed: &compute.ManagedSslCertificateManagedArgs{
+			Domains: pulumi.StringArray{
+				pulumi.String("koborin.ai"),
+				pulumi.String("dev.koborin.ai"),
+			},
+		},
+	}, pulumi.DependsOn(apiServices))
+	if err != nil {
+		return err
+	}
+
+	urlMap, err := compute.NewURLMap(ctx, "url-map", &compute.URLMapArgs{
+		Project:        pulumi.String(projectID),
+		Name:           pulumi.String("koborin-ai-url-map"),
+		Description:    pulumi.String("Routes traffic to dev/prod backends based on host header"),
+		DefaultService: prodBackend.ID(),
+		HostRules: compute.URLMapHostRuleArray{
+			&compute.URLMapHostRuleArgs{
+				Hosts:       pulumi.StringArray{pulumi.String("koborin.ai")},
+				PathMatcher: pulumi.String("prod-matcher"),
+			},
+			&compute.URLMapHostRuleArgs{
+				Hosts:       pulumi.StringArray{pulumi.String("dev.koborin.ai")},
+				PathMatcher: pulumi.String("dev-matcher"),
+			},
+		},
+		PathMatchers: compute.URLMapPathMatcherArray{
+			&compute.URLMapPathMatcherArgs{
+				Name:           pulumi.String("prod-matcher"),
+				DefaultService: prodBackend.ID(),
+			},
+			&compute.URLMapPathMatcherArgs{
+				Name:           pulumi.String("dev-matcher"),
+				DefaultService: devBackend.ID(),
+			},
+		},
+	}, pulumi.DependsOn([]pulumi.Resource{devBackend, prodBackend}))
+	if err != nil {
+		return err
+	}
+
+	httpsProxy, err := compute.NewTargetHttpsProxy(ctx, "https-proxy", &compute.TargetHttpsProxyArgs{
+		Project: pulumi.String(projectID),
+		Name:    pulumi.String("koborin-ai-https-proxy"),
+		UrlMap:  urlMap.ID(),
+		SslCertificates: pulumi.StringArray{
+			sslCert.ID(),
+		},
+	}, pulumi.DependsOn([]pulumi.Resource{urlMap, sslCert}))
+	if err != nil {
+		return err
+	}
+
+	_, err = compute.NewGlobalForwardingRule(ctx, "forwarding-rule", &compute.GlobalForwardingRuleArgs{
+		Project:             pulumi.String(projectID),
+		Name:                pulumi.String("koborin-ai-forwarding-rule"),
+		Target:              httpsProxy.ID(),
+		PortRange:           pulumi.String("443"),
+		IpProtocol:          pulumi.String("TCP"),
+		LoadBalancingScheme: pulumi.String("EXTERNAL_MANAGED"),
+		NetworkTier:         pulumi.String("PREMIUM"),
+		IpAddress:           staticIP.Address,
+	}, pulumi.DependsOn([]pulumi.Resource{httpsProxy, staticIP}))
+	if err != nil {
+		return err
+	}
+
+	// Workload Identity (for GitHub Actions)
+	workloadIdentityPool, err := iam.NewWorkloadIdentityPool(ctx, "github-actions-pool", &iam.WorkloadIdentityPoolArgs{
+		Project:                pulumi.String(projectID),
+		WorkloadIdentityPoolId: pulumi.String("github-actions-pool"),
+		DisplayName:            pulumi.String("github-actions-pool"),
+		Description:            pulumi.String("Workload Identity Pool for GitHub Actions workflows"),
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = iam.NewWorkloadIdentityPoolProvider(ctx, "github-provider", &iam.WorkloadIdentityPoolProviderArgs{
+		Project:                        pulumi.String(projectID),
+		WorkloadIdentityPoolId:         workloadIdentityPool.WorkloadIdentityPoolId,
+		WorkloadIdentityPoolProviderId: pulumi.String("actions-firebase-provider"),
+		DisplayName:                    pulumi.String("github-actions-provider"),
+		Description:                    pulumi.String("GitHub Actions OIDC provider"),
+		AttributeCondition: pulumi.String(`assertion.repository_owner == "nozomi-koborinai"`),
+		AttributeMapping: pulumi.StringMap{
+			"google.subject":             pulumi.String("assertion.repository"),
+			"attribute.repository_owner": pulumi.String("assertion.repository_owner"),
+		},
+		Oidc: &iam.WorkloadIdentityPoolProviderOidcArgs{
+			IssuerUri: pulumi.String("https://token.actions.githubusercontent.com"),
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	githubActionsSA, err := serviceaccount.NewAccount(ctx, "github-actions-sa", &serviceaccount.AccountArgs{
+		Project:     pulumi.String(projectID),
+		AccountId:   pulumi.String("github-actions-service"),
+		DisplayName: pulumi.String("github-actions-service"),
+		Description: pulumi.String("Service account for GitHub Actions to deploy via Pulumi"),
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = serviceaccount.NewIAMMember(ctx, "github-wif-user", &serviceaccount.IAMMemberArgs{
+		ServiceAccountId: githubActionsSA.Name,
+		Role:             pulumi.String("roles/iam.workloadIdentityUser"),
+		Member: pulumi.Sprintf(
+			"principal://iam.googleapis.com/projects/%s/locations/global/workloadIdentityPools/%s/subject/nozomi-koborinai/koborin-ai",
+			projectNumber,
+			workloadIdentityPool.WorkloadIdentityPoolId,
+		),
+	})
+	if err != nil {
+		return err
+	}
+
+	deployerRoles := []string{
+		"roles/artifactregistry.admin",
+		"roles/cloudbuild.builds.builder",
+		"roles/cloudbuild.builds.viewer",
+		"roles/run.admin",
+		"roles/compute.admin",
+		"roles/iap.admin",
+		"roles/logging.admin",
+		"roles/logging.viewer",
+		"roles/monitoring.admin",
+		"roles/resourcemanager.projectIamAdmin",
+		"roles/iam.serviceAccountUser",
+		"roles/iam.serviceAccountAdmin",
+		"roles/iam.workloadIdentityPoolAdmin",
+		"roles/serviceusage.serviceUsageAdmin",
+		"roles/storage.objectAdmin",
+	}
+
+	for _, role := range deployerRoles {
+		logicalName := "deployer-sa-" + strings.ReplaceAll(strings.ReplaceAll(role, ".", "-"), "/", "-")
+		_, err = projects.NewIAMMember(ctx, logicalName, &projects.IAMMemberArgs{
+			Project: pulumi.String(projectID),
+			Role:    pulumi.String(role),
+			Member:  pulumi.Sprintf("serviceAccount:%s", githubActionsSA.Email),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+```
+
+</details>
+
+#### infra/stacks/dev.go
+
+Defines the dev environment Cloud Run service:
+
+- **Cloud Run Service**: `koborin-ai-web-dev`
+- **IAM**: Grants `roles/run.invoker` to IAP Service Agent
+
+<details>
+<summary>View `dev.go` code</summary>
+
+```go
+package stacks
+
+import (
+	"fmt"
+
+	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/cloudrunv2"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
+)
+
+func Dev(ctx *pulumi.Context) error {
+	cfg := config.New(ctx, "")
+	gcpCfg := config.New(ctx, "gcp")
+
+	projectID := gcpCfg.Require("project")
+	projectNumber := cfg.Require("projectNumber")
+	imageURI := cfg.Require("imageUri")
+
+	webDev, err := cloudrunv2.NewService(ctx, "web-dev", &cloudrunv2.ServiceArgs{
+		Project:  pulumi.String(projectID),
+		Location: pulumi.String("asia-northeast1"),
+		Name:     pulumi.String("koborin-ai-web-dev"),
+		Ingress:  pulumi.String("INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"),
+		Template: &cloudrunv2.ServiceTemplateArgs{
+			ExecutionEnvironment: pulumi.String("EXECUTION_ENVIRONMENT_GEN2"),
+			Containers: cloudrunv2.ServiceTemplateContainerArray{
+				&cloudrunv2.ServiceTemplateContainerArgs{
+					Image: pulumi.String(imageURI),
+					Envs: cloudrunv2.ServiceTemplateContainerEnvArray{
+						&cloudrunv2.ServiceTemplateContainerEnvArgs{
+							Name:  pulumi.String("NODE_ENV"),
+							Value: pulumi.String("development"),
+						},
+						&cloudrunv2.ServiceTemplateContainerEnvArgs{
+							Name:  pulumi.String("NEXT_PUBLIC_ENV"),
+							Value: pulumi.String("dev"),
+						},
+					},
+				},
+			},
+			Scaling: &cloudrunv2.ServiceTemplateScalingArgs{
+				MinInstanceCount: pulumi.Int(0),
+				MaxInstanceCount: pulumi.Int(1),
+			},
+		},
+		Traffics: cloudrunv2.ServiceTrafficArray{
+			&cloudrunv2.ServiceTrafficArgs{
+				Type:    pulumi.String("TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"),
+				Percent: pulumi.Int(100),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = cloudrunv2.NewServiceIamMember(ctx, "web-dev-iap-invoker", &cloudrunv2.ServiceIamMemberArgs{
+		Project:  pulumi.String(projectID),
+		Location: pulumi.String("asia-northeast1"),
+		Name:     webDev.Name,
+		Role:     pulumi.String("roles/run.invoker"),
+		Member:   pulumi.String(fmt.Sprintf("serviceAccount:service-%s@gcp-sa-iap.iam.gserviceaccount.com", projectNumber)),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+```
+
+</details>
+
+#### infra/stacks/prod.go
+
+Defines the prod environment Cloud Run service:
+
+- **Cloud Run Service**: `koborin-ai-web-prod`
+- **IAM**: Grants `roles/run.invoker` to `allUsers` (public access)
+
+<details>
+<summary>View `prod.go` code</summary>
+
+```go
+package stacks
+
+import (
+	"github.com/pulumi/pulumi-gcp/sdk/v8/go/gcp/cloudrunv2"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
+)
+
+func Prod(ctx *pulumi.Context) error {
+	cfg := config.New(ctx, "")
+	gcpCfg := config.New(ctx, "gcp")
+
+	projectID := gcpCfg.Require("project")
+	imageURI := cfg.Require("imageUri")
+
+	webProd, err := cloudrunv2.NewService(ctx, "web-prod", &cloudrunv2.ServiceArgs{
+		Project:  pulumi.String(projectID),
+		Location: pulumi.String("asia-northeast1"),
+		Name:     pulumi.String("koborin-ai-web-prod"),
+		Ingress:  pulumi.String("INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"),
+		Template: &cloudrunv2.ServiceTemplateArgs{
+			ExecutionEnvironment: pulumi.String("EXECUTION_ENVIRONMENT_GEN2"),
+			Containers: cloudrunv2.ServiceTemplateContainerArray{
+				&cloudrunv2.ServiceTemplateContainerArgs{
+					Image: pulumi.String(imageURI),
+					Envs: cloudrunv2.ServiceTemplateContainerEnvArray{
+						&cloudrunv2.ServiceTemplateContainerEnvArgs{
+							Name:  pulumi.String("NODE_ENV"),
+							Value: pulumi.String("production"),
+						},
+						&cloudrunv2.ServiceTemplateContainerEnvArgs{
+							Name:  pulumi.String("NEXT_PUBLIC_ENV"),
+							Value: pulumi.String("prod"),
+						},
+					},
+				},
+			},
+			Scaling: &cloudrunv2.ServiceTemplateScalingArgs{
+				MinInstanceCount: pulumi.Int(0),
+				MaxInstanceCount: pulumi.Int(10),
+			},
+		},
+		Traffics: cloudrunv2.ServiceTrafficArray{
+			&cloudrunv2.ServiceTrafficArgs{
+				Type:    pulumi.String("TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"),
+				Percent: pulumi.Int(100),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = cloudrunv2.NewServiceIamMember(ctx, "web-prod-invoker", &cloudrunv2.ServiceIamMemberArgs{
+		Project:  pulumi.String(projectID),
+		Location: pulumi.String("asia-northeast1"),
+		Name:     webProd.Name,
+		Role:     pulumi.String("roles/run.invoker"),
+		Member:   pulumi.String("allUsers"),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+```
+
+</details>
+
+### App Implementation
+
+<RichLinkCard href="https://github.com/nozomi-koborinai/koborin-ai/tree/main/app" title="koborin-ai/app at main · nozomi-koborinai/koborin-ai" description="Astro + Starlight application for koborin.ai." />
+
+#### app/astro.config.mjs
+
+Configuration file for Astro and Starlight:
+
+- **Multilingual support**: `root` (English) and `ja` (Japanese)
+- **Sidebar**: Imported from `app/src/sidebar.ts`
+- **Custom components**: Head, ThemeSelect, Header, Sidebar, Pagination
+
+<details>
+<summary>View `astro.config.mjs` code</summary>
+
+```javascript
+import { defineConfig } from "astro/config";
+import starlight from "@astrojs/starlight";
+import rehypeMermaid from "rehype-mermaid";
+import { sidebar } from "./src/sidebar.ts";
+
+export default defineConfig({
+  site: "https://koborin.ai",
+  srcDir: "src",
+  markdown: {
+    rehypePlugins: [
+      [
+        rehypeMermaid,
+        {
+          strategy: "inline-svg",
+          mermaidConfig: { theme: "neutral" },
+        },
+      ],
+    ],
+  },
+  integrations: [
+    starlight({
+      title: "koborin.ai",
+      defaultLocale: "root",
+      locales: {
+        root: { label: "English", lang: "en" },
+        ja: { label: "日本語" },
+      },
+      description: "Personal site + technical garden",
+      favicon: "/favicon.png",
+      logo: {
+        src: "./src/assets/_shared/koborin-ai-header.webp",
+        replacesTitle: true,
+      },
+      social: [
+        { label: "GitHub", icon: "github", href: "https://github.com/nozomi-koborinai" },
+        { label: "LinkedIn", icon: "linkedin", href: "https://linkedin.com/in/nozomi-koborinai" },
+        { label: "X", icon: "x.com", href: "https://x.com/fender_kn" },
+        { label: "Medium", icon: "document", href: "https://medium.com/@nozomi-koborinai" },
+      ],
+      sidebar,
+      customCss: ['./src/styles/custom.css'],
+      components: {
+        Head: './src/components/Head.astro',
+        ThemeSelect: './src/components/ThemeSelect.astro',
+        Header: './src/components/SiteHeader.astro',
+        Sidebar: './src/components/Sidebar.astro',
+        Pagination: './src/components/Pagination.astro',
+      },
+      head: [
+        { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
+      ],
+      disable404Route: true,
+    }),
+  ],
+});
+```
+
+</details>
+
+#### app/Dockerfile
+
+Multi-stage build that serves the static site via nginx:
+
+1. **Build stage**: Node.js for OG image optimization → `astro build`
+2. **Runtime stage**: Serve static files with `nginx:alpine`
+
+<details>
+<summary>View `Dockerfile` code</summary>
+
+```dockerfile
+# Build stage
+FROM node:22-slim AS build
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    libnss3 libnspr4 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 \
+    libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
+    libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 \
+    libcairo2 webp imagemagick file \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+RUN npm install
+RUN npx playwright install chromium
+COPY . .
+
+RUN ./scripts/optimize-og-images.sh
+RUN npm run build
+
+# Runtime stage
+FROM nginx:alpine AS runtime
+COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 8080
+```
+
+</details>
+
+#### app/nginx/nginx.conf
+
+nginx configuration:
+
+- **Port 8080**: To meet Cloud Run requirements
+- **UTF-8 charset**: To prevent character encoding issues in `llms.txt`
+- **Cache settings**: `/_astro/` for 1 year, OG images for 7 days
+- **WebP auto-serving**: Resolves requests to `/og/*.png` to `.webp`
+
+<details>
+<summary>View `nginx.conf` code</summary>
+
+```nginx
+worker_processes  1;
+
+events {
+  worker_connections  1024;
+}
+
+http {
+  server {
+    listen 8080;
+    server_name   _;
+
+    root   /usr/share/nginx/html;
+    index  index.html index.htm;
+    include /etc/nginx/mime.types;
+
+    charset utf-8;
+    charset_types text/plain text/css application/json;
+
+    gzip on;
+    gzip_min_length 1000;
+    gzip_proxied expired no-cache no-store private auth;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
+
+    error_page 404 /404.html;
+    location = /404.html { root /usr/share/nginx/html; internal; }
+
+    location /_astro/ { expires 1y; add_header Cache-Control "public, immutable"; }
+
+    location ~ ^/og/(.+)\.(png|jpe?g)$ {
+      set $webp_file /og/$1.webp;
+      try_files $webp_file $uri =404;
+      expires 7d;
+      add_header Cache-Control "public";
+    }
+
+    location /og/ { expires 7d; add_header Cache-Control "public"; }
+    location = /favicon.png { expires 30d; add_header Cache-Control "public"; }
+    location / { try_files $uri $uri/index.html =404; }
+  }
+}
+```
+
+</details>
+
+---
+
 ## Conclusion
 
 - **Simple setup**: A single GCP project works well for a personal site
 - **Developer experience**: dev/prod separation with IAP protecting the dev environment
+- **Frontend**: No API/DB needed, GitHub as CMS, built with Starlight
 - **CDKTF → Pulumi Go migration**: Avoiding sunset risk while unifying on a preferred language
 - **Behavior / Structure awareness**: Adjusting CI scope based on the nature of changes
-- **llms.txt**: Publishing articles in a format that my future self (and LLMs) can reference
+- **Site features**: llms.txt and Engagement Features (Giscus, Webmention, Share buttons) to connect with readers
 
 ## Source Code
 

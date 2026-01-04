@@ -181,7 +181,9 @@ These files are **auto-generated** at build time from Content Collections. Artic
 
 ```text
 .
+├── .gcloudignore                  # Excludes files from Cloud Build upload
 ├── app/                           # Astro + Starlight application (Static, nginx)
+│   ├── cloudbuild.yaml            # Cloud Build config for Docker build
 │   ├── src/
 │   │   ├── assets/               # Images organized by category
 │   │   │   ├── _shared/          # Common assets (header logo)

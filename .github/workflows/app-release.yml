@@ -22,6 +22,12 @@ on:
           - dev
           - prod
 
+# Prevent concurrent deployments to avoid Pulumi state conflicts
+# When multiple triggers occur (e.g., main merge + tag push), jobs queue up
+concurrency:
+  group: app-release
+  cancel-in-progress: false
+
 jobs:
   release:
     name: Build, Package, and Deploy

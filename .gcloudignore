@@ -8,9 +8,9 @@ app/node_modules/
 # Build output
 app/dist/
 
-# Development files
-**/.env
-**/.env.*
+# Development files (but keep app/.env for Giscus/GA4 config)
+.env
+.env.*
 **/*.log
 
 # IDE and editor files

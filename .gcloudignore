@@ -1,0 +1,37 @@
+# Ignore files not needed for Docker build
+# This reduces upload size to Cloud Build
+
+# Node modules (installed during build)
+app/node_modules/
+**/node_modules/
+
+# Build output
+app/dist/
+
+# Development files
+**/.env
+**/.env.*
+**/*.log
+
+# IDE and editor files
+.vscode/
+.idea/
+**/*.swp
+**/*.swo
+.cursor/
+
+# Infrastructure (not needed for app build)
+infra/
+
+# Documentation
+docs/
+
+# GitHub workflows
+.github/
+
+# Other root files not needed for build
+README.md
+LICENSE
+AGENTS.md
+CLAUDE.md
+

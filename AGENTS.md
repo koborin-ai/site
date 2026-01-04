@@ -324,6 +324,24 @@ Examples:
    - Use simple subgraph labels (avoid long strings like `"Pulumi Backend State - GCS"`).
    - If diagrams look broken in dark mode, check that CSS selectors in `custom.css` cover the generated SVG structure.
 
+6. **Terminology Tables for Abbreviations**:
+   - When using abbreviations in Mermaid diagrams (e.g., LB, NEG, IAP), always add a terminology table immediately below the diagram.
+   - **Format**: Use a Markdown table with columns: `Abbreviation`, `Full Name`, `Description`.
+   - **Full Name requirements**:
+     - Use the official name from the primary source (vendor documentation).
+     - Make the full name a hyperlink to the official documentation page.
+   - **MCP tools for terminology lookup**:
+     - Google Cloud terms: Use `google-cloud-mcp` (`search_documentation` → `read_documentation`).
+     - Other libraries/frameworks: Use `context7` MCP (`resolve-library-id` → `query-docs`).
+   - **Example**:
+
+     ```markdown
+     | Abbreviation | Full Name | Description |
+     | --- | --- | --- |
+     | LB | [Application Load Balancer](https://cloud.google.com/load-balancing/docs/load-balancing-overview) | Distributes requests to appropriate backends |
+     | NEG | [Serverless network endpoint group](https://cloud.google.com/load-balancing/docs/negs/serverless-neg-concepts) | Connection point to Cloud Run services |
+     ```
+
 ## Documentation Standards
 
 1. **Markdown Formatting**:

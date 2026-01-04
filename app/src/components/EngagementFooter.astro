@@ -53,16 +53,22 @@ const title = entry.data.title || 'Untitled';
       grid-template-columns: 1fr 1fr;
       grid-template-rows: auto auto;
       gap: 1.5rem;
+      align-items: start;
     }
     
     .share-section {
       grid-column: 1;
       grid-row: 1;
+      display: flex;
+      align-items: center;
     }
     
     .webmentions-section {
       grid-column: 2;
       grid-row: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
     
     .giscus-section {

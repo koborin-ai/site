@@ -4,6 +4,7 @@
  * 
  * - For pages with `publishedAt` (articles): Shows EngagementFooter + default Footer
  * - For other pages: Shows only default Footer
+ * - Always shows site footer with copyright and privacy policy link
  */
 import Default from '@astrojs/starlight/components/Footer.astro';
 import EngagementFooter from './EngagementFooter.astro';
@@ -24,6 +25,13 @@ const hasPublishedAt = !!frontmatter.publishedAt;
 const explicitEngagement = frontmatter.engagement;
 
 const showEngagement = explicitEngagement === true || (explicitEngagement !== false && hasPublishedAt);
+
+// Locale detection for privacy policy link
+const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
+const privacyPolicyUrl = isJapanese ? '/ja/privacy-policy/' : '/privacy-policy/';
+const privacyPolicyLabel = isJapanese ? 'プライバシーポリシー' : 'Privacy Policy';
+
+const currentYear = new Date().getFullYear();
 ---
 
 {showEngagement && <EngagementFooter />}
@@ -32,3 +40,60 @@ const showEngagement = explicitEngagement === true || (explicitEngagement !== fa
   <slot />
 </Default>
 
+<footer class="site-footer">
+  <div class="site-footer-content">
+    <span class="copyright">© {currentYear} koborin.ai</span>
+    <span class="separator">·</span>
+    <a href={privacyPolicyUrl} class="footer-link">{privacyPolicyLabel}</a>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--sl-color-gray-6);
+    padding: 1.5rem 1rem;
+    margin-top: 1rem;
+  }
+
+  .site-footer-content {
+    max-width: 72rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .copyright {
+    color: var(--sl-color-gray-3);
+  }
+
+  .separator {
+    color: var(--sl-color-gray-4);
+  }
+
+  .footer-link {
+    color: var(--sl-color-gray-3);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .footer-link:hover {
+    color: var(--sl-color-text-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @media (max-width: 600px) {
+    .site-footer-content {
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .separator {
+      display: none;
+    }
+  }
+</style>

@@ -26,23 +26,27 @@ func Dev(ctx *pulumi.Context) error {
 		Ingress:  pulumi.String("INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"),
 		Template: &cloudrunv2.ServiceTemplateArgs{
 			ExecutionEnvironment: pulumi.String("EXECUTION_ENVIRONMENT_GEN2"),
-			Containers: cloudrunv2.ServiceTemplateContainerArray{
-				&cloudrunv2.ServiceTemplateContainerArgs{
-					Image: pulumi.String(imageURI),
-					Envs: cloudrunv2.ServiceTemplateContainerEnvArray{
-						// NODE_ENV: server-side environment detection
-						&cloudrunv2.ServiceTemplateContainerEnvArgs{
-							Name:  pulumi.String("NODE_ENV"),
-							Value: pulumi.String("development"),
-						},
-						// NEXT_PUBLIC_ENV: client-side environment detection (legacy, kept for compatibility)
-						&cloudrunv2.ServiceTemplateContainerEnvArgs{
-							Name:  pulumi.String("NEXT_PUBLIC_ENV"),
-							Value: pulumi.String("dev"),
-						},
+		Containers: cloudrunv2.ServiceTemplateContainerArray{
+			&cloudrunv2.ServiceTemplateContainerArgs{
+				Image: pulumi.String(imageURI),
+				Envs: cloudrunv2.ServiceTemplateContainerEnvArray{
+					// NODE_ENV: server-side environment detection
+					&cloudrunv2.ServiceTemplateContainerEnvArgs{
+						Name:  pulumi.String("NODE_ENV"),
+						Value: pulumi.String("development"),
+					},
+					// NEXT_PUBLIC_ENV: client-side environment detection (legacy, kept for compatibility)
+					&cloudrunv2.ServiceTemplateContainerEnvArgs{
+						Name:  pulumi.String("NEXT_PUBLIC_ENV"),
+						Value: pulumi.String("dev"),
 					},
 				},
+				Resources: &cloudrunv2.ServiceTemplateContainerResourcesArgs{
+					// Temporarily boost CPU during cold start to reduce startup latency
+					StartupCpuBoost: pulumi.Bool(true),
+				},
 			},
+		},
 			Scaling: &cloudrunv2.ServiceTemplateScalingArgs{
 				MinInstanceCount: pulumi.Int(0),
 				MaxInstanceCount: pulumi.Int(1),

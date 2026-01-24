@@ -143,7 +143,7 @@
 }
 
 /* Light mode: subtle background for Mermaid diagrams only */
-[data-theme="light"] .sl-markdown-content svg:not(.sl-anchor-icon svg) {
+[data-theme="light"] .sl-markdown-content svg:not(.sl-anchor-icon svg):not(svg.starlight-aside__icon) {
   background: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-md);
   padding: var(--space-md);
@@ -606,6 +606,18 @@
 
 [data-theme="light"] .article-dates time {
   color: #3f3f46;
+}
+
+/* ==========================================================================
+   Starlight Aside - Light mode icon visibility fix
+   ========================================================================== */
+
+/* Light mode: Ensure aside/note icon SVG inherits proper color */
+[data-theme="light"] svg.starlight-aside__icon {
+  fill: var(--sl-color-blue) !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
 }
 
 /* ==========================================================================

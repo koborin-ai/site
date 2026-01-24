@@ -28,6 +28,26 @@ app/src/content/docs/
 
 ## Execution Flow
 
+### 0. Wall-Hitting Phase (Before Writing)
+
+Before creating files, have a conversation with the user to clarify the article's direction:
+
+1. **Clarify the core message**
+   - Ask: "What do you want readers to take away?"
+   - Identify the single most important point
+
+2. **Dig into experiences and episodes**
+   - Ask for concrete stories, failures, and learnings
+   - Extract raw, unpolished details (these become authentic content)
+
+3. **Decide writing style early**
+   - Japanese: Confirm「だ・である調」vs「ですます調」before writing
+   - English: Confirm formal vs conversational tone
+
+4. **Verify title-content alignment**
+   - Ensure the title matches the core message
+   - If the content evolves, revisit the title
+
 ### 1. Confirm Category
 
 Ask user for category:
@@ -108,6 +128,39 @@ import myImage from '../../../assets/my-image.png';
 4. **Lists**: Use bullet points for readability
 5. **Code blocks**: Always specify language (`typescript`, `bash`, etc.)
 6. **Emoji**: Use sparingly (only when user explicitly requests)
+
+## Avoiding AI-like Writing
+
+Common patterns that make articles feel "AI-generated" — avoid these:
+
+### Headings
+
+- **Avoid**: 「転機：〜」「結論：〜」「まとめ」 (feels formulaic)
+- **Better**: Simple, direct headings that flow naturally from content
+
+### Structure
+
+- **Avoid**: Overly organized tables summarizing points (feels forced)
+- **Better**: Let the narrative carry the message; tables only when genuinely helpful
+
+### Introductions
+
+- **Avoid**: Starting with a dialogue or rhetorical question that feels staged
+- **Better**: Jump into the topic directly or share a brief personal context
+
+### Conclusions
+
+- **Avoid**: Abrupt transition to "## 結論" with bullet-point summaries
+- **Better**: Use a horizontal rule (`---`) and let the closing flow naturally from the content
+
+### Tone
+
+- **Avoid**: Overly balanced statements ("〜かもしれない" everywhere)
+- **Better**: Take a stance when you have conviction; acknowledge uncertainty honestly when you don't
+
+### Key principle
+
+If a section feels "too neat" or "too organized," it probably needs more raw, human detail. Ask the user for specific episodes, failures, or emotions to make it authentic.
 
 ## Post-Creation Verification
 

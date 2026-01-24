@@ -1,0 +1,149 @@
+---
+title: Everything Has Meaning
+description: Even things that seem unrelated will connect someday.
+publishedAt: 2026-01-24
+---
+
+There's something I often share in one-on-ones and conversations with team members.
+"Everything has meaning," I tell them.
+
+This comes from my own experience.
+
+## My Past Self
+
+As of January 2026, I'm in my seventh year as a working professional.
+I spent about four years at my first company, and I'm now in my third year at my current one.
+
+At my first company, I believed that programming was my happiness, and that mastering it was the only thing that mattered.
+Design patterns, clean architecture, language specifications.
+I thought that's why companies had separate sales and engineering departments—so I could live purely in the world of technology.
+
+I left my first job because I felt like "there was nothing left for me to do."
+The work involved maintaining a system that had been running for over 15 years.
+It was written in VB.NET, with tightly coupled UI and logic. Due to language and framework constraints, achieving proper separation of concerns was nearly impossible.
+
+Still, I tried my best. For new features, I worked on improving testability.
+But I had a growing desire to "learn software architecture from scratch," so I sought a new environment and changed jobs.
+
+Looking back, my narrow perspective was the real cause.
+If I had truly wanted to learn, I could have done more to improve that system.
+"I want to see a new world" might have just been an excuse to move myself to a more comfortable place.
+
+But even if it was running away, I gained a lot from where I landed.
+In my current environment, I'm handling work that would typically be assigned to someone with over 10 years of experience at my previous company.
+I don't regret believing it was the right choice and taking that leap.
+
+## At My Current Job
+
+At my current job, I do pre-sales work.
+I work with sales to help win projects for our company.
+
+The process involves understanding the customer's challenges and proposing how our technology can help. If the proposal lands, we get the contract.
+But no matter how strong your programming skills are, that alone won't get you far.
+
+In one pre-sales meeting, I proposed implementing DevOps.
+The audience was leadership from a technical department struggling with development resources.
+I confidently presented case studies showing how Netflix and Amazon had improved their development productivity.
+
+But their reaction was cold.
+"We're not a big company like that. This isn't realistic for us."
+I had planned to follow up with a customized approach for their specific situation. But they cut me off with "That's enough."
+
+I thought I was presenting a proposal that met them where they were.
+But from their perspective, it was a story where they couldn't imagine their own company succeeding.
+That's when I learned what it really means to fail at meeting someone where they are.
+
+If the decision-maker is purely technical, technical discussions work.
+But more often, they're not.
+They're from accounting, HR, or other business-side departments unrelated to IT.
+Naturally, their challenges are framed in business terms, not technical ones.
+
+Talking about "clean architecture" or "language specifications" won't resonate.
+Ultimately, technology is the "how," but first you need to understand the "what."
+You need to listen at a higher level of abstraction and propose solutions that address business needs.
+
+Later, I realized that this constant movement between "concrete and abstract" was deeply connected to my engineering work.
+
+## The Moment Things Connect
+
+When there's extra time in one-on-ones, or when I'm working on presentation materials with junior colleagues who are about to bloom, I share this thought:
+
+"You know what I pay attention to in slide decks? Line spacing, color usage, how information is organized when you step back and look at the whole page.
+If the presentation is supplementary to verbal communication, cramped text won't get the message across.
+When using bullet points, I check if they're MECE. And that's the same structure as code design."
+
+The same applies when splitting modules in software engineering.
+Separating redundant classes, extracting common logic.
+The perspective of "how to organize things so they communicate clearly" is the same whether it's a document or code.
+
+:::note[Side note]
+I don't use AI image generation much for slide creation yet. There's too much "gacha" randomness—fine-tuning nuances is difficult. Instead, I use an OSS tool called [deck](https://github.com/k1LoW/deck). You write content in Markdown and adjust the design in Google Slides. By balancing automation and manual control, it becomes easier to translate my thoughts into slides, and what I want to communicate gets organized in my head.
+:::
+
+### Coding Agents and Default Arguments
+
+There's something I often hear from SRE team members in one-on-ones.
+When they're implementing Terraform code with a coding agent, the agent tends to add default arguments.
+
+I worked on hospital-related system development at my previous job, so I'll share a slightly modified example based on that experience.
+
+```typescript
+// Before: Two services with similar logic
+class HospitalService {
+  async sendNotification(patientId: string, message: string) {
+    // Logic running in 100 hospitals
+  }
+}
+
+class ClinicService {
+  async sendNotification(patientId: string, message: string, priority: string) {
+    // Logic under new development
+  }
+}
+```
+
+Ask a coding agent to refactor, and you might get this:
+
+```typescript
+// After: Agent "safely" consolidates with default argument
+class NotificationService {
+  async sendNotification(
+    patientId: string,
+    message: string,
+    priority: string = "normal" // Default to avoid impacting existing code
+  ) {
+    // Consolidated logic
+  }
+}
+```
+
+No errors. But poor maintainability.
+
+Systems have context that isn't explicitly documented.
+For logic running in 100 hospitals, it affects human lives. Keeping a default to avoid touching that logic might make sense.
+
+But for systems under development, it's different.
+When you haven't released yet and you're still in the system design phase, it's often better for callers to specify values with intent.
+
+The same applies to infrastructure. In Terraform, when you have a module called from both dev and prod, relying entirely on the module's default values means dev/prod don't pass values explicitly. Resource definitions meant for dev/prod get hidden inside the module's defaults.
+
+You need to understand the context—whether it's business-driven or technical—and make deliberate decisions.
+And those decisions must have reasons behind them.
+
+---
+
+What I learned from pre-sales, what I pay attention to in presentation design, what I think about in code design.
+They seem like separate topics, but they all share the same structure: moving between concrete and abstract.
+
+At my first company, I only looked at the "concrete."
+That's why I felt like "there was nothing left for me to do."
+But the opportunity to learn abstraction through that concrete work was always there.
+
+Sometimes I'm frustrated with how my current organization is structured.
+But I believe that everything I do within it has meaning, and I keep going.
+
+So in one-on-ones and conversations with team members, I tell them this:
+"Even things that seem unrelated will connect someday."
+
+Of course, I'm still learning too.
+But I believe it's better to put thoughts into words while they're still fresh.

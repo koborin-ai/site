@@ -66,7 +66,7 @@ jobs:
       - name: Security audit
         if: steps.change-type.outputs.type == 'behavior'
         working-directory: app
-        run: npm audit
+        run: npm audit --audit-level=high
 
       - name: Astro check (lint/typecheck/tests)
         working-directory: app

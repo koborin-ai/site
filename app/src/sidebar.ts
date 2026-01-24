@@ -7,6 +7,10 @@ export const sidebar = [
     label: "Tech",
     items: [
       {
+        label: "Genkit vs ADK",
+        slug: "tech/genkit-vs-adk",
+      },
+      {
         label: "koborin.ai Architecture",
         translations: { ja: "koborin.ai のアーキテクチャ" },
         slug: "tech/koborin-ai-architecture",

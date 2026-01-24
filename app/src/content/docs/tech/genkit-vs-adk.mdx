@@ -1,0 +1,310 @@
+---
+title: "Genkit vs ADK: A Guide to Choosing the Right Google AI Framework"
+description: A practical comparison of Genkit and Agent Development Kit for engineers building AI applications
+ogImage: /og/genkit-vs-adk.jpeg
+publishedAt: 2026-01-24
+---
+
+import RichLinkCard from '../../../components/RichLinkCard.astro';
+
+<img src="/og/genkit-vs-adk.jpeg" alt="Genkit vs ADK" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
+
+Google offers two open-source frameworks for AI development: **Genkit** and **Agent Development Kit (ADK)**.
+
+Both can leverage Google's large language models (Gemini), but they differ in their target use cases, architecture, and developer-facing features.
+
+This article compares Genkit and ADK across use cases, platform integrations, model support, development style, and maturity to help you understand the differences and choose the right framework for your project.
+
+---
+
+## TL;DR
+
+| Aspect | Genkit | ADK |
+| --- | --- | --- |
+| Primary Use Case | Adding GenAI features to apps (chat, summarization, RAG, etc.) | Building multi-agent systems with collaborative agents |
+| Languages | Node.js (GA), Go (GA), Python (Alpha) | Python (GA), TypeScript, Go, Java |
+| Design Philosophy | Developer explicitly controls the flow | LLM dynamically decides agent delegation |
+| Deployment | Cloud Run, GKE, Vercel, or anywhere | Anywhere, with deep Vertex AI Agent Engine integration |
+
+The choice depends on the complexity of your problem and your team's preferred language.
+
+---
+
+## Framework Overview
+
+### Genkit
+
+Genkit is a framework designed to simplify adding AI capabilities to your applications.
+
+Originally developed by the Firebase team, it became an independent product after a Google reorganization and now sits alongside Flutter, Dart, and Go in the developer platforms organization.
+
+Use plugins and templates to integrate various generative AI models and quickly build AI features.
+
+<RichLinkCard href="https://genkit.dev" title="Genkit - Open-source AI framework by Google" description="Open-source framework for building AI-powered apps with unified APIs for Google Gemini, GPT, Claude, and more." />
+
+**Key Features:**
+
+- **Languages**: Node.js (GA Feb 2025), Go (GA Sep 2025), Python (Alpha)
+- **Runtime**: Deploy anywhere — Cloud Run, GKE, Vercel, on-premise, etc.
+- **Model Support**: Gemini, OpenAI, Anthropic Claude, Ollama, and more via plugins
+- **Developer Experience**: Local Developer UI for prompt testing, step-by-step traces, and schema validation
+- **Multi-agent**: Beta support via the prompt-as-tool pattern
+
+The [genkit-dart](https://github.com/genkit-ai/genkit-dart) client library is also under active development, opening up possibilities for Flutter applications.
+
+The Genkit community has published **Mastering Genkit: Go Edition** — a comprehensive guide covering everything from setup to advanced AI agents and RAG systems.
+
+<RichLinkCard href="https://mastering-genkit.github.io/mastering-genkit-go/" title="Mastering Genkit: Go Edition" description="A guide to building production-ready AI applications using Go and Genkit." />
+
+### Agent Development Kit (ADK)
+
+ADK is a toolkit specialized for building sophisticated AI agent systems. It provides a foundation for complex multi-agent scenarios involving coordination between agents and external tool integrations.
+
+<RichLinkCard href="https://google.github.io/adk-docs/" title="Agent Development Kit" description="Build powerful multi-agent systems with Agent Development Kit." />
+
+**Key Features:**
+
+- **Languages**: Python (GA), TypeScript, Go (announced Nov 2025), Java
+- **Runtime**: Deploy to any container environment — Cloud Run, GKE, etc. Optimized for Vertex AI Agent Engine integration
+- **Model Support**: Gemini via Vertex AI, plus other models through LiteLLM adapters
+- **Developer Experience**: Local dev UI (`adk web`), CLI evaluation tool (`adk eval`)
+- **Multi-agent**: First-class support for Agent, Tool, Sub-agent, and workflow orchestration
+- **Enterprise Connectors**: 100+ connectors via ApplicationIntegrationToolset — Salesforce, ServiceNow, JIRA, SAP, and more
+
+Companies like Renault Group, Box, and Revionics are already building systems with ADK.
+
+---
+
+## Key Differences
+
+### Design Philosophy
+
+These aren't competing frameworks — they operate at different layers.
+
+A Google engineer working on Genkit summarized its role this way:
+
+> Genkit focuses on "low-layer" AI APIs: models, tools, prompts, MCP, and developer tools like o11y tooling and playgrounds. Genkit lets you interact directly with LLMs, ships without hardcoded prompts by default, and its o11y tooling lets you see exactly what your agent is doing.
+
+From this perspective:
+
+- **Genkit** is a low-layer AI framework. It focuses on models, tools, prompts, MCP, and o11y. You can use it standalone to build agents, or as a foundation for higher-layer frameworks.
+- **ADK** is a high-layer agent framework. It comes with batteries included — session management, memory, evaluation, and tight Vertex AI Agent Engine integration.
+
+A Genkit team member also shared this on the Genkit Discord:
+
+> ADK is specifically only for building agents, and it has an opinionated foundation for how to construct multi-agent systems. Genkit is a general purpose toolkit for building with GenAI which includes agent-building capabilities, but we take fewer strong opinions on the specific construction of agents.
+
+In short: Genkit is general-purpose and flexible; ADK is specialized for multi-agent construction. Understand this difference, then choose based on your requirements.
+
+### Comparison Table
+
+| Aspect | Genkit | ADK |
+| --- | --- | --- |
+| **Primary Use Case** | General GenAI integration (chatbots, summarization, recommendations, RAG, etc.) | Complex agent systems with multiple collaborating agents |
+| **Languages** | Node.js (GA), Go (GA), Python (Alpha) | Python (GA), TypeScript, Go, Java |
+| **Development Style** | Code-defined flows, explicit control | Agent-centric, LLM-driven orchestration |
+| **Multi-agent** | Beta (prompt-as-tool pattern) | First-class support (Sequential, Parallel, Loop) |
+| **Deployment** | Cloud Run, GKE, Vercel, anywhere | Anywhere, best fit with Agent Engine |
+| **Model Flexibility** | Plugin-based, easy model switching | LiteLLM adapters, Vertex AI native |
+| **Maturity** | Node GA (Feb 2025), Go GA (Sep 2025) | Python GA (May 2025), other languages in development |
+
+### Architecture Patterns
+
+#### Genkit: Flow Orchestration
+
+Genkit uses a style where you explicitly define the workflow (flow).
+
+You write the processing steps in code: "generate text with LLM A → process the result → execute function B → ...". Genkit provides unified APIs like `ai.generate()`, structured data output, and function calling through plugins, making these steps easy to implement concisely.
+
+**TypeScript Example:**
+
+```typescript
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
+
+const ai = genkit({ plugins: [googleAI()] });
+
+const { text } = await ai.generate({
+    model: googleAI.model('gemini-2.5-flash'),
+    prompt: 'Why is Genkit awesome?'
+});
+```
+
+**Go Example:**
+
+```go
+import (
+    "context"
+    "github.com/firebase/genkit/go/ai"
+    "github.com/firebase/genkit/go/plugins/googlegenai"
+)
+
+func main() {
+    ctx := context.Background()
+    g, _ := genkit.Init(ctx, genkit.WithPlugins(&googlegenai.GoogleAI{}))
+    
+    resp, _ := genkit.Generate(ctx, g,
+        ai.WithModel(googlegenai.GoogleAIModel("gemini-2.5-flash")),
+        ai.WithPrompt("Why is Genkit awesome?"),
+    )
+    fmt.Println(resp.Text())
+}
+```
+
+With function calling, the LLM can behave like a semi-autonomous agent that invokes defined functions as needed, but you still control the overall flow.
+
+#### ADK: Agent-Centric Orchestration
+
+ADK uses an agent-oriented architecture.
+
+You define agents (Agent classes), each with its own role (instruction prompts) and available tools or sub-agents.
+
+ADK supports multiple patterns for sub-agent coordination:
+
+- **`sub_agents` pattern**: The LLM automatically generates `transfer_to_agent` calls to delegate control to sub-agents
+- **`AgentTool` pattern**: Wrap sub-agents as tools that the root agent can invoke
+
+Here's an example of the `AgentTool` pattern, where sub-agents have their own tools and are called as "tools" by the root agent:
+
+```python
+from google.adk.agents import Agent
+from google.adk.tools import AgentTool, ToolContext
+
+# --- Sub-agent 1: Goal Setting ---
+def get_user_goal(tool_context: ToolContext) -> dict:
+    """Retrieves the user's current health goal from session state."""
+    goal = tool_context.state.get("health_goal")
+    if goal is None:
+        return {"status": "not_set", "message": "No goal set yet."}
+    return {"status": "success", "health_goal": goal}
+
+def set_user_goal(tool_context: ToolContext, goal_type: str, description: str) -> dict:
+    """Sets the user's health goal in session state."""
+    tool_context.state["health_goal"] = {"goal_type": goal_type, "description": description}
+    return {"status": "success", "message": f"Goal set: {goal_type}"}
+
+goal_setting_agent = Agent(
+    name="goal_setting_agent",
+    description="Handles health goal setting and retrieval.",
+    instruction="You help users set and check their health goals.",
+    tools=[get_user_goal, set_user_goal],
+)
+
+# --- Sub-agent 2: Meal Advisor ---
+meal_advisor_agent = Agent(
+    name="meal_advisor_agent",
+    description="Provides meal recommendations based on user goals.",
+    instruction="You suggest meals considering the user's health goals and calorie targets.",
+)
+
+# --- Root Agent ---
+root_agent = Agent(
+    model="gemini-2.5-flash",
+    name="health_advisor",
+    description="Main health advisor agent",
+    instruction="""You are a health advisor assistant.
+
+## Your Role
+- Understand user requests and delegate to appropriate sub-agents
+- Use goal_setting_agent for goal-related queries
+- Use meal_advisor_agent for meal recommendations
+
+## Direct Response Cases
+- Greetings: respond directly
+- General health questions: respond directly
+""",
+    tools=[
+        AgentTool(agent=goal_setting_agent),
+        AgentTool(agent=meal_advisor_agent),
+    ],
+)
+```
+
+The root agent delegates to appropriate sub-agents based on LLM reasoning. Each sub-agent has its own tools and instructions to handle specialized tasks.
+
+ADK also provides workflow control agents:
+
+- **SequentialAgent**: Run agents in sequence
+- **ParallelAgent**: Run agents in parallel
+- **LoopAgent**: Repeat until a condition is met
+
+---
+
+## Decision Guide
+
+| Scenario / Condition | Recommendation | Reason |
+| --- | --- | --- |
+| Quickly add simple AI features to an app | Genkit | Chatbots, summarization, RAG. Prioritize development speed |
+| Complex AI system with multiple specialized agents | ADK | Multiple data sources/tools, need role separation |
+| Team primarily writes TypeScript / JavaScript | Genkit | Node.js support, leverage web frontend experience |
+| Team primarily writes Python | ADK | Leverage ML and data processing experience. Python is GA |
+| Team primarily writes Go | Either works | Genkit Go is GA, ADK Go is available |
+| Need to connect to Google Cloud data / enterprise systems | ADK | Rich connectors for BigQuery, Salesforce, ServiceNow, etc. |
+| Want flexibility for various AI use cases in the future | Genkit | High extensibility through plugins |
+
+### Choosing by Language
+
+Now that ADK supports Python, TypeScript, Go, and Java, and Genkit supports Node.js, Go, and Python, language preference alone rarely decides the choice.
+
+However, maturity varies:
+
+| Language | Genkit | ADK |
+| --- | --- | --- |
+| **TypeScript/Node.js** | GA | Available |
+| **Go** | GA | Available (announced Nov 2025) |
+| **Python** | Alpha | GA |
+| **Java** | Not supported | Available |
+
+If your team writes Python and needs production stability, ADK is a natural choice. If you want a stable AI toolkit in Go, Genkit Go fits well.
+
+---
+
+## Learning Path and Combination Patterns
+
+### From Low-Layer to High-Layer
+
+A common recommendation shared in the Genkit community is to follow Anthropic's "[Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)" guidance.
+
+When you're starting out, it often makes sense to begin with a low-layer toolkit like Genkit to deeply understand models, tools, prompts, and o11y, then adopt a high-layer framework like ADK based on your application's requirements.
+
+Once you have this foundation, you can work with ADK or any other framework.
+
+### Practical Combinations
+
+1. **Genkit for the UI-facing layer**: User input processing, simple generation tasks, API responses
+2. **ADK for complex backend orchestration**: When requests require multi-step reasoning by specialized agents
+
+---
+
+## Summary
+
+Think of Genkit and ADK as complementary layers rather than competing choices.
+
+| Layer | Framework | Focus |
+| --- | --- | --- |
+| Low-layer | Genkit | Models, tools, prompts, MCP, o11y |
+| High-layer | ADK | Session management, memory, evaluation, multi-agent orchestration |
+
+Start with Genkit to understand AI fundamentals, then consider ADK when requirements get complex. Or combine them — use Genkit as a foundation with ADK on top. This flexibility is a strength of Google's AI framework ecosystem.
+
+---
+
+## Resources
+
+### Genkit
+
+<RichLinkCard href="https://genkit.dev/docs" title="Genkit Documentation" description="Official documentation for Genkit." />
+
+<RichLinkCard href="https://github.com/firebase/genkit" title="genkit" description="Open-source framework for building AI-powered apps in JavaScript, Go, and Python." />
+
+<RichLinkCard href="https://github.com/genkit-ai/genkit-dart" title="genkit-ai/genkit-dart" description="Dart client for Genkit." />
+
+<RichLinkCard href="https://mastering-genkit.github.io/mastering-genkit-go/" title="Mastering Genkit: Go Edition" description="Comprehensive guide for building production-ready AI applications with Go and Genkit." />
+
+### ADK
+
+<RichLinkCard href="https://google.github.io/adk-docs/" title="Agent Development Kit Documentation" description="Official documentation for ADK." />
+
+<RichLinkCard href="https://github.com/google/adk-python" title="google/adk-python" description="An open-source, code-first Python toolkit for building, evaluating, and deploying sophisticated AI agents." />
+
+<RichLinkCard href="https://github.com/google/adk-samples" title="google/adk-samples" description="Ready-to-use agents built on ADK for Python and Java." />

@@ -22,7 +22,7 @@ This article compares Genkit and ADK across use cases, platform integrations, mo
 | Aspect | Genkit | ADK |
 | --- | --- | --- |
 | Primary Use Case | Adding GenAI features to apps (chat, summarization, RAG, etc.) | Building multi-agent systems with collaborative agents |
-| Languages | Node.js (GA), Go (GA), Python (Alpha) | Python (GA), TypeScript, Go, Java |
+| Languages | Node.js (GA), Go (GA), Python (Alpha), Dart (Preview) | Python (GA), TypeScript, Go, Java |
 | Design Philosophy | Developer explicitly controls the flow | LLM dynamically decides agent delegation |
 | Deployment | Cloud Run, GKE, Vercel, or anywhere | Anywhere, with deep Vertex AI Agent Engine integration |
 
@@ -44,13 +44,13 @@ Use plugins and templates to integrate various generative AI models and quickly 
 
 **Key Features:**
 
-- **Languages**: Node.js (GA Feb 2025), Go (GA Sep 2025), Python (Alpha)
+- **Languages**: Node.js (GA Feb 2025), Go (GA Sep 2025), Python (Alpha), Dart (Preview)
 - **Runtime**: Deploy anywhere — Cloud Run, GKE, Vercel, on-premise, etc.
 - **Model Support**: Gemini, OpenAI, Anthropic Claude, Ollama, and more via plugins
 - **Developer Experience**: Local Developer UI for prompt testing, step-by-step traces, and schema validation
 - **Multi-agent**: Beta support via the prompt-as-tool pattern
 
-The [genkit-dart](https://github.com/genkit-ai/genkit-dart) client library is also under active development, opening up possibilities for Flutter applications.
+[Genkit Dart](https://github.com/genkit-ai/genkit-dart) is also under active development as a full Genkit SDK for Dart. With model plugins (`genkit_google_genai`, `genkit_firebase_ai`), flow/tool definitions, and server-side HTTP hosting via `genkit_shelf`, it offers capabilities comparable to the Node.js and Go SDKs — opening up possibilities for both server-side Dart and Flutter applications.
 
 The Genkit community has published **Mastering Genkit: Go Edition** — a comprehensive guide covering everything from setup to advanced AI agents and RAG systems.
 
@@ -101,7 +101,7 @@ In short: Genkit is general-purpose and flexible; ADK is specialized for multi-a
 | Aspect | Genkit | ADK |
 | --- | --- | --- |
 | **Primary Use Case** | General GenAI integration (chatbots, summarization, recommendations, RAG, etc.) | Complex agent systems with multiple collaborating agents |
-| **Languages** | Node.js (GA), Go (GA), Python (Alpha) | Python (GA), TypeScript, Go, Java |
+| **Languages** | Node.js (GA), Go (GA), Python (Alpha), Dart (Preview) | Python (GA), TypeScript, Go, Java |
 | **Development Style** | Code-defined flows, explicit control | Agent-centric, LLM-driven orchestration |
 | **Multi-agent** | Beta (prompt-as-tool pattern) | First-class support (Sequential, Parallel, Loop) |
 | **Deployment** | Cloud Run, GKE, Vercel, anywhere | Anywhere, best fit with Agent Engine |
@@ -244,7 +244,7 @@ ADK also provides workflow control agents:
 
 ### Choosing by Language
 
-Now that ADK supports Python, TypeScript, Go, and Java, and Genkit supports Node.js, Go, and Python, language preference alone rarely decides the choice.
+Now that ADK supports Python, TypeScript, Go, and Java, and Genkit supports Node.js, Go, Python, and Dart, language preference alone rarely decides the choice.
 
 However, maturity varies:
 
@@ -253,9 +253,10 @@ However, maturity varies:
 | **TypeScript/Node.js** | GA | Available |
 | **Go** | GA | Available (announced Nov 2025) |
 | **Python** | Alpha | GA |
+| **Dart** | Preview | Not supported |
 | **Java** | Not supported | Available |
 
-If your team writes Python and needs production stability, ADK is a natural choice. If you want a stable AI toolkit in Go, Genkit Go fits well.
+If your team writes Python and needs production stability, ADK is a natural choice. If you want a stable AI toolkit in Go, Genkit Go fits well. If your team builds with Dart or Flutter, Genkit Dart (Preview) lets you use the same Genkit patterns on both client and server.
 
 ---
 
@@ -297,7 +298,7 @@ Start with Genkit to understand AI fundamentals, then consider ADK when requirem
 
 <RichLinkCard href="https://github.com/firebase/genkit" title="genkit" description="Open-source framework for building AI-powered apps in JavaScript, Go, and Python." />
 
-<RichLinkCard href="https://github.com/genkit-ai/genkit-dart" title="genkit-ai/genkit-dart" description="Dart client for Genkit." />
+<RichLinkCard href="https://github.com/genkit-ai/genkit-dart" title="genkit-ai/genkit-dart" description="Genkit SDK for Dart — model plugins, flow definitions, and server-side hosting." />
 
 <RichLinkCard href="https://mastering-genkit.github.io/mastering-genkit-go/" title="Mastering Genkit: Go Edition" description="Comprehensive guide for building production-ready AI applications with Go and Genkit." />
 

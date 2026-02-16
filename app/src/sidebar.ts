@@ -7,6 +7,10 @@ export const sidebar = [
     label: "Tech",
     items: [
       {
+        label: "MCP Deep Dive",
+        slug: "tech/mcp-deep-dive",
+      },
+      {
         label: "Genkit vs ADK",
         slug: "tech/genkit-vs-adk",
       },

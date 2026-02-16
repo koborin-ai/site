@@ -130,10 +130,18 @@
 /* Dark mode: edge labels */
 [data-theme="dark"] .sl-markdown-content svg .edgeLabel {
   background-color: #2a2a35 !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .sl-markdown-content svg .edgeLabel rect {
   fill: #2a2a35 !important;
+}
+
+[data-theme="dark"] .sl-markdown-content svg .edgeLabel span,
+[data-theme="dark"] .sl-markdown-content svg .edgeLabel p,
+[data-theme="dark"] .sl-markdown-content svg .edgeLabel div {
+  color: #ffffff !important;
+  background-color: #2a2a35 !important;
 }
 
 /* Dark mode: rect sections (alt/loop backgrounds) */

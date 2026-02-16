@@ -90,6 +90,11 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Categorized: `{ label: "Category", items: [{ label: "Post", slug: "category/post" }] }`
      - **Sidebar labels**: Use English labels only (no `translations`). This ensures consistent navigation across all language versions.
    - Folder structure maps to URL structure: `docs/blog/post.mdx` → `/blog/post/`
+   - **Japanese link spacing**: In Japanese MDX prose, add a half-width space between Japanese text characters (hiragana, katakana, kanji) and Markdown links. Do NOT add a space between full-width punctuation (`、`, `。`, `（`, `）`) and links — full-width characters already have built-in visual whitespace.
+     - Good: `どのバージョンの [仕様](https://...) に準拠する`
+     - Good: `GA で、[Dart 版](https://...) は 2026 年` (no space after `、`)
+     - Bad: `どのバージョンの[仕様](https://...)に準拠する` (missing spaces around link)
+     - Bad: `GA で、 [Dart 版](https://...) は` (unnecessary space after `、`)
 3. **Brand Assets Management**:
    - **Favicon**: Place in `app/public/favicon.png`. Configured in `astro.config.mjs` (`favicon` property).
    - **Header Logo**: Place in `app/src/assets/_shared/`. Configured in `astro.config.mjs` (`logo.src` property). Set `replacesTitle: true` to hide text title.

@@ -1,12 +1,11 @@
 ---
 /**
- * EngagementFooter - Container for engagement UI (Share, Webmentions, Giscus)
+ * EngagementFooter - Container for engagement UI (Share, Giscus)
  * 
  * Combines all engagement components into a cohesive footer section.
  * Displayed only on pages with publishedAt (articles).
  */
 import ShareButtons from './ShareButtons.astro';
-import Webmentions from './Webmentions.astro';
 import Giscus from './Giscus.astro';
 
 // Get the current page URL
@@ -20,10 +19,6 @@ const title = entry.data.title || 'Untitled';
 <aside class="engagement-footer" aria-label="Article engagement">
   <div class="engagement-section share-section">
     <ShareButtons url={canonicalUrl} title={title} />
-  </div>
-  
-  <div class="engagement-section webmentions-section">
-    <Webmentions url={canonicalUrl} />
   </div>
   
   <div class="engagement-section giscus-section">
@@ -44,42 +39,6 @@ const title = entry.data.title || 'Untitled';
   
   .engagement-section:last-child {
     margin-bottom: 0;
-  }
-  
-  /* Share and Webmentions on same row on desktop */
-  @media (min-width: 768px) {
-    .engagement-footer {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto;
-      gap: 1.5rem;
-      align-items: start;
-    }
-    
-    .share-section {
-      grid-column: 1;
-      grid-row: 1;
-      display: flex;
-      align-items: center;
-    }
-    
-    .webmentions-section {
-      grid-column: 2;
-      grid-row: 1;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-    }
-    
-    .giscus-section {
-      grid-column: 1 / -1;
-      grid-row: 2;
-      margin-bottom: 0;
-    }
-    
-    .engagement-section {
-      margin-bottom: 0;
-    }
   }
 </style>
 

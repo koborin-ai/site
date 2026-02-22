@@ -195,19 +195,14 @@ This document is a quick guide for any contributors or AI agents that touch the 
     - **Static files**: Generated at build time via Astro endpoints using `@astrojs/rss`. Zero runtime overhead.
     - **Implementation**: `app/src/pages/rss.xml.ts` (English), `app/src/pages/ja/rss.xml.ts` (Japanese).
     - **Sorted by date**: Articles are sorted by `publishedAt` date (newest first).
-13. **Engagement Features (Giscus + Webmention)**:
-    - Articles (pages with `publishedAt`) display an engagement footer with share buttons, Webmention stats, and Giscus comments.
+13. **Engagement Features (Giscus)**:
+    - Articles (pages with `publishedAt`) display an engagement footer with share buttons and Giscus comments.
     - **Components**:
       - `app/src/components/Footer.astro`: Starlight Footer override that conditionally renders engagement UI.
-      - `app/src/components/EngagementFooter.astro`: Container for share, webmentions, and giscus.
+      - `app/src/components/EngagementFooter.astro`: Container for share buttons and Giscus.
       - `app/src/components/ShareButtons.astro`: Share links (X, Bluesky, Mastodon, Hatena Bookmark, copy link).
-      - `app/src/components/Webmentions.astro`: Fetches and displays webmention counts from webmention.io.
       - `app/src/components/Giscus.astro`: GitHub Discussions-based comments (only renders if configured).
     - **Display logic**: Engagement UI appears on pages with `publishedAt` frontmatter. Override with `engagement: true/false` in frontmatter.
-    - **Webmention setup**:
-      - Endpoints declared in `Head.astro`: `<link rel="webmention" href="https://webmention.io/koborin.ai/webmention">`.
-      - Client-side fetch from `webmention.io/api/mentions.jf2?target=...` to display latest counts.
-      - For SNS reactions (Mastodon likes/reposts), consider adding Bridgy later.
     - **Giscus setup** (requires GitHub Secrets):
       - Enable Discussions on the GitHub repository.
       - Install the `giscus` GitHub App.

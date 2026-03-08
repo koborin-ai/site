@@ -1,0 +1,573 @@
+---
+title: "Markdown ドキュメント間の整合性を静的解析する contextlint というリンターを作っている話"
+description: "SDD で直面した Markdown の整合性課題を解決するルールベースリンター contextlint の紹介"
+publishedAt: 2026-03-08
+ogImage: /og/contextlint-introduction.png
+---
+
+import { Image } from 'astro:assets';
+import RichLinkCard from '../../../../components/RichLinkCard.astro';
+import mcpImage from '../../../../assets/tech/contextlint-introduction/mcp-ja.png';
+
+<img src="/og/contextlint-introduction.png" alt="contextlint" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
+
+## はじめに
+
+AI を活用したソフトウェア開発では、要件・仕様・設計といった構造化ドキュメントを SSOT（Single Source of Truth: 信頼できる唯一の情報源）として管理し、それを基に AI がコードを生成する、いわゆる **仕様駆動開発（SDD）** のようなアプローチが定着しつつあります。
+
+こうしたアプローチでは、ドキュメントの品質が生成されるコードの品質に大きく影響します。
+つまり、**ドキュメントが壊れていれば、そこから生まれるコードにも影響が及ぶ**ということです。
+
+私は実際に SDD ベースのドキュメント管理を実践しており、その過程で「Markdown ドキュメント間の整合性を保ち続けることの難しさ」に直面しました。
+
+本記事では、その課題を解決するために開発中の **contextlint** というツールを紹介します。
+
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint"
+  title="contextlint"
+  description="A rule-based linter that verifies consistency across Markdown documents."
+/>
+
+## SDD のドキュメント構成
+
+### ドキュメントの階層構造
+
+私の場合、ドキュメントを **変化の速度** に応じて階層化しています。
+具体的には、以下のような 3 層構造で管理しています。
+
+```text
+docs/
+├── foundation/           ← Layer 1: ほぼ不変（用語定義など）
+│   └── glossary.md
+├── standards/            ← Layer 2: 低頻度（管理ルール）
+│   └── doc_standards.md
+└── zones/                ← Layer 3: 高頻度（要件・仕様・設計）
+    ├── auth/
+    │   ├── overview.md
+    │   ├── requirements.md
+    │   ├── spec_session.md
+    │   ├── table_users.md
+    │   └── screen_login.md
+    └── todo/
+        ├── overview.md
+        ├── requirements.md
+        ├── spec_task.md
+        ├── table_tasks.md
+        └── screen_task_list.md
+```
+
+Layer 1 にプロジェクト共通のユビキタス言語を、Layer 2 にドキュメントの運用ルールを、Layer 3 に実際の要件・仕様・設計を置いています。
+
+### Zone による責任分界
+
+**Zone** は責任分界の単位です。例えば `auth`（認証）と `todo`（タスク管理）のように、独立した関心事ごとにドキュメントセットを持ちます。
+Zone 間の依存関係は明示的に管理します。
+
+### 要件からコードへのトレーサビリティ
+
+SDD のメリットは、**要件 → 仕様 → 設計 → コード** の追跡可能性です。
+
+```text
+requirements.md (REQ-TODO-01)
+  ├── spec_task.md (タスクの CRUD 仕様)
+  │    ├── screen_task_list.md (一覧画面の項目定義)
+  │    └── table_tasks.md (tasks テーブルのカラム定義)
+  │         └── prisma/schema.prisma
+  └── src/todo/domain/task.ts (// REQ-TODO-01)
+```
+
+要件 ID `REQ-TODO-01` は仕様ファイルで参照され、仕様はテーブル設計や画面設計に反映され、最終的にコードに至るまで一気通貫で追跡できます。
+
+## ドキュメントの整合性が壊れるとき
+
+ただ、ドキュメントが増えてくると**整合性を保つのが難しく**なります。
+
+### 安定度管理の複雑さ
+
+顧客がいる案件では、要件定義からこちらで行うケースもあると思います。
+要件が固まるまでに仮説を立てたり、デモを見せながらフィードバックをもらったりする中で、各項目のステータスを管理する必要が出てきます。
+
+```markdown
+| ID          | 要件                               | 安定度 | 根拠           |
+| ----------- | ---------------------------------- | ------ | -------------- |
+| REQ-TODO-01 | タスクを作成・編集・削除できること | stable | 初回定例で合意 |
+| REQ-TODO-02 | タスクに期限を設定できること       | review | デモで確認予定 |
+| REQ-TODO-03 | タスクをカテゴリで分類できること   | draft  | 仮説段階       |
+```
+
+`draft`（仮説段階）→ `review`（確認待ち）→ `stable`（合意済み）のライフサイクルを管理するわけですが、安定度の列が抜けていたり想定外の値が入っていたりしても、なかなか気づけません。
+
+### 相互参照の壊れやすさ
+
+要件 ID を別のファイルから参照する場面はよくあります。
+
+```markdown
+<!-- table_tasks.md -->
+
+## 要件（What）
+
+| ID              | 要件                               | 安定度 |
+| --------------- | ---------------------------------- | ------ |
+| REQ-TODO-TBL-01 | タスクのメタデータを管理できること | review |
+```
+
+この ID が別のファイルからも参照されるとき、要件を削除したり ID を変更したりすると、**参照先が壊れます**。しかもその壊れ方は **サイレント** です。
+エラーも出なければ、テストも落ちません。
+
+### ユビキタス言語の継承
+
+私の場合、Layer 1 のユビキタス言語を全ての SDD ファイルの冒頭で継承する形にしています。
+
+```markdown
+<!-- table_tasks.md -->
+
+## 継承
+
+- [Layer 1: 用語定義](../../foundation/glossary.md)
+- [Layer 2: ドキュメント管理標準](../../standards/doc_standards.md)
+```
+
+このリンクが有効かどうか（ファイルが存在するか、パスが正しいか）は、ファイル数が増えるほど確認が難しくなります。
+
+### ドキュメントの膨張
+
+システムが大きくなれば Zone もファイルも増えます。要件 ID が数十、数百になると、相互参照の把握はもう手作業では追いつきません。
+
+## なぜ LLM ではなく静的解析か
+
+整合性チェックも LLM に任せるという選択肢はあると思います。ただ、いくつか気になる点があり、結局 **静的解析** に落ち着きました。
+
+### 時間的コストと金銭的コスト
+
+LLM にドキュメントを検証させるには、対象ファイルをすべてコンテキストに含める必要があります。
+ドキュメントが増えるほどトークン数も膨らみ、**時間的コスト** と **金銭的コスト** の両方が増えていきます。
+
+企業で Cursor や Claude Code を契約している場合、リクエストの上限をチーム全体で共有していることも多いと思います。
+ドキュメントの整合性チェックのように繰り返し行う作業で LLM のリクエストを消費するのは、できれば避けたいところです。
+
+### 再現性が求められる検証に LLM は向かない
+
+LLM の出力には本質的にランダム性があります。「必須カラムが存在するか」「ID が重複していないか」「リンク先のファイルが存在するか」のような **Yes/No で判定できる問題** に対して、確率的に「たぶん大丈夫です」と返されても、結局自分で確認しないと不安が残ります。
+
+こうした AI 出力の不安定さに毎回振り回されると、**判断疲れ** にもつながります。
+条件さえ決まれば OK/NG が機械的に判定できるものは静的解析に任せて、人間の判断は最小限にしたい。
+再現性が求められる検証は、エラーとして「整合性が取れていません」と明確に指摘してもらうほうが信頼できます。
+
+### AI 向けのツールだが、AI には依存しない
+
+contextlint は SDD のような **AI 向けの構造化ドキュメントを検証する** ためのツールですが、contextlint 自体は TypeScript で書かれた純粋な静的解析ツールであり、**AI / LLM には一切依存していません**。
+
+AI が「書く」、contextlint が「整合性をチェックする」。
+生成とチェックの責務を分離することで、チェック結果にランダム性が入り込まなくなります。
+
+### 静的解析の強み
+
+| 観点       | LLM                          | 静的解析                 |
+| ---------- | ---------------------------- | ------------------------ |
+| 結果の安定 | 実行ごとに変わりうる         | 同じ入力なら常に同じ結果 |
+| 速度       | トークン数に比例して遅くなる | 数秒で完了               |
+| コスト     | API / リクエスト消費あり     | なし。CI で気軽に回せる  |
+
+これが `contextlint` を作り始めた動機です。
+
+## contextlint とは
+
+`contextlint` は、Markdown ドキュメント間の整合性を検証するルールベースリンターです。
+ドキュメント間の参照切れ、重複 ID、セクションの不足、構造上の問題を **決定論的に、数秒で、CI フレンドリーに** 検出します。
+
+```bash
+npm install -D @contextlint/cli
+```
+
+現在 4 カテゴリ・16 ルールを提供しています。
+
+| カテゴリ                  | 概要                                         | ルール数 |
+| ------------------------- | -------------------------------------------- | -------- |
+| テーブル検証（TBL）       | テーブルの必須カラム、空セル、値の制約       | 6        |
+| 構造検証（SEC / STR）     | 必須セクション、セクション順序、必須ファイル | 3        |
+| 参照検証（REF）           | ドキュメント間のリンク、ID、アンカーの整合性 | 6        |
+| チェックリスト検証（CHK） | チェックリスト項目の完了状態                 | 1        |
+
+ここまで挙げた課題との対応関係は以下の通りです。
+
+| 課題                       | contextlint ルール                                                              |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| 安定度管理の複雑さ         | TBL-002（空セル防止）、TBL-003（許可値の制約）                                  |
+| 相互参照の壊れやすさ       | REF-002（ID のトレーサビリティ）、TBL-006（ID の一意性）                        |
+| ユビキタス言語の継承リンク | REF-001（リンク先の存在）、REF-005（アンカーの存在）                            |
+| ドキュメントの膨張         | STR-001（必須ファイル）、SEC-001（必須セクション）、REF-004（モジュール間依存） |
+
+設定ファイル（`contextlint.config.json`）でルールと対象ファイルを宣言するだけで使えます。
+
+```jsonc
+{
+  "$schema": "https://raw.githubusercontent.com/nozomi-koborinai/contextlint/main/schema.json",
+  // デフォルトの検証対象（docs 配下の全 Markdown）
+  "include": ["docs/**/*.md"],
+  "rules": [
+    // ID・安定度カラムの空セルを禁止
+    { "rule": "tbl002", "options": { "columns": ["ID", "安定度"] } },
+    // 安定度の値を draft / review / stable に制限
+    {
+      "rule": "tbl003",
+      "options": {
+        "column": "安定度",
+        "values": ["draft", "review", "stable"]
+      }
+    },
+    // ドキュメント間の相対リンクが実在するか検証
+    { "rule": "ref001" }
+  ]
+}
+```
+
+## ルール体系
+
+ここからは各カテゴリのルールを詳しく紹介します。
+
+### テーブル検証（TBL）
+
+Markdown テーブルの内容を検証するルール群です。
+
+| ルール  | 概要                                                 |
+| ------- | ---------------------------------------------------- |
+| TBL-001 | テーブルに必須カラムが存在するか                     |
+| TBL-002 | 指定カラムに空セルがないか                           |
+| TBL-003 | カラムの値が許可リストに含まれるか                   |
+| TBL-004 | カラムの値が正規表現パターンに一致するか             |
+| TBL-005 | 条件付き制約（あるカラムの値に応じた別カラムの制約） |
+| TBL-006 | 指定カラムの値がプロジェクト全体で一意か             |
+
+例えば、先ほどの安定度管理の例では、以下の設定で「安定度列の空セル防止」と「許可された値のみ受け入れ」を実現できます。
+
+```json
+{
+  "rules": [
+    {
+      "rule": "tbl002",
+      "options": { "columns": ["ID", "安定度"] }
+    },
+    {
+      "rule": "tbl003",
+      "options": { "column": "安定度", "values": ["draft", "review", "stable"] }
+    }
+  ]
+}
+```
+
+### 構造検証（SEC / STR）
+
+ドキュメントの構造を検証するルール群です。
+
+| ルール  | 概要                                               |
+| ------- | -------------------------------------------------- |
+| SEC-001 | 指定ファイルに必須セクション（見出し）が存在するか |
+| SEC-002 | セクション見出しが指定された順序で並んでいるか     |
+| STR-001 | プロジェクトに必須ファイルが存在するか             |
+
+例えば、すべての `requirements.md` に `業務価値（Why）` と `要件（What）` セクションを強制できます。
+
+```json
+{
+  "rule": "sec001",
+  "options": {
+    "sections": ["業務価値（Why）", "要件（What）"],
+    "files": "**/requirements.md"
+  }
+}
+```
+
+SEC-002 を使えば、セクションの「存在」だけでなく「順序」も強制できます。
+テンプレート駆動のドキュメント（ADR や RFC など）で、Overview → Requirements → Design のような順序を統一したい場合に有効です。
+
+### チェックリスト検証（CHK）
+
+Markdown のチェックリストを検証するルール群です。
+
+| ルール  | 概要                                                   |
+| ------- | ------------------------------------------------------ |
+| CHK-001 | 指定セクション内の全チェックリスト項目が完了しているか |
+
+レビューチェックリストやリリースゲートなど、CI でチェックリストの完了を強制したい場面で使えます。
+
+```json
+{
+  "rule": "chk001",
+  "options": {
+    "section": "Review Checklist",
+    "files": "docs/reviews/*.md"
+  }
+}
+```
+
+### 参照検証（REF）
+
+ドキュメント間の参照整合性を検証するルール群です。
+
+| ルール  | 概要                                                               |
+| ------- | ------------------------------------------------------------------ |
+| REF-001 | Markdown リンクの参照先ファイルが存在するか                        |
+| REF-002 | 要件 ID のクロスファイルトレーサビリティ                           |
+| REF-003 | 安定度の順序制約（stable な項目が draft な項目に依存していないか） |
+| REF-004 | Zone 間の依存関係が宣言されているか                                |
+| REF-005 | アンカーフラグメント（`#見出し名`）が参照先の見出しに存在するか    |
+| REF-006 | 画像参照（`![alt](path)`）の参照先ファイルが存在するか             |
+
+REF-001 は、先ほど触れた「ユビキタス言語の継承リンクが壊れていないか」を検証するルールです。
+
+### markdownlint との違い
+
+Markdown の **構文やフォーマット** を検証する markdownlint とは異なり、contextlint は Markdown の **コンテンツの意味的な整合性やファイル間の整合性** に特化しています。
+
+| 観点     | markdownlint                           | contextlint                                     |
+| -------- | -------------------------------------- | ----------------------------------------------- |
+| 対象     | 構文・フォーマット                     | コンテンツの構造・意味                          |
+| 例       | 見出しレベルの順序、リストのインデント | テーブルの必須カラム、ID の一意性、参照先の存在 |
+| 位置づけ | Markdown の書き方                      | Markdown の中身                                 |
+
+両者は補完関係にあるので、併用がおすすめです。
+
+### パッケージ構成
+
+contextlint は 3 つのパッケージで構成されるモノレポです。
+
+| パッケージ                | 役割                                             |
+| ------------------------- | ------------------------------------------------ |
+| `@contextlint/core`       | ルールエンジンと Markdown パーサー               |
+| `@contextlint/cli`        | CLI エントリーポイント（`contextlint` コマンド） |
+| `@contextlint/mcp-server` | AI ツール連携用の MCP サーバー                   |
+
+## 使い方
+
+### クイックスタート
+
+```bash
+# インストール
+npm install -D @contextlint/cli
+
+# 実行（カレントディレクトリから contextlint.config.json を自動検出）
+npx contextlint
+```
+
+### 設定ファイルの例
+
+実際のプロジェクトでは、以下のような設定ファイルを使っています。
+
+```jsonc
+{
+  "$schema": "https://raw.githubusercontent.com/nozomi-koborinai/contextlint/main/schema.json",
+  // 検証対象のファイルパターン
+  "include": ["docs/**/*.md"],
+  "rules": [
+    // --- テーブル検証 ---
+    // ID・安定度カラムの空セルを禁止
+    {
+      "rule": "tbl002",
+      "options": { "columns": ["ID", "安定度"] }
+    },
+    // 安定度の値を draft / review / stable に制限
+    {
+      "rule": "tbl003",
+      "options": {
+        "column": "安定度",
+        "values": ["draft", "review", "stable"]
+      }
+    },
+    // 要件 ID が REQ-AUTH-01 のような命名規則に従っているか
+    {
+      "rule": "tbl004",
+      "options": {
+        "column": "ID",
+        "pattern": "^REQ-[A-Z]+-\\d{2,3}$"
+      }
+    },
+    // 要件 ID がプロジェクト全体で重複していないか
+    {
+      "rule": "tbl006",
+      "options": {
+        "files": "**/requirements.md",
+        "column": "ID"
+      }
+    },
+
+    // --- 構造検証 ---
+    // requirements.md に必須セクションが存在するか
+    {
+      "rule": "sec001",
+      "options": {
+        "sections": ["業務価値（Why）", "要件（What）"],
+        "files": "**/requirements.md"
+      }
+    },
+    // プロジェクトに必要なファイルが揃っているか
+    {
+      "rule": "str001",
+      "options": {
+        "files": [
+          "docs/zones/auth/requirements.md",
+          "docs/zones/todo/requirements.md"
+        ]
+      }
+    },
+
+    // --- 参照検証 ---
+    // ドキュメント間の相対リンクが実在するか
+    {
+      "rule": "ref001"
+    },
+    // 要件 ID が仕様ファイルから正しく参照されているか
+    {
+      "rule": "ref002",
+      "options": {
+        "definitions": "**/requirements.md",
+        "references": ["**/spec_*.md", "**/overview.md"],
+        "idColumn": "ID",
+        "idPattern": "^REQ-"
+      }
+    },
+    // stable な仕様が draft な要件に依存していないか
+    {
+      "rule": "ref003",
+      "options": {
+        "stabilityColumn": "安定度",
+        "stabilityOrder": ["draft", "review", "stable"],
+        "definitions": "**/requirements.md",
+        "references": ["**/spec_*.md"]
+      }
+    },
+    // Zone 間のリンクが overview で宣言されているか
+    {
+      "rule": "ref004",
+      "options": {
+        "zonesDir": "docs/zones",
+        "dependencySection": "外部Zone連携"
+      }
+    }
+  ]
+}
+```
+
+この設定で、以下が自動的に検証されます。
+
+- 要件テーブルの `ID` と `安定度` が空でないこと（TBL-002）
+- 安定度の値が `draft` / `review` / `stable` のいずれかであること（TBL-003）
+- 要件 ID が `REQ-AUTH-01` のような命名規則に従っていること（TBL-004）
+- 要件 ID がプロジェクト全体で重複していないこと（TBL-006）
+- `requirements.md` に必須セクションが存在すること（SEC-001）
+- 必要なファイルが存在すること（STR-001）
+- ドキュメント間の相対リンクの参照先が存在すること（REF-001）
+- 要件 ID が仕様ファイルから参照されていること（REF-002）
+- stable な仕様が draft な要件に依存していないこと（REF-003）
+- Zone 間の依存関係が宣言されていること（REF-004）
+
+### 実行結果のイメージ
+
+実際に `contextlint` を実行すると、以下のようにファイルごとに違反が報告されます。
+
+```text
+$ npx contextlint
+
+docs/zones/todo/requirements.md
+  line 5   error    Column "安定度" has invalid value "wip" (allowed: draft, review, stable)  TBL-003
+  line 5   error    Column "ID" value "REQ_TODO_03" does not match pattern ^REQ-[A-Z]+-\d{2,3}$  TBL-004
+
+docs/zones/auth/table_users.md
+  line 8   warning  Empty cell in column "安定度"  TBL-002
+  line 12  error    Link target "../../foundation/glossary.md" does not exist  REF-001
+
+2 errors, 1 warning in 2 files
+```
+
+## CI 連携
+
+GitHub Actions で contextlint を実行する例です。
+
+```yaml
+name: contextlint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: npx @contextlint/cli
+```
+
+ドキュメントを変更した PR で自動的に検証が走るので、壊れた構造を**マージ前に検出**できます。
+
+## AI ツール連携
+
+contextlint は MCP (Model Context Protocol) サーバーとしても動作します。
+
+```json
+{
+  "mcpServers": {
+    "contextlint": {
+      "command": "npx",
+      "args": ["@contextlint/mcp-server"]
+    }
+  }
+}
+```
+
+MCP サーバーは以下の 2 つのツールを提供します。
+
+| ツール       | 概要                                                                |
+| ------------ | ------------------------------------------------------------------- |
+| `lint`       | Markdown コンテンツを直接渡してルールを指定し、その場で lint を実行 |
+| `lint-files` | 設定ファイルと glob パターンを指定し、ファイル単位で lint を実行    |
+
+この設定を入れると、Claude や Cursor などの AI ツールが会話の中でドキュメントの lint を実行できるようになります。例えば、こんなワークフローが可能です。
+
+1. AI にドキュメントを編集させる
+2. 編集後、MCP 経由で `lint-files` を実行して整合性をチェック
+3. 違反があれば AI が自動的に修正し、再度 lint を実行
+
+<Image src={mcpImage} alt="MCP 経由で contextlint を実行している様子" width={800} quality={80} />
+*MCP 経由で AI がドキュメントの整合性をチェックし、違反箇所と修正案を提示している様子*
+
+MCP を使わなくても、Claude Code の Hooks や Cursor の Hooks で CLI を直接実行させる方法もあります。
+ドキュメント編集後に `npx contextlint` を自動実行するフックを設定しておけば、MCP サーバーなしでも同様のワークフローが実現できます。
+
+いずれの方法でも、CI が「壊れたものを通さない」ためのガードレールなのに対し、AI ツール連携は「壊れたものをそもそも作らない」ための仕組みです。
+
+## SDD 以外のユースケース
+
+本記事では SDD を例に紹介しましたが、`contextlint` のルール自体は汎用的なので、SDD に限らず Markdown でドキュメント管理しているプロジェクトで活用できます。
+
+- **ADR（Architecture Decision Records）** — SEC-001 で必須セクション（Status, Context, Decision）の存在を強制し、TBL-003 でステータスの値を制約
+- **Docs as Code 全般** — 壊れた参照、重複 ID、欠損ファイルを CI で自動検出
+
+ドキュメントもコードと同じように Git で管理し、CI でガードレールを敷く。
+そんな Docs as Code の実践に `contextlint` を組み込むと、markdownlint と合わせてカバー範囲が広がります。
+
+## おわりに
+
+コードには ESLint や型検査があるのに、ドキュメントの中身を検証する手段がない。
+`contextlint` は、そのギャップを埋めたくて作り始めたツールです。
+
+- テーブルの必須カラムや値の制約を検証する
+- ドキュメント間の参照整合性を検証する
+- 要件 ID の一意性やトレーサビリティを検証する
+- CI で自動実行し、MCP で AI ツールと連携する
+- **AI 向けのドキュメントを検証するが、AI には依存しない**
+
+SDD、ADR など、Markdown でドキュメント管理している方は、ぜひ試してみてください。
+
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint"
+  title="contextlint"
+  description="A rule-based linter that verifies consistency across Markdown documents."
+/>
+
+<RichLinkCard
+  href="https://www.npmjs.com/org/contextlint"
+  title="@contextlint on npm"
+  description="contextlint packages on npm — @contextlint/cli, @contextlint/core, @contextlint/mcp-server."
+/>

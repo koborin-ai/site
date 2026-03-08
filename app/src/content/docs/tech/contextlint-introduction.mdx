@@ -1,0 +1,573 @@
+---
+title: "Building contextlint: A Static Analysis Linter for Markdown Document Consistency"
+description: "A rule-based linter for solving Markdown consistency challenges in Specification-Driven Development (SDD)"
+publishedAt: 2026-03-08
+ogImage: /og/contextlint-introduction.png
+---
+
+import { Image } from 'astro:assets';
+import RichLinkCard from '../../../components/RichLinkCard.astro';
+import mcpImage from '../../../assets/tech/contextlint-introduction/mcp-en.png';
+
+<img src="/og/contextlint-introduction.png" alt="contextlint" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
+
+## Introduction
+
+In AI-powered software development, an approach is taking hold where structured documents — requirements, specifications, and designs — are managed as an SSOT (Single Source of Truth) and AI generates code based on them. This is commonly called **Specification-Driven Development (SDD)**.
+
+In this approach, the quality of documents directly impacts the quality of generated code.
+In other words, **if documents are broken, the code produced from them will be affected too**.
+
+I practice SDD-based document management in my work, and through that process, I've faced the challenge of "keeping Markdown documents consistent with each other."
+
+This article introduces **contextlint**, a tool I'm building to solve that challenge.
+
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint"
+  title="contextlint"
+  description="A rule-based linter that verifies consistency across Markdown documents."
+/>
+
+## Document Structure in SDD
+
+### Layered Document Hierarchy
+
+I organize documents in layers based on their **rate of change**.
+Specifically, I use a 3-layer structure:
+
+```text
+docs/
+├── foundation/           ← Layer 1: Near-immutable (glossary, etc.)
+│   └── glossary.md
+├── standards/            ← Layer 2: Low frequency (management rules)
+│   └── doc_standards.md
+└── zones/                ← Layer 3: High frequency (requirements, specs, designs)
+    ├── auth/
+    │   ├── overview.md
+    │   ├── requirements.md
+    │   ├── spec_session.md
+    │   ├── table_users.md
+    │   └── screen_login.md
+    └── todo/
+        ├── overview.md
+        ├── requirements.md
+        ├── spec_task.md
+        ├── table_tasks.md
+        └── screen_task_list.md
+```
+
+Layer 1 holds project-wide ubiquitous language, Layer 2 holds document governance rules, and Layer 3 holds the actual requirements, specifications, and designs.
+
+### Zones as Boundaries of Responsibility
+
+A **Zone** is a unit of responsibility boundary. For example, `auth` (authentication) and `todo` (task management) each have their own document sets for independent concerns.
+Dependencies between zones are explicitly managed.
+
+### Traceability from Requirements to Code
+
+The benefit of SDD is the traceability chain: **requirements → specifications → design → code**.
+
+```text
+requirements.md (REQ-TODO-01)
+  ├── spec_task.md (Task CRUD specification)
+  │    ├── screen_task_list.md (List screen field definitions)
+  │    └── table_tasks.md (tasks table column definitions)
+  │         └── prisma/schema.prisma
+  └── src/todo/domain/task.ts (// REQ-TODO-01)
+```
+
+The requirement ID `REQ-TODO-01` is referenced in specification files, specifications are reflected in table and screen designs, and everything can be traced end-to-end down to the code.
+
+## When Document Consistency Breaks
+
+As documents grow, **maintaining consistency becomes difficult**.
+
+### Complexity of Stability Management
+
+In client-facing projects, you often handle requirements definition yourself.
+As requirements solidify through hypotheses, demos, and feedback cycles, you need to track the status of each item.
+
+```markdown
+| ID          | Requirement                         | Stability | Basis              |
+| ----------- | ----------------------------------- | --------- | ------------------ |
+| REQ-TODO-01 | Create, edit, and delete tasks      | stable    | Agreed at kickoff  |
+| REQ-TODO-02 | Set deadlines on tasks              | review    | Pending demo check |
+| REQ-TODO-03 | Categorize tasks                    | draft     | Hypothesis stage   |
+```
+
+You manage a lifecycle of `draft` (hypothesis) → `review` (awaiting confirmation) → `stable` (agreed), but it's easy to miss when a stability column is blank or contains an unexpected value.
+
+### Fragility of Cross-References
+
+It's common to reference requirement IDs from other files.
+
+```markdown
+<!-- table_tasks.md -->
+
+## Requirements (What)
+
+| ID              | Requirement                         | Stability |
+| --------------- | ----------------------------------- | --------- |
+| REQ-TODO-TBL-01 | Manage task metadata                | review    |
+```
+
+When this ID is referenced from another file, deleting a requirement or changing an ID **breaks the reference**. And this breakage is **silent**.
+No errors are thrown, and no tests fail.
+
+### Inheriting Ubiquitous Language
+
+I inherit Layer 1's ubiquitous language at the top of every SDD file.
+
+```markdown
+<!-- table_tasks.md -->
+
+## Inheritance
+
+- [Layer 1: Glossary](../../foundation/glossary.md)
+- [Layer 2: Document Standards](../../standards/doc_standards.md)
+```
+
+Whether these links are valid (whether the files exist, whether the paths are correct) becomes harder to verify as the number of files grows.
+
+### Document Proliferation
+
+As systems grow, zones and files multiply. When requirement IDs number in the dozens or hundreds, tracking cross-references by hand is no longer feasible.
+
+## Why Static Analysis, Not LLMs
+
+Delegating consistency checks to an LLM is certainly an option. However, several concerns led me to settle on **static analysis**.
+
+### Time Cost and Financial Cost
+
+To have an LLM verify documents, you need to include all target files in the context.
+As documents grow, token counts increase, driving up both **time cost** and **financial cost**.
+
+When organizations contract Cursor or Claude Code, request limits are often shared across the team.
+Consuming LLM requests for repetitive tasks like document consistency checks is something you'd rather avoid.
+
+### LLMs Are Not Suited for Reproducible Verification
+
+LLM outputs are inherently non-deterministic. For **yes/no problems** like "does a required column exist?", "are IDs unique?", or "does the linked file exist?" — receiving a probabilistic "it's probably fine" still leaves you needing to verify it yourself.
+
+Being subject to this instability in AI outputs on every check leads to **decision fatigue**.
+For things that can be mechanically determined as OK/NG given defined conditions, let static analysis handle it and keep human judgment to a minimum.
+For verification that demands reproducibility, having an error message that clearly states "consistency is broken" is far more trustworthy.
+
+### A Tool for AI, But Not Dependent on AI
+
+contextlint is a tool for **verifying AI-oriented structured documents** like those in SDD, but contextlint itself is a pure static analysis tool written in TypeScript that **has zero dependency on AI / LLMs**.
+
+AI "writes," contextlint "checks consistency."
+By separating the responsibilities of generation and checking, randomness is kept out of the checking results.
+
+### Strengths of Static Analysis
+
+| Aspect    | LLM                                 | Static Analysis                  |
+| --------- | ------------------------------------ | -------------------------------- |
+| Stability | Results may vary between runs        | Same input always yields same output |
+| Speed     | Slows as token count grows           | Completes in seconds             |
+| Cost      | Consumes API / request quota         | None. Run freely in CI           |
+
+This is the motivation behind building `contextlint`.
+
+## What Is contextlint
+
+`contextlint` is a rule-based linter that verifies consistency across Markdown documents.
+It detects broken cross-references, duplicate IDs, missing sections, and structural issues **deterministically, in seconds, and CI-friendly**.
+
+```bash
+npm install -D @contextlint/cli
+```
+
+It currently provides 4 categories and 16 rules.
+
+| Category                    | Overview                                         | Rules |
+| --------------------------- | ------------------------------------------------ | ----- |
+| Table Validation (TBL)      | Required columns, empty cells, value constraints | 6     |
+| Structure Validation (SEC / STR) | Required sections, section order, required files | 3     |
+| Reference Validation (REF)  | Links, IDs, anchor consistency across documents  | 6     |
+| Checklist Validation (CHK)  | Checklist item completion status                 | 1     |
+
+Here's how the challenges map to contextlint rules:
+
+| Challenge                    | contextlint Rules                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| Stability management         | TBL-002 (empty cell prevention), TBL-003 (allowed value constraints)            |
+| Cross-reference fragility    | REF-002 (ID traceability), TBL-006 (ID uniqueness)                              |
+| Ubiquitous language links    | REF-001 (link target existence), REF-005 (anchor existence)                     |
+| Document proliferation       | STR-001 (required files), SEC-001 (required sections), REF-004 (cross-zone deps) |
+
+Just declare rules and target files in a configuration file (`contextlint.config.json`).
+
+```jsonc
+{
+  "$schema": "https://raw.githubusercontent.com/nozomi-koborinai/contextlint/main/schema.json",
+  // Default validation targets (all Markdown under docs)
+  "include": ["docs/**/*.md"],
+  "rules": [
+    // Prevent empty cells in ID and Stability columns
+    { "rule": "tbl002", "options": { "columns": ["ID", "Stability"] } },
+    // Restrict Stability values to draft / review / stable
+    {
+      "rule": "tbl003",
+      "options": {
+        "column": "Stability",
+        "values": ["draft", "review", "stable"]
+      }
+    },
+    // Verify relative links between documents exist
+    { "rule": "ref001" }
+  ]
+}
+```
+
+## Rule System
+
+Let's look at each category's rules in detail.
+
+### Table Validation (TBL)
+
+Rules for validating Markdown table contents.
+
+| Rule    | Overview                                                   |
+| ------- | ---------------------------------------------------------- |
+| TBL-001 | Required columns exist in a table                          |
+| TBL-002 | No empty cells in specified columns                        |
+| TBL-003 | Column values are within an allowed list                   |
+| TBL-004 | Column values match a regex pattern                        |
+| TBL-005 | Conditional constraints (constraints on one column based on another) |
+| TBL-006 | Column values are unique across the entire project         |
+
+For the stability management example above, the following configuration achieves "prevent empty stability cells" and "accept only allowed values":
+
+```json
+{
+  "rules": [
+    {
+      "rule": "tbl002",
+      "options": { "columns": ["ID", "Stability"] }
+    },
+    {
+      "rule": "tbl003",
+      "options": { "column": "Stability", "values": ["draft", "review", "stable"] }
+    }
+  ]
+}
+```
+
+### Structure Validation (SEC / STR)
+
+Rules for validating document structure.
+
+| Rule    | Overview                                              |
+| ------- | ----------------------------------------------------- |
+| SEC-001 | Required sections (headings) exist in specified files  |
+| SEC-002 | Section headings appear in a specified order            |
+| STR-001 | Required files exist in the project                    |
+
+For example, you can enforce that every `requirements.md` has `Business Value (Why)` and `Requirements (What)` sections.
+
+```json
+{
+  "rule": "sec001",
+  "options": {
+    "sections": ["Business Value (Why)", "Requirements (What)"],
+    "files": "**/requirements.md"
+  }
+}
+```
+
+SEC-002 goes further by enforcing not just the "existence" but also the "order" of sections.
+This is useful for template-driven documents (ADRs, RFCs, etc.) where you want to standardize an order like Overview → Requirements → Design.
+
+### Checklist Validation (CHK)
+
+Rules for validating Markdown checklists.
+
+| Rule    | Overview                                                     |
+| ------- | ------------------------------------------------------------ |
+| CHK-001 | All checklist items in a specified section are completed      |
+
+Useful for enforcing checklist completion in CI — for review checklists, release gates, and similar workflows.
+
+```json
+{
+  "rule": "chk001",
+  "options": {
+    "section": "Review Checklist",
+    "files": "docs/reviews/*.md"
+  }
+}
+```
+
+### Reference Validation (REF)
+
+Rules for validating cross-document reference integrity.
+
+| Rule    | Overview                                                              |
+| ------- | --------------------------------------------------------------------- |
+| REF-001 | Markdown link targets exist                                           |
+| REF-002 | Cross-file traceability of requirement IDs                            |
+| REF-003 | Stability ordering constraints (stable items don't depend on draft)    |
+| REF-004 | Cross-zone dependencies are declared                                  |
+| REF-005 | Anchor fragments (`#heading`) exist in the target document's headings |
+| REF-006 | Image reference targets (`![alt](path)`) exist                        |
+
+REF-001 is the rule that verifies whether "ubiquitous language inheritance links are not broken."
+
+### Difference from markdownlint
+
+Unlike markdownlint, which validates Markdown **syntax and formatting**, contextlint specializes in **semantic content consistency and cross-file integrity**.
+
+| Aspect   | markdownlint                           | contextlint                                      |
+| -------- | -------------------------------------- | ------------------------------------------------ |
+| Target   | Syntax and formatting                  | Content structure and semantics                   |
+| Examples | Heading level order, list indentation  | Required table columns, ID uniqueness, link targets |
+| Role     | How Markdown is written                | What Markdown contains                            |
+
+The two are complementary — using both together is recommended.
+
+### Package Structure
+
+contextlint is a monorepo composed of 3 packages.
+
+| Package                   | Role                                                |
+| ------------------------- | --------------------------------------------------- |
+| `@contextlint/core`       | Rule engine and Markdown parser                     |
+| `@contextlint/cli`        | CLI entry point (the `contextlint` command)          |
+| `@contextlint/mcp-server` | MCP server for AI tool integration                  |
+
+## Usage
+
+### Quick Start
+
+```bash
+# Install
+npm install -D @contextlint/cli
+
+# Run (auto-detects contextlint.config.json from current directory)
+npx contextlint
+```
+
+### Configuration File Example
+
+Here's a configuration file from a real project:
+
+```jsonc
+{
+  "$schema": "https://raw.githubusercontent.com/nozomi-koborinai/contextlint/main/schema.json",
+  // Validation target file patterns
+  "include": ["docs/**/*.md"],
+  "rules": [
+    // --- Table Validation ---
+    // Prevent empty cells in ID and Stability columns
+    {
+      "rule": "tbl002",
+      "options": { "columns": ["ID", "Stability"] }
+    },
+    // Restrict Stability values to draft / review / stable
+    {
+      "rule": "tbl003",
+      "options": {
+        "column": "Stability",
+        "values": ["draft", "review", "stable"]
+      }
+    },
+    // Require IDs to follow a naming convention like REQ-AUTH-01
+    {
+      "rule": "tbl004",
+      "options": {
+        "column": "ID",
+        "pattern": "^REQ-[A-Z]+-\\d{2,3}$"
+      }
+    },
+    // Ensure requirement IDs are unique across the project
+    {
+      "rule": "tbl006",
+      "options": {
+        "files": "**/requirements.md",
+        "column": "ID"
+      }
+    },
+
+    // --- Structure Validation ---
+    // Ensure required sections exist in requirements.md
+    {
+      "rule": "sec001",
+      "options": {
+        "sections": ["Business Value (Why)", "Requirements (What)"],
+        "files": "**/requirements.md"
+      }
+    },
+    // Ensure required files exist in the project
+    {
+      "rule": "str001",
+      "options": {
+        "files": [
+          "docs/zones/auth/requirements.md",
+          "docs/zones/todo/requirements.md"
+        ]
+      }
+    },
+
+    // --- Reference Validation ---
+    // Verify relative links between documents exist
+    {
+      "rule": "ref001"
+    },
+    // Verify requirement IDs are correctly referenced from spec files
+    {
+      "rule": "ref002",
+      "options": {
+        "definitions": "**/requirements.md",
+        "references": ["**/spec_*.md", "**/overview.md"],
+        "idColumn": "ID",
+        "idPattern": "^REQ-"
+      }
+    },
+    // Ensure stable specs don't depend on draft requirements
+    {
+      "rule": "ref003",
+      "options": {
+        "stabilityColumn": "Stability",
+        "stabilityOrder": ["draft", "review", "stable"],
+        "definitions": "**/requirements.md",
+        "references": ["**/spec_*.md"]
+      }
+    },
+    // Ensure cross-zone links are declared in overview files
+    {
+      "rule": "ref004",
+      "options": {
+        "zonesDir": "docs/zones",
+        "dependencySection": "External Zone Dependencies"
+      }
+    }
+  ]
+}
+```
+
+With this configuration, the following are automatically verified:
+
+- `ID` and `Stability` columns in requirement tables are not empty (TBL-002)
+- Stability values are one of `draft` / `review` / `stable` (TBL-003)
+- Requirement IDs follow a naming convention like `REQ-AUTH-01` (TBL-004)
+- Requirement IDs are unique across the project (TBL-006)
+- Required sections exist in `requirements.md` (SEC-001)
+- Required files exist (STR-001)
+- Relative links between documents point to existing targets (REF-001)
+- Requirement IDs are referenced from specification files (REF-002)
+- Stable specifications don't depend on draft requirements (REF-003)
+- Cross-zone dependencies are declared (REF-004)
+
+### Execution Output
+
+Running `contextlint` reports violations per file:
+
+```text
+$ npx contextlint
+
+docs/zones/todo/requirements.md
+  line 5   error    Column "Stability" has invalid value "wip" (allowed: draft, review, stable)  TBL-003
+  line 5   error    Column "ID" value "REQ_TODO_03" does not match pattern ^REQ-[A-Z]+-\d{2,3}$  TBL-004
+
+docs/zones/auth/table_users.md
+  line 8   warning  Empty cell in column "Stability"  TBL-002
+  line 12  error    Link target "../../foundation/glossary.md" does not exist  REF-001
+
+2 errors, 1 warning in 2 files
+```
+
+## CI Integration
+
+Here's an example of running contextlint in GitHub Actions:
+
+```yaml
+name: contextlint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: npx @contextlint/cli
+```
+
+Validation runs automatically on PRs that modify documents, catching broken structures **before merge**.
+
+## AI Tool Integration
+
+contextlint also works as an MCP (Model Context Protocol) server.
+
+```json
+{
+  "mcpServers": {
+    "contextlint": {
+      "command": "npx",
+      "args": ["@contextlint/mcp-server"]
+    }
+  }
+}
+```
+
+The MCP server provides two tools:
+
+| Tool         | Overview                                                            |
+| ------------ | ------------------------------------------------------------------- |
+| `lint`       | Pass Markdown content directly with rules for inline linting        |
+| `lint-files` | Specify a config file and glob patterns for file-based linting      |
+
+With this setup, AI tools like Claude and Cursor can run document linting within conversations. For example:
+
+1. Have AI edit a document
+2. After editing, run `lint-files` via MCP to check consistency
+3. If violations are found, AI automatically fixes them and re-runs lint
+
+<Image src={mcpImage} alt="Running contextlint via MCP" width={800} quality={80} />
+*AI checking document consistency via MCP, identifying violations and suggesting fixes*
+
+You can also use Claude Code Hooks or Cursor Hooks to run the CLI directly without MCP.
+Set up a hook to auto-run `npx contextlint` after document edits, and you get the same workflow without the MCP server.
+
+Either way, CI acts as a guardrail to "not let broken things through," while AI tool integration is a mechanism to "not create broken things in the first place."
+
+## Use Cases Beyond SDD
+
+This article used SDD as an example, but `contextlint`'s rules are general-purpose — they can be used in any project that manages documents in Markdown.
+
+- **ADR (Architecture Decision Records)** — Use SEC-001 to enforce required sections (Status, Context, Decision) and TBL-003 to constrain status values
+- **Docs as Code in general** — Auto-detect broken references, duplicate IDs, and missing files in CI
+
+Managing documents in Git like code and setting up CI guardrails.
+Adding `contextlint` to such Docs as Code practices, alongside markdownlint, broadens your coverage.
+
+## Conclusion
+
+Code has ESLint and type checking, but there's no equivalent for verifying document contents.
+`contextlint` is a tool I started building to fill that gap.
+
+- Validates required table columns and value constraints
+- Validates cross-document reference integrity
+- Validates requirement ID uniqueness and traceability
+- Runs automatically in CI, integrates with AI tools via MCP
+- **Validates AI-oriented documents, but does not depend on AI**
+
+If you manage documents in Markdown — whether for SDD, ADR, or anything else — give it a try.
+
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint"
+  title="contextlint"
+  description="A rule-based linter that verifies consistency across Markdown documents."
+/>
+
+<RichLinkCard
+  href="https://www.npmjs.com/org/contextlint"
+  title="@contextlint on npm"
+  description="contextlint packages on npm — @contextlint/cli, @contextlint/core, @contextlint/mcp-server."
+/>

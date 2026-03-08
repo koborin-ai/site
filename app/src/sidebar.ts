@@ -7,6 +7,11 @@ export const sidebar = [
     label: "Tech",
     items: [
       {
+        label: "Building contextlint",
+        translations: { ja: "contextlint というリンターを作っている話" },
+        slug: "tech/contextlint-introduction",
+      },
+      {
         label: "MCP Deep Dive",
         slug: "tech/mcp-deep-dive",
       },

@@ -179,23 +179,25 @@ It detects broken cross-references, duplicate IDs, missing sections, and structu
 npm install -D @contextlint/cli
 ```
 
-It currently provides 4 categories and 16 rules.
+It currently provides 6 categories and 21 rules.
 
-| Category                    | Overview                                         | Rules |
-| --------------------------- | ------------------------------------------------ | ----- |
-| Table Validation (TBL)      | Required columns, empty cells, value constraints | 6     |
-| Structure Validation (SEC / STR) | Required sections, section order, required files | 3     |
-| Reference Validation (REF)  | Links, IDs, anchor consistency across documents  | 6     |
-| Checklist Validation (CHK)  | Checklist item completion status                 | 1     |
+| Category                      | Overview                                              | Rules |
+| ----------------------------- | ----------------------------------------------------- | ----- |
+| Table Validation (TBL)        | Required columns, empty cells, value constraints      | 6     |
+| Structure Validation (SEC / STR) | Required sections, section order, required files    | 3     |
+| Reference Validation (REF)    | Links, IDs, anchor consistency across documents       | 6     |
+| Checklist Validation (CHK)    | Checklist item completion status                      | 1     |
+| Context Validation (CTX)      | Placeholder detection, term consistency               | 2     |
+| Graph Validation (GRP)        | Traceability chains, circular refs, orphan documents  | 3     |
 
 Here's how the challenges map to contextlint rules:
 
-| Challenge                    | contextlint Rules                                                               |
-| ---------------------------- | ------------------------------------------------------------------------------- |
-| Stability management         | TBL-002 (empty cell prevention), TBL-003 (allowed value constraints)            |
-| Cross-reference fragility    | REF-002 (ID traceability), TBL-006 (ID uniqueness)                              |
-| Ubiquitous language links    | REF-001 (link target existence), REF-005 (anchor existence)                     |
-| Document proliferation       | STR-001 (required files), SEC-001 (required sections), REF-004 (cross-zone deps) |
+| Challenge                    | contextlint Rules                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Stability management         | TBL-002 (empty cell prevention), TBL-003 (allowed value constraints)                                         |
+| Cross-reference fragility    | REF-002 (ID traceability), TBL-006 (ID uniqueness)                                                           |
+| Ubiquitous language links    | REF-001 (link target existence), REF-005 (anchor existence), CTX-002 (term consistency)                       |
+| Document proliferation       | STR-001 (required files), SEC-001 (required sections), REF-004 (cross-zone deps), GRP-001–003 (graph health)  |
 
 Just declare rules and target files in a configuration file (`contextlint.config.json`).
 
@@ -315,6 +317,53 @@ Rules for validating cross-document reference integrity.
 
 REF-001 is the rule that verifies whether "ubiquitous language inheritance links are not broken."
 
+### Context Validation (CTX)
+
+Rules for validating document content quality.
+
+| Rule    | Overview                                                                |
+| ------- | ----------------------------------------------------------------------- |
+| CTX-001 | Placeholder content (TODO, TBD, FIXME, etc.) has not been left behind   |
+| CTX-002 | Terms are consistent with the project glossary                          |
+
+CTX-001 detects placeholder content like `TODO` or `TBD` left in documents. While useful during drafting, leftover placeholders risk AI generating code based on incomplete specifications.
+
+```json
+{
+  "rule": "ctx001",
+  "options": {
+    "patterns": ["TODO", "TBD", "FIXME", "PLACEHOLDER"]
+  }
+}
+```
+
+CTX-002 verifies that terms defined in the Layer 1 glossary are used consistently across documents. This goes beyond checking that inheritance links exist (REF-001) — it validates **term-level consistency**.
+
+```json
+{
+  "rule": "ctx002",
+  "options": {
+    "glossaryFile": "docs/foundation/glossary.md",
+    "termColumn": "Term",
+    "files": "docs/zones/**/*.md"
+  }
+}
+```
+
+### Graph Validation (GRP)
+
+Rules that analyze inter-document dependencies as a graph and detect structural issues. contextlint's **Context Graph Engine** builds the dependency graph and validates it with the following rules.
+
+| Rule    | Overview                                                          |
+| ------- | ----------------------------------------------------------------- |
+| GRP-001 | Traceability chain from requirements to code is not broken        |
+| GRP-002 | No circular references in document dependencies                   |
+| GRP-003 | No orphan documents that are not referenced from anywhere         |
+
+The "requirements → specifications → design → code" traceability described earlier — GRP-001 verifies that this **chain is not broken** using graph analysis. GRP-002 detects circular dependencies like A → B → C → A, and GRP-003 finds "orphan" documents that are not referenced from anywhere.
+
+In projects with dozens of files or more, finding such structural issues by eye is virtually impossible. Graph validation fills that gap.
+
 ### Difference from markdownlint
 
 Unlike markdownlint, which validates Markdown **syntax and formatting**, contextlint specializes in **semantic content consistency and cross-file integrity**.
@@ -344,6 +393,9 @@ contextlint is a monorepo composed of 3 packages.
 ```bash
 # Install
 npm install -D @contextlint/cli
+
+# Generate config interactively (English, Japanese, Chinese, Korean)
+npx contextlint init
 
 # Run (auto-detects contextlint.config.json from current directory)
 npx contextlint
@@ -478,6 +530,35 @@ docs/zones/auth/table_users.md
 2 errors, 1 warning in 2 files
 ```
 
+### CLI Subcommands
+
+Starting from v0.6.0, contextlint provides subcommands for analyzing and leveraging document dependencies beyond linting.
+
+| Command                     | Overview                                                    |
+| --------------------------- | ----------------------------------------------------------- |
+| `contextlint`               | Run lint based on the config file (default)                 |
+| `contextlint init`          | Generate a config file interactively                        |
+| `contextlint impact <file>` | Show the blast radius of changes to a given file            |
+| `contextlint slice <query>` | Extract a subset of documents related to a given query      |
+| `contextlint graph`         | Visualize the dependency graph between documents            |
+| `contextlint compile`       | Generate SKILL.md from documents and config (Context Compiler) |
+
+The `--watch` flag enables real-time linting on file changes, and `--format json` outputs results in JSON.
+
+```bash
+# Watch for file changes and lint in real time
+npx contextlint --watch
+
+# Output in JSON format (useful for CI and scripting)
+npx contextlint --format json
+
+# Analyze the impact of changing a specific file
+npx contextlint impact docs/zones/auth/requirements.md
+
+# Visualize the dependency graph
+npx contextlint graph
+```
+
 ## CI Integration
 
 Here's an example of running contextlint in GitHub Actions:
@@ -501,6 +582,8 @@ jobs:
 
 Validation runs automatically on PRs that modify documents, catching broken structures **before merge**.
 
+With `--format json`, results are output in JSON, making it easy to integrate with CI reporters.
+
 ## AI Tool Integration
 
 contextlint also works as an MCP (Model Context Protocol) server.
@@ -516,18 +599,23 @@ contextlint also works as an MCP (Model Context Protocol) server.
 }
 ```
 
-The MCP server provides two tools:
+The MCP server provides six tools:
 
-| Tool         | Overview                                                            |
-| ------------ | ------------------------------------------------------------------- |
-| `lint`       | Pass Markdown content directly with rules for inline linting        |
-| `lint-files` | Specify a config file and glob patterns for file-based linting      |
+| Tool              | Overview                                                            |
+| ----------------- | ------------------------------------------------------------------- |
+| `lint`            | Pass Markdown content directly with rules for inline linting        |
+| `lint-files`      | Specify a config file and glob patterns for file-based linting      |
+| `context-graph`   | Retrieve the dependency graph between documents                     |
+| `context-slice`   | Extract a subset of documents related to a given query              |
+| `impact-analysis` | Analyze the blast radius of changes to a given file                 |
+| `compile-context` | Generate SKILL.md from documents and config (Context Compiler)      |
 
-With this setup, AI tools like Claude and Cursor can run document linting within conversations. For example:
+With this setup, AI tools like Claude and Cursor can run document linting and dependency analysis within conversations. For example:
 
 1. Have AI edit a document
 2. After editing, run `lint-files` via MCP to check consistency
 3. If violations are found, AI automatically fixes them and re-runs lint
+4. Use `impact-analysis` to check the blast radius and update related documents
 
 <Image src={mcpImage} alt="Running contextlint via MCP" width={800} quality={80} />
 *AI checking document consistency via MCP, identifying violations and suggesting fixes*
@@ -536,6 +624,105 @@ You can also use Claude Code Hooks or Cursor Hooks to run the CLI directly witho
 Set up a hook to auto-run `npx contextlint` after document edits, and you get the same workflow without the MCP server.
 
 Either way, CI acts as a guardrail to "not let broken things through," while AI tool integration is a mechanism to "not create broken things in the first place."
+
+### Context Compiler
+
+The Context Compiler, added in v0.7.0, **deterministically** generates custom skills (`SKILL.md`) for Claude Code from your project's documents and contextlint configuration. No LLM is used — same input always yields the same output.
+
+```bash
+npx contextlint compile
+```
+
+#### Configuration
+
+Add a `compile` section to your `contextlint.config.json`:
+
+```json
+{
+  "include": ["docs/**/*.md"],
+  "compile": {
+    "skill": {
+      "name": "my-project-docs",
+      "description": "Validate and maintain project documentation"
+    },
+    "outdir": ".claude/skills/my-project"
+  },
+  "rules": [...]
+}
+```
+
+#### Generated SKILL.md Structure
+
+The `compile` command analyzes the dependency graph and outputs a SKILL.md under `.claude/skills/` with four sections:
+
+| Section               | Content                                                                        |
+| --------------------- | ------------------------------------------------------------------------------ |
+| Document Architecture | File tree with graph roles (entry / hub / leaf / bridge / isolated)             |
+| Document Rules        | Applied rules described in natural language, grouped by category                |
+| Document Dependencies | Dynamic context injection via `impact` / `slice` commands                       |
+| Workflow              | Guidance for creating and editing documents                                     |
+
+Here's what a generated SKILL.md looks like:
+
+```markdown
+---
+name: my-project-docs
+description: "Validate and maintain project documentation"
+---
+
+## Document Architecture
+
+### File Tree
+
+| Path | Role |
+|------|------|
+| `docs/zones/auth/overview.md` | entry point |
+| `docs/zones/auth/requirements.md` | hub |
+| `docs/zones/auth/table_users.md` | leaf |
+
+### Document Types
+
+- **[ID, Requirement, Stability]** - 2 table(s) (ID format: `REQ-NNN`)
+
+## Document Rules
+
+### Table Structure
+- **TBL-002**: Columns "ID", "Stability" must not be empty
+- **TBL-003**: Column "Stability" values must be one of: draft, review, stable
+
+### References
+- **REF-001**: All relative links must point to existing files
+
+## Document Dependencies
+
+### Impact Analysis (dynamic)
+!`npx contextlint impact $ARGUMENTS`
+
+### Related Documents (dynamic)
+!`npx contextlint slice $ARGUMENTS`
+```
+
+The key part is the `` !`npx contextlint impact $ARGUMENTS` `` syntax in the `Document Dependencies` section. This leverages Claude Code's [**Dynamic Context Injection**](https://code.claude.com/docs/en/skills#inject-dynamic-context) — when the skill is loaded, the commands execute automatically and their output is embedded into the prompt.
+
+This means when Claude Code starts working on document-related tasks, the following happens automatically:
+
+1. Document structure and rules are understood from SKILL.md
+2. `contextlint impact` / `slice` results reveal the blast radius of changes
+3. Code is generated and modified based on that context
+
+If MCP is a real-time "conversational" integration, the Context Compiler is a "pre-load context" approach.
+
+### Direct Execution from Claude Code
+
+In Claude Code, you can run shell commands directly within a conversation using the `!` prefix:
+
+```
+! npx contextlint
+! npx contextlint impact docs/zones/auth/requirements.md
+! npx contextlint graph
+```
+
+The output is added to the conversation context, so Claude can propose next actions based on the results. Even without setting up an MCP server, you can integrate contextlint into your AI workflow using just `!` commands.
 
 ## Use Cases Beyond SDD
 
@@ -555,6 +742,9 @@ Code has ESLint and type checking, but there's no equivalent for verifying docum
 - Validates required table columns and value constraints
 - Validates cross-document reference integrity
 - Validates requirement ID uniqueness and traceability
+- Detects term inconsistencies and leftover placeholders
+- Analyzes dependency graphs to catch circular references and orphan documents
+- Visualizes and leverages structure via `impact` / `slice` / `graph` / `compile`
 - Runs automatically in CI, integrates with AI tools via MCP
 - **Validates AI-oriented documents, but does not depend on AI**
 

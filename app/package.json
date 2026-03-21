@@ -20,9 +20,9 @@
   "type": "module",
   "dependencies": {
     "@astrojs/rss": "^4.0.14",
-    "@astrojs/starlight": "^0.37.1",
+    "@astrojs/starlight": "^0.38.2",
     "@vercel/og": "^0.11.1",
-    "astro": "^5.16.0",
+    "astro": "^6.0.8",
     "medium-zoom": "^1.1.0",
     "playwright": "^1.57.0",
     "react": "^19.2.0",

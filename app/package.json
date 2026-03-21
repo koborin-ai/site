@@ -19,17 +19,17 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@astrojs/rss": "^4.0.14",
-    "@astrojs/starlight": "^0.37.1",
+    "@astrojs/rss": "^4.0.17",
+    "@astrojs/starlight": "^0.38.1",
     "@vercel/og": "^0.11.1",
-    "astro": "^5.16.0",
+    "astro": "^6.0.4",
     "medium-zoom": "^1.1.0",
     "playwright": "^1.57.0",
     "react": "^19.2.0",
     "rehype-mermaid": "^3.0.0"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.5",
+    "@astrojs/check": "^0.9.8",
     "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.1",
     "hygen": "^6.2.11",
     "textlint": "^15.5.1",

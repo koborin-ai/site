@@ -28,7 +28,7 @@ export async function getLlmsContent(
   });
 
   const entries = filtered.map((doc) => {
-    const url = `${SITE_URL}/${doc.slug}/`;
+    const url = `${SITE_URL}/${doc.id}/`;
     return `## ${doc.data.title}\nURL: ${url}\n\n${doc.body}`;
   });
 

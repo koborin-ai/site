@@ -4,6 +4,10 @@ export const sidebar = [
     link: "/",
   },
   {
+    label: "Plugin Marketplace",
+    link: "/plugins/",
+  },
+  {
     label: "Tech",
     items: [
       {

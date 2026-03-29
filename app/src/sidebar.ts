@@ -4,8 +4,17 @@ export const sidebar = [
     link: "/",
   },
   {
+    label: "Plugin Marketplace",
+    link: "/plugins/",
+  },
+  {
     label: "Tech",
     items: [
+      {
+        label: "Plugin Marketplace on koborin.ai",
+        translations: { ja: "koborin.ai に Plugin Marketplace を追加した" },
+        slug: "tech/plugin-marketplace",
+      },
       {
         label: "Building contextlint",
         translations: { ja: "contextlint というリンターを作っている話" },

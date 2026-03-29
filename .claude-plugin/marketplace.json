@@ -12,18 +12,26 @@
     {
       "name": "agent-team-fullstack",
       "source": "./plugins/agent-team-fullstack",
-      "description": "Orchestrate full-stack development with Agent Teams for parallel implementation across Frontend, Mobile, Backend, Infra, and SRE roles.",
+      "description": "Orchestrate full-stack development with Agent Teams for parallel implementation. Use when the user says \"build with a team\", \"develop in parallel\", \"spin up an Agent Team\", or \"investigate this bug\".",
       "version": "1.0.0",
       "category": "development",
-      "tags": ["agent-team", "fullstack", "parallel-development"]
+      "tags": [
+        "agent-team",
+        "fullstack",
+        "parallel-development"
+      ]
     },
     {
       "name": "mermaid-diagram",
       "source": "./plugins/mermaid-diagram",
-      "description": "Create Mermaid diagrams, generate PNGs via mmdc, and reference them from Markdown. Includes design principles and a batch generation script.",
+      "description": "Create Mermaid diagrams, generate PNGs via mmdc, and reference them from Markdown documents. Use when creating, updating, or managing diagrams in a project.",
       "version": "1.0.0",
       "category": "documentation",
-      "tags": ["mermaid", "diagram", "documentation"]
+      "tags": [
+        "mermaid",
+        "diagram",
+        "documentation"
+      ]
     }
   ]
 }

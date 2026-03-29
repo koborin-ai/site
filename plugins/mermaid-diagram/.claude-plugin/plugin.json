@@ -1,12 +1,11 @@
 {
   "name": "mermaid-diagram",
   "version": "1.0.0",
-  "description": "Create Mermaid diagrams, generate PNGs via mmdc, and reference them from Markdown. Includes design principles and a batch generation script.",
+  "description": "Create Mermaid diagrams, generate PNGs via mmdc, and reference them from Markdown documents. Use when creating, updating, or managing diagrams in a project.",
   "author": {
     "name": "Nozomi Koborinai"
   },
   "repository": "https://github.com/nozomi-koborinai/koborin-ai",
   "license": "MIT",
-  "keywords": ["mermaid", "diagram", "png", "documentation"],
   "skills": "./skills/"
 }

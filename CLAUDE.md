@@ -20,11 +20,21 @@ Skills are located in `.claude/skills/`:
 - **translate-article**: Translate MDX articles between languages while preserving frontmatter and structure
 - **update-agents-md**: Update AGENTS.md with new rules
 
+### Plugin Marketplace
+
+This repository hosts a Claude Code plugin marketplace at `.claude-plugin/marketplace.json`.
+Published plugins live in `plugins/` with the standard plugin structure (`plugin.json` + `skills/`).
+
+Currently published plugins:
+- **agent-team-fullstack**: Orchestrate full-stack development with Agent Teams
+- **mermaid-diagram**: Mermaid diagram workflow with PNG generation script
+
 ### Project-Specific Notes
 
 1. **Infrastructure**: Never run `pulumi up` or `pulumi preview` locally. All infra changes go through GitHub Actions.
 2. **Content Creation**: Create MDX files under `app/src/content/docs/` and update `app/src/sidebar.ts`.
 3. **Testing**: Run `npm run lint && npm run typecheck && npm run test` in `app/` before committing.
+4. **Plugins**: Plugin structure and marketplace.json are validated by `plugin-ci.yml` on PRs touching `plugins/` or `.claude-plugin/`.
 
 ### Common Commands
 

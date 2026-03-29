@@ -1,0 +1,133 @@
+name: Plugin CI
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - "plugins/**"
+      - ".claude-plugin/**"
+      - ".github/workflows/plugin-ci.yml"
+
+jobs:
+  validate:
+    name: Validate Plugin Structure
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate marketplace.json
+        run: |
+          echo "Validating marketplace.json..."
+          python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
+          echo "✓ Valid JSON"
+
+          # Check required fields
+          python3 -c "
+          import json, sys
+          with open('.claude-plugin/marketplace.json') as f:
+              m = json.load(f)
+          errors = []
+          if 'name' not in m:
+              errors.append('missing field: name')
+          if 'owner' not in m or 'name' not in m.get('owner', {}):
+              errors.append('missing field: owner.name')
+          if 'plugins' not in m or not isinstance(m['plugins'], list):
+              errors.append('missing or invalid field: plugins')
+          for i, p in enumerate(m.get('plugins', [])):
+              for field in ['name', 'source', 'description', 'version']:
+                  if field not in p:
+                      errors.append(f'plugins[{i}] ({p.get(\"name\", \"unknown\")}): missing field: {field}')
+          if errors:
+              print('Errors found:')
+              for e in errors:
+                  print(f'  ✗ {e}')
+              sys.exit(1)
+          print('✓ All required fields present')
+          print(f'✓ {len(m[\"plugins\"])} plugin(s) registered')
+          "
+
+      - name: Validate plugin structure
+        run: |
+          echo "Validating plugin directories..."
+          errors=0
+
+          for plugin_dir in plugins/*/; do
+            name=$(basename "$plugin_dir")
+            echo ""
+            echo "--- ${name} ---"
+
+            # Check plugin.json exists and is valid
+            manifest="${plugin_dir}.claude-plugin/plugin.json"
+            if [[ ! -f "$manifest" ]]; then
+              echo "  ✗ Missing ${manifest}"
+              errors=$((errors + 1))
+            else
+              if python3 -m json.tool "$manifest" > /dev/null 2>&1; then
+                echo "  ✓ plugin.json is valid JSON"
+              else
+                echo "  ✗ plugin.json is invalid JSON"
+                errors=$((errors + 1))
+              fi
+            fi
+
+            # Check at least one SKILL.md exists
+            skill_count=$(find "${plugin_dir}skills" -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
+            if [[ "$skill_count" -eq 0 ]]; then
+              echo "  ✗ No SKILL.md found in ${plugin_dir}skills/"
+              errors=$((errors + 1))
+            else
+              echo "  ✓ ${skill_count} skill(s) found"
+            fi
+          done
+
+          echo ""
+          if [[ $errors -gt 0 ]]; then
+            echo "✗ ${errors} error(s) found"
+            exit 1
+          fi
+          echo "✓ All plugins valid"
+
+      - name: Check marketplace ↔ plugin consistency
+        run: |
+          echo "Checking marketplace.json references match plugin directories..."
+          python3 -c "
+          import json, os, sys
+          with open('.claude-plugin/marketplace.json') as f:
+              m = json.load(f)
+          root = m.get('metadata', {}).get('pluginRoot', '.')
+          errors = []
+          for p in m.get('plugins', []):
+              source = p['source']
+              # Resolve relative to pluginRoot if source starts with ./plugins/
+              plugin_dir = source
+              if not os.path.isdir(plugin_dir):
+                  errors.append(f'{p[\"name\"]}: source directory not found: {plugin_dir}')
+                  continue
+              manifest = os.path.join(plugin_dir, '.claude-plugin', 'plugin.json')
+              if not os.path.isfile(manifest):
+                  errors.append(f'{p[\"name\"]}: plugin.json not found at {manifest}')
+                  continue
+              with open(manifest) as pf:
+                  pj = json.load(pf)
+              if pj.get('name') != p['name']:
+                  errors.append(f'{p[\"name\"]}: name mismatch — marketplace says \"{p[\"name\"]}\" but plugin.json says \"{pj.get(\"name\")}\"')
+          # Check for plugins on disk not in marketplace
+          if os.path.isdir('plugins'):
+              on_disk = {d for d in os.listdir('plugins') if os.path.isdir(os.path.join('plugins', d))}
+              in_marketplace = {p['name'] for p in m.get('plugins', [])}
+              orphans = on_disk - in_marketplace
+              for o in orphans:
+                  errors.append(f'{o}: exists in plugins/ but not listed in marketplace.json')
+          if errors:
+              print('Errors found:')
+              for e in errors:
+                  print(f'  ✗ {e}')
+              sys.exit(1)
+          print('✓ All marketplace entries match plugin directories')
+          "

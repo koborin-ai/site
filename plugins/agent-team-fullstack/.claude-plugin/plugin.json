@@ -1,0 +1,12 @@
+{
+  "name": "agent-team-fullstack",
+  "version": "1.0.0",
+  "description": "Orchestrate full-stack development with Agent Teams for parallel implementation across Frontend, Mobile, Backend, Infra, and SRE roles.",
+  "author": {
+    "name": "Nozomi Koborinai"
+  },
+  "repository": "https://github.com/nozomi-koborinai/koborin-ai",
+  "license": "MIT",
+  "keywords": ["agent-team", "fullstack", "parallel-development", "orchestration"],
+  "skills": "./skills/"
+}

@@ -7,6 +7,8 @@ on:
     paths:
       - "app/**"
       - "content/**"
+      - "plugins/**"
+      - ".claude-plugin/**"
       - ".github/workflows/app-release.yml"
       - ".github/workflows/app-ci.yml"
     tags:
@@ -112,6 +114,11 @@ jobs:
         run: |
           gcloud config set project "${{ env.PROJECT_ID }}"
           gcloud config set run/region "${{ env.REGION }}"
+
+      - name: Generate plugin catalog
+        run: |
+          pip install cc-plugin-catalog
+          cc-plugin-catalog build . -o app/public/plugins --base-url "https://koborin.ai/plugins"
 
       - name: Build and push Docker image
         id: build-image

@@ -4,8 +4,26 @@
     "name": "Nozomi Koborinai"
   },
   "metadata": {
-    "description": "Claude Code skills by Nozomi Koborinai",
+    "description": "Claude Code plugins by Nozomi Koborinai",
+    "version": "1.0.0",
     "pluginRoot": "./plugins"
   },
-  "plugins": []
+  "plugins": [
+    {
+      "name": "agent-team-fullstack",
+      "source": "./plugins/agent-team-fullstack",
+      "description": "Orchestrate full-stack development with Agent Teams for parallel implementation across Frontend, Mobile, Backend, Infra, and SRE roles.",
+      "version": "1.0.0",
+      "category": "development",
+      "tags": ["agent-team", "fullstack", "parallel-development"]
+    },
+    {
+      "name": "mermaid-diagram",
+      "source": "./plugins/mermaid-diagram",
+      "description": "Create Mermaid diagrams, generate PNGs via mmdc, and reference them from Markdown. Includes design principles and a batch generation script.",
+      "version": "1.0.0",
+      "category": "documentation",
+      "tags": ["mermaid", "diagram", "documentation"]
+    }
+  ]
 }

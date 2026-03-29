@@ -1,0 +1,11 @@
+{
+  "name": "koborinai-plugins",
+  "owner": {
+    "name": "Nozomi Koborinai"
+  },
+  "metadata": {
+    "description": "Claude Code skills by Nozomi Koborinai",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": []
+}

@@ -214,10 +214,7 @@ jobs:
 
       - name: Deployment summary
         run: |
-          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment**: ${TARGET_ENV}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Service**: ${SERVICE_NAME}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image**: ${IMAGE_URI}" >> $GITHUB_STEP_SUMMARY
           echo "- **Region**: ${REGION}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Service URL**: ${{ steps.service-url.outputs.SERVICE_URL }}" >> $GITHUB_STEP_SUMMARY

@@ -30,9 +30,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.8",
-    "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.1",
+    "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.3",
     "hygen": "^6.2.11",
-    "textlint": "^15.5.1",
+    "textlint": "^15.5.4",
     "typescript": "^5.9.3"
   }
 }

@@ -44,6 +44,9 @@ func Dev(ctx *pulumi.Context) error {
 				Resources: &cloudrunv2.ServiceTemplateContainerResourcesArgs{
 					// Temporarily boost CPU during cold start to reduce startup latency
 					StartupCpuBoost: pulumi.Bool(true),
+					// Only bill vCPU/memory while a request is being served.
+					// Runtime is nginx serving static files — no background work.
+					CpuIdle: pulumi.Bool(true),
 				},
 			},
 		},

@@ -346,7 +346,7 @@ cd infra && go build ./...
   - Pool: `github-actions-pool`.
   - Provider: `actions-firebase-provider` (OIDC issuer: `https://token.actions.githubusercontent.com`).
   - Service Account: `github-actions-service@{project}.iam.gserviceaccount.com`.
-  - IAM binding: Subject-based binding for repository `nozomi-koborinai/koborin-ai`.
+  - IAM binding: Subject-based binding for repository `koborin-ai/site`.
   - Project IAM roles (Artifact Registry, Run, Compute, IAM, etc.) granted to the Pulumi SA.
 - **DNS**: Records live in Cloudflare and are managed manually (A records point to the LB IP).
 

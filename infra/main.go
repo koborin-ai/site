@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/nozomi-koborinai/koborin-ai/infra-go/stacks"
+	"github.com/koborin-ai/site/infra-go/stacks"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 

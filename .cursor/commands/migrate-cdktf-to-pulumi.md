@@ -216,7 +216,7 @@ pulumi import gcp:serviceaccount/account:Account github-actions-sa \
 
 # Service Account IAM
 pulumi import gcp:serviceaccount/iAMMember:IAMMember github-wif-user \
-  "projects/${PROJECT_ID}/serviceAccounts/github-actions-service@${PROJECT_ID}.iam.gserviceaccount.com roles/iam.workloadIdentityUser principal://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-actions-pool/subject/nozomi-koborinai/koborin-ai" --yes
+  "projects/${PROJECT_ID}/serviceAccounts/github-actions-service@${PROJECT_ID}.iam.gserviceaccount.com roles/iam.workloadIdentityUser principal://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-actions-pool/subject/koborin-ai/site" --yes
 
 # Project IAM Roles (loop)
 SA_EMAIL="github-actions-service@${PROJECT_ID}.iam.gserviceaccount.com"

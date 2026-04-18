@@ -33,11 +33,11 @@ Anyone can install published skills with the following commands:
 
 ```bash
 # From the terminal
-claude plugin marketplace add nozomi-koborinai/koborin-ai
+claude plugin marketplace add koborin-ai/site
 claude plugin install mermaid-diagram@koborinai-plugins
 
 # From within Claude Code
-/plugin marketplace add nozomi-koborinai/koborin-ai
+/plugin marketplace add koborin-ai/site
 /plugin install mermaid-diagram@koborinai-plugins
 ```
 
@@ -75,7 +75,7 @@ flowchart LR
         DOTFILES["nozomi-koborinai/dotfiles\nskills/ + public-skills.yml"]
     end
     subgraph PUBLIC["Public Repository"]
-        KOBORINAI["nozomi-koborinai/koborin-ai\nplugins/ + marketplace.json"]
+        KOBORINAI["koborin-ai/site\nplugins/ + marketplace.json"]
     end
     DOTFILES -->|GitHub Actions| KOBORINAI
     KOBORINAI -->|cc-plugin-catalog| SITE["koborin.ai/plugins/"]

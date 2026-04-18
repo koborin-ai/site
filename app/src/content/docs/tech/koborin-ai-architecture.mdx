@@ -470,7 +470,7 @@ From here, I'll introduce specific implementation details. Those interested can 
 
 ### Stack-Based Infrastructure Implementation
 
-<RichLinkCard href="https://github.com/nozomi-koborinai/koborin-ai/tree/main/infra" title="koborin-ai/infra at main · nozomi-koborinai/koborin-ai" description="Pulumi Go stacks for koborin.ai infrastructure (shared, dev, prod)." />
+<RichLinkCard href="https://github.com/koborin-ai/site/tree/main/infra" title="site/infra at main · koborin-ai/site" description="Pulumi Go stacks for koborin.ai infrastructure (shared, dev, prod)." />
 
 #### infra/stacks/shared.go
 
@@ -742,7 +742,7 @@ func Shared(ctx *pulumi.Context) error {
 		WorkloadIdentityPoolProviderId: pulumi.String("actions-firebase-provider"),
 		DisplayName:                    pulumi.String("github-actions-provider"),
 		Description:                    pulumi.String("GitHub Actions OIDC provider"),
-		AttributeCondition: pulumi.String(`assertion.repository_owner == "nozomi-koborinai"`),
+		AttributeCondition: pulumi.String(`assertion.repository_owner == "koborin-ai"`),
 		AttributeMapping: pulumi.StringMap{
 			"google.subject":             pulumi.String("assertion.repository"),
 			"attribute.repository_owner": pulumi.String("assertion.repository_owner"),
@@ -769,7 +769,7 @@ func Shared(ctx *pulumi.Context) error {
 		ServiceAccountId: githubActionsSA.Name,
 		Role:             pulumi.String("roles/iam.workloadIdentityUser"),
 		Member: pulumi.Sprintf(
-			"principal://iam.googleapis.com/projects/%s/locations/global/workloadIdentityPools/%s/subject/nozomi-koborinai/koborin-ai",
+			"principal://iam.googleapis.com/projects/%s/locations/global/workloadIdentityPools/%s/subject/koborin-ai/site",
 			projectNumber,
 			workloadIdentityPool.WorkloadIdentityPoolId,
 		),
@@ -981,7 +981,7 @@ func Prod(ctx *pulumi.Context) error {
 
 ### App Implementation
 
-<RichLinkCard href="https://github.com/nozomi-koborinai/koborin-ai/tree/main/app" title="koborin-ai/app at main · nozomi-koborinai/koborin-ai" description="Astro + Starlight application for koborin.ai." />
+<RichLinkCard href="https://github.com/koborin-ai/site/tree/main/app" title="site/app at main · koborin-ai/site" description="Astro + Starlight application for koborin.ai." />
 
 #### app/astro.config.mjs
 
@@ -1163,4 +1163,4 @@ http {
 
 ## Source Code
 
-<RichLinkCard href="https://github.com/nozomi-koborinai/koborin-ai" title="koborin-ai" description="🪴 A repository for building personal homepages and technical garden on GCP" />
+<RichLinkCard href="https://github.com/koborin-ai/site" title="site" description="🪴 A repository for building personal homepages and technical garden on GCP" />

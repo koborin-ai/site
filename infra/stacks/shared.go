@@ -286,8 +286,9 @@ func Shared(ctx *pulumi.Context) error {
 		WorkloadIdentityPoolProviderId: pulumi.String("actions-firebase-provider"),
 		DisplayName:                    pulumi.String("github-actions-provider"),
 		Description:                    pulumi.String("GitHub Actions OIDC provider"),
-		// Only allow workflows from repositories owned by nozomi-koborinai
-		AttributeCondition: pulumi.String(`assertion.repository_owner == "nozomi-koborinai"`),
+		// Allow both old (nozomi-koborinai, pre-migration) and new (koborin-ai) owners during rename+transfer.
+		// Narrow back to `koborin-ai` only after migration is fully verified.
+		AttributeCondition: pulumi.String(`assertion.repository_owner == "nozomi-koborinai" || assertion.repository_owner == "koborin-ai"`),
 		AttributeMapping: pulumi.StringMap{
 			"google.subject":             pulumi.String("assertion.repository"),
 			"attribute.repository_owner": pulumi.String("assertion.repository_owner"),
@@ -311,12 +312,27 @@ func Shared(ctx *pulumi.Context) error {
 		return err
 	}
 
-	// Allow Workload Identity Pool to impersonate the service account
+	// Allow Workload Identity Pool to impersonate the service account.
+	// Binding for the old repo path (nozomi-koborinai/koborin-ai); delete after migration is verified.
 	_, err = serviceaccount.NewIAMMember(ctx, "github-wif-user", &serviceaccount.IAMMemberArgs{
 		ServiceAccountId: githubActionsSA.Name,
 		Role:             pulumi.String("roles/iam.workloadIdentityUser"),
 		Member: pulumi.Sprintf(
 			"principal://iam.googleapis.com/projects/%s/locations/global/workloadIdentityPools/%s/subject/nozomi-koborinai/koborin-ai",
+			projectNumber,
+			workloadIdentityPool.WorkloadIdentityPoolId,
+		),
+	})
+	if err != nil {
+		return err
+	}
+
+	// Binding for the new repo path (koborin-ai/site) after rename+transfer.
+	_, err = serviceaccount.NewIAMMember(ctx, "github-wif-user-new", &serviceaccount.IAMMemberArgs{
+		ServiceAccountId: githubActionsSA.Name,
+		Role:             pulumi.String("roles/iam.workloadIdentityUser"),
+		Member: pulumi.Sprintf(
+			"principal://iam.googleapis.com/projects/%s/locations/global/workloadIdentityPools/%s/subject/koborin-ai/site",
 			projectNumber,
 			workloadIdentityPool.WorkloadIdentityPoolId,
 		),

@@ -1,4 +1,4 @@
-module github.com/nozomi-koborinai/koborin-ai/infra-go
+module github.com/koborin-ai/site/infra-go
 
 go 1.25.8
 

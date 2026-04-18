@@ -280,7 +280,7 @@ Examples:
   - Pool ID: `github-actions-pool`
   - Provider ID: `actions-firebase-provider`
   - Service account created in `shared` stack (`github-actions-service@<project>.iam.gserviceaccount.com`).
-  - Principal string: `principal://iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github-actions-pool/subject/nozomi-koborinai/koborin-ai`.
+  - Principal string: `principal://iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github-actions-pool/subject/koborin-ai/site`.
 
 ## Release Process
 

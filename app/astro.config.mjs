@@ -26,11 +26,12 @@ export default defineConfig({
         root: { label: "English", lang: "en" },
         ja: { label: "日本語" },
       },
-      description: "Personal site + technical garden",
+      description: "Personal site + technical proving ground",
       lastUpdated: true,
       favicon: "/favicon.png",
       logo: {
-        src: "./src/assets/_shared/koborin-ai-header.webp",
+        dark: "./src/assets/_shared/koborin-ai-header-dark.svg",
+        light: "./src/assets/_shared/koborin-ai-header-light.svg",
         replacesTitle: true,
       },
       social: [

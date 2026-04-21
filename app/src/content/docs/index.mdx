@@ -6,10 +6,20 @@ lastUpdated: false
 ---
 
 import { Image } from 'astro:assets';
-import profileImage from '../../assets/about-me/overview/nozomi-koborinai.jpeg';
 import bookCover from '../../assets/life/reflections-on-2025/book-cover.png';
 
-<img src="/og/koborin-ai-hero.png" alt="Welcome to koborin.ai" fetchpriority="high" width="1200" height="630" style="width: 100%; height: auto;" />
+<div class="hero-image">
+  <img src="/og/koborin-ai-hero-light.png" alt="Welcome to koborin.ai" fetchpriority="high" width="1200" height="630" class="hero-light" />
+  <img src="/og/koborin-ai-hero-dark.png" alt="Welcome to koborin.ai" width="1200" height="630" class="hero-dark" />
+</div>
+
+<style>{`
+  .hero-image img { width: 100%; height: auto; }
+  .hero-dark { display: none; }
+  .hero-light { display: block; }
+  [data-theme="dark"] .hero-dark { display: block; }
+  [data-theme="dark"] .hero-light { display: none; }
+`}</style>
 
 ## About This Proving Ground
 
@@ -17,14 +27,15 @@ This is a personal technical proving ground where I explore, document, and share
 
 ---
 
-## About Nozomi Koborinai
+## Who runs this
 
-<Image src={profileImage} alt="Nozomi Koborinai speaking at a tech conference" width={600} quality={80} style="border-radius: 8px; margin-bottom: 1.5rem; width: 100%; max-width: 600px; height: auto; display: block; margin-left: auto; margin-right: auto;" />
+Built by [@nozomi-koborinai](https://github.com/nozomi-koborinai).
 
 - 🏢 Serverless Application Developer at a Google Cloud Partner company in Japan
 - 🏆 Google Cloud Partner Top Engineer 2025 & 2026 (Application Modernization)
 - 📖 Contributing to developer communities through Genkit books, OSS, and conference talks
 - 🎯 Specialized in DDD and Clean Architecture for quality assurance
+- 🤖 Exploring AI-driven development — building tools like [contextlint](https://github.com/nozomi-koborinai/contextlint)
 
 ### Background
 
@@ -32,7 +43,7 @@ I graduated from an IT technical college in March 2019, where I built my foundat
 
 During my first four years, I developed electronic medical record systems using C# / VB.NET, taught at App University (Japan's app development engineering community), and co-authored a book on Flutter design patterns.
 
-Currently, I specialize in **Serverless Application Development** (Google Cloud, Firebase, DevOps, IaC, Identity & Access Management).
+Currently working across cloud architecture, pre-sales, and team leadership at a Google Cloud Partner company — while exploring AI-driven development on the side.
 
 ---
 
@@ -61,6 +72,8 @@ Unlock the full potential of Genkit and Go—explore the journey from fundamenta
 | Item | Description | Link |
 |------|-------------|------|
 | Google Cloud Partner Top Engineer 2025 & 2026 | Selected for Application Modernization two years in a row | - |
+| contextlint | Context-aware linting framework for AI-driven development | [GitHub](https://github.com/nozomi-koborinai/contextlint) |
+| Ableton OSC MCP Server | MCP server for controlling Ableton Live via OSC | [GitHub](https://github.com/nozomi-koborinai/ableton-osc-mcp-server) |
 | Dart client for Genkit | Official OSS library co-developed with the Firebase team | [GitHub](https://github.com/genkit-ai/genkit-dart) |
 | Introduction to Flutter Design Patterns (co-author) | Covers layered / onion architecture | [Zenn](https://zenn.dev/flutteruniv/books/flutter-architechture-en) |
 | App University (formerly Flutter University) | Former instructor, current 1-on-1 mentor | [flutteruniv.com](https://flutteruniv.com) |
@@ -89,6 +102,7 @@ Unlock the full potential of Genkit and Go—explore the journey from fundamenta
 
 | Year | Project | Overview |
 |------|---------|----------|
+| 2026 | Cloud Modernization (On-prem Alfresco → GCP) | Tech lead & PM overseeing backend and SRE engineers. Migrating on-premises Alfresco to GCP with a platform engineering mindset — building harnesses to maximize developer experience for the team |
 | 2025 | Full-scratch Business System Development | Secure architecture with Cloud Run + Cloud SQL Auth Proxy. Fully automated IaC with CDKTF. Solo full-stack TypeScript development |
 | 2025 | Platform Engineering Support | Supported a project struggling with dev environment differences and Firebase Authentication implementation. Standardized dev environments for 20+ engineers using Cloud Workstations and conducted Firebase Auth best practices workshops |
 | 2025 | Generative AI App Development Support (Won Competition) | Proposed Genkit and DB security architecture, winning the contract over 2 competitors. Also supported team building focused on Agentic AI coding |
@@ -120,5 +134,5 @@ When I'm not coding, I enjoy:
 
 I frequently work with AI-related products like Genkit, and with the rise of Agentic AI, the `.ai` domain feels like a natural fit.
 
-Feel free to explore this garden—I'll keep tending to it bit by bit.
+Feel free to explore this proving ground—I'll keep tending to it bit by bit.
 

@@ -6,10 +6,20 @@ lastUpdated: false
 ---
 
 import { Image } from 'astro:assets';
-import profileImage from '../../../assets/about-me/overview/nozomi-koborinai.jpeg';
 import bookCover from '../../../assets/life/reflections-on-2025/book-cover.png';
 
-<img src="/og/koborin-ai-hero.png" alt="koborin.ai へようこそ" fetchpriority="high" width="1200" height="630" style="width: 100%; height: auto;" />
+<div class="hero-image">
+  <img src="/og/koborin-ai-hero-light.png" alt="koborin.ai へようこそ" fetchpriority="high" width="1200" height="630" class="hero-light" />
+  <img src="/og/koborin-ai-hero-dark.png" alt="koborin.ai へようこそ" width="1200" height="630" class="hero-dark" />
+</div>
+
+<style>{`
+  .hero-image img { width: 100%; height: auto; }
+  .hero-dark { display: none; }
+  .hero-light { display: block; }
+  [data-theme="dark"] .hero-dark { display: block; }
+  [data-theme="dark"] .hero-light { display: none; }
+`}</style>
 
 ## Technical Proving Ground について
 
@@ -19,14 +29,15 @@ import bookCover from '../../../assets/life/reflections-on-2025/book-cover.png';
 
 ---
 
-## Nozomi Koborinai について
+## Who runs this
 
-<Image src={profileImage} alt="テックカンファレンスで登壇する Nozomi Koborinai" width={600} quality={80} style="border-radius: 8px; margin-bottom: 1.5rem; width: 100%; max-width: 600px; height: auto; display: block; margin-left: auto; margin-right: auto;" />
+Built by [@nozomi-koborinai](https://github.com/nozomi-koborinai).
 
 - 🏢 日本の Google Cloud パートナー企業でサーバーレスアプリケーション開発を専門に活動
 - 🏆 Google Cloud Partner Top Engineer 2025 & 2026 (Application Modernization 領域で 2 年連続選出)
 - 📖 Genkit の書籍・OSS・登壇を通じて開発者コミュニティに貢献
 - 🎯 DDD・クリーンアーキテクチャを軸にした品質確保が得意
+- 🤖 AI 駆動開発を探求中 — [contextlint](https://github.com/nozomi-koborinai/contextlint) などのツールを開発
 
 ### 経歴
 
@@ -34,7 +45,7 @@ import bookCover from '../../../assets/life/reflections-on-2025/book-cover.png';
 
 最初の 4 年間は C# / VB.NET を使った電子カルテシステムの開発、App 大学（日本のアプリケーション開発エンジニアコミュニティ）での講師、Flutter デザインパターンに関する書籍の共同執筆を行いました。
 
-現在は **サーバーレスアプリケーション開発**（Google Cloud、Firebase、DevOps、IaC、認証認可）を専門としています。
+現在は Google Cloud パートナー企業で、クラウドアーキテクチャ・プリセールス・テックリードなど幅広く携わりつつ、個人で AI 駆動開発を探求しています。
 
 ---
 
@@ -63,6 +74,8 @@ Genkit と Go の可能性を最大限に引き出し、初歩から高度な AI
 | 項目 | 説明 | リンク |
 |------|------|--------|
 | Google Cloud Partner Top Engineer 2025 & 2026 | Application Modernization 領域で 2 年連続選出 | - |
+| contextlint | AI 駆動開発のためのコンテキスト認識 Lint フレームワーク | [GitHub](https://github.com/nozomi-koborinai/contextlint) |
+| Ableton OSC MCP Server | OSC 経由で Ableton Live を操作する MCP サーバー | [GitHub](https://github.com/nozomi-koborinai/ableton-osc-mcp-server) |
 | Dart client for Genkit | Firebase チームと共同開発した公式 OSS ライブラリ | [GitHub](https://github.com/genkit-ai/genkit-dart) |
 | Flutter 設計パターン入門（共著） | レイヤード／オニオンアーキテクチャについて言及 | [Zenn](https://zenn.dev/flutteruniv/books/flutter-architecture) |
 | App 大学（旧 Flutter 大学） | 元講師、現 1on1 メンター | [flutteruniv.com](https://flutteruniv.com) |
@@ -91,6 +104,7 @@ Genkit と Go の可能性を最大限に引き出し、初歩から高度な AI
 
 | 年 | プロジェクト | 概要 |
 |----|--------------|------|
+| 2026 | クラウドモダナイゼーション（オンプレ Alfresco → GCP） | バックエンド・SRE エンジニアを束ねるテックリード兼 PM として活動中。プラットフォームエンジニアリングを意識し、メンバーに最大限の開発者体験を提供できるようハーネス整備を推進 |
 | 2025 | 業務システムのフルスクラッチ開発 | Cloud Run + Cloud SQL Auth Proxy によるセキュアなアーキテクチャ。CDKTF で IaC を完全自動化。TypeScript でフルスタック開発を単独で担当 |
 | 2025 | プラットフォームエンジニアリング支援 | 開発環境の差異と Firebase Authentication の実装が課題となっていたプロジェクトを支援。Cloud Workstations で 20 名分の開発環境を標準化し、Firebase Authentication のベストプラクティスに関するワークショップを実施 |
 | 2025 | 生成 AI アプリ開発支援（コンペ勝利） | Genkit と DB のセキュリティ設計を提案し、競合 2 社を抑えて受注。Agentic AI コーディングに特化したチームビルディングも支援 |

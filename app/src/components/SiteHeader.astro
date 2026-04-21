@@ -9,7 +9,8 @@ import Search from '@astrojs/starlight/components/Search.astro';
 import MobileMenuToggle from '@astrojs/starlight/components/MobileMenuToggle.astro';
 import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
 import ThemeSelect from './ThemeSelect.astro';
-import headerLogo from '../assets/_shared/koborin-ai-header.webp';
+import headerLogoDark from '../assets/_shared/koborin-ai-header-dark.svg';
+import headerLogoLight from '../assets/_shared/koborin-ai-header-light.svg';
 
 const props = Astro.props;
 
@@ -21,7 +22,8 @@ const homeHref = isJapanese ? '/ja/' : '/';
 <header class="nav-header">
   <nav class="nav-container">
     <a href={homeHref} class="nav-logo" aria-label="koborin.ai home">
-      <Image src={headerLogo} alt="koborin.ai" height={144} quality={85} loading="eager" />
+      <Image src={headerLogoDark} alt="koborin.ai" height={144} class="logo-dark" loading="eager" />
+      <Image src={headerLogoLight} alt="koborin.ai" height={144} class="logo-light" loading="eager" />
     
     <div class="nav-actions">
       <div class="nav-search">
@@ -89,9 +91,13 @@ const homeHref = isJapanese ? '/ja/' : '/';
 
   /* Logo */
   .nav-logo { display: flex; align-items: center; flex-shrink: 0; margin-left: -0.25rem; }
-  .nav-logo img { height: 4.5rem; width: auto; }
-  @media (max-width: 768px) { 
-    .nav-logo img { height: 4rem; }
+  .nav-logo img { height: 3rem; width: auto; }
+  .logo-dark { display: none; }
+  .logo-light { display: block; }
+  :global([data-theme="dark"]) .logo-dark { display: block; }
+  :global([data-theme="dark"]) .logo-light { display: none; }
+  @media (max-width: 768px) {
+    .nav-logo img { height: 2.5rem; }
   }
 
   /* Actions Area */

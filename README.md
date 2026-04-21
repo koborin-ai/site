@@ -1,8 +1,8 @@
 # koborin.ai
 
-![koborin-ai](./app/src/assets/_shared/koborin-ai-header.webp)
+![koborin-ai](./app/src/assets/_shared/koborin-ai-header-light.svg)
 
-Technical garden for exploring AI, cloud architecture, and continuous learning.
+Technical proving ground for exploring AI, cloud architecture, and continuous learning.
 
 Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with Pulumi (Go).
 

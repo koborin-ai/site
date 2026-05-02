@@ -1,0 +1,208 @@
+---
+title: "contextlint v0.9 — Editor Integration with LSP Server and VS Code Extension"
+description: "Real-time Markdown document linting in your editor — LSP server, VS Code extension, and Quick Fixes for contextlint v0.9."
+publishedAt: 2026-04-29
+ogImage: /og/contextlint-lsp.png
+---
+
+import { Image } from 'astro:assets';
+import RichLinkCard from '../../../components/RichLinkCard.astro';
+import diagnosticImage from '../../../assets/tech/contextlint-lsp-and-editor-integration/diagnostic-with-hover.png';
+import overviewImage from '../../../assets/tech/contextlint-lsp-and-editor-integration/diagnostics-overview.png';
+import quickfixPopupImage from '../../../assets/tech/contextlint-lsp-and-editor-integration/quickfix-tbl002-popup.png';
+import quickfixAppliedImage from '../../../assets/tech/contextlint-lsp-and-editor-integration/quickfix-applied.png';
+
+<img src="/og/contextlint-lsp.png" alt="contextlint v0.9 — Editor Integration" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
+
+## Introduction
+
+A while back, I introduced **contextlint** — a rule-based linter that verifies consistency across Markdown documents.
+
+<RichLinkCard
+  href="/tech/contextlint-introduction/"
+  title="Building contextlint: A Static Analysis Linter for Markdown Document Consistency"
+  description="The original introduction — why static analysis, the rule system, MCP, and Context Compiler."
+/>
+
+That article covered the rule system, the CLI, MCP integration, and the Context Compiler — most of which landed by **v0.7**.
+
+In **v0.9**, the project crossed a different kind of line: contextlint now ships a **Language Server Protocol (LSP)** implementation. Open a Markdown file in VS Code, Cursor, Neovim, Helix, or any LSP-capable editor, and you get real-time diagnostics, hover info, and Quick Fixes — the same rules CI runs, but on every keystroke.
+
+This is a follow-up focused on that v0.9 step.
+
+## Three layers of feedback
+
+Before v0.9, contextlint covered two layers of feedback:
+
+| Layer  | Where                       | When you find out          |
+| ------ | --------------------------- | -------------------------- |
+| **CI** | GitHub Actions              | At PR review time          |
+| **MCP**| Claude / Cursor over MCP    | After the AI finishes editing |
+
+Both work, but neither catches the broken table the moment a human types it.
+
+v0.9 adds the missing layer:
+
+| Layer   | Where                       | When you find out             |
+| ------- | --------------------------- | ----------------------------- |
+| **LSP** | Your editor                 | While you're typing           |
+| **MCP** | Claude / Cursor over MCP    | After the AI finishes editing |
+| **CI**  | GitHub Actions              | At PR review time             |
+
+CI keeps broken docs out of `main`. MCP keeps AI-generated docs from being broken in the first place. LSP keeps the **human editing loop** honest. The three layers complement each other rather than replace each other.
+
+## `@contextlint/lsp-server`
+
+The new package is `@contextlint/lsp-server`, exposing a `contextlint-lsp` binary built on `vscode-languageserver`.
+
+```bash
+npm install -D @contextlint/lsp-server
+```
+
+A few things worth noting about the server itself:
+
+- **Same config as CLI / MCP.** The server walks up from the workspace root looking for `contextlint.config.json` — exactly like `npx contextlint` and the MCP server. One config file drives all three.
+- **Workspace-wide diagnostics.** Project-scope rules — REF-001, REF-002, TBL-006, GRP-001 / 002 / 003, CTX-002 — work across the whole workspace, not just the open file. An in-memory document cache keeps that fast.
+- **Diagnostics land at the actual line.** Document-scope rules (TBL-002, CHK-001, …) report at the offending row. Project-scope rules report at the actual file and line of the violation, not the rule's defining file. This was a deliberate v0.9 fix so diagnostics map cleanly to editor squiggles.
+
+In other words, the LSP isn't a stripped-down subset of the CLI — it runs the same rule engine on the same graph.
+
+<Image src={diagnosticImage} alt="A TBL-001 violation underlined in the editor with rule details on hover" quality={80} />
+*TBL-001 evaluates the table as a whole, so the squiggle lands on the header row rather than a specific cell. Hovering reveals the rule ID and the missing column names — `ID` and `Status` in this example.*
+
+> All screenshots in this article are taken against one example `contextlint.config.json`. Which rules fire and where the squiggles appear depends on each project's config.
+
+## VS Code / Cursor
+
+The simplest way in is the bundled VS Code extension, distributed as a VSIX on every release.
+
+1. Grab `contextlint-vscode-VERSION.vsix` from the [latest GitHub Release](https://github.com/nozomi-koborinai/contextlint/releases).
+2. From the Extensions view: **Views and More Actions… → Install from VSIX…** and pick the file.
+3. Or from the command line:
+
+```bash
+code --install-extension contextlint-vscode-VERSION.vsix
+```
+
+The extension activates on Markdown files, finds the nearest `contextlint.config.json`, and starts `@contextlint/lsp-server` automatically. No further setup needed.
+
+The extension is currently VSIX-only — Marketplace publication is tracked separately and planned for a future release. Cursor uses the same extension format, so the same VSIX works there.
+
+<Image src={overviewImage} alt="Multiple rule violations highlighted simultaneously in a single Markdown file" quality={80} />
+*TBL-001, TBL-002, and CHK-001 violations diagnosed simultaneously across one file. The diagnostic count appears next to the file name in the explorer.*
+
+## Neovim, Helix, JetBrains
+
+For everything else, the `contextlint-lsp` binary should be enough on any LSP-capable editor. The snippets below cover the most common setups. They're expected to work, but I haven't personally verified them outside VS Code / Cursor yet — if you hit a snag, an issue on the repo is appreciated.
+
+### Neovim ([nvim-lspconfig](https://github.com/neovim/nvim-lspconfig))
+
+```lua
+local configs = require('lspconfig.configs')
+local util = require('lspconfig.util')
+
+if not configs.contextlint then
+  configs.contextlint = {
+    default_config = {
+      cmd = { 'npx', 'contextlint-lsp' },
+      filetypes = { 'markdown' },
+      root_dir = util.root_pattern('contextlint.config.json', '.git'),
+      single_file_support = false,
+    },
+  }
+end
+
+require('lspconfig').contextlint.setup({})
+```
+
+### Helix (`~/.config/helix/languages.toml`)
+
+```toml
+[language-server.contextlint]
+command = "npx"
+args = ["contextlint-lsp"]
+
+[[language]]
+name = "markdown"
+language-servers = ["contextlint"]
+```
+
+### JetBrains IDEs (via [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij))
+
+1. Install the **LSP4IJ** plugin from the Marketplace.
+2. Open **Settings → Languages & Frameworks → Language Servers → Add**:
+   - **Name**: `contextlint`
+   - **Command**: `npx contextlint-lsp`
+   - **Mapping → File name patterns**: `*.md`
+
+After external changes (for example `git pull`), reload the editor window so the workspace cache picks them up.
+
+## Quick Fixes
+
+Diagnostics tell you something is wrong. Quick Fixes — Code Actions in LSP terms — actually fix it. v0.9 ships two:
+
+| Rule        | Quick Fix                                          |
+| ----------- | -------------------------------------------------- |
+| **CHK-001** | Check the unchecked checklist item                 |
+| **TBL-002** | Insert a `TODO` placeholder into the empty cell    |
+
+The intent isn't to auto-fix everything. It's to remove the "first physical step" — the keystrokes you'd be repeating by hand — for the violations that show up most often during editing.
+
+Both fixes are mechanical and deterministic. A `TODO` placeholder isn't a real value, but it gets the document into a syntactically valid state so the rest of the rules can keep running, and it leaves a marker for you to come back to. CTX-001 (placeholder content) will then flag that `TODO` later, which is the point: the rule chain catches it twice — once when you typed nothing, once when you forgot to come back.
+
+<Image src={quickfixPopupImage} alt="Quick Fix popup offering to fill empty cells with TODO for TBL-002" quality={80} />
+*The Quick Fix for TBL-002 — a single Code Action fills the empty cell with a `TODO` placeholder.*
+
+<Image src={quickfixAppliedImage} alt="Editor state after applying the TBL-002 and CHK-001 Quick Fixes" quality={80} />
+*After applying the Quick Fixes — the empty cell now holds `TODO`, and the checklist items are flipped to `[x]`. The squiggle on the first table remains because TBL-001 ("missing required column") doesn't ship a Quick Fix yet.*
+
+More Code Actions are likely to follow as common patterns surface.
+
+## Programmatic API (appendix)
+
+The graph engine the LSP server relies on is also exposed as a public API on `@contextlint/core`. If you're building tools around your docs, you can bypass the CLI and use it directly.
+
+```typescript
+import {
+  parseDocument,
+  buildContextGraph,
+  getImpactSet,
+  getContextSlice,
+  topologicalSort,
+  classifyImpact,
+} from "@contextlint/core";
+```
+
+| Function                                              | Description                                                          |
+| ----------------------------------------------------- | -------------------------------------------------------------------- |
+| `buildContextGraph(documents)`                        | Build a dependency graph from parsed documents                       |
+| `getImpactSet(graph, filePath)`                       | Files affected by changing a given file (direct + transitive)        |
+| `getContextSlice(graph, documents, query, maxDepth?)` | Minimal set of files relevant to a query                             |
+| `topologicalSort(graph)`                              | Topological sort of the document graph (dependency order)            |
+| `classifyImpact(graph, filePath)`                     | Classify each affected file as direct vs transitive                  |
+
+This is the same machinery behind `contextlint impact`, `contextlint slice`, and the LSP's project-scope diagnostics. If your editor integration or docs pipeline needs custom analysis, you don't need to fork the CLI.
+
+## Wrapping up
+
+What v0.9 changed isn't a single feature so much as **where contextlint runs**:
+
+- **LSP** — while you're editing
+- **MCP** — while AI is editing
+- **CI** — before merge
+
+The same rules. The same config. The same graph. Just earlier feedback.
+
+Catching things at CI still matters, but bringing that same feedback into the editor — where you actually write — was the part of v0.9 that felt right to me. Building things that nudge developer experience forward, even a little, is the kind of work I enjoy.
+
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint"
+  title="contextlint"
+  description="A rule-based linter that verifies consistency across Markdown documents."
+/>
+
+<RichLinkCard
+  href="https://www.npmjs.com/org/contextlint"
+  title="@contextlint on npm"
+  description="contextlint packages on npm — @contextlint/cli, @contextlint/core, @contextlint/mcp-server, @contextlint/lsp-server."
+/>

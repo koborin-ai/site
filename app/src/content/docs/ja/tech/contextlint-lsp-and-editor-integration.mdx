@@ -1,0 +1,211 @@
+---
+title: "contextlint v0.9 — エディタで波線が出るようになった話（LSP サーバーと VS Code 拡張）"
+description: "contextlint が v0.9 で LSP サーバーと VS Code 拡張に対応。エディタで編集中にリアルタイムで波線が出て、Quick Fix で直せるようになりました。"
+publishedAt: 2026-04-29
+ogImage: /og/contextlint-lsp.png
+---
+
+import { Image } from 'astro:assets';
+import RichLinkCard from '../../../../components/RichLinkCard.astro';
+import diagnosticImage from '../../../../assets/tech/contextlint-lsp-and-editor-integration/diagnostic-with-hover.png';
+import overviewImage from '../../../../assets/tech/contextlint-lsp-and-editor-integration/diagnostics-overview.png';
+import quickfixPopupImage from '../../../../assets/tech/contextlint-lsp-and-editor-integration/quickfix-tbl002-popup.png';
+import quickfixAppliedImage from '../../../../assets/tech/contextlint-lsp-and-editor-integration/quickfix-applied.png';
+
+<img src="/og/contextlint-lsp.png" alt="contextlint v0.9 — Editor Integration" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
+
+## はじめに
+
+少し前に、Markdown ドキュメント間の整合性を静的解析で検証するリンター **contextlint** を紹介する記事を書きました。
+
+<RichLinkCard
+  href="/ja/tech/contextlint-introduction/"
+  title="Markdown ドキュメント間の整合性を静的解析する contextlint というリンターを作っている話"
+  description="ルール体系・CLI・MCP・Context Compiler を扱った導入記事"
+/>
+
+その記事では、ルール体系、CLI サブコマンド、MCP 連携、Context Compiler までを紹介しました。これらはおおよそ **v0.7** までで揃った機能です。
+
+そこから **v0.9** で、contextlint は新しいレイヤーに踏み込みました。**Language Server Protocol（LSP）** への対応です。VS Code、Cursor、Neovim、Helix、その他 LSP に対応したエディタで Markdown を開くと、編集中にリアルタイムで診断が出て、ホバーでルール詳細が見え、Quick Fix で修正までできる。CI で動いていたのと同じルールが、キーストロークごとに動くようになりました。
+
+本記事は、その v0.9 のアップデートに焦点を当てた続編です。
+
+## フィードバックの三層構造
+
+v0.9 までの contextlint は、フィードバックのレイヤーが 2 つでした。
+
+| レイヤー | 動く場所                    | 気づくタイミング               |
+| -------- | --------------------------- | ------------------------------ |
+| **CI**   | GitHub Actions              | PR レビュー時                  |
+| **MCP**  | Claude / Cursor の MCP 経由 | AI が編集を終えたあと          |
+
+どちらも有効ですが、**人間が今まさにテーブルを壊した瞬間** には誰も気づきません。
+
+v0.9 はその欠けていたレイヤーを埋めるものです。
+
+| レイヤー | 動く場所                    | 気づくタイミング               |
+| -------- | --------------------------- | ------------------------------ |
+| **LSP**  | エディタ                    | 入力中                         |
+| **MCP**  | Claude / Cursor の MCP 経由 | AI が編集を終えたあと          |
+| **CI**   | GitHub Actions              | PR レビュー時                  |
+
+CI は壊れたドキュメントを `main` に通さないための **最後の砦**。
+MCP は AI が壊れたドキュメントを生成しないための **AI のループ**。
+LSP は人間が編集している瞬間にフィードバックを返す **人間のループ**。
+3 つのレイヤーは互いを置き換える関係ではなく、**補完する関係** にあります。
+
+## `@contextlint/lsp-server` の概要
+
+新パッケージは `@contextlint/lsp-server`。`vscode-languageserver` をベースに、`contextlint-lsp` というバイナリを提供します。
+
+```bash
+npm install -D @contextlint/lsp-server
+```
+
+設計上のポイントをいくつか挙げると、
+
+- **CLI / MCP と同じ設定ファイルを使う**。サーバーはワークスペースルートから上方向に `contextlint.config.json` を探します。`npx contextlint` や MCP サーバーと完全に同じ挙動です。1 つの設定ファイルが 3 つのレイヤーを同時に駆動します。
+- **ワークスペース全体に対する診断**。REF-001、REF-002、TBL-006、GRP-001 / 002 / 003、CTX-002 のような **プロジェクト全体に跨るルール** も、開いているファイルだけでなくワークスペース全体に対して動きます。インメモリのドキュメントキャッシュを持っているので、編集中もサクッとレスポンスが返ります。
+- **違反は実際の行に出る**。テーブル系のルール（TBL-002、CHK-001 など）はテーブルの実際のセル行に診断を出します。プロジェクト全体に跨るルールも、ルールを定義しているファイルではなく、違反が起きている実際のファイル＋行に診断を出すように v0.9 で修正されました。これは「エディタの波線が正確な位置に出る」ために必要な前提です。
+
+つまり LSP は CLI のサブセットや簡易版ではなく、**同じルールエンジンと同じグラフの上で動く** 実体です。
+
+<Image src={diagnosticImage} alt="TBL-001 の違反とホバーで表示されるルール詳細" quality={80} />
+*TBL-001 はテーブル全体を対象とするルールなので、波線はセル単位ではなくヘッダー行に出る。ホバーすると、欠落しているカラム名（この例では `ID` と `Status`）がルール ID と一緒に表示される。*
+
+> 本記事のスクリーンショットはすべて、一例となる `contextlint.config.json` での挙動です。どのルールが動き、どこに波線が出るかは、プロジェクトごとの設定に依存します。
+
+## VS Code / Cursor で使う
+
+一番手軽な入り口は、リリースごとに VSIX として配布されている VS Code 拡張です。
+
+1. [GitHub リリース](https://github.com/nozomi-koborinai/contextlint/releases) から `contextlint-vscode-VERSION.vsix` をダウンロード
+2. 拡張機能ビューの **Views and More Actions… → Install from VSIX…** で先ほどの `.vsix` を選択
+3. もしくはコマンドラインから:
+
+```bash
+code --install-extension contextlint-vscode-VERSION.vsix
+```
+
+拡張は Markdown ファイルを開いたタイミングで起動し、最寄りの `contextlint.config.json` を見つけて `@contextlint/lsp-server` を自動的に立ち上げます。設定ファイルさえあれば、追加の操作は不要です。
+
+VS Code Marketplace への公開は別途進行中で、将来のリリースで予定されています。Cursor は VS Code と同じ拡張形式なので、同じ VSIX がそのまま動きます。
+
+<Image src={overviewImage} alt="複数ルールの違反が同じファイル上で同時に診断される様子" quality={80} />
+*TBL-001 / TBL-002 / CHK-001 の違反が 1 つのファイルで同時に診断される様子。エクスプローラーのファイル名の横にも違反数が表示される。*
+
+## Neovim / Helix / JetBrains
+
+LSP に対応しているエディタなら、`contextlint-lsp` バイナリを直接使えるはずです。以下は代表的なエディタの設定例ですが、**VS Code / Cursor 以外は私自身では未検証** です。動くはずですが、手元で詰まったら issue を立てていただけると助かります。
+
+### Neovim ([nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) を使用)
+
+```lua
+local configs = require('lspconfig.configs')
+local util = require('lspconfig.util')
+
+if not configs.contextlint then
+  configs.contextlint = {
+    default_config = {
+      cmd = { 'npx', 'contextlint-lsp' },
+      filetypes = { 'markdown' },
+      root_dir = util.root_pattern('contextlint.config.json', '.git'),
+      single_file_support = false,
+    },
+  }
+end
+
+require('lspconfig').contextlint.setup({})
+```
+
+### Helix (`~/.config/helix/languages.toml`)
+
+```toml
+[language-server.contextlint]
+command = "npx"
+args = ["contextlint-lsp"]
+
+[[language]]
+name = "markdown"
+language-servers = ["contextlint"]
+```
+
+### JetBrains IDE ([LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij) 経由)
+
+1. Marketplace から **LSP4IJ** プラグインをインストール
+2. **Settings → Languages & Frameworks → Language Servers → Add** を開き、以下を設定:
+   - **Name**: `contextlint`
+   - **Command**: `npx contextlint-lsp`
+   - **Mapping → File name patterns**: `*.md`
+
+外部からの変更（`git pull` など）を反映したいときは、エディタウィンドウをリロードしてワークスペースキャッシュを更新してください。
+
+## Quick Fix
+
+診断は「壊れている」と教えてくれるだけ。実際に直してくれるのは Quick Fix（LSP 用語では Code Actions）です。v0.9 では 2 つの Quick Fix を提供しています。
+
+| ルール      | Quick Fix の内容                                   |
+| ----------- | -------------------------------------------------- |
+| **CHK-001** | 未完了のチェックリスト項目をチェック済みにする     |
+| **TBL-002** | 空セルに `TODO` プレースホルダーを挿入             |
+
+すべてを自動修正するつもりはありません。**繰り返し打鍵することになる「最初の一歩」** を Code Action 化することで、編集中によく出る違反だけサクッと整える、というのが狙いです。
+
+どちらも機械的・決定論的な修正です。`TODO` プレースホルダーは本来の値ではありませんが、ドキュメントを構文的に妥当な状態に戻すことで残りのルールが回り続けられるようにし、なおかつ「あとで戻ってこい」というマーカーを残します。残った `TODO` は CTX-001（プレースホルダーコンテンツの検出）が後から拾い上げるので、ルールチェーンが二重に守ってくれる構図です。何も書かなかった瞬間に一度、戻り忘れた瞬間にもう一度。
+
+<Image src={quickfixPopupImage} alt="TBL-002 の Quick Fix ポップアップ" quality={80} />
+*TBL-002 の Quick Fix — 1 つの Code Action で空セルに `TODO` プレースホルダーが挿入される。*
+
+<Image src={quickfixAppliedImage} alt="Quick Fix 適用後のエディタの状態" quality={80} />
+*Quick Fix 適用後 — 空セルに `TODO` が入り、チェックリストも `[x]` に切り替わっている。最上部のテーブルに残っている TBL-001 の波線は「必須カラム不足」に対応する Quick Fix がまだ用意されていないため。*
+
+今後よく出るパターンが見えてきたら、Code Actions は順次増やしていく予定です。
+
+## Programmatic API（補足）
+
+LSP サーバーが内部で使っているグラフ解析エンジンは、`@contextlint/core` から **公開 API** としてもエクスポートされています。ドキュメント周辺のツールを自分で作りたい場合は、CLI を経由せずに直接呼び出せます。
+
+```typescript
+import {
+  parseDocument,
+  buildContextGraph,
+  getImpactSet,
+  getContextSlice,
+  topologicalSort,
+  classifyImpact,
+} from "@contextlint/core";
+```
+
+| 関数                                                  | 概要                                                          |
+| ----------------------------------------------------- | ------------------------------------------------------------- |
+| `buildContextGraph(documents)`                        | パース済みドキュメントから依存グラフを構築                    |
+| `getImpactSet(graph, filePath)`                       | 指定ファイルの変更で影響を受けるファイル群（直接 + 推移）     |
+| `getContextSlice(graph, documents, query, maxDepth?)` | 指定クエリに関連する最小限のファイルセット                    |
+| `topologicalSort(graph)`                              | ドキュメントグラフのトポロジカルソート（依存順）              |
+| `classifyImpact(graph, filePath)`                     | 影響を受けるファイルを「直接」と「推移」に分類                |
+
+これは `contextlint impact` や `contextlint slice` の裏側、そして LSP のプロジェクト全体スコープの診断の裏側で動いているのと **同じ機構** です。エディタ統合やドキュメントパイプラインで独自の解析を組み込みたいときに、CLI をフォークしなくて済みます。
+
+## おわりに
+
+v0.9 で変わったのは「機能が 1 つ増えた」というよりは、**contextlint が動く場所** が変わったことだと思っています。
+
+- **LSP** — 人間が編集している間に
+- **MCP** — AI が編集している間に
+- **CI** — マージ前に
+
+ルールも、設定も、グラフも同じ。フィードバックが返ってくるタイミングだけが早くなりました。
+
+CI で止めてくれるのも大事ですが、書いている瞬間にエディタで気づける状態を contextlint にも持ち込めたのは、v0.9 で良かった点でした。開発者体験（DX）が少しでも前に進むものを作るのが、個人的に好きなテーマなので。
+
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint"
+  title="contextlint"
+  description="A rule-based linter that verifies consistency across Markdown documents."
+/>
+
+<RichLinkCard
+  href="https://www.npmjs.com/org/contextlint"
+  title="@contextlint on npm"
+  description="contextlint packages on npm — @contextlint/cli, @contextlint/core, @contextlint/mcp-server, @contextlint/lsp-server."
+/>

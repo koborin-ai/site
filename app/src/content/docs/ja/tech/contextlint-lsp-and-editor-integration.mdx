@@ -30,6 +30,12 @@ import quickfixAppliedImage from '../../../../assets/tech/contextlint-lsp-and-ed
 
 本記事は、その v0.9 のアップデートに焦点を当てた続編です。
 
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint/releases/tag/v0.9.0"
+  title="Release v0.9.0 · nozomi-koborinai/contextlint"
+  description="contextlint v0.9.0 のリリースノート。LSP サーバー、VS Code 拡張、Code Actions、ワークスペース全体の lint、診断位置の精度改善などの詳細"
+/>
+
 ## フィードバックの三層構造
 
 v0.9 までの contextlint は、フィードバックのレイヤーが 2 つでした。
@@ -79,13 +85,19 @@ npm install -D @contextlint/lsp-server
 
 一番手軽な入り口は、リリースごとに VSIX として配布されている VS Code 拡張です。
 
-1. [GitHub リリース](https://github.com/nozomi-koborinai/contextlint/releases) から `contextlint-vscode-VERSION.vsix` をダウンロード
+1. GitHub リリースから `contextlint-vscode-VERSION.vsix` をダウンロード
 2. 拡張機能ビューの **Views and More Actions… → Install from VSIX…** で先ほどの `.vsix` を選択
 3. もしくはコマンドラインから:
 
 ```bash
 code --install-extension contextlint-vscode-VERSION.vsix
 ```
+
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint/releases"
+  title="Releases · nozomi-koborinai/contextlint"
+  description="contextlint の全リリース一覧。各リリースに VSIX ファイルが添付されています"
+/>
 
 拡張は Markdown ファイルを開いたタイミングで起動し、最寄りの `contextlint.config.json` を見つけて `@contextlint/lsp-server` を自動的に立ち上げます。設定ファイルさえあれば、追加の操作は不要です。
 

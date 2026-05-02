@@ -30,6 +30,12 @@ In **v0.9**, the project crossed a different kind of line: contextlint now ships
 
 This is a follow-up focused on that v0.9 step.
 
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint/releases/tag/v0.9.0"
+  title="Release v0.9.0 · nozomi-koborinai/contextlint"
+  description="Full release notes for contextlint v0.9.0 — LSP server, VS Code extension, Code Actions, workspace-wide lint, and diagnostic-line accuracy fixes."
+/>
+
 ## Three layers of feedback
 
 Before v0.9, contextlint covered two layers of feedback:
@@ -76,13 +82,19 @@ In other words, the LSP isn't a stripped-down subset of the CLI — it runs the 
 
 The simplest way in is the bundled VS Code extension, distributed as a VSIX on every release.
 
-1. Grab `contextlint-vscode-VERSION.vsix` from the [latest GitHub Release](https://github.com/nozomi-koborinai/contextlint/releases).
+1. Grab `contextlint-vscode-VERSION.vsix` from the latest GitHub release.
 2. From the Extensions view: **Views and More Actions… → Install from VSIX…** and pick the file.
 3. Or from the command line:
 
 ```bash
 code --install-extension contextlint-vscode-VERSION.vsix
 ```
+
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/contextlint/releases"
+  title="Releases · nozomi-koborinai/contextlint"
+  description="All contextlint releases — each one ships a VSIX asset for direct download."
+/>
 
 The extension activates on Markdown files, finds the nearest `contextlint.config.json`, and starts `@contextlint/lsp-server` automatically. No further setup needed.
 

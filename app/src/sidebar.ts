@@ -17,6 +17,11 @@ export const sidebar = [
         slug: "tech/contextlint-introduction",
       },
       {
+        label: "contextlint v0.9 — LSP & VS Code Extension",
+        translations: { ja: "contextlint v0.9 — エディタで波線が出るようになった話" },
+        slug: "tech/contextlint-lsp-and-editor-integration",
+      },
+      {
         label: "MCP Deep Dive",
         slug: "tech/mcp-deep-dive",
       },

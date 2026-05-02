@@ -11,6 +11,8 @@ import mcpImage from '../../../../assets/tech/contextlint-introduction/mcp-ja.pn
 
 <img src="/og/contextlint-introduction.png" alt="contextlint" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
 
+> **Updated 2026-04-29**: contextlint v0.9 で LSP サーバーと VS Code 拡張によるエディタ統合が入りました。詳細は [続編記事](/ja/tech/contextlint-lsp-and-editor-integration/) を参照してください。
+
 ## はじめに
 
 AI を活用したソフトウェア開発では、要件・仕様・設計といった構造化ドキュメントを SSOT（Single Source of Truth: 信頼できる唯一の情報源）として管理し、それを基に AI がコードを生成する、いわゆる **仕様駆動開発（SDD）** のようなアプローチが定着しつつあります。
@@ -561,28 +563,28 @@ npx contextlint graph
 
 ## CI 連携
 
-GitHub Actions で contextlint を実行する例です。
+v0.6 以降、contextlint には公式の Composite Action が同梱されており、`--format json` での実行と PR 差分への inline annotations までを 1 ステップでセットアップできます。
 
 ```yaml
 name: contextlint
-
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
-
+    paths: ["docs/**"]
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - run: npx @contextlint/cli
+      - uses: actions/checkout@v4
+      - uses: nozomi-koborinai/contextlint/.github/actions/contextlint@main
+        # with:
+        #   config: 'contextlint.config.json'  # optional
+        #   files: 'docs/**/*.md'              # optional
+        #   version: 'latest'                  # optional
 ```
 
-ドキュメントを変更した PR で自動的に検証が走るので、壊れた構造を**マージ前に検出**できます。
+ドキュメントを変更した PR で自動的に検証が走り、壊れた構造を**マージ前に検出**できます。違反は PR の差分上に行レベルのアノテーションとして表示されます。
 
-`--format json` を指定すると JSON 形式で出力でき、CI のレポーターとの連携にも便利です。
+サードパーティのアクションに依存したくない場合は、素の `npx @contextlint/cli` でも構いません。`--format json` と組み合わせれば、自前のレポーターに食わせるのも簡単です。
 
 ## AI ツール連携
 
@@ -749,6 +751,12 @@ Claude Code では `!` プレフィックスを使って、会話の中からシ
 - **AI 向けのドキュメントを検証するが、AI には依存しない**
 
 SDD、ADR など、Markdown でドキュメント管理している方は、ぜひ試してみてください。
+
+<RichLinkCard
+  href="/ja/tech/contextlint-lsp-and-editor-integration/"
+  title="contextlint v0.9 — エディタで波線が出るようになった話（LSP / VSCode 対応）"
+  description="続編記事：LSP サーバーと VS Code 拡張によるエディタ内リアルタイム診断"
+/>
 
 <RichLinkCard
   href="https://github.com/nozomi-koborinai/contextlint"

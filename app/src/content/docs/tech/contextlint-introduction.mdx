@@ -11,6 +11,8 @@ import mcpImage from '../../../assets/tech/contextlint-introduction/mcp-en.png';
 
 <img src="/og/contextlint-introduction.png" alt="contextlint" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
 
+> **Updated 2026-04-29**: contextlint v0.9 ships with editor integration via LSP and a VS Code extension — see the [follow-up article](/tech/contextlint-lsp-and-editor-integration/) for the details.
+
 ## Introduction
 
 In AI-powered software development, an approach is taking hold where structured documents — requirements, specifications, and designs — are managed as an SSOT (Single Source of Truth) and AI generates code based on them. This is commonly called **Specification-Driven Development (SDD)**.
@@ -561,28 +563,28 @@ npx contextlint graph
 
 ## CI Integration
 
-Here's an example of running contextlint in GitHub Actions:
+Starting from v0.6, contextlint ships an official Composite Action that runs the linter with `--format json` and surfaces violations as line-level annotations on the PR diff.
 
 ```yaml
 name: contextlint
-
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
-
+    paths: ["docs/**"]
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - run: npx @contextlint/cli
+      - uses: actions/checkout@v4
+      - uses: nozomi-koborinai/contextlint/.github/actions/contextlint@main
+        # with:
+        #   config: 'contextlint.config.json'  # optional
+        #   files: 'docs/**/*.md'              # optional
+        #   version: 'latest'                  # optional
 ```
 
 Validation runs automatically on PRs that modify documents, catching broken structures **before merge**.
 
-With `--format json`, results are output in JSON, making it easy to integrate with CI reporters.
+If you'd rather not pin to a third-party action, plain `npx @contextlint/cli` works too — pair it with `--format json` if you want to feed the output into your own reporter.
 
 ## AI Tool Integration
 
@@ -749,6 +751,12 @@ Code has ESLint and type checking, but there's no equivalent for verifying docum
 - **Validates AI-oriented documents, but does not depend on AI**
 
 If you manage documents in Markdown — whether for SDD, ADR, or anything else — give it a try.
+
+<RichLinkCard
+  href="/tech/contextlint-lsp-and-editor-integration/"
+  title="contextlint v0.9 — Editor Integration with LSP and VS Code"
+  description="The follow-up: real-time diagnostics in your editor via the new LSP server and VS Code extension."
+/>
 
 <RichLinkCard
   href="https://github.com/nozomi-koborinai/contextlint"

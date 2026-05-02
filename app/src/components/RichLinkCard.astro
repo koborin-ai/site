@@ -9,10 +9,10 @@ interface Props {
 
 const { href, title, description, thumbnail, source } = Astro.props;
 
-// Extract domain info from URL
-const url = new URL(href);
-const domain = url.hostname.replace('www.', '');
-const displaySource = source || domain;
+const isExternal = /^https?:\/\//i.test(href);
+const url = isExternal ? new URL(href) : null;
+const domain = url ? url.hostname.replace('www.', '') : '';
+const displaySource = source || (isExternal ? domain : '');
 
 // Fetch OG metadata from the target URL at build time
 async function fetchOgMetadata(targetUrl: string) {
@@ -44,22 +44,27 @@ async function fetchOgMetadata(targetUrl: string) {
   }
 }
 
-// Fetch OG data (only if title or description not provided)
-const needsFetch = !title || !description;
+// Fetch OG data (only for external links and only if title or description not provided)
+const needsFetch = isExternal && (!title || !description);
 const ogData = needsFetch ? await fetchOgMetadata(href) : null;
 
 // Use provided values or fallback to OG data
-const displayTitle = title || ogData?.title || domain;
+const displayTitle = title || ogData?.title || domain || href;
 const displayDescription = description || ogData?.description || '';
 const ogImage = ogData?.image;
 
-// Use provided thumbnail, OG image, or fallback to favicon
-const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+// Use provided thumbnail, OG image, or fallback to favicon (external only)
+const faviconUrl = isExternal ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null;
 const displayThumbnail = thumbnail || ogImage || faviconUrl;
-const isFavicon = !thumbnail && !ogImage;
+const isFavicon = !thumbnail && !ogImage && Boolean(faviconUrl);
 ---
 
-<a href={href} target="_blank" rel="noopener noreferrer" class="rich-link-card">
+<a
+  href={href}
+  target={isExternal ? "_blank" : undefined}
+  rel={isExternal ? "noopener noreferrer" : undefined}
+  class="rich-link-card"
+>
   <div class="content">
     <div class="title">{displayTitle}</div>
     {displayDescription && <div class="description">{displayDescription}</div>}
@@ -70,9 +75,11 @@ const isFavicon = !thumbnail && !ogImage;
       </div>
     )}
   </div>
-  <div class="thumbnail" class:list={[{ 'thumbnail--favicon': isFavicon }]}>
-    <img src={displayThumbnail} alt="" loading="lazy" />
-  </div>
+  {displayThumbnail && (
+    <div class="thumbnail" class:list={[{ 'thumbnail--favicon': isFavicon }]}>
+      <img src={displayThumbnail} alt="" loading="lazy" />
+    </div>
+  )}
 </a>
 
 <style>

@@ -1,0 +1,75 @@
+---
+/**
+ * SiteImage — サイト全体で画像表示を統一するラッパー。
+ *
+ * variant ごとに widths / quality / formats / loading を持つ preset を適用。
+ * 生 <img> や Astro <Image /> の直接利用は禁止。すべて本コンポーネント経由とする。
+ */
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+export type Variant = 'hero' | 'card' | 'thumbnail' | 'inline';
+
+interface Props {
+  src: ImageMetadata;
+  alt: string;
+  variant: Variant;
+  /** preset を上書きする escape hatch。基本は使わない */
+  widths?: number[];
+  /** preset を上書きする escape hatch */
+  loading?: 'lazy' | 'eager';
+  /** 任意の追加 class */
+  class?: string;
+  /** 任意の追加 style */
+  style?: string;
+}
+
+const { src, alt, variant, widths, loading, class: className, style } = Astro.props;
+
+const PRESETS = {
+  hero: {
+    widths: [768, 1376, 2752],
+    formats: ['avif', 'webp'] as const,
+    quality: 88,
+    loading: 'eager' as const,
+    fetchpriority: 'high' as const,
+  },
+  card: {
+    widths: [160, 320, 480],
+    formats: ['avif', 'webp'] as const,
+    quality: 85,
+    loading: 'lazy' as const,
+    fetchpriority: 'auto' as const,
+  },
+  thumbnail: {
+    widths: [80, 160, 240],
+    formats: ['avif', 'webp'] as const,
+    quality: 82,
+    loading: 'lazy' as const,
+    fetchpriority: 'auto' as const,
+  },
+  inline: {
+    widths: [400, 800, 1200],
+    formats: ['webp'] as const,
+    quality: 85,
+    loading: 'lazy' as const,
+    fetchpriority: 'auto' as const,
+  },
+} as const;
+
+const preset = PRESETS[variant];
+const finalWidths = widths ?? [...preset.widths];
+const finalLoading = loading ?? preset.loading;
+---
+
+<Picture
+  src={src}
+  alt={alt}
+  widths={finalWidths}
+  formats={[...preset.formats]}
+  quality={preset.quality}
+  loading={finalLoading}
+  fetchpriority={preset.fetchpriority}
+  class={className}
+  style={style}
+/>

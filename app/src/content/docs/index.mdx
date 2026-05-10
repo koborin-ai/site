@@ -7,6 +7,8 @@ lastUpdated: false
 
 import { Image } from 'astro:assets';
 import bookCover from '../../assets/life/reflections-on-2025/book-cover.png';
+import contextlintOg from '../../assets/_shared/building/contextlint-og.png';
+import abletonOscMcpKey from '../../assets/_shared/building/ableton-osc-mcp-key.png';
 
 <div class="hero-image">
   <img src="/og/koborin-ai-hero-light.png" alt="Welcome to koborin.ai" fetchpriority="high" width="1200" height="630" class="hero-light" />
@@ -41,7 +43,7 @@ Built by [@nozomi-koborinai](https://github.com/nozomi-koborinai).
 
 I graduated from an IT technical college in March 2019, where I built my foundation in object-oriented programming with Java.
 
-During my first four years, I developed electronic medical record systems using C# / VB.NET, taught at App University (Japan's app development engineering community), and co-authored a book on Flutter design patterns.
+During my first four years, I worked on enterprise legacy systems while teaching at App University (Japan's app development engineering community) and co-authoring a book on Flutter design patterns.
 
 Currently working across cloud architecture, pre-sales, and team leadership at a Google Cloud Partner company — while exploring AI-driven development on the side.
 
@@ -67,14 +69,68 @@ Unlock the full potential of Genkit and Go—explore the journey from fundamenta
 
 ---
 
+### Building
+
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://contextlint.dev/">
+<Image src={contextlintOg} alt="contextlint OG image" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
+
+**contextlint**
+
+A semantic linter for AI-era Markdown. Verifies cross-references, required sections, and dependency graphs deterministically — across your editor, AI assistants, and CI. Tagline: *"markdownlint for syntax. contextlint for meaning."*
+
+[contextlint.dev](https://contextlint.dev/) / [GitHub](https://github.com/nozomi-koborinai/contextlint)
+</div>
+</div>
+
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://github.com/nozomi-koborinai/ableton-osc-mcp">
+<Image src={abletonOscMcpKey} alt="Ableton OSC MCP Server key visual" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
+
+**Ableton OSC MCP Server**
+
+An MCP (Model Context Protocol) server that lets AI assistants like Claude or Cursor drive Ableton Live 11+ via AbletonOSC. Built in Go + Genkit. Tracks, MIDI clips, tempo, and clip slots are exposed as MCP tool calls so AI conversation can drive beat-making and music production directly.
+
+[GitHub](https://github.com/nozomi-koborinai/ableton-osc-mcp)
+</div>
+</div>
+
+<div style="margin: 1.5rem 0;">
+
+**terradart**
+
+A Dart code generator that turns the Terraform Google provider schema into typed, refactor-safe Dart bindings. Focuses on the IaC ↔ Dart application seam: a renamed Pub/Sub topic or secret breaks at compile time, not at runtime. Synthesizes JSON that the existing `terraform` CLI consumes — not a replacement. Pre-alpha (v0.0.x), filling the Dart-shaped slot CDKTF didn't reach before being archived in October 2025.
+
+[GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
+</div>
+
+---
+
+### OSS Contributions
+
+**Genkit for Dart and Flutter**
+
+Originally co-developed the Dart client for Genkit with the Genkit team, aiming to grow the Flutter/Dart Genkit community. The project has since evolved from a client library into Genkit for Dart and Flutter — a full AI SDK with client features alongside. Now contributing as a community member.
+
+[GitHub](https://github.com/genkit-ai/genkit-dart)
+
+**Genkit (core)**
+
+Small contributions to the upstream Genkit repository: docs improvements and minor PRs.
+
+[GitHub](https://github.com/genkit-ai/genkit)
+
+---
+
 ### Highlights
 
 | Item | Description | Link |
 |------|-------------|------|
 | Google Cloud Partner Top Engineer 2025 & 2026 | Selected for Application Modernization two years in a row | - |
-| contextlint | Context-aware linting framework for AI-driven development | [GitHub](https://github.com/nozomi-koborinai/contextlint) |
-| Ableton OSC MCP Server | MCP server for controlling Ableton Live via OSC | [GitHub](https://github.com/nozomi-koborinai/ableton-osc-mcp) |
-| Dart client for Genkit | Official OSS library co-developed with the Firebase team | [GitHub](https://github.com/genkit-ai/genkit-dart) |
 | Introduction to Flutter Design Patterns (co-author) | Covers layered / onion architecture | [Zenn](https://zenn.dev/flutteruniv/books/flutter-architechture-en) |
 | App University (formerly Flutter University) | Former instructor, current 1-on-1 mentor | [flutteruniv.com](https://flutteruniv.com) |
 
@@ -110,7 +166,9 @@ Unlock the full potential of Genkit and Go—explore the journey from fundamenta
 | 2024 | Identity & Access Management Architecture | Introduced Identity Platform as IDaaS. Proposed dynamic authorization with Cloud Run sidecar + Open Policy Agent (OPA), supporting SAML auth providers |
 | 2024 | Firebase Architecture Support | Implemented IP restrictions for Cloud Functions deployment via VPC Service Controls. Designed auto-documentation pipeline with Gemini Code Assist |
 | 2023 | Tokyo Flutter Hackathon Winner | Participated with App University (formerly Flutter University) team. Developed real-time online game in 24 hours. Handled Firebase full-stack (Auth, Firestore, Hosting, Cloud Storage, Cloud Functions) |
+| 2023 | Cloud Management Platform Construction | Tech lead on a custom Cloud Management Platform centralizing change management and operational tasks across a customer's GCP environment. Wired Snyk IaC into the Terraform pipeline for both static IaC scanning and drift detection between Terraform state and the actual cloud |
 | 2023-24 | MoodTrend | Mood tracking app for bipolar disorder. As tech lead, designed Flutter software architecture and CI/CD pipeline (Workload Identity + GitHub Actions + Terraform), contributing to initial release. Currently off the project ([iOS](https://apps.apple.com/jp/app/%E6%B0%97%E5%88%86%E3%82%B0%E3%83%A9%E3%83%95-moodtrend-%E5%8F%8C%E6%A5%B5%E6%80%A7%E9%9A%9C%E5%AE%B3-%E8%BA%81%E9%AC%B1%E3%82%B0%E3%83%A9%E3%83%95/id6480364789) / [Android](https://play.google.com/store/apps/details?id=com.moodtrend.mood_trend_flutter)) |
+| 2019–2023 | Large-scale Electronic Medical Record System (4 years) | Team member on a 30+ developer codebase with 400+ tables. Incrementally migrated parts of the legacy VB.NET / C# / ASP.NET / WPF stack from tightly-coupled to loosely-coupled — introducing ViewModel / Repository layers (MVVM), replacing live network calls in unit tests with mocks |
 
 ---
 

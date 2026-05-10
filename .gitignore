@@ -68,3 +68,6 @@ logs/
 
 # Python
 __pycache__/
+
+# AI agent workspace (brainstorming specs, plans, working notes)
+/docs/

@@ -7,6 +7,8 @@ lastUpdated: false
 
 import { Image } from 'astro:assets';
 import bookCover from '../../../assets/life/reflections-on-2025/book-cover.png';
+import contextlintOg from '../../../assets/_shared/building/contextlint-og.png';
+import abletonOscMcpKey from '../../../assets/_shared/building/ableton-osc-mcp-key.png';
 
 <div class="hero-image">
   <img src="/og/koborin-ai-hero-light.png" alt="koborin.ai へようこそ" fetchpriority="high" width="1200" height="630" class="hero-light" />
@@ -43,7 +45,7 @@ Built by [@nozomi-koborinai](https://github.com/nozomi-koborinai).
 
 2019 年 3 月に IT 専門学校を卒業し、Java によるオブジェクト指向プログラミングの基礎を築きました。
 
-最初の 4 年間は C# / VB.NET を使った電子カルテシステムの開発、App 大学（日本のアプリケーション開発エンジニアコミュニティ）での講師、Flutter デザインパターンに関する書籍の共同執筆を行いました。
+最初の 4 年間は、エンタープライズのレガシーシステム開発に携わりつつ、App 大学（日本のアプリケーション開発エンジニアコミュニティ）での講師活動と、Flutter デザインパターンに関する書籍の共同執筆を並行していました。
 
 現在は Google Cloud パートナー企業で、クラウドアーキテクチャ・プリセールス・テックリードなど幅広く携わりつつ、個人で AI 駆動開発を探求しています。
 
@@ -69,14 +71,68 @@ Genkit と Go の可能性を最大限に引き出し、初歩から高度な AI
 
 ---
 
+### Building
+
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://contextlint.dev/">
+<Image src={contextlintOg} alt="contextlint OG 画像" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
+
+**contextlint**
+
+AI 時代の Markdown のためのセマンティックリンター。エディタ・AI アシスタント・CI を横断して、相互参照・必須セクション・依存グラフを決定論的に検証します。タグライン: *「markdownlint for syntax. contextlint for meaning.」*
+
+[contextlint.dev](https://contextlint.dev/) / [GitHub](https://github.com/nozomi-koborinai/contextlint)
+</div>
+</div>
+
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://github.com/nozomi-koborinai/ableton-osc-mcp">
+<Image src={abletonOscMcpKey} alt="Ableton OSC MCP Server キービジュアル" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
+
+**Ableton OSC MCP Server**
+
+Claude や Cursor などの AI アシスタントから、AbletonOSC 経由で Ableton Live 11+ を操作できる MCP (Model Context Protocol) サーバー。Go + Genkit で実装。トラック・MIDI クリップ・テンポ・クリップスロットを MCP のツール呼び出しとして公開し、AI との対話からビートメイキングや音楽制作を直接駆動できる。
+
+[GitHub](https://github.com/nozomi-koborinai/ableton-osc-mcp)
+</div>
+</div>
+
+<div style="margin: 1.5rem 0;">
+
+**terradart**
+
+Terraform Google provider のスキーマから、型付き・リファクタ安全な Dart バインディングを生成する Dart コードジェネレーター。IaC と Dart アプリケーションの「縫い目」（topic 名やシークレット参照）にフォーカスし、リネームしたら実行時ではなくコンパイル時に壊れる状態を作る。既存の `terraform` CLI が消費する JSON を生成するだけで、Terraform を置き換えるものではない。Pre-alpha (v0.0.x)。CDKTF が 2025 年 10 月にアーカイブされる前に到達できなかった、Dart 形のスロットを埋める位置づけ。
+
+[GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
+</div>
+
+---
+
+### OSS Contributions
+
+**Genkit for Dart and Flutter**
+
+もともと Flutter/Dart の Genkit コミュニティを広げる目的で、Genkit チームと Dart 用クライアントライブラリを共同開発。その後プロジェクトはクライアントライブラリから Genkit for Dart and Flutter — クライアント機能も備えた本格的な AI SDK へと発展。現在はコミュニティの一員としてコントリビュートを継続中。
+
+[GitHub](https://github.com/genkit-ai/genkit-dart)
+
+**Genkit (core)**
+
+Genkit 本体リポジトリへの小さなコントリビューション。docs 改善や軽微な PR を中心に。
+
+[GitHub](https://github.com/genkit-ai/genkit)
+
+---
+
 ### ハイライト
 
 | 項目 | 説明 | リンク |
 |------|------|--------|
 | Google Cloud Partner Top Engineer 2025 & 2026 | Application Modernization 領域で 2 年連続選出 | - |
-| contextlint | AI 駆動開発のためのコンテキスト認識 Lint フレームワーク | [GitHub](https://github.com/nozomi-koborinai/contextlint) |
-| Ableton OSC MCP Server | OSC 経由で Ableton Live を操作する MCP サーバー | [GitHub](https://github.com/nozomi-koborinai/ableton-osc-mcp) |
-| Dart client for Genkit | Firebase チームと共同開発した公式 OSS ライブラリ | [GitHub](https://github.com/genkit-ai/genkit-dart) |
 | Flutter 設計パターン入門（共著） | レイヤード／オニオンアーキテクチャについて言及 | [Zenn](https://zenn.dev/flutteruniv/books/flutter-architecture) |
 | App 大学（旧 Flutter 大学） | 元講師、現 1on1 メンター | [flutteruniv.com](https://flutteruniv.com) |
 
@@ -112,7 +168,9 @@ Genkit と Go の可能性を最大限に引き出し、初歩から高度な AI
 | 2024 | 認証認可基盤の設計・構築 | Identity Platform を IDaaS として導入。Cloud Run サイドカー + Open Policy Agent (OPA) による動的な認可制御を提案し、SAML 認証プロバイダーに対応 |
 | 2024 | Firebase アーキテクチャ支援 | VPC Service Controls で Cloud Functions のデプロイに IP 制限を導入。Gemini Code Assist でドキュメント自動生成パイプラインを設計 |
 | 2023 | 東京 Flutter ハッカソン優勝 | App 大学（旧 Flutter 大学）のチームで参加し、24 時間でリアルタイムオンラインゲームを開発。Firebase フルスタック（Auth, Firestore, Hosting, Cloud Storage, Cloud Functions）を担当 |
+| 2023 | Cloud Management Platform 構築 | 顧客の GCP 環境横断で変更管理・運用業務を集約する Cloud Management Platform をテックリードとして構築。Terraform パイプラインに Snyk IaC を組み込み、IaC コードの静的スキャンと、Terraform state とクラウド実態とのドリフト検知の両方を実現 |
 | 2023-24 | 気分グラフ MoodTrend | 双極性障害向けの気分記録アプリ。テックリードとして Flutter のソフトウェアアーキテクチャ設計と CI/CD パイプライン構築（Workload Identity + GitHub Actions + Terraform）を担当し、初回リリースに貢献。現在はプロジェクトから離脱 ([iOS](https://apps.apple.com/jp/app/%E6%B0%97%E5%88%86%E3%82%B0%E3%83%A9%E3%83%95-moodtrend-%E5%8F%8C%E6%A5%B5%E6%80%A7%E9%9A%9C%E5%AE%B3-%E8%BA%81%E9%AC%B1%E3%82%B0%E3%83%A9%E3%83%95/id6480364789) / [Android](https://play.google.com/store/apps/details?id=com.moodtrend.mood_trend_flutter)) |
+| 2019–2023 | 大規模電子カルテシステム開発（4 年） | 30 名以上の開発体制・400 を超えるテーブル規模のコードベースにチームメンバーとして参画。VB.NET / C# / ASP.NET / WPF というレガシースタックを、密結合から疎結合へ少しずつ移行 — MVVM の ViewModel / Repository レイヤーを導入し、単体テスト内に直接入っていたネットワーク呼び出しをモックに置き換え |
 
 ---
 

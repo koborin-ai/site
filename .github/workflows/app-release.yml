@@ -185,7 +185,7 @@ jobs:
           pulumi config set imageUri ${{ env.IMAGE_URI }} --non-interactive
 
       - name: Pulumi Preview
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         with:
           command: preview
           stack-name: ${{ env.TARGET_ENV }}
@@ -194,7 +194,7 @@ jobs:
           PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
 
       - name: Pulumi Up
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         with:
           command: up
           stack-name: ${{ env.TARGET_ENV }}

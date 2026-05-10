@@ -6,21 +6,25 @@ lastUpdated: false
 ---
 
 import { Image } from 'astro:assets';
+import SiteImage from '../../components/SiteImage.astro';
+import heroLight from '../../assets/og/koborin-ai-hero-light.png';
+import heroDark from '../../assets/og/koborin-ai-hero-dark.png';
 import bookCover from '../../assets/life/reflections-on-2025/book-cover.png';
 import contextlintOg from '../../assets/_shared/building/contextlint-og.png';
 import abletonOscMcpKey from '../../assets/_shared/building/ableton-osc-mcp-key.png';
 
 <div class="hero-image">
-  <img src="/og/koborin-ai-hero-light.png" alt="Welcome to koborin.ai" fetchpriority="high" width="1200" height="630" class="hero-light" />
-  <img src="/og/koborin-ai-hero-dark.png" alt="Welcome to koborin.ai" width="1200" height="630" class="hero-dark" />
+  <SiteImage src={heroLight} alt="Welcome to koborin.ai" variant="hero" class="hero-light" />
+  <SiteImage src={heroDark} alt="Welcome to koborin.ai" variant="hero" class="hero-dark" />
 </div>
 
 <style>{`
+  .hero-image picture { width: 100%; }
   .hero-image img { width: 100%; height: auto; }
-  .hero-dark { display: none; }
-  .hero-light { display: block; }
-  [data-theme="dark"] .hero-dark { display: block; }
-  [data-theme="dark"] .hero-light { display: none; }
+  .hero-image picture:has(.hero-dark) { display: none; }
+  .hero-image picture:has(.hero-light) { display: block; }
+  [data-theme="dark"] .hero-image picture:has(.hero-dark) { display: block; }
+  [data-theme="dark"] .hero-image picture:has(.hero-light) { display: none; }
 `}</style>
 
 ## About This Proving Ground

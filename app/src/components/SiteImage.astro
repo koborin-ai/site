@@ -2,8 +2,8 @@
 /**
  * SiteImage — サイト全体で画像表示を統一するラッパー。
  *
- * variant ごとに widths / quality / formats / loading を持つ preset を適用。
- * 生 <img> や Astro <Image /> の直接利用は禁止。すべて本コンポーネント経由とする。
+ * variant ごとに widths / sizes / quality / formats / loading を持つ preset を適用。
+ * 生 <img> や Astro <Image /> / <Picture /> の直接利用は禁止。すべて本コンポーネント経由とする。
  */
 import { Picture } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -18,17 +18,20 @@ interface Props {
   widths?: number[];
   /** preset を上書きする escape hatch */
   loading?: 'lazy' | 'eager';
+  /** preset を上書きする escape hatch */
+  sizes?: string;
   /** 任意の追加 class */
   class?: string;
   /** 任意の追加 style */
   style?: string;
 }
 
-const { src, alt, variant, widths, loading, class: className, style } = Astro.props;
+const { src, alt, variant, widths, loading, sizes, class: className, style } = Astro.props;
 
 const PRESETS = {
   hero: {
     widths: [768, 1376, 2752],
+    sizes: '100vw',
     formats: ['avif', 'webp'] as const,
     quality: 88,
     loading: 'eager' as const,
@@ -36,6 +39,7 @@ const PRESETS = {
   },
   card: {
     widths: [160, 320, 480],
+    sizes: '(max-width: 768px) 100vw, 160px',
     formats: ['avif', 'webp'] as const,
     quality: 85,
     loading: 'lazy' as const,
@@ -43,6 +47,7 @@ const PRESETS = {
   },
   thumbnail: {
     widths: [80, 160, 240],
+    sizes: '(max-width: 768px) 80px, 160px',
     formats: ['avif', 'webp'] as const,
     quality: 82,
     loading: 'lazy' as const,
@@ -50,6 +55,7 @@ const PRESETS = {
   },
   inline: {
     widths: [400, 800, 1200],
+    sizes: '(max-width: 768px) 100vw, 800px',
     formats: ['webp'] as const,
     quality: 85,
     loading: 'lazy' as const,
@@ -60,12 +66,14 @@ const PRESETS = {
 const preset = PRESETS[variant];
 const finalWidths = widths ?? [...preset.widths];
 const finalLoading = loading ?? preset.loading;
+const finalSizes = sizes ?? preset.sizes;
 ---
 
 <Picture
   src={src}
   alt={alt}
   widths={finalWidths}
+  sizes={finalSizes}
   formats={[...preset.formats]}
   quality={preset.quality}
   loading={finalLoading}

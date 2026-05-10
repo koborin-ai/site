@@ -45,11 +45,6 @@ export const sidebar = [
     label: "Life",
     items: [
       {
-        label: "Acknowledging Aging",
-        translations: { ja: "老いを認めるということ" },
-        slug: "life/acknowledging-aging",
-      },
-      {
         label: "Everything Has Meaning",
         translations: { ja: "全てのことに意味がある" },
         slug: "life/everything-has-meaning",

@@ -5,7 +5,6 @@ ogImage: /og/koborin-ai-hero.png
 lastUpdated: false
 ---
 
-import { Image } from 'astro:assets';
 import SiteImage from '../../../components/SiteImage.astro';
 import heroLight from '../../../assets/og/koborin-ai-hero-light.png';
 import heroDark from '../../../assets/og/koborin-ai-hero-dark.png';
@@ -50,7 +49,7 @@ Built by [@nozomi-koborinai](https://github.com/nozomi-koborinai).
 
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1rem 0;">
 <a href="https://www.amazon.com/dp/B0G4HKJRPB">
-<Image src={bookCover} alt="Mastering Genkit: Go Edition 表紙" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+<SiteImage src={bookCover} alt="Mastering Genkit: Go Edition 表紙" variant="card" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
 </a>
 <div style="flex: 1; min-width: 200px;">
 
@@ -70,7 +69,7 @@ Genkit と Go の可能性を最大限に引き出し、初歩から高度な AI
 
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
 <a href="https://contextlint.dev/">
-<Image src={contextlintOg} alt="contextlint OG 画像" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+<SiteImage src={contextlintOg} alt="contextlint OG 画像" variant="card" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
 </a>
 <div style="flex: 1; min-width: 200px;">
 
@@ -84,7 +83,7 @@ AI 時代の Markdown のためのセマンティックリンター。エディ�
 
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
 <a href="https://github.com/nozomi-koborinai/ableton-osc-mcp">
-<Image src={abletonOscMcpKey} alt="Ableton OSC MCP Server キービジュアル" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+<SiteImage src={abletonOscMcpKey} alt="Ableton OSC MCP Server キービジュアル" variant="card" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
 </a>
 <div style="flex: 1; min-width: 200px;">
 

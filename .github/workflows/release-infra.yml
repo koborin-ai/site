@@ -117,7 +117,7 @@ jobs:
           fi
 
       - name: Pulumi Preview (Pre-Apply Check)
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         with:
           command: preview
           stack-name: ${{ env.PULUMI_STACK }}
@@ -126,7 +126,7 @@ jobs:
           PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
 
       - name: Pulumi Up
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         with:
           command: up
           stack-name: ${{ env.PULUMI_STACK }}
@@ -136,7 +136,7 @@ jobs:
 
       - name: Pulumi Preview (Verify No Drift)
         if: always()
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         with:
           command: preview
           stack-name: ${{ env.PULUMI_STACK }}

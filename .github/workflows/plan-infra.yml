@@ -114,7 +114,7 @@ jobs:
           fi
 
       - name: Pulumi Preview
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         with:
           command: preview
           stack-name: ${{ env.PULUMI_STACK }}

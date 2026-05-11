@@ -109,16 +109,53 @@ Add new article to `app/src/sidebar.ts`:
 
 ### 5. Assets (Optional)
 
-If using images:
+All on-page images must go through the `SiteImage` component
+(`app/src/components/SiteImage.astro`). Raw `<img>` tags and direct use of
+Astro's `<Image />` / `<Picture />` are forbidden — they bypass the responsive
+`srcset`/AVIF/WebP pipeline and ship multi-MB originals.
 
-1. Place image in `app/src/assets/`
-2. Import and use in MDX:
+#### Variant cheat sheet
 
-```mdx
-import myImage from '../../../assets/my-image.png';
+Pick the variant by *rendered* size, not source dimensions:
 
-<img src={myImage.src} alt="Description" style="..." />
-```
+| Variant | Use case | Display class |
+|---------|----------|---------------|
+| `hero` | LCP candidate, top-page hero | ~1376px |
+| `articleHeader` | LCP candidate, article opener (OG image displayed in body) | ~750px |
+| `card` | Top-page / list thumbnails | 160–480px |
+| `thumbnail` | Small icon-like images | 80–240px |
+| `inline` | Regular images inside article body | 400–1200px |
+
+#### Rules for a new article
+
+1. **Article header image (OG image)**: place the same PNG in **both**
+   - `app/public/og/<slug>.png` — consumed by OG meta tags and nginx's WebP redirect (do not remove).
+   - `app/src/assets/og/<slug>.png` — imported by `SiteImage` so Astro can generate optimized variants.
+
+2. **Render the article opener** at the top of the MDX body:
+
+   ```mdx
+   import SiteImage from '../../../components/SiteImage.astro';
+   import headerImage from '../../../assets/og/<slug>.png';
+
+   <SiteImage src={headerImage} alt="..." variant="articleHeader" style="width: 100%; height: auto;" />
+   ```
+
+3. **In-body images** (screenshots, diagrams, etc.) go under
+   `app/src/assets/{category}/{article}/` and are rendered with `variant="inline"`:
+
+   ```mdx
+   import SiteImage from '../../../components/SiteImage.astro';
+   import myImage from '../../../assets/{category}/{article}/image.png';
+
+   <SiteImage src={myImage} alt="Description" variant="inline" />
+   ```
+
+4. **Do not** pass a string path (e.g. `src="/og/<slug>.png"`) to `SiteImage` —
+   it requires an imported asset module so the build pipeline can emit
+   optimized variants.
+
+`SiteImage` API reference: `app/src/components/SiteImage.astro`.
 
 ## Content Guidelines
 

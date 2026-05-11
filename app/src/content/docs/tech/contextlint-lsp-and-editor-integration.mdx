@@ -5,14 +5,15 @@ publishedAt: 2026-04-29
 ogImage: /og/contextlint-lsp.png
 ---
 
-import { Image } from 'astro:assets';
 import RichLinkCard from '../../../components/RichLinkCard.astro';
+import SiteImage from '../../../components/SiteImage.astro';
 import diagnosticImage from '../../../assets/tech/contextlint-lsp-and-editor-integration/diagnostic-with-hover.png';
 import overviewImage from '../../../assets/tech/contextlint-lsp-and-editor-integration/diagnostics-overview.png';
 import quickfixPopupImage from '../../../assets/tech/contextlint-lsp-and-editor-integration/quickfix-tbl002-popup.png';
 import quickfixAppliedImage from '../../../assets/tech/contextlint-lsp-and-editor-integration/quickfix-applied.png';
+import contextlintLspOg from '../../../assets/og/contextlint-lsp.png';
 
-<img src="/og/contextlint-lsp.png" alt="contextlint v0.9 — Editor Integration" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={contextlintLspOg} alt="contextlint v0.9 — Editor Integration" variant="articleHeader" style="width: 100%; height: auto;" />
 
 ## Introduction
 
@@ -67,7 +68,7 @@ A few things worth noting about the server itself:
 
 In other words, the LSP isn't a stripped-down subset of the CLI — it runs the same rule engine on the same graph.
 
-<Image src={diagnosticImage} alt="A TBL-001 violation underlined in the editor with rule details on hover" quality={80} />
+<SiteImage src={diagnosticImage} alt="A TBL-001 violation underlined in the editor with rule details on hover" variant="inline" />
 *TBL-001 evaluates the table as a whole, so the squiggle lands on the header row rather than a specific cell. Hovering reveals the rule ID and the missing column names — `ID` and `Status` in this example.*
 
 > All screenshots in this article are taken against one example `contextlint.config.json`. Which rules fire and where the squiggles appear depends on each project's config.
@@ -88,7 +89,7 @@ The extension activates on Markdown files, finds the nearest `contextlint.config
 
 The extension is currently VSIX-only — Marketplace publication is tracked separately and planned for a future release. Cursor uses the same extension format, so the same VSIX works there.
 
-<Image src={overviewImage} alt="Multiple rule violations highlighted simultaneously in a single Markdown file" quality={80} />
+<SiteImage src={overviewImage} alt="Multiple rule violations highlighted simultaneously in a single Markdown file" variant="inline" />
 *TBL-001, TBL-002, and CHK-001 violations diagnosed simultaneously across one file. The diagnostic count appears next to the file name in the explorer.*
 
 ## Neovim, Helix, JetBrains
@@ -150,10 +151,10 @@ The intent isn't to auto-fix everything. It's to remove the "first physical step
 
 Both fixes are mechanical and deterministic. A `TODO` placeholder isn't a real value, but it gets the document into a syntactically valid state so the rest of the rules can keep running, and it leaves a marker for you to come back to. CTX-001 (placeholder content) will then flag that `TODO` later, which is the point: the rule chain catches it twice — once when you typed nothing, once when you forgot to come back.
 
-<Image src={quickfixPopupImage} alt="Quick Fix popup offering to fill empty cells with TODO for TBL-002" quality={80} />
+<SiteImage src={quickfixPopupImage} alt="Quick Fix popup offering to fill empty cells with TODO for TBL-002" variant="inline" />
 *The Quick Fix for TBL-002 — a single Code Action fills the empty cell with a `TODO` placeholder.*
 
-<Image src={quickfixAppliedImage} alt="Editor state after applying the TBL-002 and CHK-001 Quick Fixes" quality={80} />
+<SiteImage src={quickfixAppliedImage} alt="Editor state after applying the TBL-002 and CHK-001 Quick Fixes" variant="inline" />
 *After applying the Quick Fixes — the empty cell now holds `TODO`, and the checklist items are flipped to `[x]`. The squiggle on the first table remains because TBL-001 ("missing required column") doesn't ship a Quick Fix yet.*
 
 More Code Actions are likely to follow as common patterns surface.

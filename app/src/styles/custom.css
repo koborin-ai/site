@@ -606,6 +606,27 @@
   text-align: center !important;
 }
 
+/* Hero image — light/dark variant toggle (used by index.mdx and ja/index.mdx) */
+.hero-image picture {
+  width: 100%;
+}
+.hero-image img {
+  width: 100%;
+  height: auto;
+}
+.hero-image picture:has(.hero-dark) {
+  display: none;
+}
+.hero-image picture:has(.hero-light) {
+  display: block;
+}
+[data-theme="dark"] .hero-image picture:has(.hero-dark) {
+  display: block;
+}
+[data-theme="dark"] .hero-image picture:has(.hero-light) {
+  display: none;
+}
+
 /* ==========================================================================
    Article Dates - Published/Updated timestamps below title
    ========================================================================== */

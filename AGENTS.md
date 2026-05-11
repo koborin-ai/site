@@ -101,38 +101,49 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Favicon**: Place in `app/public/favicon.png`. Configured in `astro.config.mjs` (`favicon` property).
    - **Header Logo**: Place in `app/src/assets/_shared/`. Configured in `astro.config.mjs` (`logo.src` property). Set `replacesTitle: true` to hide text title.
    - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`).
-     - **MANDATORY**: Use Astro's `<Image>` component for all local images in MDX files. NEVER use raw `<img>` tags with imported images.
-     - **Import pattern**:
-
-       ```mdx
-       import { Image } from 'astro:assets';
-       import myImage from '../../assets/category/article/image.png';
-
-       <Image src={myImage} alt="Description" width={600} quality={80} />
-       ```
-
-     - **Why**: Raw `<img src={image.src}>` bypasses Astro's image optimization, resulting in multi-MB images being served. The `<Image>` component automatically resizes, converts to WebP, and adds width/height attributes.
-     - **CI Check**: `app/scripts/check-image-usage.sh` validates proper usage during CI.
-   - **Image Location Rules** (important distinction):
-
-     | Location | Component | Optimization | Use Case |
-     |----------|-----------|--------------|----------|
-     | `src/assets/` | `<Image>` or `![](...)` | Astro auto-optimizes | Article content images |
-     | `public/og/` | `<img>` or `![](...)` | `optimize-og-images.sh` | OG/hero images |
-
-     - **`src/assets/`**: Use `<Image>` component (preferred) or Markdown `![](relative-path)`. Both are auto-optimized by Astro (WebP conversion, resizing).
-     - **`public/`**: Cannot use `<Image>` component (static files). Use `<img>` with explicit `width`/`height` for LCP images, or Markdown syntax for others. OG images are optimized by separate script.
    - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
-4. **OG Image Management**:
-   - **Image Location**: Place OG images in `app/public/og/` as PNG or JPEG.
+4. **Image Conventions**:
+   - **MANDATORY**: All on-page images must be rendered through the `SiteImage` component (`app/src/components/SiteImage.astro`). Raw `<img>` tags and direct use of Astro's `<Image />` / `<Picture />` are forbidden in MDX and `.astro` files.
+   - **Why**: `SiteImage` centralizes responsive `srcset`/`sizes`, quality, format (AVIF/WebP), and loading strategy per variant. Bypassing it breaks LCP budgets and ships multi-MB originals.
+   - **Enforcement**: Going forward, prefer code review for `SiteImage` compliance until a dedicated CI check is added.
+   - **Variant table** — pick the variant that matches the rendered size, not the source dimensions:
+
+     | Variant | Use case | Rendered width |
+     |---------|----------|----------------|
+     | `hero` | LCP candidate, top-page hero | ~1376px |
+     | `articleHeader` | LCP candidate, article opener (OG image displayed in body) | ~750px |
+     | `card` | Top-page / list thumbnails | 160–480px |
+     | `thumbnail` | Small icon-like images | 80–240px |
+     | `inline` | Regular images inside article body | 400–1200px |
+
+   - **Import pattern** (article body):
+
+     ```mdx
+     import SiteImage from '../../../components/SiteImage.astro';
+     import myImage from '../../../assets/category/article/image.png';
+
+     <SiteImage src={myImage} alt="Description" variant="inline" />
+     ```
+
+5. **OG Image Management**:
+   - **Image Location**: Place OG images in `app/public/og/<slug>.png` as PNG or JPEG.
    - **Auto-optimization**: CI automatically converts images to WebP format during build. No manual optimization required.
-   - **Frontmatter**: Set `ogImage: /og/xxx.png` in frontmatter (`.png` reference is auto-converted to `.webp` by `Head.astro`).
-   - **Display in Article**: Add `![](/og/xxx.png)` at the beginning of the article content (nginx auto-serves WebP version).
+   - **Frontmatter**: Set `ogImage: /og/<slug>.png` in frontmatter (`.png` reference is auto-converted to `.webp` by `Head.astro`).
    - **Japanese Articles**: Use the same `ogImage` path as the corresponding English article.
    - **Default**: Pages without `ogImage` fall back to `/og/index.webp`.
    - **Optimization Script**: `app/scripts/optimize-og-images.sh` handles WebP conversion (runs in Dockerfile and app-ci.yml).
-5. **Article Dates**:
+   - **Dual-placement rule for body display**: The `/og/<slug>.png` under `app/public/og/` is consumed by OG meta tags and nginx's WebP redirect, so it must stay there. If you also want to render the same image at the top of the article body via `SiteImage`, copy the source PNG to `app/src/assets/og/<slug>.png` and `import` it from there:
+
+     ```mdx
+     import SiteImage from '../../../components/SiteImage.astro';
+     import headerImage from '../../../assets/og/<slug>.png';
+
+     <SiteImage src={headerImage} alt="..." variant="articleHeader" style="width: 100%; height: auto;" />
+     ```
+
+     Do **not** use `<SiteImage src="/og/<slug>.png" ... />` — `SiteImage` requires an imported asset so Astro can generate optimized variants at build time.
+6. **Article Dates**:
    - **Published Date**: Set `publishedAt: YYYY-MM-DD` in frontmatter when creating a new article.
    - **Updated Date**: Automatically extracted from Git history at build time via Starlight's built-in `lastUpdated` feature.
    - **Display**: Dates appear below the article title (e.g., `Published: Dec 1, 2024 · Updated: Jan 2, 2025`).
@@ -140,19 +151,19 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Same-day Updates**: If `publishedAt` and `lastUpdated` are within 1 day, only the published date is shown.
    - **CI/CD**: Uses `fetch-depth: 0` to clone full Git history. This is required because Cloud Build receives the project root (including `.git`) to enable `lastUpdated` feature.
    - **Local Development**: Updated date is shown for committed files. New uncommitted files show only the published date (if set).
-6. **Starlight Features**:
+7. **Starlight Features**:
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.
    - Social links and sidebar are configured in `astro.config.mjs`.
-7. **Testing**: run `npm run lint && npm run test && npm run typecheck && npm run check-images` in `app/` before committing.
-8. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
-9. **Docker & Deployment**:
+8. **Testing**: run `npm run lint && npm run test && npm run typecheck && npm run check-images` in `app/` before committing.
+9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
+10. **Docker & Deployment**:
    - The app builds as a static site (`output: "static"` in Astro config) and is served via nginx.
    - Dockerfile uses multi-stage build: `node:22-slim` for build, `nginx:alpine` for runtime.
    - **Build context**: Cloud Build receives the project root (not just `app/`) so that `.git` is available for the `lastUpdated` feature. The `cloudbuild.yaml` specifies `app/Dockerfile` location.
    - nginx configuration is at `app/nginx/nginx.conf` (port 8080 for Cloud Run compatibility).
    - All pages are pre-rendered at build time; no Node.js runtime required in production.
-10. **LLM Context Files (llms.txt)**:
+11. **LLM Context Files (llms.txt)**:
    - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
    - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
    - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese) - all articles with full Markdown body.
@@ -165,7 +176,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Add a new category: Create `app/src/pages/llms-{category}.txt.ts` (English) and `app/src/pages/llms-ja-{category}.txt.ts` (Japanese), then update `app/src/pages/llms.txt.ts` index.
      - Change output format: Edit `app/src/utils/llms.ts`.
      - Existing articles are auto-included; no endpoint changes needed for new content.
-11. **RichLinkCard Component**:
+12. **RichLinkCard Component**:
     - Use `RichLinkCard` instead of Starlight's built-in `LinkCard` for external links in MDX.
     - **Location**: `app/src/components/RichLinkCard.astro`
     - **Import**: `import RichLinkCard from '../../../../components/RichLinkCard.astro';`
@@ -188,7 +199,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
       - Only use this for quick prototyping or when you don't know the page title/description.
       - Always replace with manual specification before committing.
     - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description), thumbnail (og:image → favicon).
-12. **RSS Feeds**:
+13. **RSS Feeds**:
     - The site provides RSS feeds for blog aggregation services.
     - **English feed**: `/rss.xml` - includes `tech/` and `life/` categories.
     - **Japanese feed**: `/ja/rss.xml` - includes `ja/tech/` and `ja/life/` categories.
@@ -197,7 +208,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
     - **Static files**: Generated at build time via Astro endpoints using `@astrojs/rss`. Zero runtime overhead.
     - **Implementation**: `app/src/pages/rss.xml.ts` (English), `app/src/pages/ja/rss.xml.ts` (Japanese).
     - **Sorted by date**: Articles are sorted by `publishedAt` date (newest first).
-13. **Engagement Features (Giscus)**:
+14. **Engagement Features (Giscus)**:
     - Articles (pages with `publishedAt`) display an engagement footer with share buttons and Giscus comments.
     - **Components**:
       - `app/src/components/Footer.astro`: Starlight Footer override that conditionally renders engagement UI.
@@ -234,7 +245,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 4. **Performance Optimization**
    - **Partial Hydration**: Use `client:load`, `client:idle`, `client:visible` directives judiciously. Default to static.
-   - **Image Optimization**: Use `astro:assets` (`<Image />` component) for all local images.
+   - **Image Optimization**: Use the `SiteImage` component (`app/src/components/SiteImage.astro`) for all local images. Direct use of `<Image />` / `<Picture />` from `astro:assets` is forbidden.
    - **Lazy Loading**: Ensure off-screen images and heavy components are lazy-loaded.
 
 5. **Routing (Custom Pages)**

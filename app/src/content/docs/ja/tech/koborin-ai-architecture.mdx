@@ -5,14 +5,15 @@ ogImage: /og/koborin-ai-architecture.png
 publishedAt: 2026-01-02
 ---
 
-import { Image } from 'astro:assets';
 import RichLinkCard from '../../../../components/RichLinkCard.astro';
+import SiteImage from '../../../../components/SiteImage.astro';
 import gcsImage from '../../../../assets/tech/koborin-ai-architecture/gcs.png';
 import dnsImage from '../../../../assets/tech/koborin-ai-architecture/dns.png';
 import iap1Image from '../../../../assets/tech/koborin-ai-architecture/iap-1.png';
 import iap2Image from '../../../../assets/tech/koborin-ai-architecture/iap-2.png';
+import koborinAiArchitectureOg from '../../../../assets/og/koborin-ai-architecture.png';
 
-<img src="/og/koborin-ai-architecture.png" alt="og" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={koborinAiArchitectureOg} alt="og" variant="articleHeader" style="width: 100%; height: auto;" />
 
 このサイト [koborin.ai](https://koborin.ai) は、自身の技術メモや思考を発信するための個人サイト (Technical Garden) です。
 
@@ -146,7 +147,7 @@ State は下記のような役割を持ちます：
 このサイトでは、Pulumi の State を GCS（Google Cloud Storage）に保存しています。
 スタックごとに別ファイルとして保存されるため、以下のような構成になっています。
 
-<Image src={gcsImage} alt="gcs" width={750} quality={80} />
+<SiteImage src={gcsImage} alt="gcs" variant="inline" />
 
 `shared.json`、`dev.json`、`prod.json` がそれぞれのスタックの State ファイルです。
 
@@ -229,7 +230,7 @@ Starlight を選んだ理由：
 ドメインはもともと Cloudflare で取得していたので、Cloudflare の A レコードで `koborin.ai` と `dev.koborin.ai` が Google Cloud 側の静的 IP を向くように設定しています。
 ※ DNS は Cloudflare のコンソールから手動で設定しています。
 
-<Image src={dnsImage} alt="dns" width={750} quality={80} />
+<SiteImage src={dnsImage} alt="dns" variant="inline" />
 
 ### 2. Global HTTPS Load Balancer
 
@@ -255,8 +256,8 @@ LB は **URL Map** を使って、ホスト名に応じてトラフィックを�
     <tr><th>状態</th><th>イメージ</th></tr>
   </thead>
   <tbody>
-    <tr><td>アクセス時</td><td><Image src={iap1Image} alt="iap-1" width={400} quality={80} /></td></tr>
-    <tr><td>アクセス拒否時</td><td><Image src={iap2Image} alt="iap-2" width={400} quality={80} /></td></tr>
+    <tr><td>アクセス時</td><td><SiteImage src={iap1Image} alt="iap-1" variant="inline" /></td></tr>
+    <tr><td>アクセス拒否時</td><td><SiteImage src={iap2Image} alt="iap-2" variant="inline" /></td></tr>
   </tbody>
 </table>
 

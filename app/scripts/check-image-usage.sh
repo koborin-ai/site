@@ -17,10 +17,10 @@ if grep -rn '<img[^>]*src={[^}]*\.src}' "$CONTENT_DIR" --include="*.mdx" 2>/dev/
     echo "ERROR: Found raw <img> tags using imported image .src property."
     echo "       This bypasses Astro's image optimization."
     echo ""
-    echo "FIX: Use the <Image> component instead:"
-    echo "     import { Image } from 'astro:assets';"
-    echo "     import myImage from '../../assets/path/to/image.png';"
-    echo "     <Image src={myImage} alt=\"...\" width={600} />"
+    echo "FIX: Use the <SiteImage> component instead:"
+    echo "     import SiteImage from '../../../components/SiteImage.astro';"
+    echo "     import myImage from '../../../assets/path/to/image.png';"
+    echo "     <SiteImage src={myImage} alt=\"...\" variant=\"inline\" />"
     echo ""
     ERRORS_FOUND=1
 fi
@@ -36,12 +36,12 @@ if [ -n "$MARKDOWN_ASSETS" ]; then
     echo "$MARKDOWN_ASSETS"
     echo ""
     echo "       Markdown syntax doesn't allow explicit width control."
-    echo "       Use <Image> component for better performance:"
+    echo "       Use <SiteImage> component for better performance:"
     echo ""
     echo "FIX: Replace ![alt](../../../assets/...) with:"
-    echo "     import { Image } from 'astro:assets';"
+    echo "     import SiteImage from '../../../components/SiteImage.astro';"
     echo "     import myImage from '../../../assets/path/to/image.png';"
-    echo "     <Image src={myImage} alt=\"...\" width={600} quality={80} />"
+    echo "     <SiteImage src={myImage} alt=\"...\" variant=\"inline\" />"
     echo ""
     ERRORS_FOUND=1
 fi

@@ -5,11 +5,12 @@ publishedAt: 2026-03-08
 ogImage: /og/contextlint-introduction.png
 ---
 
-import { Image } from 'astro:assets';
 import RichLinkCard from '../../../components/RichLinkCard.astro';
+import SiteImage from '../../../components/SiteImage.astro';
 import mcpImage from '../../../assets/tech/contextlint-introduction/mcp-en.png';
+import contextlintIntroductionOg from '../../../assets/og/contextlint-introduction.png';
 
-<img src="/og/contextlint-introduction.png" alt="contextlint" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={contextlintIntroductionOg} alt="contextlint" variant="articleHeader" style="width: 100%; height: auto;" />
 
 > **Updated 2026-04-29**: contextlint v0.9 ships with editor integration via LSP and a VS Code extension — see the [follow-up article](/tech/contextlint-lsp-and-editor-integration/) for the details.
 
@@ -619,7 +620,7 @@ With this setup, AI tools like Claude and Cursor can run document linting and de
 3. If violations are found, AI automatically fixes them and re-runs lint
 4. Use `impact-analysis` to check the blast radius and update related documents
 
-<Image src={mcpImage} alt="Running contextlint via MCP" width={800} quality={80} />
+<SiteImage src={mcpImage} alt="Running contextlint via MCP" variant="inline" />
 *AI checking document consistency via MCP, identifying violations and suggesting fixes*
 
 You can also use Claude Code Hooks or Cursor Hooks to run the CLI directly without MCP.

@@ -5,23 +5,17 @@ ogImage: /og/koborin-ai-hero.png
 lastUpdated: false
 ---
 
-import { Image } from 'astro:assets';
+import SiteImage from '../../components/SiteImage.astro';
+import heroLight from '../../assets/og/koborin-ai-hero-light.png';
+import heroDark from '../../assets/og/koborin-ai-hero-dark.png';
 import bookCover from '../../assets/life/reflections-on-2025/book-cover.png';
 import contextlintOg from '../../assets/_shared/building/contextlint-og.png';
 import abletonOscMcpKey from '../../assets/_shared/building/ableton-osc-mcp-key.png';
 
 <div class="hero-image">
-  <img src="/og/koborin-ai-hero-light.png" alt="Welcome to koborin.ai" fetchpriority="high" width="1200" height="630" class="hero-light" />
-  <img src="/og/koborin-ai-hero-dark.png" alt="Welcome to koborin.ai" width="1200" height="630" class="hero-dark" />
+  <SiteImage src={heroLight} alt="Welcome to koborin.ai" variant="hero" class="hero-light" />
+  <SiteImage src={heroDark} alt="Welcome to koborin.ai" variant="hero" class="hero-dark" />
 </div>
-
-<style>{`
-  .hero-image img { width: 100%; height: auto; }
-  .hero-dark { display: none; }
-  .hero-light { display: block; }
-  [data-theme="dark"] .hero-dark { display: block; }
-  [data-theme="dark"] .hero-light { display: none; }
-`}</style>
 
 ## About This Proving Ground
 
@@ -53,7 +47,7 @@ Currently working across cloud architecture, pre-sales, and team leadership at a
 
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1rem 0;">
 <a href="https://www.amazon.com/dp/B0G4HKJRPB">
-<Image src={bookCover} alt="Mastering Genkit: Go Edition Cover" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+<SiteImage src={bookCover} alt="Mastering Genkit: Go Edition Cover" variant="card" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
 </a>
 <div style="flex: 1; min-width: 200px;">
 
@@ -73,7 +67,7 @@ Unlock the full potential of Genkit and Go—explore the journey from fundamenta
 
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
 <a href="https://contextlint.dev/">
-<Image src={contextlintOg} alt="contextlint OG image" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+<SiteImage src={contextlintOg} alt="contextlint OG image" variant="card" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
 </a>
 <div style="flex: 1; min-width: 200px;">
 
@@ -87,7 +81,7 @@ A semantic linter for AI-era Markdown. Verifies cross-references, required secti
 
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
 <a href="https://github.com/nozomi-koborinai/ableton-osc-mcp">
-<Image src={abletonOscMcpKey} alt="Ableton OSC MCP Server key visual" width={160} quality={80} style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+<SiteImage src={abletonOscMcpKey} alt="Ableton OSC MCP Server key visual" variant="card" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
 </a>
 <div style="flex: 1; min-width: 200px;">
 

@@ -5,7 +5,6 @@ publishedAt: 2026-03-08
 ogImage: /og/contextlint-introduction.png
 ---
 
-import { Image } from 'astro:assets';
 import RichLinkCard from '../../../../components/RichLinkCard.astro';
 import SiteImage from '../../../../components/SiteImage.astro';
 import mcpImage from '../../../../assets/tech/contextlint-introduction/mcp-ja.png';
@@ -621,7 +620,7 @@ MCP サーバーは以下の 6 つのツールを提供します。
 3. 違反があれば AI が自動的に修正し、再度 lint を実行
 4. `impact-analysis` で変更の影響範囲を確認し、関連ドキュメントも更新
 
-<Image src={mcpImage} alt="MCP 経由で contextlint を実行している様子" width={800} quality={80} />
+<SiteImage src={mcpImage} alt="MCP 経由で contextlint を実行している様子" variant="inline" />
 *MCP 経由で AI がドキュメントの整合性をチェックし、違反箇所と修正案を提示している様子*
 
 MCP を使わなくても、Claude Code の Hooks や Cursor の Hooks で CLI を直接実行させる方法もあります。

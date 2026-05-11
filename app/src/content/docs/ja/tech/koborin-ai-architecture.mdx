@@ -5,7 +5,6 @@ ogImage: /og/koborin-ai-architecture.png
 publishedAt: 2026-01-02
 ---
 
-import { Image } from 'astro:assets';
 import RichLinkCard from '../../../../components/RichLinkCard.astro';
 import SiteImage from '../../../../components/SiteImage.astro';
 import gcsImage from '../../../../assets/tech/koborin-ai-architecture/gcs.png';
@@ -148,7 +147,7 @@ State は下記のような役割を持ちます：
 このサイトでは、Pulumi の State を GCS（Google Cloud Storage）に保存しています。
 スタックごとに別ファイルとして保存されるため、以下のような構成になっています。
 
-<Image src={gcsImage} alt="gcs" width={750} quality={80} />
+<SiteImage src={gcsImage} alt="gcs" variant="inline" />
 
 `shared.json`、`dev.json`、`prod.json` がそれぞれのスタックの State ファイルです。
 
@@ -231,7 +230,7 @@ Starlight を選んだ理由：
 ドメインはもともと Cloudflare で取得していたので、Cloudflare の A レコードで `koborin.ai` と `dev.koborin.ai` が Google Cloud 側の静的 IP を向くように設定しています。
 ※ DNS は Cloudflare のコンソールから手動で設定しています。
 
-<Image src={dnsImage} alt="dns" width={750} quality={80} />
+<SiteImage src={dnsImage} alt="dns" variant="inline" />
 
 ### 2. Global HTTPS Load Balancer
 
@@ -257,8 +256,8 @@ LB は **URL Map** を使って、ホスト名に応じてトラフィックを�
     <tr><th>状態</th><th>イメージ</th></tr>
   </thead>
   <tbody>
-    <tr><td>アクセス時</td><td><Image src={iap1Image} alt="iap-1" width={400} quality={80} /></td></tr>
-    <tr><td>アクセス拒否時</td><td><Image src={iap2Image} alt="iap-2" width={400} quality={80} /></td></tr>
+    <tr><td>アクセス時</td><td><SiteImage src={iap1Image} alt="iap-1" variant="inline" /></td></tr>
+    <tr><td>アクセス拒否時</td><td><SiteImage src={iap2Image} alt="iap-2" variant="inline" /></td></tr>
   </tbody>
 </table>
 

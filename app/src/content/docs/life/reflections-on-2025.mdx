@@ -6,12 +6,14 @@ publishedAt: 2025-12-31
 ---
 
 import { Image } from 'astro:assets';
+import SiteImage from '../../../components/SiteImage.astro';
 import nextImage from '../../../assets/life/reflections-on-2025/next.png';
 import tourImage from '../../../assets/life/reflections-on-2025/office-tour.jpeg';
 import dmImage from '../../../assets/life/reflections-on-2025/dm.png';
 import bookCoverImage from '../../../assets/life/reflections-on-2025/book-cover.png';
+import reflectionsOn2025Og from '../../../assets/og/2025.png';
 
-<img src="/og/2025.png" alt="og" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={reflectionsOn2025Og} alt="og" variant="hero" widths={[375, 750, 1500]} style="width: 100%; height: auto;" />
 
 2025 was a turbulent year for me—someone who had mostly stayed at home until now.
 First trip abroad, a major life stage change, co-authoring a book with an engineer from overseas, publishing it, and getting promoted at my main job.

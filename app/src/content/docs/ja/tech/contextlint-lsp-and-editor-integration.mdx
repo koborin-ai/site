@@ -7,12 +7,14 @@ ogImage: /og/contextlint-lsp.png
 
 import { Image } from 'astro:assets';
 import RichLinkCard from '../../../../components/RichLinkCard.astro';
+import SiteImage from '../../../../components/SiteImage.astro';
 import diagnosticImage from '../../../../assets/tech/contextlint-lsp-and-editor-integration/diagnostic-with-hover.png';
 import overviewImage from '../../../../assets/tech/contextlint-lsp-and-editor-integration/diagnostics-overview.png';
 import quickfixPopupImage from '../../../../assets/tech/contextlint-lsp-and-editor-integration/quickfix-tbl002-popup.png';
 import quickfixAppliedImage from '../../../../assets/tech/contextlint-lsp-and-editor-integration/quickfix-applied.png';
+import contextlintLspOg from '../../../../assets/og/contextlint-lsp.png';
 
-<img src="/og/contextlint-lsp.png" alt="contextlint v0.9 — Editor Integration" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={contextlintLspOg} alt="contextlint v0.9 — Editor Integration" variant="hero" widths={[375, 750, 1500]} style="width: 100%; height: auto;" />
 
 ## はじめに
 

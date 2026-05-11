@@ -6,8 +6,10 @@ publishedAt: 2026-01-24
 ---
 
 import RichLinkCard from '../../../../components/RichLinkCard.astro';
+import SiteImage from '../../../../components/SiteImage.astro';
+import genkitVsAdkOg from '../../../../assets/og/genkit-vs-adk.jpeg';
 
-<img src="/og/genkit-vs-adk.jpeg" alt="Genkit vs ADK" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={genkitVsAdkOg} alt="Genkit vs ADK" variant="hero" widths={[375, 750, 1500]} style="width: 100%; height: auto;" />
 
 Google は AI 開発を支援するオープンソースのフレームワークとして **Genkit** と **Agent Development Kit（ADK）** を提供しています。
 

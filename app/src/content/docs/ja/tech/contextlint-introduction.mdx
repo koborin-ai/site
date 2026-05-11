@@ -7,9 +7,11 @@ ogImage: /og/contextlint-introduction.png
 
 import { Image } from 'astro:assets';
 import RichLinkCard from '../../../../components/RichLinkCard.astro';
+import SiteImage from '../../../../components/SiteImage.astro';
 import mcpImage from '../../../../assets/tech/contextlint-introduction/mcp-ja.png';
+import contextlintIntroductionOg from '../../../../assets/og/contextlint-introduction.png';
 
-<img src="/og/contextlint-introduction.png" alt="contextlint" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={contextlintIntroductionOg} alt="contextlint" variant="hero" widths={[375, 750, 1500]} style="width: 100%; height: auto;" />
 
 > **Updated 2026-04-29**: contextlint v0.9 で LSP サーバーと VS Code 拡張によるエディタ統合が入りました。詳細は [続編記事](/ja/tech/contextlint-lsp-and-editor-integration/) を参照してください。
 

@@ -6,12 +6,14 @@ publishedAt: 2025-12-31
 ---
 
 import { Image } from 'astro:assets';
+import SiteImage from '../../../../components/SiteImage.astro';
 import nextImage from '../../../../assets/life/reflections-on-2025/next.png';
 import tourImage from '../../../../assets/life/reflections-on-2025/office-tour.jpeg';
 import dmImage from '../../../../assets/life/reflections-on-2025/dm.png';
 import bookCoverImage from '../../../../assets/life/reflections-on-2025/book-cover.png';
+import reflectionsOn2025Og from '../../../../assets/og/2025.png';
 
-<img src="/og/2025.png" alt="og" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={reflectionsOn2025Og} alt="og" variant="hero" widths={[375, 750, 1500]} style="width: 100%; height: auto;" />
 
 今年、2025 年は、今まで家に篭っていた私にとって激動の 1 年だった。
 初の海外旅行、ライフステージの変化、海外のエンジニアとの書籍共同執筆、出版、そしてメインのお仕事での昇格。

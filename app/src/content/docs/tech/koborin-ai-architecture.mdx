@@ -7,12 +7,14 @@ publishedAt: 2026-01-02
 
 import { Image } from 'astro:assets';
 import RichLinkCard from '../../../components/RichLinkCard.astro';
+import SiteImage from '../../../components/SiteImage.astro';
 import gcsImage from '../../../assets/tech/koborin-ai-architecture/gcs.png';
 import dnsImage from '../../../assets/tech/koborin-ai-architecture/dns.png';
 import iap1Image from '../../../assets/tech/koborin-ai-architecture/iap-1.png';
 import iap2Image from '../../../assets/tech/koborin-ai-architecture/iap-2.png';
+import koborinAiArchitectureOg from '../../../assets/og/koborin-ai-architecture.png';
 
-<img src="/og/koborin-ai-architecture.png" alt="og" width="750" height="396" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={koborinAiArchitectureOg} alt="og" variant="hero" widths={[375, 750, 1500]} style="width: 100%; height: auto;" />
 
 This site, [koborin.ai](https://koborin.ai), is my personal site (Technical Garden) for publishing technical notes and thoughts.
 

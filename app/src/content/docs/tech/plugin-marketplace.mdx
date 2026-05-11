@@ -6,8 +6,10 @@ ogImage: /og/plugin-marketplace.png
 ---
 
 import RichLinkCard from '../../../components/RichLinkCard.astro';
+import SiteImage from '../../../components/SiteImage.astro';
+import pluginMarketplaceOg from '../../../assets/og/plugin-marketplace.png';
 
-<img src="/og/plugin-marketplace.png" alt="Plugin Marketplace on koborin.ai" width="1024" height="540" fetchpriority="high" style="width: 100%; height: auto;" />
+<SiteImage src={pluginMarketplaceOg} alt="Plugin Marketplace on koborin.ai" variant="hero" widths={[375, 750, 1500]} style="width: 100%; height: auto;" />
 
 ## Introduction
 

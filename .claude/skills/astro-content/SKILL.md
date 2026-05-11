@@ -118,8 +118,8 @@ Astro's `<Image />` / `<Picture />` are forbidden — they bypass the responsive
 
 Pick the variant by *rendered* size, not source dimensions:
 
-| Variant | Use case | Display class |
-|---------|----------|---------------|
+| Variant | Use case | Rendered width |
+|---------|----------|----------------|
 | `hero` | LCP candidate, top-page hero | ~1376px |
 | `articleHeader` | LCP candidate, article opener (OG image displayed in body) | ~750px |
 | `card` | Top-page / list thumbnails | 160–480px |
@@ -204,7 +204,7 @@ If a section feels "too neat" or "too organized," it probably needs more raw, hu
 After creation, suggest:
 
 ```bash
-cd app && npm run build && npm run lint && npm run typecheck
+cd app && npm run build && npm run lint && npm run typecheck && npm run check-images
 ```
 
 Verify build succeeds.

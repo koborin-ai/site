@@ -106,11 +106,11 @@ This document is a quick guide for any contributors or AI agents that touch the 
 4. **Image Conventions**:
    - **MANDATORY**: All on-page images must be rendered through the `SiteImage` component (`app/src/components/SiteImage.astro`). Raw `<img>` tags and direct use of Astro's `<Image />` / `<Picture />` are forbidden in MDX and `.astro` files.
    - **Why**: `SiteImage` centralizes responsive `srcset`/`sizes`, quality, format (AVIF/WebP), and loading strategy per variant. Bypassing it breaks LCP budgets and ships multi-MB originals.
-   - **CI Check**: `app/scripts/check-image-usage.sh` validates that no raw `<img>` / `<Image />` / `<Picture />` slips through.
+   - **Enforcement**: Going forward, prefer code review for `SiteImage` compliance until a dedicated CI check is added.
    - **Variant table** — pick the variant that matches the rendered size, not the source dimensions:
 
-     | Variant | Use case | Display class |
-     |---------|----------|---------------|
+     | Variant | Use case | Rendered width |
+     |---------|----------|----------------|
      | `hero` | LCP candidate, top-page hero | ~1376px |
      | `articleHeader` | LCP candidate, article opener (OG image displayed in body) | ~750px |
      | `card` | Top-page / list thumbnails | 160–480px |
@@ -245,7 +245,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 4. **Performance Optimization**
    - **Partial Hydration**: Use `client:load`, `client:idle`, `client:visible` directives judiciously. Default to static.
-   - **Image Optimization**: Use `astro:assets` (`<Image />` component) for all local images.
+   - **Image Optimization**: Use the `SiteImage` component (`app/src/components/SiteImage.astro`) for all local images. Direct use of `<Image />` / `<Picture />` from `astro:assets` is forbidden.
    - **Lazy Loading**: Ensure off-screen images and heavy components are lazy-loaded.
 
 5. **Routing (Custom Pages)**

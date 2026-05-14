@@ -8,7 +8,7 @@
   function initZoom() {
     // Initialize medium-zoom for content images, excluding images wrapped in
     // <a> (linked images should follow the link instead of zooming).
-    const candidates = document.querySelectorAll(
+    const candidates = document.querySelectorAll<HTMLImageElement>(
       '.sl-markdown-content img:not(.medium-zoom-image)'
     );
     const zoomable = Array.from(candidates).filter(

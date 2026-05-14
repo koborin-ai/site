@@ -6,8 +6,15 @@
   import mediumZoom from 'medium-zoom';
 
   function initZoom() {
-    // Initialize medium-zoom for content images
-    mediumZoom('.sl-markdown-content img:not(.medium-zoom-image)', {
+    // Initialize medium-zoom for content images, excluding images wrapped in
+    // <a> (linked images should follow the link instead of zooming).
+    const candidates = document.querySelectorAll(
+      '.sl-markdown-content img:not(.medium-zoom-image)'
+    );
+    const zoomable = Array.from(candidates).filter(
+      (img) => !img.closest('a')
+    );
+    mediumZoom(zoomable, {
       margin: 24,
       background: 'rgba(0, 0, 0, 0.9)',
       scrollOffset: 0,
@@ -74,7 +81,7 @@
 
   // Initialize on page load
   document.addEventListener('astro:page-load', initZoom);
-  
+
   // Also run on initial load for non-SPA navigation
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initZoom);
@@ -82,4 +89,13 @@
     initZoom();
   }
 </script>
+
+<style is:global>
+  /* medium-zoom does not set z-index; Starlight's site header has z-index 10,
+     so without this override the zoomed image is hidden behind the header. */
+  .medium-zoom-overlay,
+  .medium-zoom-image--opened {
+    z-index: 1000;
+  }
+</style>
 

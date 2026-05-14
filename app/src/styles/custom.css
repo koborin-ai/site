@@ -608,7 +608,10 @@
 
 /* Hero image — light/dark variant toggle (used by index.mdx and ja/index.mdx) */
 .hero-image picture {
+  display: block;
   width: 100%;
+  max-width: 720px;
+  margin: 1rem auto 2rem;
 }
 .hero-image img {
   width: 100%;

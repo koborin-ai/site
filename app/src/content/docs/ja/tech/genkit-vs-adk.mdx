@@ -200,6 +200,7 @@ goal_setting_agent = Agent(
 
 # --- Sub-agent 2: Meal Advisor ---
 meal_advisor_agent = Agent(
+    model="gemini-2.5-flash",
     name="meal_advisor_agent",
     description="Provides meal recommendations based on user goals.",
     instruction="You suggest meals considering the user's health goals and calorie targets.",

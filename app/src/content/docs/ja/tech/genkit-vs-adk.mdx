@@ -53,6 +53,7 @@ Genkit は、アプリケーションへの AI 機能組み込みをシンプル
 - **モデルサポート**: Gemini、OpenAI、Anthropic Claude、Ollama など（プラグイン経由）
 - **開発体験**: ローカル Developer UI でプロンプトテスト、ステップごとのトレース、スキーマ検証
 - **マルチエージェント**: プロンプトをツールとして扱うパターンで Beta サポート
+- **Middleware**: Generate / Model / Tool の 3 レイヤで横断的な拡張（ガードレール、キャッシュ、リトライ、HITL 承認など）。2026 年 5 月正式発表、TypeScript / Go / Dart で利用可能（Python は予定）
 
 また、[Genkit Dart](https://github.com/genkit-ai/genkit-dart) の開発も活発に進められており、Dart 向けフル Genkit SDK として進化しています。モデルプラグイン（`genkit_google_genai`、`genkit_firebase_ai`）、フロー・ツール定義、`genkit_shelf` によるサーバーサイド HTTP ホスティングを提供し、Node.js・Go SDK と同等の機能を備えています。サーバーサイド Dart と Flutter の両方から利用可能です。
 

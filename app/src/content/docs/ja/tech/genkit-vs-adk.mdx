@@ -82,8 +82,8 @@ ADK は、高度な AI エージェントシステムの開発に特化したツ
   - Go（2026 年 3 月 v1.0 stable）
   - Java（2026 年 3 月 v1.0 stable）
   - TypeScript（2026 年 4 月 v1.0 stable）
-- **ランタイム**: Cloud Run、GKE など任意のコンテナ環境にデプロイ可能。**Gemini Enterprise Agent Platform**（2026 年 4 月の Cloud Next 26 で旧 Vertex AI Agent Builder からリブランド）の Agent Runtime（旧 Agent Engine）との統合が深い
-- **モデルサポート**: Vertex AI 経由の Gemini、LiteLLM アダプタで他モデルも対応
+- **ランタイム**: Cloud Run、GKE など任意のコンテナ環境にデプロイ可能。**Gemini Enterprise Agent Platform**（2026 年 4 月の Cloud Next 26 で Vertex AI からリブランド・拡張された後継プラットフォーム）の Agent Runtime（旧 Agent Engine）との統合が深い
+- **モデルサポート**: Agent Platform 経由の Gemini、LiteLLM アダプタで他モデルも対応
 - **開発体験**: ローカル開発 UI（`adk web`）、CLI 評価ツール（`adk eval`）
 - **マルチエージェント**: Agent、Tool、Sub-agent、ワークフローオーケストレーションのファーストクラスサポート
 - **エンタープライズ連携**: ApplicationIntegrationToolset で Salesforce、ServiceNow、JIRA、SAP など 100 以上のコネクタを提供。さらに Vertex AI Search Tool、UrlContextTool、SkillToolset、Spanner Admin Toolset、Apigee モデル連携などのビルトインツール群が追加
@@ -118,7 +118,7 @@ Genkit チームは Discord でも「ADK はエージェント構築専用で mu
 | **開発スタイル** | コードで定義したフロー、明示的な制御 | エージェント中心、LLM 駆動のオーケストレーション |
 | **マルチエージェント** | Beta（プロンプトをツール化するパターン）、Middleware で横断的拡張 | ファーストクラス（Sequential / Parallel / Loop、v2.0 Beta で graph-based Workflow） |
 | **デプロイ** | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Gemini Enterprise Agent Platform / Agent Runtime との相性が最も良い |
-| **モデル柔軟性** | Genkit プラグインで Gemini / OpenAI / Anthropic / Ollama などを切替 | Vertex AI 経由の Gemini が中心、LiteLLM で他ベンダーも対応 |
+| **モデル柔軟性** | Genkit プラグインで Gemini / OpenAI / Anthropic / Ollama などを切替 | Agent Platform 経由の Gemini が中心、LiteLLM で他ベンダーも対応 |
 | **成熟度** | Node GA（2025-02）、Go GA（2025-09）、Python Beta（2026-02〜）、Dart Preview | Python GA（2025-05）、Go / Java / TS が 2026-03〜04 に v1.0 stable、Python v2.0 Beta |
 
 ### アーキテクチャパターン
@@ -364,4 +364,4 @@ Genkit と ADK は「どちらが良いか」ではなく、補完的なレイ�
 
 <RichLinkCard href="https://github.com/google/agents-cli" title="Agents CLI" description="ADK エージェントの scaffolding / 評価 / デプロイ / observability を担う OSS CLI。" />
 
-<RichLinkCard href="https://cloud.google.com/products/gemini-enterprise-agent-platform" title="Gemini Enterprise Agent Platform" description="旧 Vertex AI Agent Builder。Cloud Next 26 でリブランド。" />
+<RichLinkCard href="https://cloud.google.com/products/gemini-enterprise-agent-platform" title="Gemini Enterprise Agent Platform" description="Vertex AI の進化版として Cloud Next 26 でリブランド。" />

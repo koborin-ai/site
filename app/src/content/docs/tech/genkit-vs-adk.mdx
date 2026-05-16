@@ -80,8 +80,8 @@ ADK is a toolkit specialized for building sophisticated AI agent systems. It pro
   - Go (v1.0 stable, Mar 2026)
   - Java (v1.0 stable, Mar 2026)
   - TypeScript (v1.0 stable, Apr 2026)
-- **Runtime**: Deploy to any container environment — Cloud Run, GKE, etc. Deep integration with **Gemini Enterprise Agent Platform** (rebranded from Vertex AI Agent Builder at Cloud Next 26, April 2026) and its Agent Runtime (formerly Agent Engine)
-- **Model Support**: Gemini via Vertex AI, plus other models through LiteLLM adapters
+- **Runtime**: Deploy to any container environment — Cloud Run, GKE, etc. Deep integration with **Gemini Enterprise Agent Platform** (the evolution of Vertex AI, rebranded at Cloud Next 26 in April 2026) and its Agent Runtime (formerly Agent Engine)
+- **Model Support**: Gemini via Agent Platform, plus other models through LiteLLM adapters
 - **Developer Experience**: Local dev UI (`adk web`), CLI evaluation tool (`adk eval`)
 - **Multi-agent**: First-class support for Agent, Tool, Sub-agent, and workflow orchestration
 - **Enterprise Connectors**: 100+ connectors via ApplicationIntegrationToolset — Salesforce, ServiceNow, JIRA, SAP, and more. Built-in tools added since: Vertex AI Search Tool, UrlContextTool, SkillToolset, Spanner Admin Toolset, Apigee model integration
@@ -116,7 +116,7 @@ The Genkit team has framed it on Discord as: ADK is purpose-built for agents and
 | **Development Style** | Code-defined flows, explicit control | Agent-centric, LLM-driven orchestration |
 | **Multi-agent** | Beta (prompt-as-tool pattern); Middleware for cross-cutting extensions | First-class (Sequential / Parallel / Loop; graph-based Workflow in v2.0 Beta) |
 | **Deployment** | Cloud Run, GKE, Vercel, anywhere | Anywhere; best fit with Gemini Enterprise Agent Platform / Agent Runtime |
-| **Model Flexibility** | Switch between Gemini / OpenAI / Anthropic / Ollama and more via Genkit plugins | Gemini-centric via Vertex AI, with other vendors via LiteLLM |
+| **Model Flexibility** | Switch between Gemini / OpenAI / Anthropic / Ollama and more via Genkit plugins | Gemini-centric via Agent Platform, with other vendors via LiteLLM |
 | **Maturity** | Node GA (Feb 2025), Go GA (Sep 2025), Python Beta (Feb 2026~), Dart Preview | Python GA (May 2025), Go / Java / TS reached v1.0 stable in Mar-Apr 2026, Python v2.0 in Beta |
 
 ### Architecture Patterns
@@ -362,4 +362,4 @@ Start with Genkit to understand AI fundamentals, then consider ADK when requirem
 
 <RichLinkCard href="https://github.com/google/agents-cli" title="Agents CLI" description="Open-source CLI for ADK agent scaffolding, evaluation, deployment, and observability." />
 
-<RichLinkCard href="https://cloud.google.com/products/gemini-enterprise-agent-platform" title="Gemini Enterprise Agent Platform" description="Formerly Vertex AI Agent Builder. Rebranded at Cloud Next 26." />
+<RichLinkCard href="https://cloud.google.com/products/gemini-enterprise-agent-platform" title="Gemini Enterprise Agent Platform" description="The evolution of Vertex AI, rebranded at Cloud Next 26." />

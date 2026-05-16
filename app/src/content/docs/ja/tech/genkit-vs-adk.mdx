@@ -19,6 +19,14 @@ Google は AI 開発を支援するオープンソースのフレームワーク
 
 それぞれの特徴を理解し、どちらのフレームワークがプロジェクトに適しているか判断する手助けとなれば幸いです。
 
+**時間がない方向け**：Genkit team が運営する subreddit [`r/GenkitFramework`](https://www.reddit.com/r/GenkitFramework/comments/1t6ib62/genkit_vs_adk_why_google_provides_two_agentic/) には、Genkit 開発元による使い分けの説明があります。
+
+> if you're looking for the rich enterprise features of Agent Platform, and want to build multi-agent standalone systems, ADK is for you.
+>
+> if you're looking to add Gen AI or agentic features into your app, or want to build agents with lower level components especially using a variety of platforms and models, Genkit is the way to go.
+
+これがおおよその結論。本記事は背景・歴史・最新動向・コード例まで踏み込んで補足します。
+
 ---
 
 ## TL;DR
@@ -30,14 +38,7 @@ Google は AI 開発を支援するオープンソースのフレームワーク
 | 設計思想 | 開発者がフローを明示的に制御 | LLM がエージェント間の委譲を動的に決定 |
 | デプロイ先 | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Gemini Enterprise Agent Platform との統合が深い |
 
-どちらを選ぶべきかは、解決したい問題の複雑さとチームが得意な言語によって決まります。
-
-**迷ったときの基準**:
-
-- アプリに AI / agentic 機能を埋めたい → Genkit
-- Agent Platform 上で multi-agent システムを組みたい → ADK
-
-両者は統合されておらず、独立した OSS フレームワークとして並走しています。
+どちらを選ぶべきかは、解決したい問題の複雑さとチームが得意な言語によって決まります。両者は統合されておらず、独立した OSS フレームワークとして並走しています。
 
 ---
 

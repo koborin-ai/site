@@ -17,6 +17,14 @@ Both can leverage Google's large language models (Gemini), but they differ in th
 
 This article compares Genkit and ADK across use cases, platform integrations, model support, development style, and maturity to help you understand the differences and choose the right framework for your project.
 
+**For the time-pressed**: The Genkit team's subreddit [`r/GenkitFramework`](https://www.reddit.com/r/GenkitFramework/comments/1t6ib62/genkit_vs_adk_why_google_provides_two_agentic/) has a clear breakdown of when to use which, written from inside Genkit:
+
+> if you're looking for the rich enterprise features of Agent Platform, and want to build multi-agent standalone systems, ADK is for you.
+>
+> if you're looking to add Gen AI or agentic features into your app, or want to build agents with lower level components especially using a variety of platforms and models, Genkit is the way to go.
+
+That's the gist. The rest of this article fills in background, history, latest moves, and code examples.
+
 ---
 
 ## TL;DR
@@ -28,14 +36,7 @@ This article compares Genkit and ADK across use cases, platform integrations, mo
 | Design Philosophy | Developer explicitly controls the flow | LLM dynamically decides agent delegation |
 | Deployment | Cloud Run, GKE, Vercel, or anywhere | Anywhere, with deep Gemini Enterprise Agent Platform integration |
 
-The choice depends on the complexity of your problem and your team's preferred language.
-
-**Quick rule of thumb**:
-
-- Want to embed AI / agentic features into an app → Genkit
-- Want to build a multi-agent system on Agent Platform → ADK
-
-They're not merged — they're independent OSS frameworks running in parallel.
+The choice depends on the complexity of your problem and your team's preferred language. They're independent OSS frameworks running in parallel, not merged.
 
 ---
 

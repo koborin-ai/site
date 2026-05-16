@@ -278,6 +278,22 @@ ADK が Python、TypeScript、Go、Java をサポートし、Genkit が Node.js�
 
 ---
 
+## 開発ツールとの統合
+
+両者とも、AI 開発ツール（Gemini CLI、Claude Code、Codex 等）と組み合わせて自然言語からエージェント開発を進められる流れを整えてきています。
+
+**Genkit**: Gemini CLI 向けに **Genkit Extension** が提供されています。MCP ツール経由でフロー実行・ドキュメント参照・トレース分析ができ、Genkit のパターンに沿ったコード生成も支援されます。
+
+```bash
+gemini extensions install https://github.com/gemini-cli-extensions/genkit
+```
+
+**ADK**: **Agents CLI**（Apache-2.0 ライセンスの OSS）が、ADK と組み合わせて使うスキャフォールディング / 評価 / デプロイ / observability の CLI として用意されています。`scaffold`、`eval run`、`deploy`、`publish gemini-enterprise` などのサブコマンドと、AI コーディングツールに読み込ませる 7 つの skill バンドルを提供します。インストール方法やセットアップは公式ドキュメントを参照してください。
+
+どちらも、エージェント開発のワークフローを「ツールに任せる」方向に進めるアプローチで、構築するシステムの方向性（Genkit / ADK のどちらか）が決まった後で開発体験をさらに加速させたいときの選択肢になります。
+
+---
+
 ## 学習パスと組み合わせパターン
 
 ### 低レイヤーから高レイヤーへ

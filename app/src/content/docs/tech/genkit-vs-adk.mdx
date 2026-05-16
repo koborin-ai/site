@@ -272,6 +272,22 @@ If your team writes Python and needs production stability, ADK is a natural choi
 
 ---
 
+## Developer Tooling Integration
+
+Both sides are wiring up integrations with AI development tools (Gemini CLI, Claude Code, Codex, and others) so you can drive agent development through natural language.
+
+**Genkit**: The **Genkit Extension for Gemini CLI** ships MCP tools for flow execution, doc lookup, and trace analysis, plus code generation aligned with Genkit patterns.
+
+```bash
+gemini extensions install https://github.com/gemini-cli-extensions/genkit
+```
+
+**ADK**: **Agents CLI** (open source, Apache-2.0) handles scaffolding / eval / deploy / observability for ADK agents. Subcommands like `scaffold`, `eval run`, `deploy`, `publish gemini-enterprise` plus seven skill bundles that AI coding tools can load for ADK-specific workflows. See the official docs for installation and setup.
+
+Both push agent development toward "let the tools do it" — pick them up once you've settled on Genkit or ADK and want to accelerate the build loop.
+
+---
+
 ## Learning Path and Combination Patterns
 
 ### From Low-Layer to High-Layer

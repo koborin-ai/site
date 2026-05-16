@@ -26,11 +26,13 @@ Google は AI 開発を支援するオープンソースのフレームワーク
 | 観点 | Genkit | ADK |
 | --- | --- | --- |
 | 主なユースケース | アプリへの生成 AI 機能組み込み（チャット、要約、RAG など） | 複数エージェントが協調するマルチエージェントシステム構築 |
-| 対応言語 | Node.js (GA)、Go (GA)、Python (Alpha)、Dart (Preview) | Python (GA)、TypeScript、Go、Java |
+| 対応言語 | Node.js (GA)、Go (GA)、Python (Beta)、Dart (Preview) | Python (GA)、Go (GA)、Java (GA)、TypeScript (GA) |
 | 設計思想 | 開発者がフローを明示的に制御 | LLM がエージェント間の委譲を動的に決定 |
-| デプロイ先 | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Vertex AI Agent Engine との統合が深い |
+| デプロイ先 | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Gemini Enterprise Agent Platform との統合が深い |
 
 どちらを選ぶべきかは、解決したい問題の複雑さとチームが得意な言語によって決まります。
+
+**迷ったときの一行基準**: 既存アプリに AI 機能を足したい → Genkit。Agent Platform 上で multi-agent システムを組みたい → ADK。両者は統合されておらず、独立した OSS フレームワークとして並走しています。
 
 ---
 

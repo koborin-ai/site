@@ -24,11 +24,13 @@ This article compares Genkit and ADK across use cases, platform integrations, mo
 | Aspect | Genkit | ADK |
 | --- | --- | --- |
 | Primary Use Case | Adding GenAI features to apps (chat, summarization, RAG, etc.) | Building multi-agent systems with collaborative agents |
-| Languages | Node.js (GA), Go (GA), Python (Alpha), Dart (Preview) | Python (GA), TypeScript, Go, Java |
+| Languages | Node.js (GA), Go (GA), Python (Beta), Dart (Preview) | Python (GA), Go (GA), Java (GA), TypeScript (GA) |
 | Design Philosophy | Developer explicitly controls the flow | LLM dynamically decides agent delegation |
-| Deployment | Cloud Run, GKE, Vercel, or anywhere | Anywhere, with deep Vertex AI Agent Engine integration |
+| Deployment | Cloud Run, GKE, Vercel, or anywhere | Anywhere, with deep Gemini Enterprise Agent Platform integration |
 
 The choice depends on the complexity of your problem and your team's preferred language.
+
+**One-line rule of thumb**: Want to add AI features to an existing app → Genkit. Want to build a multi-agent system on Agent Platform → ADK. They're not merged — they're independent OSS frameworks running in parallel.
 
 ---
 

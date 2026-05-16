@@ -30,7 +30,12 @@ This article compares Genkit and ADK across use cases, platform integrations, mo
 
 The choice depends on the complexity of your problem and your team's preferred language.
 
-**One-line rule of thumb**: Want to add AI features to an existing app → Genkit. Want to build a multi-agent system on Agent Platform → ADK. They're not merged — they're independent OSS frameworks running in parallel.
+**Quick rule of thumb**:
+
+- Want to embed AI / agentic features into an app → Genkit
+- Want to build a multi-agent system on Agent Platform → ADK
+
+They're not merged — they're independent OSS frameworks running in parallel.
 
 ---
 
@@ -48,7 +53,12 @@ Use plugins and templates to integrate various generative AI models and quickly 
 
 **Key Features:**
 
-- **Languages**: Node.js (GA Feb 2025), Go (GA Sep 2025), Python (Beta since Feb 2026), Dart (Preview)
+- **Languages**:
+  - Node.js (GA Feb 2025)
+  - Go (GA Sep 2025)
+  - Python (Beta since Feb 2026)
+  - Dart (Preview)
+  - Java (community implementation `genkit-ai/genkit-java`, 1.0.0-SNAPSHOT under active development)
 - **Runtime**: Deploy anywhere — Cloud Run, GKE, Vercel, on-premise, etc.
 - **Model Support**: Gemini, OpenAI, Anthropic Claude, Ollama, and more via plugins
 - **Developer Experience**: Local Developer UI for prompt testing, step-by-step traces, and schema validation
@@ -56,10 +66,6 @@ Use plugins and templates to integrate various generative AI models and quickly 
 - **Middleware**: Cross-cutting extensions across Generate / Model / Tool layers (guardrails, caching, retries, HITL approval). Announced May 2026, available in TypeScript / Go / Dart (Python planned)
 
 [Genkit Dart](https://github.com/genkit-ai/genkit-dart) is also under active development as a full Genkit SDK for Dart. With model plugins (`genkit_google_genai`, `genkit_firebase_ai`), flow/tool definitions, and server-side HTTP hosting via `genkit_shelf`, it offers capabilities comparable to the Node.js and Go SDKs — opening up possibilities for both server-side Dart and Flutter applications.
-
-The Genkit community has published **Mastering Genkit: Go Edition** — a comprehensive guide covering everything from setup to advanced AI agents and RAG systems.
-
-<RichLinkCard href="https://mastering-genkit.github.io/mastering-genkit-go/" title="Mastering Genkit: Go Edition" description="A guide to building production-ready AI applications using Go and Genkit." />
 
 ### Agent Development Kit (ADK)
 
@@ -69,7 +75,11 @@ ADK is a toolkit specialized for building sophisticated AI agent systems. It pro
 
 **Key Features:**
 
-- **Languages**: Python (GA May 2025, ~10 months ahead of the others), Go (v1.0 stable, Mar 2026), Java (v1.0 stable, Mar 2026), TypeScript (v1.0 stable, Apr 2026). v2.0 is Python-only and in Beta phase
+- **Languages**:
+  - Python (GA May 2025, ~10 months ahead of the others; v2.0 is Python-only and in Beta phase)
+  - Go (v1.0 stable, Mar 2026)
+  - Java (v1.0 stable, Mar 2026)
+  - TypeScript (v1.0 stable, Apr 2026)
 - **Runtime**: Deploy to any container environment — Cloud Run, GKE, etc. Deep integration with **Gemini Enterprise Agent Platform** (rebranded from Vertex AI Agent Builder at Cloud Next 26, April 2026) and its Agent Runtime (formerly Agent Engine)
 - **Model Support**: Gemini via Vertex AI, plus other models through LiteLLM adapters
 - **Developer Experience**: Local dev UI (`adk web`), CLI evaluation tool (`adk eval`)
@@ -93,13 +103,9 @@ A Google engineer working on Genkit summarized its role this way:
 From this perspective:
 
 - **Genkit** is a low-layer AI framework. It focuses on models, tools, prompts, MCP, and o11y. You can use it standalone to build agents, or as a foundation for higher-layer frameworks.
-- **ADK** is a high-layer agent framework. It comes with batteries included — session management, memory, evaluation, and tight Vertex AI Agent Engine integration.
+- **ADK** is a high-layer agent framework. It comes with batteries included — session management, memory, evaluation, and tight Gemini Enterprise Agent Platform integration.
 
-A Genkit team member also shared this on the Genkit Discord:
-
-> ADK is specifically only for building agents, and it has an opinionated foundation for how to construct multi-agent systems. Genkit is a general purpose toolkit for building with GenAI which includes agent-building capabilities, but we take fewer strong opinions on the specific construction of agents.
-
-In short: Genkit is general-purpose and flexible; ADK is specialized for multi-agent construction. Understand this difference, then choose based on your requirements.
+The Genkit team has framed it on Discord as: ADK is purpose-built for agents and opinionated about how multi-agent systems are constructed, while Genkit is a general-purpose GenAI toolkit that takes fewer strong opinions on the specific construction of agents. In short: Genkit is flexible, ADK is specialized for multi-agent construction — pick by requirement.
 
 ### Comparison Table
 
@@ -110,7 +116,7 @@ In short: Genkit is general-purpose and flexible; ADK is specialized for multi-a
 | **Development Style** | Code-defined flows, explicit control | Agent-centric, LLM-driven orchestration |
 | **Multi-agent** | Beta (prompt-as-tool pattern); Middleware for cross-cutting extensions | First-class (Sequential / Parallel / Loop; graph-based Workflow in v2.0 Beta) |
 | **Deployment** | Cloud Run, GKE, Vercel, anywhere | Anywhere; best fit with Gemini Enterprise Agent Platform / Agent Runtime |
-| **Model Flexibility** | Plugin-based, easy model switching | LiteLLM adapters, Vertex AI native |
+| **Model Flexibility** | Switch between Gemini / OpenAI / Anthropic / Ollama and more via Genkit plugins | Gemini-centric via Vertex AI, with other vendors via LiteLLM |
 | **Maturity** | Node GA (Feb 2025), Go GA (Sep 2025), Python Beta (Feb 2026~), Dart Preview | Python GA (May 2025), Go / Java / TS reached v1.0 stable in Mar-Apr 2026, Python v2.0 in Beta |
 
 ### Architecture Patterns
@@ -236,7 +242,7 @@ ADK also provides workflow control agents:
 
 #### ADK 2.0 (Beta): Graph-based Workflow Runtime
 
-In April 2026, ADK entered v2.0 Beta phase (v2.0.0b1). The core of v2.0 is a **graph-based Workflow runtime** that lets you express task routing, fan-out / fan-in, loops, retries, human-in-the-loop approval, and nested workflows explicitly as a graph. Combined with the new Task API, agent-to-agent delegation can carry typed input / output contracts — handling more complex branching than Sequential / Parallel / Loop allows.
+In April 2026, ADK entered v2.0 Beta phase. The core of v2.0 is a **graph-based Workflow runtime** that lets you express task routing, fan-out / fan-in, loops, retries, human-in-the-loop approval, and nested workflows explicitly as a graph. Combined with the new Task API, agent-to-agent delegation can carry typed input / output contracts — handling more complex branching than Sequential / Parallel / Loop allows.
 
 That said, v2.0 is **Python-only** and Beta at the time of writing. v1.x continues for production use, and v1.x and v2.0 can coexist in the same process (compatibility maintained). You don't need to migrate to v2.0 right now — if Sequential / Parallel / Loop covers your needs, staying on v1.x is fine. v2.0 becomes a candidate when complex graph orchestration enters the picture.
 
@@ -268,9 +274,9 @@ However, maturity varies:
 | **Go** | GA | v1.0 stable (Mar 2026) |
 | **Python** | Beta (since Feb 2026) | v1.x GA + v2.0 Beta |
 | **Dart** | Preview | Not supported |
-| **Java** | Not supported | v1.0 stable (Mar 2026) |
+| **Java** | Community implementation (1.0.0-SNAPSHOT) | v1.0 stable (Mar 2026) |
 
-If your team writes Python and prioritizes production stability, ADK (v1.x GA since May 2025, well-proven) is the natural choice — and v2.0 Beta is on the table if you want to explore graph-based orchestration. For Go teams, both Genkit Go and ADK Go are at v1.x stable, so the decision comes down to use case (embed in an existing app vs build multi-agent). Dart / Flutter teams: Genkit Dart (Preview) is the realistic option. Java teams: ADK is the only choice.
+If your team writes Python and prioritizes production stability, ADK (v1.x GA since May 2025, well-proven) is the natural choice — and v2.0 Beta is on the table if you want to explore graph-based orchestration. For Go teams, both Genkit Go and ADK Go are at v1.x stable, so the decision comes down to use case (embedding AI / agentic features into an app vs building a standalone multi-agent system). Dart / Flutter teams: Genkit Dart (Preview) is the realistic option. Java teams: ADK v1.0 is the solid pick, and Genkit Java is moving at 1.0.0-SNAPSHOT if you want to try Genkit patterns in Java.
 
 ---
 
@@ -278,11 +284,7 @@ If your team writes Python and prioritizes production stability, ADK (v1.x GA si
 
 Both sides are wiring up integrations with AI development tools (Gemini CLI, Claude Code, Codex, and others) so you can drive agent development through natural language.
 
-**Genkit**: The **Genkit Extension for Gemini CLI** ships MCP tools for flow execution, doc lookup, and trace analysis, plus code generation aligned with Genkit patterns.
-
-```bash
-gemini extensions install https://github.com/gemini-cli-extensions/genkit
-```
+**Genkit**: The **Genkit Extension for Gemini CLI** ships MCP tools for flow execution, doc lookup, and trace analysis, plus code generation aligned with Genkit patterns. See the repo for install instructions.
 
 **ADK**: **Agents CLI** (open source, Apache-2.0) handles scaffolding / eval / deploy / observability for ADK agents. Subcommands like `scaffold`, `eval run`, `deploy`, `publish gemini-enterprise` plus seven skill bundles that AI coding tools can load for ADK-specific workflows. See the official docs for installation and setup.
 
@@ -302,7 +304,7 @@ Once you have this foundation, you can work with ADK or any other framework.
 
 ### Split by Use Case First, Then Combine
 
-Rather than thinking of these as "complementary layers," it's closer to Google's current public stance to split by use case first. As Genkit DevEx Lead Michael Doyle puts it on social media:
+Rather than thinking of these as "complementary layers," it's closer to Google's current public stance to split by use case first. On social media, the framing often goes:
 
 > Have an app (web, mobile, etc)? Want to add agentic features to it? Use Genkit!
 >
@@ -337,6 +339,8 @@ Start with Genkit to understand AI fundamentals, then consider ADK when requirem
 <RichLinkCard href="https://github.com/firebase/genkit" title="genkit" description="Open-source framework for building AI-powered apps in JavaScript, Go, and Python." />
 
 <RichLinkCard href="https://github.com/genkit-ai/genkit-dart" title="genkit-ai/genkit-dart" description="Genkit SDK for Dart — model plugins, flow definitions, and server-side hosting." />
+
+<RichLinkCard href="https://github.com/genkit-ai/genkit-java" title="genkit-ai/genkit-java" description="Genkit's Java implementation. Community-developed (1.0.0-SNAPSHOT), requires Java 21+." />
 
 <RichLinkCard href="https://mastering-genkit.github.io/mastering-genkit-go/" title="Mastering Genkit: Go Edition" description="Comprehensive guide for building production-ready AI applications with Go and Genkit." />
 

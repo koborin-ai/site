@@ -26,11 +26,18 @@ Google は AI 開発を支援するオープンソースのフレームワーク
 | 観点 | Genkit | ADK |
 | --- | --- | --- |
 | 主なユースケース | アプリへの生成 AI 機能組み込み（チャット、要約、RAG など） | 複数エージェントが協調するマルチエージェントシステム構築 |
-| 対応言語 | Node.js (GA)、Go (GA)、Python (Alpha)、Dart (Preview) | Python (GA)、TypeScript、Go、Java |
+| 対応言語 | Node.js (GA)、Go (GA)、Python (Beta)、Dart (Preview) | Python (GA)、Go (GA)、Java (GA)、TypeScript (GA) |
 | 設計思想 | 開発者がフローを明示的に制御 | LLM がエージェント間の委譲を動的に決定 |
-| デプロイ先 | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Vertex AI Agent Engine との統合が深い |
+| デプロイ先 | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Gemini Enterprise Agent Platform との統合が深い |
 
 どちらを選ぶべきかは、解決したい問題の複雑さとチームが得意な言語によって決まります。
+
+**迷ったときの基準**:
+
+- アプリに AI / agentic 機能を埋めたい → Genkit
+- Agent Platform 上で multi-agent システムを組みたい → ADK
+
+両者は統合されておらず、独立した OSS フレームワークとして並走しています。
 
 ---
 
@@ -48,17 +55,19 @@ Genkit は、アプリケーションへの AI 機能組み込みをシンプル
 
 **主な特徴：**
 
-- **言語**: Node.js（2025年2月 GA）、Go（2025年9月 GA）、Python（Alpha）、Dart（Preview）
+- **対応言語**:
+  - Node.js（2025 年 2 月 GA）
+  - Go（2025 年 9 月 GA）
+  - Python（2026 年 2 月から Beta）
+  - Dart（Preview）
+  - Java（コミュニティ実装 `genkit-ai/genkit-java`、1.0.0-SNAPSHOT で開発中）
 - **ランタイム**: Cloud Run、GKE、Vercel、オンプレなど任意の環境にデプロイ可能
 - **モデルサポート**: Gemini、OpenAI、Anthropic Claude、Ollama など（プラグイン経由）
 - **開発体験**: ローカル Developer UI でプロンプトテスト、ステップごとのトレース、スキーマ検証
 - **マルチエージェント**: プロンプトをツールとして扱うパターンで Beta サポート
+- **Middleware**: Generate / Model / Tool の 3 レイヤで横断的な拡張（ガードレール、キャッシュ、リトライ、HITL 承認など）。2026 年 5 月正式発表、TypeScript / Go / Dart で利用可能（Python は予定）
 
 また、[Genkit Dart](https://github.com/genkit-ai/genkit-dart) の開発も活発に進められており、Dart 向けフル Genkit SDK として進化しています。モデルプラグイン（`genkit_google_genai`、`genkit_firebase_ai`）、フロー・ツール定義、`genkit_shelf` によるサーバーサイド HTTP ホスティングを提供し、Node.js・Go SDK と同等の機能を備えています。サーバーサイド Dart と Flutter の両方から利用可能です。
-
-Genkit コミュニティでは **Mastering Genkit: Go Edition** も公開されています。環境構築から高度な AI エージェント、RAG システムまでをカバーする包括的なガイドです。
-
-<RichLinkCard href="https://mastering-genkit.github.io/mastering-genkit-go/" title="Mastering Genkit: Go Edition" description="A guide to building production-ready AI applications using Go and Genkit." />
 
 ### Agent Development Kit（ADK）
 
@@ -68,12 +77,16 @@ ADK は、高度な AI エージェントシステムの開発に特化したツ
 
 **主な特徴：**
 
-- **言語**: Python（GA）、TypeScript、Go（2025年11月発表）、Java
-- **ランタイム**: Cloud Run、GKE など任意のコンテナ環境にデプロイ可能。Vertex AI Agent Engine との統合に最適化
+- **対応言語**:
+  - Python（2025 年 5 月 GA、約 10 ヶ月先行。v2.0 は Python 限定で Beta phase）
+  - Go（2026 年 3 月 v1.0 stable）
+  - Java（2026 年 3 月 v1.0 stable）
+  - TypeScript（2026 年 4 月 v1.0 stable）
+- **ランタイム**: Cloud Run、GKE など任意のコンテナ環境にデプロイ可能。**Gemini Enterprise Agent Platform**（2026 年 4 月の Cloud Next 26 で旧 Vertex AI Agent Builder からリブランド）の Agent Runtime（旧 Agent Engine）との統合が深い
 - **モデルサポート**: Vertex AI 経由の Gemini、LiteLLM アダプタで他モデルも対応
 - **開発体験**: ローカル開発 UI（`adk web`）、CLI 評価ツール（`adk eval`）
 - **マルチエージェント**: Agent、Tool、Sub-agent、ワークフローオーケストレーションのファーストクラスサポート
-- **エンタープライズ連携**: ApplicationIntegrationToolset で Salesforce、ServiceNow、JIRA、SAP など 100 以上のコネクタを提供
+- **エンタープライズ連携**: ApplicationIntegrationToolset で Salesforce、ServiceNow、JIRA、SAP など 100 以上のコネクタを提供。さらに Vertex AI Search Tool、UrlContextTool、SkillToolset、Spanner Admin Toolset、Apigee モデル連携などのビルトインツール群が追加
 
 Renault Group、Box、Revionics などの企業が ADK を活用したシステムを構築しています。
 
@@ -92,29 +105,21 @@ Google の Genkit エンジニアは、Genkit の役割を次のようにまと�
 この視点から整理すると：
 
 - **Genkit** は低レイヤーの AI フレームワーク。モデル、ツール、プロンプト、MCP、o11y にフォーカス。単体でエージェントを構築することも、高レイヤーのフレームワークの基盤として使うこともできます。
-- **ADK** は高レイヤーのエージェントフレームワーク。セッション管理、メモリ、評価、Vertex AI Agent Engine との統合など、バッテリー同梱の機能を備えています。
+- **ADK** は高レイヤーのエージェントフレームワーク。セッション管理、メモリ、評価、Gemini Enterprise Agent Platform との統合など、バッテリー同梱の機能を備えています。
 
-Discord の Genkit コミュニティでは、Genkit チームメンバーから以下のような言及もありました。
-
-> ADK is specifically only for building agents, and it has an opinionated foundation for how to construct multi-agent systems. Genkit is a general purpose toolkit for building with GenAI which includes agent-building capabilities, but we take fewer strong opinions on the specific construction of agents.
-
-日本語訳：
-
-> ADK は特にエージェントを構築するためだけのものであり、マルチエージェントシステムをどのように構築するかについて明確な方針を持っています。Genkit は、エージェント構築機能を含む GenAI で構築するための汎用ツールキットですが、エージェントの具体的な構築方法についての強い意見はあまりありません。
-
-つまり、Genkit は汎用的で柔軟、ADK はマルチエージェント構築に特化。この違いを理解した上で、要件に応じて使い分けるのが実践的です。
+Genkit チームは Discord でも「ADK はエージェント構築専用で multi-agent システムの組み方に明確な方針を持つ。Genkit は GenAI 構築のための汎用ツールキットで、エージェントの具体的な作り方には強い意見を持たない」と整理しています。要するに Genkit は柔軟、ADK はマルチエージェント特化と棲み分けがされていて、要件に応じて選びます。
 
 ### 比較表
 
 | 観点 | Genkit | ADK |
 | --- | --- | --- |
 | **主なユースケース** | アプリへの生成 AI 機能組み込み全般（チャットボット、要約、推薦、RAG など） | 複数エージェントが協調する複雑なエージェントシステム構築 |
-| **言語** | Node.js (GA)、Go (GA)、Python (Alpha)、Dart (Preview) | Python (GA)、TypeScript、Go、Java |
+| **言語** | Node.js (GA)、Go (GA)、Python (Beta)、Dart (Preview) | Python (GA)、Go (GA)、Java (GA)、TypeScript (GA) |
 | **開発スタイル** | コードで定義したフロー、明示的な制御 | エージェント中心、LLM 駆動のオーケストレーション |
-| **マルチエージェント** | Beta（プロンプトをツール化するパターン） | ファーストクラスサポート（Sequential、Parallel、Loop） |
-| **デプロイ** | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Agent Engine との相性が最も良い |
-| **モデル柔軟性** | プラグインベース、モデル切り替え容易 | LiteLLM アダプタ、Vertex AI ネイティブ |
-| **成熟度** | Node GA（2025年2月）、Go GA（2025年9月） | Python GA（2025年5月）、他言語は開発中 |
+| **マルチエージェント** | Beta（プロンプトをツール化するパターン）、Middleware で横断的拡張 | ファーストクラス（Sequential / Parallel / Loop、v2.0 Beta で graph-based Workflow） |
+| **デプロイ** | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Gemini Enterprise Agent Platform / Agent Runtime との相性が最も良い |
+| **モデル柔軟性** | Genkit プラグインで Gemini / OpenAI / Anthropic / Ollama などを切替 | Vertex AI 経由の Gemini が中心、LiteLLM で他ベンダーも対応 |
+| **成熟度** | Node GA（2025-02）、Go GA（2025-09）、Python Beta（2026-02〜）、Dart Preview | Python GA（2025-05）、Go / Java / TS が 2026-03〜04 に v1.0 stable、Python v2.0 Beta |
 
 ### アーキテクチャパターン
 
@@ -149,7 +154,7 @@ import (
 
 func main() {
     ctx := context.Background()
-    g, _ := genkit.Init(ctx, genkit.WithPlugins(&googlegenai.GoogleAI{}))
+    g := genkit.Init(ctx, genkit.WithPlugins(&googlegenai.GoogleAI{}))
     
     resp, _ := genkit.Generate(ctx, g,
         ai.WithModel(googlegenai.GoogleAIModel("gemini-2.5-flash")),
@@ -200,6 +205,7 @@ goal_setting_agent = Agent(
 
 # --- Sub-agent 2: Meal Advisor ---
 meal_advisor_agent = Agent(
+    model="gemini-2.5-flash",
     name="meal_advisor_agent",
     description="Provides meal recommendations based on user goals.",
     instruction="You suggest meals considering the user's health goals and calorie targets.",
@@ -236,6 +242,14 @@ root_agent = Agent(
 - **ParallelAgent**: エージェントを並行実行
 - **LoopAgent**: 条件を満たすまで繰り返し
 
+#### ADK 2.0（Beta）: graph ベースの Workflow ランタイム
+
+2026 年 4 月、ADK は v2.0 Beta フェーズに入りました。v2.0 の中心は **graph-based Workflow ランタイム**で、タスクのルーティング、fan-out / fan-in、ループ、リトライ、HITL（human-in-the-loop）承認、nested workflow を graph として明示的に記述できます。Task API を組み合わせると、エージェント間の委譲を input / output contract で型付けでき、Sequential / Parallel / Loop よりも複雑な分岐を扱いやすくなります。
+
+ただし v2.0 は **Python 限定**で、執筆時点では Beta phase。v1.x は production 継続で、v2.0 と v1.x は同じプロセス内で混在可能（互換性は維持されている）。本番ワークロードを今すぐ v2.0 に寄せる必要はなく、Sequential / Parallel / Loop で書ける範囲なら v1.x のままで問題ありません。複雑な graph オーケストレーションが必要になったときに、選択肢として v2.0 を検討する位置づけになります。
+
+<RichLinkCard href="https://adk.dev/2.0/" title="ADK 2.0 (Beta)" description="Graph-based Workflow runtime and Task API for ADK Python." />
+
 ---
 
 ## 選択ガイド
@@ -258,13 +272,25 @@ ADK が Python、TypeScript、Go、Java をサポートし、Genkit が Node.js�
 
 | 言語 | Genkit | ADK |
 | --- | --- | --- |
-| **TypeScript/Node.js** | GA | 利用可能 |
-| **Go** | GA | 利用可能（2025年11月発表） |
-| **Python** | Alpha | GA |
+| **TypeScript/Node.js** | GA | v1.0 stable（2026-04） |
+| **Go** | GA | v1.0 stable（2026-03） |
+| **Python** | Beta（2026-02〜） | v1.x GA + v2.0 Beta |
 | **Dart** | Preview | 非サポート |
-| **Java** | 非サポート | 利用可能 |
+| **Java** | コミュニティ実装（1.0.0-SNAPSHOT） | v1.0 stable（2026-03） |
 
-チームが Python を書いていて本番環境での安定性が必要なら、ADK が自然な選択です。Go で安定した AI ツールキットが欲しいなら、Genkit Go が適しています。Dart や Flutter でシステムを構築しているチームなら、Genkit Dart（Preview）でクライアントとサーバーの両方で同じ Genkit パターンを使えます。
+チームが Python を書いていて本番環境での安定性を最優先するなら、ADK（v1.x が 2025-05 から GA で実績がある）が自然な選択です。複雑な graph オーケストレーションを試したい場合は v2.0 Beta も視野に入ります。Go で安定した AI ツールキットが欲しいなら、Genkit Go と ADK Go のどちらも v1.x stable で、ユースケース（アプリに AI / agentic 機能を埋める vs スタンドアロン multi-agent システムを組む）で決まります。Dart や Flutter でシステムを構築しているチームなら、Genkit Dart（Preview）が現実的な唯一の選択肢。Java は ADK の v1.0 stable が手堅く、Genkit Java も 1.0.0-SNAPSHOT で動いているので、Java で Genkit パターンを試したいなら覗いてみるのもありです。
+
+---
+
+## 開発ツールとの統合
+
+両者とも、AI 開発ツール（Gemini CLI、Claude Code、Codex 等）と組み合わせて自然言語からエージェント開発を進められる流れを整えてきています。
+
+**Genkit**: Gemini CLI 向けに **Genkit Extension** が提供されています。MCP ツール経由でフロー実行・ドキュメント参照・トレース分析ができ、Genkit のパターンに沿ったコード生成も支援されます。導入手順は公式リポジトリを参照してください。
+
+**ADK**: **Agents CLI**（Apache-2.0 ライセンスの OSS）が、ADK と組み合わせて使うスキャフォールディング / 評価 / デプロイ / observability の CLI として用意されています。`scaffold`、`eval run`、`deploy`、`publish gemini-enterprise` などのサブコマンドと、AI コーディングツールに読み込ませる 7 つの skill バンドルを提供します。インストール方法やセットアップは公式ドキュメントを参照してください。
+
+どちらも、エージェント開発のワークフローを「ツールに任せる」方向に進めるアプローチで、構築するシステムの方向性（Genkit / ADK のどちらか）が決まった後で開発体験をさらに加速させたいときの選択肢になります。
 
 ---
 
@@ -278,10 +304,18 @@ Genkit コミュニティでよく共有される推奨事項があります。�
 
 この基礎があれば、ADK でも他のフレームワークでも対応できます。
 
-### 実践的な組み合わせ
+### ユースケースで分ける、その上で組み合わせる
 
-1. **Genkit を UI 向けレイヤーに**: ユーザー入力の処理、シンプルな生成タスク、API レスポンス
-2. **ADK を複雑なバックエンドオーケストレーションに**: リクエストが専門エージェントによるマルチステップ推論を必要とする場合
+「補完的なレイヤー」と言うより、まずユースケースで分けるのが現在の公式の姿勢に近い。Genkit と ADK の使い分けについて、SNS ではこんな棲み分けがよく示されています：
+
+> Have an app (web, mobile, etc)? Want to add agentic features to it? Use Genkit!
+>
+> Building complex, standalone, multi-agent systems? E.g. on GCPs Agent Platform? Use ADK.
+
+- **Genkit を選ぶとき**: 既存アプリ（Web / モバイル / API バックエンド）に AI / agentic 機能を**足したい**ケース。チャット、要約、RAG、ツール呼び出しなど。スタートが早く、アプリ開発者にとって扱いやすい
+- **ADK を選ぶとき**: Agent Platform 上で複数エージェントが協調する**スタンドアロン**な複雑システム。コネクタ・ガバナンス・評価などエンタープライズ要件が前面に出るケース
+
+「どっちも使いたい」場合は組み合わせも可能です。例えば Genkit で書いた API バックエンドから、別途デプロイした ADK エージェントを呼び出す構成。ただ最初から「組み合わせ前提」で設計する必要はなく、まずは自分のユースケースがどちら寄りかを見極めてから、必要に応じて橋渡しを考える順番で十分です。
 
 ---
 
@@ -308,7 +342,15 @@ Genkit と ADK は「どちらが良いか」ではなく、補完的なレイ�
 
 <RichLinkCard href="https://github.com/genkit-ai/genkit-dart" title="genkit-ai/genkit-dart" description="Dart 向け Genkit SDK — モデルプラグイン、フロー定義、サーバーサイドホスティング。" />
 
+<RichLinkCard href="https://github.com/genkit-ai/genkit-java" title="genkit-ai/genkit-java" description="Genkit の Java 実装。コミュニティ開発中（1.0.0-SNAPSHOT）、Java 21 以上が必要。" />
+
 <RichLinkCard href="https://mastering-genkit.github.io/mastering-genkit-go/" title="Mastering Genkit: Go Edition" description="Comprehensive guide for building production-ready AI applications with Go and Genkit." />
+
+<RichLinkCard href="https://developers.googleblog.com/announcing-genkit-middleware-intercept-extend-and-harden-your-agentic-apps/" title="Announcing Genkit Middleware" description="Genkit Middleware の正式発表記事。Generate / Model / Tool の 3 レイヤで横断的拡張を実現。" />
+
+<RichLinkCard href="https://mastering-genkit.github.io/mastering-genkit-go/chapters/04-mastering-ai-generation.html" title="Mastering Genkit: Middleware の章" description="Middleware を使った横断的拡張パターンの解説。" />
+
+<RichLinkCard href="https://github.com/gemini-cli-extensions/genkit" title="Genkit Extension for Gemini CLI" description="Gemini CLI から Genkit のフロー実行・トレース分析・コード生成を呼び出せる拡張。" />
 
 ### ADK
 
@@ -317,3 +359,9 @@ Genkit と ADK は「どちらが良いか」ではなく、補完的なレイ�
 <RichLinkCard href="https://github.com/google/adk-python" title="google/adk-python" description="An open-source, code-first Python toolkit for building, evaluating, and deploying sophisticated AI agents." />
 
 <RichLinkCard href="https://github.com/google/adk-samples" title="google/adk-samples" description="Ready-to-use agents built on ADK for Python and Java." />
+
+<RichLinkCard href="https://adk.dev/2.0/" title="ADK 2.0 (Beta)" description="Graph-based Workflow ランタイムと Task API。Python 限定の Beta。" />
+
+<RichLinkCard href="https://github.com/google/agents-cli" title="Agents CLI" description="ADK エージェントの scaffolding / 評価 / デプロイ / observability を担う OSS CLI。" />
+
+<RichLinkCard href="https://cloud.google.com/products/gemini-enterprise-agent-platform" title="Gemini Enterprise Agent Platform" description="旧 Vertex AI Agent Builder。Cloud Next 26 でリブランド。" />

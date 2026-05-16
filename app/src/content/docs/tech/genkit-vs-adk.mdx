@@ -106,12 +106,12 @@ In short: Genkit is general-purpose and flexible; ADK is specialized for multi-a
 | Aspect | Genkit | ADK |
 | --- | --- | --- |
 | **Primary Use Case** | General GenAI integration (chatbots, summarization, recommendations, RAG, etc.) | Complex agent systems with multiple collaborating agents |
-| **Languages** | Node.js (GA), Go (GA), Python (Alpha), Dart (Preview) | Python (GA), TypeScript, Go, Java |
+| **Languages** | Node.js (GA), Go (GA), Python (Beta), Dart (Preview) | Python (GA), Go (GA), Java (GA), TypeScript (GA) |
 | **Development Style** | Code-defined flows, explicit control | Agent-centric, LLM-driven orchestration |
-| **Multi-agent** | Beta (prompt-as-tool pattern) | First-class support (Sequential, Parallel, Loop) |
-| **Deployment** | Cloud Run, GKE, Vercel, anywhere | Anywhere, best fit with Agent Engine |
+| **Multi-agent** | Beta (prompt-as-tool pattern); Middleware for cross-cutting extensions | First-class (Sequential / Parallel / Loop; graph-based Workflow in v2.0 Beta) |
+| **Deployment** | Cloud Run, GKE, Vercel, anywhere | Anywhere; best fit with Gemini Enterprise Agent Platform / Agent Runtime |
 | **Model Flexibility** | Plugin-based, easy model switching | LiteLLM adapters, Vertex AI native |
-| **Maturity** | Node GA (Feb 2025), Go GA (Sep 2025) | Python GA (May 2025), other languages in development |
+| **Maturity** | Node GA (Feb 2025), Go GA (Sep 2025), Python Beta (Feb 2026~), Dart Preview | Python GA (May 2025), Go / Java / TS reached v1.0 stable in Mar-Apr 2026, Python v2.0 in Beta |
 
 ### Architecture Patterns
 

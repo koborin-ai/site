@@ -112,12 +112,12 @@ Discord の Genkit コミュニティでは、Genkit チームメンバーから
 | 観点 | Genkit | ADK |
 | --- | --- | --- |
 | **主なユースケース** | アプリへの生成 AI 機能組み込み全般（チャットボット、要約、推薦、RAG など） | 複数エージェントが協調する複雑なエージェントシステム構築 |
-| **言語** | Node.js (GA)、Go (GA)、Python (Alpha)、Dart (Preview) | Python (GA)、TypeScript、Go、Java |
+| **言語** | Node.js (GA)、Go (GA)、Python (Beta)、Dart (Preview) | Python (GA)、Go (GA)、Java (GA)、TypeScript (GA) |
 | **開発スタイル** | コードで定義したフロー、明示的な制御 | エージェント中心、LLM 駆動のオーケストレーション |
-| **マルチエージェント** | Beta（プロンプトをツール化するパターン） | ファーストクラスサポート（Sequential、Parallel、Loop） |
-| **デプロイ** | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Agent Engine との相性が最も良い |
+| **マルチエージェント** | Beta（プロンプトをツール化するパターン）、Middleware で横断的拡張 | ファーストクラス（Sequential / Parallel / Loop、v2.0 Beta で graph-based Workflow） |
+| **デプロイ** | Cloud Run、GKE、Vercel など任意の環境 | 任意の環境、Gemini Enterprise Agent Platform / Agent Runtime との相性が最も良い |
 | **モデル柔軟性** | プラグインベース、モデル切り替え容易 | LiteLLM アダプタ、Vertex AI ネイティブ |
-| **成熟度** | Node GA（2025年2月）、Go GA（2025年9月） | Python GA（2025年5月）、他言語は開発中 |
+| **成熟度** | Node GA（2025-02）、Go GA（2025-09）、Python Beta（2026-02〜）、Dart Preview | Python GA（2025-05）、Go / Java / TS が 2026-03〜04 に v1.0 stable、Python v2.0 Beta |
 
 ### アーキテクチャパターン
 

@@ -149,7 +149,7 @@ import (
 
 func main() {
     ctx := context.Background()
-    g, _ := genkit.Init(ctx, genkit.WithPlugins(&googlegenai.GoogleAI{}))
+    g := genkit.Init(ctx, genkit.WithPlugins(&googlegenai.GoogleAI{}))
     
     resp, _ := genkit.Generate(ctx, g,
         ai.WithModel(googlegenai.GoogleAIModel("gemini-2.5-flash")),

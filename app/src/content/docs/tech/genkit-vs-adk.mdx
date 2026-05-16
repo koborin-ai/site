@@ -298,10 +298,18 @@ When you're starting out, it often makes sense to begin with a low-layer toolkit
 
 Once you have this foundation, you can work with ADK or any other framework.
 
-### Practical Combinations
+### Split by Use Case First, Then Combine
 
-1. **Genkit for the UI-facing layer**: User input processing, simple generation tasks, API responses
-2. **ADK for complex backend orchestration**: When requests require multi-step reasoning by specialized agents
+Rather than thinking of these as "complementary layers," it's closer to Google's current public stance to split by use case first. As Genkit DevEx Lead Michael Doyle puts it on social media:
+
+> Have an app (web, mobile, etc)? Want to add agentic features to it? Use Genkit!
+>
+> Building complex, standalone, multi-agent systems? E.g. on GCPs Agent Platform? Use ADK.
+
+- **Choose Genkit when**: You have an existing app (web / mobile / API backend) and want to **add** AI / agentic features — chat, summarization, RAG, tool calls. Easier to get started, more ergonomic for app developers
+- **Choose ADK when**: You're building a **standalone** complex system on Agent Platform where multiple agents collaborate, with enterprise requirements (connectors, governance, evaluation) at the forefront
+
+If you want both, you can combine them — e.g., call a separately-deployed ADK agent from a Genkit-powered API backend. But you don't have to design for "combination first." Figure out which side your use case leans toward, then bridge later when the need arises.
 
 ---
 

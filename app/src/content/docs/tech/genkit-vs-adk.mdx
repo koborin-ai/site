@@ -231,6 +231,14 @@ ADK also provides workflow control agents:
 - **ParallelAgent**: Run agents in parallel
 - **LoopAgent**: Repeat until a condition is met
 
+#### ADK 2.0 (Beta): Graph-based Workflow Runtime
+
+In April 2026, ADK entered v2.0 Beta phase (v2.0.0b1). The core of v2.0 is a **graph-based Workflow runtime** that lets you express task routing, fan-out / fan-in, loops, retries, human-in-the-loop approval, and nested workflows explicitly as a graph. Combined with the new Task API, agent-to-agent delegation can carry typed input / output contracts — handling more complex branching than Sequential / Parallel / Loop allows.
+
+That said, v2.0 is **Python-only** and Beta at the time of writing. v1.x continues for production use, and v1.x and v2.0 can coexist in the same process (compatibility maintained). You don't need to migrate to v2.0 right now — if Sequential / Parallel / Loop covers your needs, staying on v1.x is fine. v2.0 becomes a candidate when complex graph orchestration enters the picture.
+
+<RichLinkCard href="https://adk.dev/2.0/" title="ADK 2.0 (Beta)" description="Graph-based Workflow runtime and Task API for ADK Python." />
+
 ---
 
 ## Decision Guide

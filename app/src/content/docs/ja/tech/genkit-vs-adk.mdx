@@ -237,6 +237,14 @@ root_agent = Agent(
 - **ParallelAgent**: エージェントを並行実行
 - **LoopAgent**: 条件を満たすまで繰り返し
 
+#### ADK 2.0（Beta）: graph ベースの Workflow ランタイム
+
+2026 年 4 月、ADK は v2.0 を Beta phase に進めました（v2.0.0b1）。v2.0 の中心は **graph-based Workflow ランタイム**で、タスクのルーティング、fan-out / fan-in、ループ、リトライ、HITL（human-in-the-loop）承認、nested workflow を graph として明示的に記述できます。Task API を組み合わせると、エージェント間の委譲を input / output contract で型付けでき、Sequential / Parallel / Loop よりも複雑な分岐を扱いやすくなります。
+
+ただし v2.0 は **Python 限定**で、執筆時点では Beta phase。v1.x は production 継続で、v2.0 と v1.x は同じプロセス内で混在可能（互換性は維持されている）。本番ワークロードを今すぐ v2.0 に寄せる必要はなく、Sequential / Parallel / Loop で書ける範囲なら v1.x のままで問題ありません。複雑な graph オーケストレーションが必要になったときに、選択肢として v2.0 を検討する位置づけになります。
+
+<RichLinkCard href="https://adk.dev/2.0/" title="ADK 2.0 (Beta)" description="Graph-based Workflow runtime and Task API for ADK Python." />
+
 ---
 
 ## 選択ガイド

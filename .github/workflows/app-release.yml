@@ -23,6 +23,12 @@ on:
         options:
           - dev
           - prod
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment to deploy app to"
+        required: true
+        type: string
 
 # Prevent concurrent deployments to avoid Pulumi state conflicts
 # When multiple triggers occur (e.g., main merge + tag push), jobs queue up
@@ -39,7 +45,7 @@ jobs:
       contents: read
     timeout-minutes: 30
 
-    environment: ${{ (startsWith(github.ref, 'refs/tags/app-v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')) && 'production (app)' || 'development (app)' }}
+    environment: ${{ (startsWith(github.ref, 'refs/tags/app-v') || ((github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && inputs.environment == 'prod')) && 'production (app)' || 'development (app)' }}
 
     env:
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -68,11 +74,8 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/app-v* ]]; then
             TARGET_ENV="prod"
             SERVICE_NAME="koborin-ai-web-prod"
-          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && "${{ github.event.inputs.environment }}" == "prod" ]]; then
-            TARGET_ENV="prod"
-            SERVICE_NAME="koborin-ai-web-prod"
-          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            TARGET_ENV="${{ github.event.inputs.environment }}"
+          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" || "${GITHUB_EVENT_NAME}" == "workflow_call" ]]; then
+            TARGET_ENV="${{ inputs.environment }}"
             if [[ "${TARGET_ENV}" == "prod" ]]; then
               SERVICE_NAME="koborin-ai-web-prod"
             fi

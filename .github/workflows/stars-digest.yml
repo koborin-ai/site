@@ -1,0 +1,124 @@
+name: Stars Digest
+
+on:
+  schedule:
+    - cron: "30 18 * * *" # 03:30 JST (30 min after the stars repo's daily update)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: stars-digest
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Generate edition
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+    timeout-minutes: 20
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+      tag: ${{ steps.commit.outputs.tag }}
+      summary: ${{ steps.gen.outputs.summary }}
+    steps:
+      - name: Checkout site
+        uses: actions/checkout@v6
+
+      - name: Checkout stars (read-only, full history)
+        uses: actions/checkout@v6
+        with:
+          repository: nozomi-koborinai/stars
+          path: .stars
+          fetch-depth: 0
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260 # v1.7.2
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.STARS_DIGEST_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Generate edition
+        id: gen
+        working-directory: tools/stars-digest
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.PROJECT_ID }}
+        run: |
+          dart pub get
+          dart run build_runner build --delete-conflicting-outputs
+          DATE_JST=$(TZ=Asia/Tokyo date +%F)
+          SUMMARY=$(dart run bin/generate.dart \
+            --stars-dir "${GITHUB_WORKSPACE}/.stars" \
+            --site-dir "${GITHUB_WORKSPACE}" \
+            --date "${DATE_JST}")
+          DELIM="EOF_$(openssl rand -hex 16)"
+          {
+            echo "summary<<${DELIM}"
+            echo "${SUMMARY}"
+            echo "${DELIM}"
+          } >> "$GITHUB_OUTPUT"
+          echo "date_jst=${DATE_JST}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit if changed
+        id: commit
+        env:
+          DATE_JST: ${{ steps.gen.outputs.date_jst }}
+        run: |
+          # Only the published outputs count as a change (ignore incidental regen).
+          PUBLISHED="app/src/content/docs/stars tools/stars-digest/state/featured.json"
+          if [[ -z "$(git status --porcelain -- $PUBLISHED)" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $PUBLISHED
+          git commit -m "chore(stars): digest ${DATE_JST}"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "tag=stars-${DATE_JST}" >> "$GITHUB_OUTPUT"
+
+  deploy-dev:
+    name: Deploy (dev)
+    needs: generate
+    if: needs.generate.outputs.changed == 'true'
+    uses: ./.github/workflows/app-release.yml
+    with:
+      environment: dev
+    secrets: inherit
+
+  deploy-prod:
+    name: Deploy (prod)
+    needs: deploy-dev
+    uses: ./.github/workflows/app-release.yml
+    with:
+      environment: prod
+    secrets: inherit
+
+  release:
+    name: Daily release notes
+    needs: [generate, deploy-dev]
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Create release (idempotent)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.generate.outputs.tag }}
+          SUMMARY: ${{ needs.generate.outputs.summary }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; skipping."
+          else
+            gh release create "$TAG" --title "Stars Digest $TAG" --notes "$SUMMARY"
+          fi

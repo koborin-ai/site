@@ -39,6 +39,7 @@ func Shared(ctx *pulumi.Context) error {
 		"monitoring.googleapis.com",
 		"logging.googleapis.com",
 		"certificatemanager.googleapis.com",
+		"aiplatform.googleapis.com",
 	}
 
 	var apiServices []pulumi.Resource
@@ -357,6 +358,46 @@ func Shared(ctx *pulumi.Context) error {
 			return err
 		}
 	}
+
+	// ========================================
+	// Stars Digest (Vertex AI) least-privilege SA
+	// ========================================
+
+	starsDigestSA, err := serviceaccount.NewAccount(ctx, "stars-digest-sa", &serviceaccount.AccountArgs{
+		Project:     pulumi.String(projectID),
+		AccountId:   pulumi.String("stars-digest"),
+		DisplayName: pulumi.String("stars-digest"),
+		Description: pulumi.String("Service account for the stars-digest GitHub Action to call Vertex AI"),
+	})
+	if err != nil {
+		return err
+	}
+
+	// Reuse the existing pool + subject (koborin-ai/site) so the digest workflow can impersonate this SA.
+	_, err = serviceaccount.NewIAMMember(ctx, "stars-digest-wif-user", &serviceaccount.IAMMemberArgs{
+		ServiceAccountId: starsDigestSA.Name,
+		Role:             pulumi.String("roles/iam.workloadIdentityUser"),
+		Member: pulumi.Sprintf(
+			"principal://iam.googleapis.com/projects/%s/locations/global/workloadIdentityPools/%s/subject/koborin-ai/site",
+			projectNumber,
+			workloadIdentityPool.WorkloadIdentityPoolId,
+		),
+	})
+	if err != nil {
+		return err
+	}
+
+	// Grant only Vertex AI prediction.
+	_, err = projects.NewIAMMember(ctx, "stars-digest-sa-aiplatform-user", &projects.IAMMemberArgs{
+		Project: pulumi.String(projectID),
+		Role:    pulumi.String("roles/aiplatform.user"),
+		Member:  pulumi.Sprintf("serviceAccount:%s", starsDigestSA.Email),
+	})
+	if err != nil {
+		return err
+	}
+
+	ctx.Export("starsDigestServiceAccount", starsDigestSA.Email)
 
 	return nil
 }

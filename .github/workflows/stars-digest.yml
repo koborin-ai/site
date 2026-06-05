@@ -29,7 +29,7 @@ jobs:
       - name: Checkout stars (read-only, full history)
         uses: actions/checkout@v6
         with:
-          repository: nozomi-koborinai/stars
+          repository: koborin-ai/stars
           path: .stars
           fetch-depth: 0
 

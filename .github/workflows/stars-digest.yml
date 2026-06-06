@@ -22,6 +22,7 @@ jobs:
       changed: ${{ steps.commit.outputs.changed }}
       tag: ${{ steps.commit.outputs.tag }}
       summary: ${{ steps.gen.outputs.summary }}
+      sha: ${{ steps.commit.outputs.sha }}
     steps:
       - name: Checkout site
         uses: actions/checkout@v6
@@ -83,6 +84,7 @@ jobs:
           git push
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "tag=stars-${DATE_JST}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   deploy-dev:
     name: Deploy (dev)
@@ -91,6 +93,7 @@ jobs:
     uses: ./.github/workflows/app-release.yml
     with:
       environment: dev
+      ref: ${{ needs.generate.outputs.sha }}
     secrets: inherit
 
   deploy-prod:
@@ -99,6 +102,7 @@ jobs:
     uses: ./.github/workflows/app-release.yml
     with:
       environment: prod
+      ref: ${{ needs.generate.outputs.sha }}
     secrets: inherit
 
   release:

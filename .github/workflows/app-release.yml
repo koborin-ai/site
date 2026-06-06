@@ -29,6 +29,10 @@ on:
         description: "Environment to deploy app to"
         required: true
         type: string
+      ref:
+        description: "Git ref to checkout and build (defaults to the triggering SHA)"
+        required: false
+        type: string
 
 # Prevent concurrent deployments to avoid Pulumi state conflicts
 # When multiple triggers occur (e.g., main merge + tag push), jobs queue up
@@ -63,6 +67,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.ref || github.sha }}
           # Fetch full Git history for Starlight's lastUpdated feature
           fetch-depth: 0
 
@@ -126,7 +131,7 @@ jobs:
       - name: Build and push Docker image
         id: build-image
         run: |
-          IMAGE_TAG="${GITHUB_SHA}-${GITHUB_RUN_ID}"
+          IMAGE_TAG="${GITHUB_SHA}-${GITHUB_RUN_ID}-${TARGET_ENV}"
           IMAGE_URI="asia-northeast1-docker.pkg.dev/${{ env.PROJECT_ID }}/koborin-ai-web/app:${IMAGE_TAG}"
 
           # Submit entire project (including .git) so Starlight can access Git history

@@ -24,6 +24,7 @@ String renderEdition(DigestResult result) {
     ..writeln('description: ${_yamlString(_truncate(e.intro, 140))}')
     ..writeln('publishedAt: ${result.dateJst}')
     ..writeln('draft: false')
+    ..writeln('lastUpdated: false')
     ..writeln('---')
     ..writeln()
     ..writeln(e.intro)
@@ -91,12 +92,13 @@ String renderIndex({required List<EditionMeta> editions}) {
     ..writeln('---')
     ..writeln('title: Stars')
     ..writeln('description: Star した OSS の毎日のパーソナル・ニュースレター')
+    ..writeln('lastUpdated: false')
     ..writeln('---')
     ..writeln()
     ..writeln('Star した OSS を、私のスタックと関心を踏まえて毎日1号お届けする個人用ニュースレターです。')
     ..writeln(_footer)
     ..writeln()
-    ..writeln('## 号一覧')
+    ..writeln('## Editions')
     ..writeln();
   for (final e in sorted) {
     b.writeln(

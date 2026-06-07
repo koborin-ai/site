@@ -1,5 +1,6 @@
 {
   "mainFeatured": [
+    "DNLHC/glance.nvim",
     "github/gh-stack",
     "openclaw/mcporter",
     "samchon/ttsc"

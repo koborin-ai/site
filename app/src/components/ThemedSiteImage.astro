@@ -1,0 +1,40 @@
+---
+/**
+ * ThemedSiteImage — light/dark image pair for Starlight theme toggle.
+ *
+ * Renders two SiteImage instances but only the visible one should load:
+ * both use loading="lazy" so display:none hides the inactive variant from
+ * network fetch. The default-visible (light) image keeps fetchpriority="high".
+ */
+import SiteImage from './SiteImage.astro';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  lightSrc: ImageMetadata;
+  darkSrc: ImageMetadata;
+  alt: string;
+  variant: 'hero';
+  wrapperClass?: string;
+}
+
+const { lightSrc, darkSrc, alt, variant, wrapperClass = 'hero-image' } = Astro.props;
+---
+
+<div class={wrapperClass}>
+  <SiteImage
+    src={lightSrc}
+    alt={alt}
+    variant={variant}
+    class="hero-light"
+    loading="lazy"
+    fetchpriority="high"
+  />
+  <SiteImage
+    src={darkSrc}
+    alt={alt}
+    variant={variant}
+    class="hero-dark"
+    loading="lazy"
+    fetchpriority="auto"
+  />
+</div>

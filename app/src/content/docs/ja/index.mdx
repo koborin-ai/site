@@ -6,16 +6,15 @@ lastUpdated: false
 ---
 
 import SiteImage from '../../../components/SiteImage.astro';
+import ThemedSiteImage from '../../../components/ThemedSiteImage.astro';
 import heroLight from '../../../assets/og/koborin-ai-hero-light.png';
 import heroDark from '../../../assets/og/koborin-ai-hero-dark.png';
 import bookCover from '../../../assets/life/reflections-on-2025/book-cover.png';
 import contextlintOg from '../../../assets/_shared/building/contextlint-og.png';
 import abletonOscMcpKey from '../../../assets/_shared/building/ableton-osc-mcp-key.png';
+import terradartOg from '../../../assets/_shared/building/terradart-og.png';
 
-<div class="hero-image">
-  <SiteImage src={heroLight} alt="koborin.ai へようこそ" variant="hero" class="hero-light" />
-  <SiteImage src={heroDark} alt="koborin.ai へようこそ" variant="hero" class="hero-dark" />
-</div>
+<ThemedSiteImage lightSrc={heroLight} darkSrc={heroDark} alt="koborin.ai へようこそ" variant="hero" />
 
 ## Technical Proving Ground について
 
@@ -95,13 +94,20 @@ Claude や Cursor などの AI アシスタントから、AbletonOSC 経由で A
 </div>
 </div>
 
-<div style="margin: 1.5rem 0;">
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://terradart.dev/">
+<SiteImage src={terradartOg} alt="TerraDart OG image" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
 
-**terradart**
+**TerraDart**
 
-Terraform Google provider のスキーマから、型付き・リファクタ安全な Dart バインディングを生成する Dart コードジェネレーター。IaC と Dart アプリケーションの「縫い目」（topic 名やシークレット参照）にフォーカスし、リネームしたら実行時ではなくコンパイル時に壊れる状態を作る。既存の `terraform` CLI が消費する JSON を生成するだけで、Terraform を置き換えるものではない。Pre-alpha (v0.0.x)。CDKTF が 2025 年 10 月にアーカイブされる前に到達できなかった、Dart 形のスロットを埋める位置づけ。
+Dart エコシステムが広がるなか、クライアントは Flutter、サーバー側も Firebase Functions や Cloud Run、Cloud Run functions など Dart を使う場面が増えている。それでもデリバリーは HCL や `*.tf.json` の Terraform、GCP コンソールでの運用を続けるチームは少なくない。
 
-[GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
+TerraDart は、そのスタック向けに Dart で型安全な IaC を書く pre-alpha の試み。GCP リソースを Dart で型付きに記述し、標準的な `*.tf.json` を出力する。既存の `terraform apply` パイプラインはそのまま使える。
+
+[terradart.dev](https://terradart.dev/) / [GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
+</div>
 </div>
 
 ---

@@ -2,6 +2,7 @@
   "mainFeatured": [
     "DNLHC/glance.nvim",
     "github/gh-stack",
+    "kosukesaigusa/claude-code-action-access-control",
     "openclaw/mcporter",
     "samchon/ttsc"
   ],

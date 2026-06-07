@@ -1,6 +1,7 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import rehypeMermaid from "rehype-mermaid";
+import remarkGfm from "remark-gfm";
 import { sidebar } from "./src/sidebar.ts";
 
 export default defineConfig({
@@ -8,6 +9,7 @@ export default defineConfig({
   srcDir: "src",
   // Static output mode (default) - all pages are pre-rendered at build time
   markdown: {
+    remarkPlugins: [remarkGfm],
     rehypePlugins: [
       [
         rehypeMermaid,

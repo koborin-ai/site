@@ -41,6 +41,7 @@ void main() {
     check(md).contains('title: "今日のタイトル"');
     check(md).contains('publishedAt: 2026-05-31');
     check(md).contains('draft: false');
+    check(md).contains('lastUpdated: false');
     check(md).contains('https://github.com/main/repo');
     check(md).contains('活用1');
     check(md).contains('https://github.com/sub/one');
@@ -60,6 +61,7 @@ void main() {
     final iOld = md.indexOf('2026-05-30');
     check(iNew < iOld).isTrue();
     check(md).contains('/stars/2026-05-31/');
+    check(md).contains('## Editions');
   });
 
   test('editionMetaFrom derives description from intro', () {

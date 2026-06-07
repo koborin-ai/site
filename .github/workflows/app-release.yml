@@ -49,7 +49,7 @@ jobs:
       contents: read
     timeout-minutes: 30
 
-    environment: ${{ (startsWith(github.ref, 'refs/tags/app-v') || ((github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && inputs.environment == 'prod')) && 'production (app)' || 'development (app)' }}
+    environment: ${{ (startsWith(github.ref, 'refs/tags/app-v') || inputs.environment == 'prod') && 'production (app)' || 'development (app)' }}
 
     env:
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -79,7 +79,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/app-v* ]]; then
             TARGET_ENV="prod"
             SERVICE_NAME="koborin-ai-web-prod"
-          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" || "${GITHUB_EVENT_NAME}" == "workflow_call" ]]; then
+          elif [[ -n "${{ inputs.environment }}" ]]; then
             TARGET_ENV="${{ inputs.environment }}"
             if [[ "${TARGET_ENV}" == "prod" ]]; then
               SERVICE_NAME="koborin-ai-web-prod"

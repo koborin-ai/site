@@ -630,6 +630,31 @@
   display: none;
 }
 
+/* Article figure — light/dark variant toggle (e.g. stars-digest List screenshot) */
+.theme-figure {
+  margin: 1.5rem 0;
+}
+.theme-figure picture {
+  display: block;
+}
+.theme-figure img {
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+.theme-figure picture:has(.theme-dark) {
+  display: none;
+}
+.theme-figure picture:has(.theme-light) {
+  display: block;
+}
+[data-theme="dark"] .theme-figure picture:has(.theme-dark) {
+  display: block;
+}
+[data-theme="dark"] .theme-figure picture:has(.theme-light) {
+  display: none;
+}
+
 /* ==========================================================================
    Article Dates - Published/Updated timestamps below title
    ========================================================================== */

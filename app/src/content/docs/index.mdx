@@ -6,16 +6,15 @@ lastUpdated: false
 ---
 
 import SiteImage from '../../components/SiteImage.astro';
+import ThemedSiteImage from '../../components/ThemedSiteImage.astro';
 import heroLight from '../../assets/og/koborin-ai-hero-light.png';
 import heroDark from '../../assets/og/koborin-ai-hero-dark.png';
 import bookCover from '../../assets/life/reflections-on-2025/book-cover.png';
 import contextlintOg from '../../assets/_shared/building/contextlint-og.png';
 import abletonOscMcpKey from '../../assets/_shared/building/ableton-osc-mcp-key.png';
+import terradartOg from '../../assets/_shared/building/terradart-og.png';
 
-<div class="hero-image">
-  <SiteImage src={heroLight} alt="Welcome to koborin.ai" variant="hero" class="hero-light" />
-  <SiteImage src={heroDark} alt="Welcome to koborin.ai" variant="hero" class="hero-dark" />
-</div>
+<ThemedSiteImage lightSrc={heroLight} darkSrc={heroDark} alt="Welcome to koborin.ai" variant="hero" />
 
 ## About This Proving Ground
 
@@ -93,13 +92,20 @@ An MCP (Model Context Protocol) server that lets AI assistants like Claude or Cu
 </div>
 </div>
 
-<div style="margin: 1.5rem 0;">
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://terradart.dev/">
+<SiteImage src={terradartOg} alt="TerraDart OG image" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
 
-**terradart**
+**TerraDart**
 
-A Dart code generator that turns the Terraform Google provider schema into typed, refactor-safe Dart bindings. Focuses on the IaC ↔ Dart application seam: a renamed Pub/Sub topic or secret breaks at compile time, not at runtime. Synthesizes JSON that the existing `terraform` CLI consumes — not a replacement. Pre-alpha (v0.0.x), filling the Dart-shaped slot CDKTF didn't reach before being archived in October 2025.
+As the Dart ecosystem grows — Flutter on the client, more server-side Dart (Firebase Functions, Cloud Run, Cloud Run functions) — teams often still use Terraform for delivery: HCL or `*.tf.json`, alongside the usual GCP console workflows.
 
-[GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
+TerraDart is my pre-alpha take on type-safe IaC for that stack. Author typed GCP resources in Dart, emit standard `*.tf.json`, and keep your existing `terraform apply` pipeline.
+
+[terradart.dev](https://terradart.dev/) / [GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
+</div>
 </div>
 
 ---

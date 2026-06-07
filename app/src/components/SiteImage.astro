@@ -20,18 +20,20 @@ interface Props {
   loading?: 'lazy' | 'eager';
   /** preset を上書きする escape hatch */
   sizes?: string;
+  /** preset を上書きする escape hatch */
+  fetchpriority?: 'high' | 'auto' | 'low';
   /** 任意の追加 class */
   class?: string;
   /** 任意の追加 style */
   style?: string;
 }
 
-const { src, alt, variant, widths, loading, sizes, class: className, style } = Astro.props;
+const { src, alt, variant, widths, loading, sizes, fetchpriority, class: className, style } = Astro.props;
 
 const PRESETS = {
   hero: {
-    widths: [768, 1376, 2752],
-    sizes: '100vw',
+    widths: [384, 720, 1440],
+    sizes: '(max-width: 720px) 100vw, 720px',
     formats: ['avif', 'webp'] as const,
     quality: 88,
     loading: 'eager' as const,
@@ -75,6 +77,7 @@ const preset = PRESETS[variant];
 const finalWidths = widths ?? [...preset.widths];
 const finalLoading = loading ?? preset.loading;
 const finalSizes = sizes ?? preset.sizes;
+const finalFetchpriority = fetchpriority ?? preset.fetchpriority;
 ---
 
 <Picture
@@ -85,7 +88,7 @@ const finalSizes = sizes ?? preset.sizes;
   formats={[...preset.formats]}
   quality={preset.quality}
   loading={finalLoading}
-  fetchpriority={preset.fetchpriority}
+  fetchpriority={finalFetchpriority}
   class={className}
   style={style}
 />

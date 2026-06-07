@@ -7,6 +7,16 @@ export const sidebar = [
     label: "Tech",
     items: [
       {
+        label: "Stars Digest",
+        translations: { ja: "star を掘り起こすエージェント" },
+        slug: "tech/stars-digest",
+      },
+      {
+        label: "contextlint v0.9 — LSP & VS Code Extension",
+        translations: { ja: "contextlint v0.9 — エディタで波線が出るようになった話" },
+        slug: "tech/contextlint-lsp-and-editor-integration",
+      },
+      {
         label: "Plugin Marketplace on koborin.ai",
         translations: { ja: "koborin.ai に Plugin Marketplace を追加した" },
         slug: "tech/plugin-marketplace",
@@ -15,11 +25,6 @@ export const sidebar = [
         label: "Building contextlint",
         translations: { ja: "contextlint というリンターを作っている話" },
         slug: "tech/contextlint-introduction",
-      },
-      {
-        label: "contextlint v0.9 — LSP & VS Code Extension",
-        translations: { ja: "contextlint v0.9 — エディタで波線が出るようになった話" },
-        slug: "tech/contextlint-lsp-and-editor-integration",
       },
       {
         label: "MCP Deep Dive",

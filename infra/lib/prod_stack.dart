@@ -1,6 +1,6 @@
 /// Prod Cloud Run service for koborin.ai.
 ///
-/// Mirrors [infra/stacks/prod.go] during the Pulumi → TerraDart migration.
+/// Prod Cloud Run stack (TerraDart → Terraform).
 library;
 
 import 'package:terradart_core/terradart_core.dart';

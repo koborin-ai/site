@@ -1,5 +1,5 @@
 name: koborin_ai_infra
-description: TerraDart infrastructure for koborin.ai (migrating from Pulumi Go).
+description: TerraDart infrastructure for koborin.ai (Dart → Terraform).
 publish_to: none
 
 environment:

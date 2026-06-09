@@ -12,8 +12,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 - Personal site + technical garden for `koborin.ai`.
 - Astro with Starlight (documentation-focused theme) for MDX content under `app/src/content/docs/`.
 - Google Cloud Run (dev / prod) fronted by a single global HTTPS load balancer.
-- Infrastructure managed via Pulumi (Go) with three stacks: `shared`, `dev`, `prod`.
-- CI/CD and Pulumi preview/up executed only through GitHub Actions using Workload Identity Federation.
+- Infrastructure managed via TerraDart (Dart) with three Terraform root modules: `shared`, `dev`, `prod`.
+- CI/CD and `terraform plan`/`apply` executed only through GitHub Actions using Workload Identity Federation.
 
 ## Repository Layout
 
@@ -29,10 +29,11 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/pages/rss.xml.ts` | RSS feed endpoint for English articles. |
 | `app/src/pages/ja/rss.xml.ts` | RSS feed endpoint for Japanese articles. |
 | `app/nginx/nginx.conf` | nginx configuration for static file serving (port 8080). |
-| `infra/` | Pulumi Go stacks (`shared`, `dev`, `prod`). |
-| `infra/stacks/shared.go` | Shared resources: APIs, Artifact Registry, HTTPS LB, Workload Identity. |
-| `infra/stacks/dev.go` | Dev Cloud Run service. |
-| `infra/stacks/prod.go` | Prod Cloud Run service. |
+| `infra/` | TerraDart infrastructure (`shared`, `dev`, `prod` stacks). |
+| `infra/lib/shared_stack.dart` | Shared resources: APIs, Artifact Registry, HTTPS LB, Workload Identity. |
+| `infra/lib/dev_stack.dart` | Dev Cloud Run service. |
+| `infra/lib/prod_stack.dart` | Prod Cloud Run service. |
+| `infra/bin/synth.dart` | Synth entry point; emits `tf-out/<stack>/main.tf.json`. |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
 | `docs/assets/{article}/` | Mermaid sources and generated images for each spec document. |
 | `.claude-plugin/` | Plugin marketplace manifest (`marketplace.json`). |
@@ -41,9 +42,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 ## Infrastructure Rules
 
-1. **Preview/Up**: never run Pulumi applies locally. All infra changes go through GitHub Actions with Workload Identity Federation.
-2. **State backend**: GCS bucket with Pulumi's automatic stack-based state management. Backend URL: `gs://<BUCKET_NAME>/pulumi`.
-3. **Stacks**: Pulumi stacks (`shared`, `dev`, `prod`) are managed via `pulumi stack select`. Each stack has its own state file.
+1. **Plan/Apply**: never run `terraform apply` locally. All infra changes go through GitHub Actions with Workload Identity Federation. Local `terraform plan` after import is OK for verification.
+2. **State backend**: GCS bucket with per-stack prefixes. Backend URL: `gs://<BUCKET_NAME>/terraform/<stack>`.
+3. **Stacks**: Terraform root modules (`shared`, `dev`, `prod`) are synthesized via `dart run bin/synth.dart <stack>`. Each stack has its own state file.
 4. **Environments**:
 
    - `shared`: APIs, Artifact Registry, static IP, Managed SSL cert, HTTPS LB (NEG, Backend Service, URL Map, Target Proxy, Forwarding Rule), IAP configuration for dev, Workload Identity for GitHub Actions.
@@ -59,9 +60,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 6. **Configuration Management**:
 
-   - All configuration values are set dynamically via `pulumi config set` in GitHub Actions.
-   - Secrets (OAuth credentials, passphrase) are stored in GitHub Secrets and passed at runtime.
-   - Stack configuration files (`Pulumi.*.yaml`) are gitignored - CI/CD sets all values.
+   - Runtime values are passed as `TF_VAR_*` environment variables in GitHub Actions (`image_uri`, `oauth_client_id`, `oauth_client_secret`, `iap_user`).
+   - Secrets (OAuth credentials) are stored in GitHub Secrets and never baked into synth output.
+   - Synth requires `GCP_PROJECT_ID` and `GCP_PROJECT_NUMBER` (shared/dev) as environment variables.
 
 7. **IaC Philosophy - Code as Documentation**:
 
@@ -72,11 +73,10 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 8. **File Organization**:
 
-   - `infra/main.go`: Entry point that loads the appropriate stack based on stack name.
-   - `infra/config.go`: Configuration helper functions.
-   - `infra/stacks/*.go`: Stack definitions (shared, dev, prod).
-   - `infra/Pulumi.yaml`: Project configuration.
-   - `infra/go.mod` / `infra/go.sum`: Go module dependencies.
+   - `infra/bin/synth.dart`: Entry point; synthesizes the selected stack to `tf-out/<stack>/main.tf.json`.
+   - `infra/lib/*_stack.dart`: Stack definitions (shared, dev, prod).
+   - `infra/lib/terraform_variables.dart`: Terraform `variable` blocks merged at synth time.
+   - `infra/pubspec.yaml`: TerraDart dependencies (`terradart_core`, `terradart_google`).
 
 ## Application Rules
 
@@ -282,10 +282,10 @@ Examples:
 ## CI/CD Expectations
 
 - Workflows:
-  - `plan-infra.yml`: `pulumi preview` for shared/dev/prod stacks (no apply).
-  - `release-infra.yml`: authenticated `pulumi up` for shared/dev/prod stacks (manual dispatch or tag based).
+  - `plan-infra.yml`: `dart analyze` + `terraform plan` for shared/dev/prod stacks (no apply).
+  - `release-infra.yml`: authenticated `terraform apply` for shared/dev/prod stacks (manual dispatch or tag based).
   - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run check-images`) on PRs touching `app/`.
-  - `app-release.yml`: builds/pushes the Astro container with Cloud Build and feeds the resulting `image_uri` into Pulumi for dev/prod deploys.
+  - `app-release.yml`: builds/pushes the Astro container with Cloud Build and applies `TF_VAR_image_uri` via Terraform for dev/prod deploys.
   - `plugin-ci.yml`: validates plugin structure, JSON schemas, and marketplace ↔ plugin consistency on PRs touching `plugins/` or `.claude-plugin/`.
 - Workload Identity:
   - Pool ID: `github-actions-pool`
@@ -297,7 +297,7 @@ Examples:
 
 - Tag infra releases as `infra-v*` to force `release-infra.yml` to apply shared/dev/prod stacks ahead of app rollouts.
 - Tag app releases as `app-v*` once `main` includes the desired content; this runs `app-release.yml`, builds a new Artifact Registry image, and updates the Cloud Run service.
-- GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `pulumi`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
+- GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
 
 ## Contact Flow & Analytics
 
@@ -388,7 +388,7 @@ Use these change types to decide PR labels and the appropriate level of testing.
 
 - **Behavior Change**: Any change that can affect what users/production systems observe.
   - App: UI/UX changes, content changes under `app/src/content/docs/`, routing/sidebar changes, asset changes under `app/public/` or `app/src/assets/`, build/runtime config changes (e.g. `app/astro.config.mjs`, `app/nginx/nginx.conf`, `app/Dockerfile`).
-  - Infra: Any Pulumi change that could change the deployed resources/configuration.
+  - Infra: Any TerraDart/Terraform change that could change the deployed resources/configuration.
   - CI: Workflow changes that can change what checks run or how deployments happen.
 - **Structure Change**: Changes intended to preserve external behavior while improving maintainability.
   - Examples: refactors, renames, formatting, comment-only changes, internal documentation updates, reorganization that does not change URLs/output.
@@ -414,11 +414,10 @@ These are in addition to the existing domain labels (`app`, `infra`, `doc`, etc.
 
 ```bash
 cd infra
-go build ./...     # Go compilation
-go vet ./...       # Go static analysis
+dart analyze
 ```
 
-All commands must complete successfully with no errors.
+All commands must complete successfully with no errors. CI also runs `terraform plan` via `plan-infra.yml`.
 
 ### Application (`app/`)
 
@@ -436,9 +435,9 @@ All five commands must complete successfully with no errors.
 ## Pull Request Checklist
 
 1. Update relevant docs (`README.md`, `AGENTS.md`, or files under `docs/`) when changing behavior.
-   - **Directory structure changes** (e.g., `app/src/assets/`, `infra/stacks/`): Update "Repository Layout" sections in both `README.md` and `AGENTS.md`.
+   - **Directory structure changes** (e.g., `app/src/assets/`, `infra/lib/`): Update "Repository Layout" sections in both `README.md` and `AGENTS.md`.
    - **New conventions or rules**: Add to `AGENTS.md` under the appropriate section.
-2. For infra: `go build ./... && go vet ./...` in `infra/` - all must pass.
+2. For infra: `dart analyze` in `infra/` - must pass.
 3. For app: `npm run build && npm run lint && npm run typecheck && npm run test && npm run check-images` in `app/` - all must pass.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual GCP steps (e.g., DNS imports, current gaps like IAP enablement) in the PR description.
@@ -452,7 +451,7 @@ All five commands must complete successfully with no errors.
      - `doc` — Documentation updates (`README.md`, `AGENTS.md`, `docs/`).
      - `ci` — Workflow changes under `.github/workflows/`.
    - **Category labels** (optional, for release notes):
-     - `feature`, `bug`, `pulumi`, `ignore`.
+     - `feature`, `bug`, `ignore`.
 
 ## Agent Execution Rules
 
@@ -476,8 +475,7 @@ The main local runtime is the **Astro + Starlight app** under `app/`. There is n
 ### Toolchain versions
 
 - **Node.js 22** (matches `app-ci.yml`). All npm commands run from `app/`.
-- **Go** (from `infra/go.mod`, currently 1.25+) for `infra/` compile checks only.
-- **Dart** is only required for `tools/stars-digest/` (not needed for website work).
+- **Dart 3.8+** for `infra/` (TerraDart synth) and `tools/stars-digest/`.
 
 ### App development
 
@@ -505,10 +503,10 @@ cd app && npx playwright install chromium
 ### Infrastructure
 
 ```bash
-cd infra && go build ./... && go vet ./...
+cd infra && dart analyze
 ```
 
-Never run `pulumi preview` or `pulumi up` locally. Infra changes go through GitHub Actions only.
+Never run `terraform apply` locally. Infra changes go through GitHub Actions only.
 
 ### Optional tooling
 

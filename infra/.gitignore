@@ -1,0 +1,12 @@
+# TerraDart synth output
+tf-out/
+
+# Terraform working files
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+
+# Dart
+.dart_tool/
+pubspec.lock

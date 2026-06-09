@@ -22,7 +22,7 @@ on:
           - prod
 
 jobs:
-  pulumi-up:
+  terraform-apply:
     runs-on: blacksmith-8vcpu-ubuntu-2404
     permissions:
       id-token: write
@@ -41,31 +41,29 @@ jobs:
       IAP_USER: ${{ secrets.IAP_USER }}
       OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
       OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
-      PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup Go
-        uses: actions/setup-go@v6
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
         with:
-          go-version-file: infra/go.mod
-          cache-dependency-path: infra/go.sum
+          sdk: "3.8"
 
-      - name: Download Go dependencies
-        working-directory: infra
-        run: go mod download
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.11.4"
 
       - name: Decide target stack
-        id: decide-stack
         run: |
           if [[ "$GITHUB_REF" == refs/tags/infra-v* ]]; then
-            echo "PULUMI_STACK=prod" >> "$GITHUB_ENV"
+            echo "INFRA_STACK=prod" >> "$GITHUB_ENV"
           elif [ "${{ github.ref_name }}" = "main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            echo "PULUMI_STACK=dev" >> "$GITHUB_ENV"
+            echo "INFRA_STACK=dev" >> "$GITHUB_ENV"
           else
-            echo "PULUMI_STACK=${{ github.event.inputs.stack }}" >> "$GITHUB_ENV"
+            echo "INFRA_STACK=${{ github.event.inputs.stack }}" >> "$GITHUB_ENV"
           fi
 
       - name: Authenticate to Google Cloud
@@ -76,71 +74,77 @@ jobs:
           create_credentials_file: true
           export_environment_variables: true
 
-      - name: Setup Pulumi
-        uses: pulumi/setup-pulumi@v2
-
       - name: Get current Cloud Run image (if exists)
-        if: env.PULUMI_STACK != 'shared'
+        if: env.INFRA_STACK != 'shared'
         id: current-image
         run: |
-          if [ "$PULUMI_STACK" = "prod" ]; then
+          if [ "$INFRA_STACK" = "prod" ]; then
             SERVICE_NAME="koborin-ai-web-prod"
           else
             SERVICE_NAME="koborin-ai-web-dev"
           fi
-          CURRENT_IMAGE=$(gcloud run services describe ${SERVICE_NAME} \
-            --region=${{ env.REGION }} \
-            --project=${{ env.PROJECT_ID }} \
+          CURRENT_IMAGE=$(gcloud run services describe "${SERVICE_NAME}" \
+            --region="${{ env.REGION }}" \
+            --project="${{ env.PROJECT_ID }}" \
             --format='value(spec.template.spec.containers[0].image)' 2>/dev/null || echo "gcr.io/cloudrun/hello")
-          echo "CURRENT_IMAGE=${CURRENT_IMAGE}" >> $GITHUB_OUTPUT
+          echo "CURRENT_IMAGE=${CURRENT_IMAGE}" >> "$GITHUB_OUTPUT"
           echo "Current image: ${CURRENT_IMAGE}"
 
-      - name: Configure Pulumi Stack
+      - name: Synth Terraform config
         working-directory: infra
         env:
-          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          GCP_PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
+          TERRAFORM_BACKEND: gcs
+          TERRAFORM_STATE_BUCKET: ${{ env.BUCKET_NAME }}
+          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
+          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
+          TF_VAR_iap_user: ${{ env.IAP_USER }}
+          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
         run: |
-          # Select or create stack
-          pulumi stack select ${{ env.PULUMI_STACK }} --create --non-interactive || true
-          
-          # Set common config
-          pulumi config set gcp:project ${{ env.PROJECT_ID }} --non-interactive
-          pulumi config set gcp:region ${{ env.REGION }} --non-interactive
-          pulumi config set projectNumber ${{ env.PROJECT_NUMBER }} --non-interactive
-          
-          if [ "$PULUMI_STACK" = "shared" ]; then
-            pulumi config set iapUser ${{ env.IAP_USER }} --non-interactive
-            pulumi config set oauthClientId ${{ env.OAUTH_CLIENT_ID }} --non-interactive
-            pulumi config set --secret oauthClientSecret ${{ env.OAUTH_CLIENT_SECRET }} --non-interactive
-          else
-            pulumi config set imageUri ${{ steps.current-image.outputs.CURRENT_IMAGE }} --non-interactive
+          set -euo pipefail
+          dart pub get
+          dart analyze
+          dart run bin/synth.dart "${INFRA_STACK}"
+
+      - name: Terraform Init
+        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
+        run: terraform init -input=false
+
+      - name: Terraform Plan (pre-apply)
+        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
+        env:
+          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
+          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
+          TF_VAR_iap_user: ${{ env.IAP_USER }}
+          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        run: terraform plan -no-color -input=false
+
+      - name: Terraform Apply
+        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
+        env:
+          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
+          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
+          TF_VAR_iap_user: ${{ env.IAP_USER }}
+          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Terraform Plan (verify no drift)
+        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
+        env:
+          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
+          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
+          TF_VAR_iap_user: ${{ env.IAP_USER }}
+          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        run: |
+          set +e
+          terraform plan -detailed-exitcode -input=false
+          EXIT_CODE=$?
+          set -e
+          if [ "$EXIT_CODE" -eq 2 ]; then
+            echo "Terraform state drift detected after apply"
+            exit 1
           fi
-
-      - name: Pulumi Preview (Pre-Apply Check)
-        uses: pulumi/actions@v7
-        with:
-          command: preview
-          stack-name: ${{ env.PULUMI_STACK }}
-          work-dir: infra
-        env:
-          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
-
-      - name: Pulumi Up
-        uses: pulumi/actions@v7
-        with:
-          command: up
-          stack-name: ${{ env.PULUMI_STACK }}
-          work-dir: infra
-        env:
-          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
-
-      - name: Pulumi Preview (Verify No Drift)
-        if: always()
-        uses: pulumi/actions@v7
-        with:
-          command: preview
-          stack-name: ${{ env.PULUMI_STACK }}
-          work-dir: infra
-          expect-no-changes: true
-        env:
-          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            exit "$EXIT_CODE"
+          fi

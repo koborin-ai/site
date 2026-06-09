@@ -34,7 +34,7 @@ on:
         required: false
         type: string
 
-# Prevent concurrent deployments to avoid Pulumi state conflicts
+# Prevent concurrent deployments to avoid Terraform state conflicts
 # When multiple triggers occur (e.g., main merge + tag push), jobs queue up
 concurrency:
   group: app-release
@@ -58,7 +58,6 @@ jobs:
       WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
       SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-      PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
       GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
       GISCUS_REPO_ID: ${{ secrets.GISCUS_REPO_ID }}
       GISCUS_CATEGORY_ID: ${{ secrets.GISCUS_CATEGORY_ID }}
@@ -165,50 +164,45 @@ jobs:
 
           echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_ENV"
 
-      - name: Setup Go
-        uses: actions/setup-go@v6
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
         with:
-          go-version-file: infra/go.mod
-          cache-dependency-path: infra/go.sum
+          sdk: "3.8"
 
-      - name: Download Go dependencies
-        working-directory: infra
-        run: go mod download
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.11.4"
 
-      - name: Setup Pulumi
-        uses: pulumi/setup-pulumi@v2
-
-      - name: Configure Pulumi Stack
+      - name: Synth Terraform config
         working-directory: infra
         env:
-          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          GCP_PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
+          TERRAFORM_BACKEND: gcs
+          TERRAFORM_STATE_BUCKET: ${{ env.BUCKET_NAME }}
+          TF_VAR_image_uri: ${{ env.IMAGE_URI }}
         run: |
-          # Select or create stack
-          pulumi stack select ${{ env.TARGET_ENV }} --create --non-interactive || true
-          
-          # Set config
-          pulumi config set gcp:project ${{ env.PROJECT_ID }} --non-interactive
-          pulumi config set gcp:region ${{ env.REGION }} --non-interactive
-          pulumi config set projectNumber ${{ env.PROJECT_NUMBER }} --non-interactive
-          pulumi config set imageUri ${{ env.IMAGE_URI }} --non-interactive
+          set -euo pipefail
+          dart pub get
+          dart analyze
+          dart run bin/synth.dart "${TARGET_ENV}"
 
-      - name: Pulumi Preview
-        uses: pulumi/actions@v7
-        with:
-          command: preview
-          stack-name: ${{ env.TARGET_ENV }}
-          work-dir: infra
-        env:
-          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
+      - name: Terraform Init
+        working-directory: infra/tf-out/${{ env.TARGET_ENV }}
+        run: terraform init -input=false
 
-      - name: Pulumi Up
-        uses: pulumi/actions@v7
-        with:
-          command: up
-          stack-name: ${{ env.TARGET_ENV }}
-          work-dir: infra
+      - name: Terraform Plan
+        working-directory: infra/tf-out/${{ env.TARGET_ENV }}
         env:
-          PULUMI_BACKEND_URL: gs://${{ env.BUCKET_NAME }}/pulumi
+          TF_VAR_image_uri: ${{ env.IMAGE_URI }}
+        run: terraform plan -no-color -input=false
+
+      - name: Terraform Apply
+        working-directory: infra/tf-out/${{ env.TARGET_ENV }}
+        env:
+          TF_VAR_image_uri: ${{ env.IMAGE_URI }}
+        run: terraform apply -auto-approve -input=false
 
       - name: Retrieve deployed service URL
         id: service-url

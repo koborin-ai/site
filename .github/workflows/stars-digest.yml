@@ -98,7 +98,11 @@ jobs:
 
   deploy-prod:
     name: Deploy (prod)
-    needs: deploy-dev
+    # `generate` must be in `needs` so `needs.generate.outputs.sha` resolves.
+    # Without it, `ref` is empty and app-release falls back to the workflow
+    # trigger SHA (pre-digest commit), which leaves prod one edition behind dev.
+    needs: [generate, deploy-dev]
+    if: needs.generate.outputs.changed == 'true'
     uses: ./.github/workflows/app-release.yml
     with:
       environment: prod

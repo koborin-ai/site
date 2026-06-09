@@ -77,10 +77,10 @@ flowchart LR
     PROD_NEG --> PROD_CR
     
     GH_WIF -.->|"Authenticate"| WIF
-    WIF -.->|"Impersonate"| PULUMI_SA
-    PULUMI_SA -.->|"Preview/Up"| PULUMI_STATE
+    WIF -.->|"Impersonate"| DEPLOYER_SA
+    DEPLOYER_SA -.->|"plan/apply"| TF_STATE
     
-    style PULUMI_STATE fill:#E8E8E8,color:#000,stroke:#666,stroke-width:2px
+    style TF_STATE fill:#E8E8E8,color:#000,stroke:#666,stroke-width:2px
     style STATE_SHARED fill:#F5F5F5,color:#000
     style STATE_DEV fill:#F5F5F5,color:#000
     style STATE_PROD fill:#F5F5F5,color:#000
@@ -95,7 +95,7 @@ flowchart LR
     style DEV_CR fill:#4A90E2,color:#fff
     style PROD_CR fill:#4A90E2,color:#fff
     style GH_WIF fill:#FFB74D,color:#000
-    style PULUMI_SA fill:#FFB74D,color:#000
+    style DEPLOYER_SA fill:#FFB74D,color:#000
 ```
 
 > DNS is hosted in Cloudflare. Terraform does **not** manage DNS records; add/update `koborin.ai` / `dev.koborin.ai` A records manually whenever the load balancer IP changes.
@@ -157,7 +157,7 @@ flowchart LR
 
 ## Tech Stack
 
-- **Frontend**: Astro with Starlight (documentation theme), TypeScript, Tailwind CSS.
+- **Frontend**: Astro with Starlight (documentation theme), TypeScript.
 - **Content Management**: MDX stored under `app/src/content/docs/` within git. Frontmatter is validated via Zod schemas (from Starlight) to keep metadata type-safe. Drafts can be marked with `draft: true` in frontmatter.
 - **Analytics & o11y**:
   - Google Analytics 4 for baseline PV/engagement.
@@ -166,7 +166,7 @@ flowchart LR
 - **Infrastructure**: TerraDart (Dart) targeting Google Cloud via Terraform.
 - **Stars Digest**: Dart CLI built on Genkit (`genkit` + `genkit_vertexai`) that calls Gemini on Vertex AI to generate the daily `/stars` OSS newsletter. See [Stars Digest](#stars-digest).
 - **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra, `app-ci.yml` / `app-release.yml` handle the Astro app, and `stars-digest.yml` runs the daily newsletter.
-- **Testing**: Vitest for app tests, TypeScript compilation for infra, Playwright for future E2E if needed.
+- **Testing**: Vitest for app tests, `dart analyze` for infra, Playwright for Mermaid rendering in production builds.
 - **LLM Context**: Machine-readable `llms.txt` files for AI assistants. Auto-generated at build time.
 
 ## Stars Digest

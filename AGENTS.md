@@ -466,3 +466,55 @@ Rules for AI agents during task execution:
 2. **Resource Cleanup**:
    - Close browser tabs opened for testing when verification is complete.
    - Remove temporary files created during debugging.
+
+## Cursor Cloud specific instructions
+
+### Primary product
+
+The main local runtime is the **Astro + Starlight app** under `app/`. There is no docker-compose, database, or local API backend. Production serves static files via nginx on Cloud Run.
+
+### Toolchain versions
+
+- **Node.js 22** (matches `app-ci.yml`). All npm commands run from `app/`.
+- **Go** (from `infra/go.mod`, currently 1.25+) for `infra/` compile checks only.
+- **Dart** is only required for `tools/stars-digest/` (not needed for website work).
+
+### App development
+
+```bash
+cd app
+npm run dev                 # http://localhost:4321
+npm run lint                # astro check (lint + typecheck + tests)
+npm run check-images
+npm run build               # requires Playwright Chromium (see below)
+npm run preview             # serve dist/ after build
+```
+
+Use **tmux** for long-running processes such as `npm run dev`.
+
+### Playwright (required for full `npm run build`)
+
+CI installs Chromium for Mermaid diagram rendering during production builds. After the VM update script runs `npm ci`, run once per fresh environment:
+
+```bash
+cd app && npx playwright install chromium
+```
+
+`npm run dev` does not need Playwright (Mermaid uses inline SVG in dev).
+
+### Infrastructure
+
+```bash
+cd infra && go build ./... && go vet ./...
+```
+
+Never run `pulumi preview` or `pulumi up` locally. Infra changes go through GitHub Actions only.
+
+### Optional tooling
+
+- **webp / imagemagick**: Used by `app/scripts/optimize-og-images.sh` in CI behavior builds. Not required for local dev or `npm run build`.
+- **Giscus / GA4**: Set `PUBLIC_GISCUS_*` and `PUBLIC_GA_MEASUREMENT_ID` in `app/.env` to mirror production engagement features. The site works without them.
+
+### Stars Digest (secondary)
+
+See `tools/stars-digest/README.md`. Requires Dart SDK, a local clone of the private `koborin-ai/stars` repo, and optionally `GEMINI_API_KEY` (use `--dry-run` for offline stub output).

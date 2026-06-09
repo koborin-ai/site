@@ -258,7 +258,7 @@ final class SharedStack extends Stack {
           'google.subject': 'assertion.repository',
           'attribute.repository_owner': 'assertion.repository_owner',
         }),
-        oidc: IamWorkloadIdentityPoolProviderOidc(
+        trustSource: IamWorkloadIdentityPoolProviderOidcTrust(
           issuerUri: TfArg.literal(
             'https://token.actions.githubusercontent.com',
           ),

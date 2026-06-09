@@ -1,6 +1,6 @@
 /// Dev Cloud Run service for koborin.ai.
 ///
-/// Mirrors [infra/stacks/dev.go] during the Pulumi → TerraDart migration.
+/// Dev Cloud Run stack (TerraDart → Terraform).
 library;
 
 import 'package:terradart_core/terradart_core.dart';

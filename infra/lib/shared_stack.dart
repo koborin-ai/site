@@ -2,7 +2,7 @@
 ///
 /// Provisions the HTTPS load balancer (dev + prod backends), Artifact
 /// Registry, Workload Identity Federation, IAP access, and deployer IAM.
-/// Mirrors [infra/stacks/shared.go] during the Pulumi → TerraDart migration.
+/// Shared GCP infrastructure stack (TerraDart → Terraform).
 library;
 
 import 'package:terradart_core/terradart_core.dart';

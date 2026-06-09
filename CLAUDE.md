@@ -14,7 +14,7 @@ Skills are located in `.claude/skills/`:
 - **commit-push-pr**: Commit changes and create pull requests
 - **evaluate-article**: Comprehensive blog article evaluation across 7 dimensions (defensibility, logical organization, practical applicability, structure, communication, controversy risk, human authenticity)
 - **import-command**: Convert Cursor commands to Claude Code skills
-- **import-pulumi**: Import existing GCP resources into Pulumi state
+- **import-pulumi**: Legacy guide for Pulumi state import (historical; infra now uses TerraDart/Terraform)
 - **safe-editing**: Ensure AI agents work in an isolated Git worktree to prevent changes to the main working directory
 - **skill-creator**: Create new Claude Code skills
 - **translate-article**: Translate MDX articles between languages while preserving frontmatter and structure

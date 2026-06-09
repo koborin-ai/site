@@ -29,3 +29,12 @@ const Map<String, Map<String, Object>> devStackTerraformVariables = {
         'Container image URI for the dev Cloud Run service (Artifact Registry).',
   },
 };
+
+/// Terraform `variable` blocks for the prod stack.
+const Map<String, Map<String, Object>> prodStackTerraformVariables = {
+  'image_uri': {
+    'type': 'string',
+    'description':
+        'Container image URI for the prod Cloud Run service (Artifact Registry).',
+  },
+};

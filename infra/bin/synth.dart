@@ -12,6 +12,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:koborin_ai_infra/dev_stack.dart';
+import 'package:koborin_ai_infra/prod_stack.dart';
 import 'package:koborin_ai_infra/shared_stack.dart';
 import 'package:koborin_ai_infra/terraform_variables.dart';
 import 'package:terradart_core/terradart_core.dart';
@@ -26,9 +27,12 @@ Future<void> main(List<String> args) async {
     case 'dev':
       await _synthDev();
       return;
+    case 'prod':
+      await _synthProd();
+      return;
     default:
       stderr.writeln(
-        'error: unknown stack "$stackName". Valid stacks: shared, dev',
+        'error: unknown stack "$stackName". Valid stacks: shared, dev, prod',
       );
       exit(64);
   }
@@ -67,6 +71,20 @@ Future<void> _synthDev() async {
     stack: stack,
     variables: devStackTerraformVariables,
     backendPrefix: 'terraform/dev',
+  );
+}
+
+Future<void> _synthProd() async {
+  final projectId = _requireEnv('GCP_PROJECT_ID');
+
+  const outputDir = 'tf-out/prod';
+  final stack = ProdStack(projectId: projectId);
+
+  await _synthStack(
+    outputDir: outputDir,
+    stack: stack,
+    variables: prodStackTerraformVariables,
+    backendPrefix: 'terraform/prod',
   );
 }
 

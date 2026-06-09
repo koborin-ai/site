@@ -20,3 +20,12 @@ const Map<String, Map<String, Object>> sharedStackTerraformVariables = {
     'description': 'Google account email allowed to access dev via IAP.',
   },
 };
+
+/// Terraform `variable` blocks for the dev stack.
+const Map<String, Map<String, Object>> devStackTerraformVariables = {
+  'image_uri': {
+    'type': 'string',
+    'description':
+        'Container image URI for the dev Cloud Run service (Artifact Registry).',
+  },
+};

@@ -269,7 +269,7 @@ When adding or updating dependencies (GitHub Actions, Go modules, npm packages, 
 
 1. **Always check for the latest stable version** before adding a new dependency.
 2. **Use specific major versions** for GitHub Actions (e.g., `@v6` not `@main` or `@latest`).
-3. **Prefer `go-version-file`** over hardcoded Go versions to keep CI in sync with `go.mod`.
+3. **Prefer version pins from project files** (e.g. `pubspec.yaml` for Dart, `go-version-file` for Go in other packages) over hardcoded versions in workflows.
 4. **Verify compatibility** with existing dependencies before upgrading.
 5. **Document breaking changes** in PR descriptions when upgrading major versions.
 
@@ -338,7 +338,7 @@ Examples:
    - Dark/light mode theming is handled by CSS in `app/src/styles/custom.css`.
    - **Do not override Mermaid theme in code blocks** - the global CSS handles theme switching.
    - Keep node labels short to avoid text overlap (especially in `flowchart LR` layouts).
-   - Use simple subgraph labels (avoid long strings like `"Pulumi Backend State - GCS"`).
+   - Use simple subgraph labels (avoid long strings like `"Terraform Backend State - GCS"`).
    - If diagrams look broken in dark mode, check that CSS selectors in `custom.css` cover the generated SVG structure.
 
 6. **Terminology Tables for Abbreviations**:
@@ -369,7 +369,7 @@ Examples:
    - Always specify language for code blocks (e.g., `bash`, `typescript`, `text`).
    - Remove trailing spaces at the end of lines.
    - End files with a single newline (no multiple blank lines at EOF).
-   - Do not use backticks in headings (e.g., use `### infra/stacks/shared.go` instead of ``### `infra/stacks/shared.go` ``).
+   - Do not use backticks in headings (e.g., use `### infra/lib/shared_stack.dart` instead of ``### `infra/lib/shared_stack.dart` ``).
 2. **Content Structure**:
    - Use clear, descriptive headings that reflect the content hierarchy.
    - Keep lists concise and actionable.

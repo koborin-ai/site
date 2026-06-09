@@ -1,11 +1,12 @@
 {
   "mainFeatured": [
     "DNLHC/glance.nvim",
+    "basecamp/omarchy",
     "github/gh-stack",
     "kosukesaigusa/claude-code-action-access-control",
     "openclaw/mcporter",
     "samchon/ttsc",
     "standardagents/arrow-js"
   ],
-  "lastProcessedStarsSha": "a99e2f247eb80a83aed18f968d5d19a9f97b9424"
+  "lastProcessedStarsSha": "c5a05217bbb54b1bd248ce88eaf59a67477cf4f2"
 }

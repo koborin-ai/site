@@ -4,7 +4,7 @@
 
 Technical proving ground for exploring AI, cloud architecture, and continuous learning.
 
-Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with Pulumi (Go).
+Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with TerraDart (Dart → Terraform).
 
 ## Architecture
 
@@ -15,7 +15,7 @@ Dev/Prod share the same HTTPS load balancer and Artifact Registry; only Cloud Ru
 title: "Google Cloud Project"
 ---
 flowchart LR
-    subgraph PULUMI_STATE["Pulumi Backend State - GCS"]
+    subgraph TF_STATE["Terraform Backend State - GCS"]
         STATE_SHARED["shared"]
         STATE_DEV["dev"]
         STATE_PROD["prod"]
@@ -52,7 +52,7 @@ flowchart LR
     
     subgraph CICD["GitHub Actions"]
         GH_WIF["Workload Identity<br/>Federation"]
-        PULUMI_SA["Pulumi SA"]
+        DEPLOYER_SA["Deployer SA"]
     end
     
     STATE_SHARED -.-> SHARED
@@ -98,7 +98,7 @@ flowchart LR
     style PULUMI_SA fill:#FFB74D,color:#000
 ```
 
-> DNS is hosted in Cloudflare. Pulumi does **not** manage DNS records; add/update `koborin.ai` / `dev.koborin.ai` A records manually whenever the load balancer IP changes.
+> DNS is hosted in Cloudflare. Terraform does **not** manage DNS records; add/update `koborin.ai` / `dev.koborin.ai` A records manually whenever the load balancer IP changes.
 
 ### Environment matrix
 
@@ -130,7 +130,7 @@ flowchart LR
         buildApp[Docker Build\n+ Artifact Registry]
     end
 
-    subgraph Pulumi
+    subgraph Terraform
         sharedStack[Shared Stack]
         envStacks[Dev/Prod Stacks]
     end
@@ -147,10 +147,10 @@ flowchart LR
 
 | Workflow | Trigger | Purpose | Notes |
 | --- | --- | --- | --- |
-| `plan-infra.yml` | PRs touching infra | Pulumi preview for shared/dev/prod stacks | No apply; reviewers inspect preview output |
-| `release-infra.yml` | `infra-v*` tags or manual dispatch | Applies shared/dev/prod stacks via Pulumi | Workload Identity SA has infra IAM roles |
+| `plan-infra.yml` | PRs touching infra | `dart analyze` + `terraform plan` for shared/dev/prod stacks | No apply; reviewers inspect plan output |
+| `release-infra.yml` | `infra-v*` tags or manual dispatch | Applies shared/dev/prod stacks via Terraform | Workload Identity SA has infra IAM roles |
 | `app-ci.yml` | PRs touching `app/` or `content/` | Runs Astro lint/typecheck/test/build | Blocks merges that break the app |
-| `app-release.yml` | Merge to `main`, `app-v*` tags, or `workflow_call` | Builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}-${TARGET_ENV}`) and applies Pulumi to update Cloud Run | Reusable via `workflow_call` (used by `stars-digest.yml`); Cloud Build runs asynchronously |
+| `app-release.yml` | Merge to `main`, `app-v*` tags, or `workflow_call` | Builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}-${TARGET_ENV}`) and applies Terraform to update Cloud Run | Reusable via `workflow_call` (used by `stars-digest.yml`); Cloud Build runs asynchronously |
 | `stars-digest.yml` | Daily cron (03:30 JST) or manual dispatch | Generates the `/stars` OSS newsletter, commits it, then deploys dev → prod | Calls `app-release.yml` via `workflow_call`; publishes a daily GitHub release |
 | `plugin-ci.yml` | PRs touching `plugins/` or `.claude-plugin/` | Validates plugin structure, JSON schemas, marketplace consistency | Blocks merges with invalid plugin packages |
 | `claude.yml` | `@claude` mention in issues/PR comments/reviews | Runs Claude Code Action to respond in-thread | Reads CI results on PRs; gated on the mention string |
@@ -162,8 +162,8 @@ flowchart LR
 - **Analytics & o11y**:
   - Google Analytics 4 for baseline PV/engagement.
   - Optional custom `/api/track` endpoint writing to Cloud Logging → BigQuery for privacy-friendly metrics.
-  - Cloud Monitoring dashboards + alert policies (via Pulumi) for Cloud Run metrics.
-- **Infrastructure**: Pulumi (Go) targeting Google Cloud.
+  - Cloud Monitoring dashboards + alert policies for Cloud Run metrics.
+- **Infrastructure**: TerraDart (Dart) targeting Google Cloud via Terraform.
 - **Stars Digest**: Dart CLI built on Genkit (`genkit` + `genkit_vertexai`) that calls Gemini on Vertex AI to generate the daily `/stars` OSS newsletter. See [Stars Digest](#stars-digest).
 - **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra, `app-ci.yml` / `app-release.yml` handle the Astro app, and `stars-digest.yml` runs the daily newsletter.
 - **Testing**: Vitest for app tests, TypeScript compilation for infra, Playwright for future E2E if needed.
@@ -232,16 +232,13 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   ├── Dockerfile                # Multi-stage build (node → nginx:alpine)
 │   └── astro.config.mjs          # Starlight integration config
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
-├── infra/                         # Pulumi Go stacks (shared/dev/prod)
-│   ├── main.go                   # Entry point
-│   ├── config.go                 # Configuration helpers
-│   ├── stacks/                   # Stack definitions
-│   │   ├── shared.go             # Shared resources (LB, APIs, WIF)
-│   │   ├── dev.go                # Dev Cloud Run
-│   │   └── prod.go               # Prod Cloud Run
-│   ├── Pulumi.yaml               # Project configuration
-│   ├── go.mod                    # Go module dependencies
-│   └── go.sum                    # Go dependency checksums
+├── infra/                         # TerraDart stacks (shared/dev/prod)
+│   ├── bin/synth.dart            # Synth entry point → tf-out/<stack>/main.tf.json
+│   ├── lib/                      # Stack definitions
+│   │   ├── shared_stack.dart     # Shared resources (LB, APIs, WIF)
+│   │   ├── dev_stack.dart        # Dev Cloud Run
+│   │   └── prod_stack.dart       # Prod Cloud Run
+│   └── pubspec.yaml              # TerraDart dependencies
 ├── tools/
 │   └── stars-digest/              # Dart + Genkit CLI for the daily /stars newsletter
 ├── .claude-plugin/                # Plugin marketplace manifest
@@ -283,8 +280,8 @@ That's it! The CI pipeline (`app/scripts/optimize-og-images.sh`) generates WebP 
 
 ## Workflow Overview
 
-1. **Infra changes**: edit Pulumi Go stacks → `go build ./... && go vet ./...` → open PR → GitHub Actions runs preview → reviewer approves → merge triggers apply on the right environment.
-2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run check-images && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and feeds the new image to Pulumi.
+1. **Infra changes**: edit TerraDart stacks → `dart analyze` → open PR → GitHub Actions runs `terraform plan` → reviewer approves → merge triggers apply on the right environment.
+2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run check-images && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and applies the new image via Terraform.
 3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `npm run lint`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
 
 ### Adding New Content
@@ -333,8 +330,8 @@ To add a new article or page:
 ## Release Strategy
 
 - Infra applies use `infra-v*` tags to trigger `release-infra.yml`. Tag the repo after merging infra PRs even if app work is still ongoing; this ensures the latest load balancer/stateful resources are deployed before app images roll out.
-- App deploys use `app-v*` tags to drive `app-release.yml`. Tagging after a successful `main` merge guarantees that the latest container image is built and the Cloud Run service is updated via Pulumi.
-- GitHub release notes are generated via `.github/release.yml`. Label each PR with `app`, `infra`, `pulumi`, `feature`, `bug`, or `doc` so the notes stay segmented by domain; apply the `ignore` label to omit a PR entirely.
+- App deploys use `app-v*` tags to drive `app-release.yml`. Tagging after a successful `main` merge guarantees that the latest container image is built and the Cloud Run service is updated via Terraform.
+- GitHub release notes are generated via `.github/release.yml`. Label each PR with `app`, `infra`, `feature`, `bug`, or `doc` so the notes stay segmented by domain; apply the `ignore` label to omit a PR entirely.
 
 ## Local Setup (once the app repo is initialized)
 
@@ -345,15 +342,15 @@ npm install
 # Run Astro dev server (app directory)
 npm run dev --prefix app
 
-# Build infrastructure (infra directory)
-cd infra && go build ./...
+# Analyze infrastructure (infra directory)
+cd infra && dart analyze
 ```
 
 ## Infrastructure Dev Notes
 
-- Pulumi stacks are located in `infra/stacks/`.
-- GCP provider version is managed via `github.com/pulumi/pulumi-gcp/sdk` Go module.
-- Each stack uses a GCS backend with automatic state management per stack name.
+- TerraDart stacks are located in `infra/lib/`.
+- Synth emits Terraform JSON via `dart run bin/synth.dart <stack>`.
+- Each stack uses a GCS backend at `gs://<BUCKET_NAME>/terraform/<stack>`.
 
 ### Shared Stack
 
@@ -374,7 +371,7 @@ cd infra && go build ./...
   - Provider: `actions-firebase-provider` (OIDC issuer: `https://token.actions.githubusercontent.com`).
   - Service Account: `github-actions-service@{project}.iam.gserviceaccount.com`.
   - IAM binding: Subject-based binding for repository `koborin-ai/site`.
-  - Project IAM roles (Artifact Registry, Run, Compute, IAM, etc.) granted to the Pulumi SA.
+  - Project IAM roles (Artifact Registry, Run, Compute, IAM, etc.) granted to the deployer service account.
 - **DNS**: Records live in Cloudflare and are managed manually (A records point to the LB IP).
 
 ### Dev Stack

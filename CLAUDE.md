@@ -31,7 +31,7 @@ Currently published plugins:
 
 ### Project-Specific Notes
 
-1. **Infrastructure**: Never run `pulumi up` or `pulumi preview` locally. All infra changes go through GitHub Actions.
+1. **Infrastructure**: Never run `terraform apply` locally. All infra changes go through GitHub Actions.
 2. **Content Creation**: Create MDX files under `app/src/content/docs/` and update `app/src/sidebar.ts`.
 3. **Testing**: Run `npm run lint && npm run typecheck && npm run test` in `app/` before committing.
 4. **Plugins**: Plugin structure and marketplace.json are validated by `plugin-ci.yml` on PRs touching `plugins/` or `.claude-plugin/`.
@@ -42,6 +42,6 @@ Currently published plugins:
 # App build and test
 cd app && npm run build && npm run lint && npm run typecheck && npm run test
 
-# Infra build and lint (Go)
-cd infra && go build ./... && go vet ./...
+# Infra analyze (TerraDart)
+cd infra && dart analyze
 ```

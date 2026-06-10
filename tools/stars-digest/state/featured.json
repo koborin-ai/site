@@ -4,9 +4,10 @@
     "basecamp/omarchy",
     "github/gh-stack",
     "kosukesaigusa/claude-code-action-access-control",
+    "mswjs/cloudflare",
     "openclaw/mcporter",
     "samchon/ttsc",
     "standardagents/arrow-js"
   ],
-  "lastProcessedStarsSha": "c5a05217bbb54b1bd248ce88eaf59a67477cf4f2"
+  "lastProcessedStarsSha": "a67f01b8af89c6e29ba6a44222185a5fd95c2fe8"
 }

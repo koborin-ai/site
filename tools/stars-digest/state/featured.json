@@ -4,6 +4,7 @@
     "antirez/ds4",
     "basecamp/omarchy",
     "github/gh-stack",
+    "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
     "mswjs/cloudflare",
     "openclaw/mcporter",
@@ -11,5 +12,5 @@
     "samchon/ttsc",
     "standardagents/arrow-js"
   ],
-  "lastProcessedStarsSha": "c13d16db4aeac43bae3f039d14606a6896f9934e"
+  "lastProcessedStarsSha": "3c28744e5febf659db472d773e0e8249ca00921b"
 }

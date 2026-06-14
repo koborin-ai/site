@@ -52,7 +52,7 @@ void main() {
   test('real prompts/digest.md discourages repetitive persona keywords', () {
     final instructions = File('prompts/digest.md').readAsStringSync();
     check(instructions).contains('文体・語彙');
-    check(instructions).contains('AI駆動開発');
+    check(instructions).contains('AIDD');
     check(instructions).contains('原則1〜2回まで');
   });
 }

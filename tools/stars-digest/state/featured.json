@@ -2,6 +2,7 @@
   "mainFeatured": [
     "DNLHC/glance.nvim",
     "antirez/ds4",
+    "awslabs/aidlc-workflows",
     "basecamp/omarchy",
     "github/gh-stack",
     "kinopeee/cursorrules",
@@ -12,5 +13,5 @@
     "samchon/ttsc",
     "standardagents/arrow-js"
   ],
-  "lastProcessedStarsSha": "3c28744e5febf659db472d773e0e8249ca00921b"
+  "lastProcessedStarsSha": "46d933aafa3ecc07d8df871096ad970f0bbfce1b"
 }

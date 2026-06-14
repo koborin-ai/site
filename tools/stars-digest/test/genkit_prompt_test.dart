@@ -48,4 +48,11 @@ void main() {
     check(s.trim()).isNotEmpty();
     check(s).contains('Genkit Dart, Google Cloud'); // persona appended
   });
+
+  test('real prompts/digest.md discourages repetitive persona keywords', () {
+    final instructions = File('prompts/digest.md').readAsStringSync();
+    check(instructions).contains('文体・語彙');
+    check(instructions).contains('AIDD');
+    check(instructions).contains('原則1〜2回まで');
+  });
 }

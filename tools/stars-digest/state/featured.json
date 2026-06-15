@@ -10,8 +10,9 @@
     "mswjs/cloudflare",
     "openclaw/mcporter",
     "permitio/opal",
+    "romgrk/barbar.nvim",
     "samchon/ttsc",
     "standardagents/arrow-js"
   ],
-  "lastProcessedStarsSha": "46d933aafa3ecc07d8df871096ad970f0bbfce1b"
+  "lastProcessedStarsSha": "ba72e15a79fccc77c9386ebed7a4f3e42d90400e"
 }

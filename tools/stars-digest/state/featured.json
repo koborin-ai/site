@@ -12,7 +12,8 @@
     "permitio/opal",
     "romgrk/barbar.nvim",
     "samchon/ttsc",
-    "standardagents/arrow-js"
+    "standardagents/arrow-js",
+    "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "ba72e15a79fccc77c9386ebed7a4f3e42d90400e"
+  "lastProcessedStarsSha": "642f83a28b80f73ac1f50001a623222a828e310d"
 }

@@ -4,6 +4,7 @@
     "antirez/ds4",
     "awslabs/aidlc-workflows",
     "basecamp/omarchy",
+    "gemini-cli-extensions/sre",
     "github/gh-stack",
     "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
@@ -15,5 +16,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "642f83a28b80f73ac1f50001a623222a828e310d"
+  "lastProcessedStarsSha": "4b263e200ee749d3e3695df35c35f64509790415"
 }

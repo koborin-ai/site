@@ -1,6 +1,7 @@
 {
   "mainFeatured": [
     "DNLHC/glance.nvim",
+    "FiloSottile/age",
     "antirez/ds4",
     "awslabs/aidlc-workflows",
     "basecamp/omarchy",
@@ -16,5 +17,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "4b263e200ee749d3e3695df35c35f64509790415"
+  "lastProcessedStarsSha": "09465cfda2b3dda2d487207b7cb8c5aa3f261657"
 }

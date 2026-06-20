@@ -10,6 +10,7 @@
     "github/gh-stack",
     "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
+    "mcollina/skills",
     "mswjs/cloudflare",
     "openclaw/mcporter",
     "permitio/opal",
@@ -18,5 +19,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "400cb40038116f1e460f381ce7e9f4c065fd3b3e"
+  "lastProcessedStarsSha": "bbaefa44d5d8a40237d95ae10c4076afdbd9cc35"
 }

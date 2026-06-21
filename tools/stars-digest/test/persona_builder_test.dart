@@ -26,13 +26,75 @@ import Foo from '../Foo.astro';
     check(out).contains('中の文');
   });
 
+  test('extractSections splits level-2 headings', () {
+    const mdx = '''
+---
+title: x
+---
+
+## Who runs this
+Google Cloud パートナー
+
+### 経歴
+2019 年卒
+
+## プロジェクト実績
+| 年 | プロジェクト |
+|----|--------------|
+| 2024 | OPA 認可基盤 |
+''';
+    final sections = extractSections(mdx);
+    check(sections.keys).contains('Who runs this');
+    check(sections.keys).contains('プロジェクト実績');
+    check(sections['Who runs this']!).contains('Google Cloud パートナー');
+    check(sections['Who runs this']!).contains('2019 年卒');
+    check(sections['プロジェクト実績']!).contains('OPA 認可基盤');
+  });
+
+  test('buildStackProfile prioritizes project deliverables over building', () {
+    const mdx = '''
+---
+title: x
+---
+
+## Who runs this
+サーバーレス開発が専門
+
+## プロジェクト実績
+Cloud Run + OPA 認可基盤
+
+## Building
+contextlint — AI 時代の Markdown リンター
+''';
+    final profile = buildStackProfile(mdx);
+    final projectPos = profile.indexOf('案件で扱ってきた技術スタック・ドメイン');
+    final buildingPos = profile.indexOf('個人で探求中のテーマ');
+    check(projectPos).isGreaterThan(-1);
+    check(buildingPos).isGreaterThan(-1);
+    check(projectPos).isLessThan(buildingPos);
+    check(profile).contains('Cloud Run + OPA 認可基盤');
+    check(profile).contains('補助的参考');
+  });
+
   test('buildPersona combines index (stack) and life (character)', () {
     final p = buildPersona(
-      indexMdx: '---\ntitle: x\n---\nGoogle Cloud と Genkit が主力。',
+      indexMdx: '''
+---
+title: x
+---
+
+## Who runs this
+Google Cloud と Genkit が主力。
+
+## プロジェクト実績
+Cloud Run 案件
+''',
       lifeMdx: const ['---\ntitle: y\n---\n全てのことに意味がある。'],
       steering: '簡潔に。',
     );
     check(p.stack).contains('Genkit');
+    check(p.stack).contains('Cloud Run 案件');
+    check(p.stack).contains('案件で扱ってきた技術スタック・ドメイン');
     check(p.character).contains('意味がある');
     check(p.steering).equals('簡潔に。');
   });

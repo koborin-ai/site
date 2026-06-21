@@ -404,11 +404,14 @@ Add exactly one:
 
 These are in addition to the existing domain labels (`app`, `infra`, `doc`, etc.).
 
+**Automation**: `.github/workflows/label-pr.yml` applies these labels from the diff (and PR title for `feature` / `bug`) via `.github/scripts/compute-pr-labels.sh`. PRs labeled `ignore` are skipped. Manual overrides are synced on the next `synchronize` unless you keep labels outside the managed set.
+
 ### How CI uses the change type
 
 - **App CI (`.github/workflows/app-ci.yml`)**:
+  - Uses the same path heuristics as `.github/scripts/compute-pr-labels.sh` (not the PR label state), so fast vs full checks do not race with label automation.
   - Default is **Behavior Change** (full checks).
-  - If the PR has `change:structure`, CI runs a **fast** check (skips `npm audit` and `npm run build`).
+  - If the diff is structure-only, CI runs a **fast** check (skips `npm audit` and `npm run build`).
 
 ### Infrastructure (`infra/`)
 
@@ -441,7 +444,7 @@ All five commands must complete successfully with no errors.
 3. For app: `npm run build && npm run lint && npm run typecheck && npm run test && npm run check-images` in `app/` - all must pass.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual GCP steps (e.g., DNS imports, current gaps like IAP enablement) in the PR description.
-6. **Label the PR** based on the diff before requesting review:
+6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
    - **Change type** (exactly one, required for CI behavior):
      - `change:behavior` — URLs, output, UI, config, or infra changes that affect users/production.
      - `change:structure` — Internal refactors, renames, or formatting with no external impact. CI skips `npm audit` and `npm run build`.

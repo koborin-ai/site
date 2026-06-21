@@ -49,10 +49,10 @@ void main() {
     check(s).contains('Genkit Dart, Google Cloud'); // persona appended
   });
 
-  test('real prompts/digest.md discourages repetitive persona keywords', () {
+  test('real prompts/digest.md prioritizes project stack over AIDD', () {
     final instructions = File('prompts/digest.md').readAsStringSync();
-    check(instructions).contains('文体・語彙');
-    check(instructions).contains('AIDD');
-    check(instructions).contains('原則1〜2回まで');
+    check(instructions).contains('接点の優先順位');
+    check(instructions).contains('案件・プロジェクト実績');
+    check(instructions).contains('原則 **0 回**');
   });
 }

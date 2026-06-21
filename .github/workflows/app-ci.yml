@@ -13,6 +13,7 @@ on:
       - ".claude-plugin/**"
       - ".github/workflows/app-ci.yml"
       - ".github/workflows/app-release.yml"
+      - ".github/scripts/compute-pr-labels.sh"
 
 jobs:
   quality:
@@ -23,11 +24,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Determine change type (labels)
+      - name: Determine change type (paths)
         id: change-type
         run: |
-          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'change:structure') }}" == "true" ]]; then
+          mapfile -t files < <(
+            git diff --name-only \
+              "${{ github.event.pull_request.base.sha }}" \
+              "${{ github.event.pull_request.head.sha }}"
+          )
+
+          if ((${#files[@]} == 0)); then
+            echo "type=behavior" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          change_label=$(
+            .github/scripts/compute-pr-labels.sh "${files[@]}" \
+              | grep -E '^change:' \
+              | head -n 1
+          )
+
+          if [[ "$change_label" == "change:structure" ]]; then
             echo "type=structure" >> "$GITHUB_OUTPUT"
           else
             echo "type=behavior" >> "$GITHUB_OUTPUT"

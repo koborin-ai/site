@@ -43,7 +43,7 @@ class Persona {
 
   String toContext() {
     final b = StringBuffer()
-      ..writeln('## 技術スタック・肩書')
+      ..writeln('## 技術スタック・案件経験')
       ..writeln(stack)
       ..writeln()
       ..writeln('## 人柄・価値観・語り口')

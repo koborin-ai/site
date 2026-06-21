@@ -8,6 +8,7 @@
     "basecamp/omarchy",
     "gemini-cli-extensions/sre",
     "github/gh-stack",
+    "k1LoW/gh-wait",
     "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
     "mcollina/skills",
@@ -19,5 +20,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "bbaefa44d5d8a40237d95ae10c4076afdbd9cc35"
+  "lastProcessedStarsSha": "2bfa7e1fa970002f838331f4c467cd0c57015e49"
 }

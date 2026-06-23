@@ -8,6 +8,7 @@
     "basecamp/omarchy",
     "gemini-cli-extensions/sre",
     "github/gh-stack",
+    "gomcpgo/api-wrapper-mcp",
     "google/adk-web",
     "k1LoW/gh-wait",
     "kinopeee/cursorrules",
@@ -21,5 +22,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "715c97bb9a38b367e29e0df427db99a10256b462"
+  "lastProcessedStarsSha": "7108919dccc24e68b2e65a357ef8852f6668ecb7"
 }

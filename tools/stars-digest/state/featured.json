@@ -14,6 +14,7 @@
     "k1LoW/gh-wait",
     "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
+    "leehack/genui_genkit",
     "mcollina/skills",
     "mswjs/cloudflare",
     "openclaw/mcporter",
@@ -23,5 +24,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "1b477efac58be13491b98afbcdd3b67477d84778"
+  "lastProcessedStarsSha": "a57346d0097939650b69ca65504b28466e9f92a4"
 }

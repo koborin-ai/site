@@ -8,6 +8,7 @@
     "awslabs/aidlc-workflows",
     "basecamp/omarchy",
     "gemini-cli-extensions/sre",
+    "genkit-ai/opentelemetry-go-plugin",
     "github/gh-stack",
     "gomcpgo/api-wrapper-mcp",
     "google/adk-web",
@@ -24,5 +25,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "a57346d0097939650b69ca65504b28466e9f92a4"
+  "lastProcessedStarsSha": "ff80de4001a4e6142adadccff296fdbbf96de656"
 }

@@ -25,10 +25,10 @@ jobs:
       sha: ${{ steps.commit.outputs.sha }}
     steps:
       - name: Checkout site
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout stars (read-only, full history)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: koborin-ai/stars
           path: .stars
@@ -117,7 +117,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Create release (idempotent)
         env:

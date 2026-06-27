@@ -12,6 +12,7 @@
     "github/gh-stack",
     "gomcpgo/api-wrapper-mcp",
     "google/adk-web",
+    "hey-api/hey-api",
     "k1LoW/gh-wait",
     "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
@@ -25,5 +26,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "ff80de4001a4e6142adadccff296fdbbf96de656"
+  "lastProcessedStarsSha": "cf3c6aa632fe3221b5abd53dfecfe8300b459371"
 }

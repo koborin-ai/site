@@ -50,11 +50,6 @@ export const sidebar = [
     label: "Life",
     items: [
       {
-        label: "Where I Stand as an Engineer",
-        translations: { ja: "エンジニアである自分の現在地" },
-        slug: "life/where-i-stand-as-an-engineer",
-      },
-      {
         label: "Everything Has Meaning",
         translations: { ja: "全てのことに意味がある" },
         slug: "life/everything-has-meaning",

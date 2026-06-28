@@ -19,6 +19,7 @@
     "leehack/genui_genkit",
     "mcollina/skills",
     "mswjs/cloudflare",
+    "mvanhorn/last30days-skill",
     "openclaw/mcporter",
     "permitio/opal",
     "romgrk/barbar.nvim",
@@ -26,5 +27,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "cf3c6aa632fe3221b5abd53dfecfe8300b459371"
+  "lastProcessedStarsSha": "20bba514a2eb72834ef3d538a60f2b0318ab2490"
 }

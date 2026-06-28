@@ -11,8 +11,9 @@ import heroLight from '../../assets/og/koborin-ai-hero-light.png';
 import heroDark from '../../assets/og/koborin-ai-hero-dark.png';
 import bookCover from '../../assets/life/reflections-on-2025/book-cover.png';
 import contextlintOg from '../../assets/_shared/building/contextlint-og.png';
-import abletonOscMcpKey from '../../assets/_shared/building/ableton-osc-mcp-key.png';
 import terradartOg from '../../assets/_shared/building/terradart-og.png';
+import gcpCostMcpHero from '../../assets/_shared/building/gcp-cost-mcp-hero.jpeg';
+import abletonOscMcpKey from '../../assets/_shared/building/ableton-osc-mcp-key.png';
 
 <ThemedSiteImage lightSrc={heroLight} darkSrc={heroDark} alt="Welcome to koborin.ai" variant="hero" />
 
@@ -79,20 +80,6 @@ A semantic linter for AI-era Markdown. Verifies cross-references, required secti
 </div>
 
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
-<a href="https://github.com/nozomi-koborinai/ableton-osc-mcp">
-<SiteImage src={abletonOscMcpKey} alt="Ableton OSC MCP Server key visual" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
-</a>
-<div style="flex: 1; min-width: 200px;">
-
-**Ableton OSC MCP Server**
-
-An MCP (Model Context Protocol) server that lets AI assistants like Claude or Cursor drive Ableton Live 11+ via AbletonOSC. Built in Go + Genkit. Tracks, MIDI clips, tempo, and clip slots are exposed as MCP tool calls so AI conversation can drive beat-making and music production directly.
-
-[GitHub](https://github.com/nozomi-koborinai/ableton-osc-mcp)
-</div>
-</div>
-
-<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
 <a href="https://terradart.dev/">
 <SiteImage src={terradartOg} alt="TerraDart OG image" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
 </a>
@@ -105,6 +92,34 @@ As the Dart ecosystem grows — Flutter on the client, more server-side Dart (Fi
 TerraDart is my pre-alpha take on type-safe IaC for that stack. Author typed GCP resources in Dart, emit standard `*.tf.json`, and keep your existing `terraform apply` pipeline.
 
 [terradart.dev](https://terradart.dev/) / [GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
+</div>
+</div>
+
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://github.com/nozomi-koborinai/gcp-cost-mcp-server">
+<SiteImage src={gcpCostMcpHero} alt="GCP Cost MCP Server hero visual" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
+
+**GCP Cost MCP Server**
+
+An MCP server that lets AI assistants like Claude or Cursor estimate GCP running costs — instead of manually using the Google Cloud Pricing Calculator. Built on the Cloud Billing Catalog API with Go + Genkit. Works with conversational requirements and architecture diagrams alike. Adopted for use at the GCP partner company I work for.
+
+[GitHub](https://github.com/nozomi-koborinai/gcp-cost-mcp-server)
+</div>
+</div>
+
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://github.com/nozomi-koborinai/ableton-osc-mcp">
+<SiteImage src={abletonOscMcpKey} alt="Ableton OSC MCP Server key visual" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
+
+**Ableton OSC MCP Server**
+
+An MCP (Model Context Protocol) server that lets AI assistants like Claude or Cursor drive Ableton Live 11+ via AbletonOSC. Built in Go + Genkit. Tracks, MIDI clips, tempo, and clip slots are exposed as MCP tool calls so AI conversation can drive beat-making and music production directly.
+
+[GitHub](https://github.com/nozomi-koborinai/ableton-osc-mcp)
 </div>
 </div>
 

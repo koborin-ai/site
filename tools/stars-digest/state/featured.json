@@ -3,6 +3,7 @@
     "BasedHardware/omi",
     "DNLHC/glance.nvim",
     "FiloSottile/age",
+    "LyalinDotCom/TextToSpeechGenkitDemo",
     "airano-ir/skillhub",
     "antirez/ds4",
     "awslabs/aidlc-workflows",
@@ -27,5 +28,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "20bba514a2eb72834ef3d538a60f2b0318ab2490"
+  "lastProcessedStarsSha": "228ae4c8f916a8c02788d0ada3cf6efc2039a39b"
 }

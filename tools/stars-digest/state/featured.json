@@ -8,6 +8,7 @@
     "antirez/ds4",
     "awslabs/aidlc-workflows",
     "basecamp/omarchy",
+    "chenglou/pretext",
     "gemini-cli-extensions/sre",
     "genkit-ai/opentelemetry-go-plugin",
     "github/gh-stack",

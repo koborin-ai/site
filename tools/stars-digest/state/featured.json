@@ -5,6 +5,7 @@
     "FiloSottile/age",
     "LearningCircuit/local-deep-research",
     "LyalinDotCom/TextToSpeechGenkitDemo",
+    "Mintplex-Labs/anything-llm",
     "airano-ir/skillhub",
     "antirez/ds4",
     "awslabs/aidlc-workflows",
@@ -30,5 +31,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "0ad233af83835da6eebc72bf1f5c30f621f7df70"
+  "lastProcessedStarsSha": "82e0b5cde0521a13035d8a5e054b8fadad50586a"
 }

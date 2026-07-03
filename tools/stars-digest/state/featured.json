@@ -11,6 +11,7 @@
     "awslabs/aidlc-workflows",
     "basecamp/omarchy",
     "chenglou/pretext",
+    "dagucloud/dagu",
     "gemini-cli-extensions/sre",
     "genkit-ai/opentelemetry-go-plugin",
     "github/gh-stack",
@@ -31,5 +32,5 @@
     "standardagents/arrow-js",
     "supabase/supabase"
   ],
-  "lastProcessedStarsSha": "82e0b5cde0521a13035d8a5e054b8fadad50586a"
+  "lastProcessedStarsSha": "3705638a0b80059c9631802e633494d7e1f3194d"
 }

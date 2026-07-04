@@ -30,7 +30,8 @@
     "romgrk/barbar.nvim",
     "samchon/ttsc",
     "standardagents/arrow-js",
-    "supabase/supabase"
+    "supabase/supabase",
+    "supertone-inc/supertonic"
   ],
-  "lastProcessedStarsSha": "3705638a0b80059c9631802e633494d7e1f3194d"
+  "lastProcessedStarsSha": "484aafbafa38eac277a974c44b6ab0789f17a7e8"
 }

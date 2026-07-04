@@ -23,7 +23,7 @@ on:
 jobs:
   terraform-plan:
     if: github.actor != 'dependabot[bot]'
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       id-token: write
       contents: read

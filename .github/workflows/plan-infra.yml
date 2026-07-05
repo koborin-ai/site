@@ -20,6 +20,10 @@ on:
           - dev
           - prod
 
+concurrency:
+  group: terraform-state
+  cancel-in-progress: false
+
 jobs:
   terraform-plan:
     if: github.actor != 'dependabot[bot]'

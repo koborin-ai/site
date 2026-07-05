@@ -1,6 +1,6 @@
 ---
 title: ソロメンテナーのための Cursor Automations 設計パターン
-description: TerraDart で実践 — cloud agents が PR を開き、GitHub Actions が検証する週次ループ
+description: TerraDart で実践 — cloud agents が PR を開き、GitHub Actions が検証する保守ループ
 draft: true
 # ogImage: /og/solo-maintainer-cursor-automations.png  # 公開前に専用 OG を生成
 # publishedAt: 2026-07-XX
@@ -37,12 +37,12 @@ Dart で Google Cloud のインフラを定義して、`terraform apply` でき�
 指示の中身はすでにリポジトリの手順書に移してあり、レビューの大半は積み上げてきた lint と CI が先に済ませています。
 それなら、起動はスケジューラに、merge の判定は workflow に渡せるはずです。
 
-そうして組み直したのが、**Cursor Automations** と **GitHub Actions** に役割を分担させた週次ループです。
+そうして組み直したのが、**Cursor Automations** と **GitHub Actions** に役割を分担させた保守ループです。
 Automations が起動する cloud agents は、判断と起草を受け持って PR を開くところまで。
 テストと実クラウドへの apply、そして merge 前の再検証は GitHub Actions が受け持ちます。
 
 この記事で扱うのは TerraDart の使い方ではありません。
-ソロメンテナが OSS の外側ループ（コードそのものではなく、検証、出荷、上流への追従といった回り続ける維持作業）をエージェントと CI にどう分担させるか、その設計を実際の構成に沿って書きます。
+ソロメンテナが、検証、出荷、上流への追従といった回り続ける保守ループを、エージェントと CI にどう分担させるか。その設計を実際の構成に沿って書きます。
 
 <RichLinkCard
   href="https://github.com/nozomi-koborinai/terradart"
@@ -52,7 +52,7 @@ Automations が起動する cloud agents は、判断と起草を受け持って
 
 ## 用語を Cursor 公式に揃える
 
-同じ機能が UI とブログ記事で違う名前で呼ばれがちなので、この記事は [Cursor 公式ドキュメント](https://cursor.com/docs/cloud-agent/automations.md)の用語で通します。
+同じ機能が UI とブログ記事で違う名前で呼ばれがちなので、この記事は [Cursor 公式ドキュメント](https://cursor.com/docs/cloud-agent/automations.md) の用語で通します。
 
 | 用語 | この記事での意味 |
 | --- | --- |
@@ -61,7 +61,85 @@ Automations が起動する cloud agents は、判断と起草を受け持って
 | **Rules / Skills / Hooks** | リポジトリにコミットする永続的なガイド。TerraDart では `AGENTS.md`、`.agents/skills/`、`.cursor/hooks.json` |
 | **GitHub Actions** | 決定論的な実行を受け持つ CI。schema 取得、`terraform apply`、テスト、条件付き auto-merge |
 
-## 分担の原則は 3 つ
+## 保守ループの全体像
+
+ここでは「保守ループ」と呼んでいますが、実際には週次を中心に、日次の Wave 出荷と月次の full apply-smoke を組み合わせた流れです。
+スケジュール処理は、GitHub Actions（機械的な実行）と Automations（判断と起草）のペアで組んでいます。
+
+```mermaid
+flowchart TB
+  subgraph gha["GitHub Actions"]
+    SB["schema-bump.yml<br/>月曜 07:00 JST"]
+    ASm["apply-smoke-monthly.yml<br/>毎月 1 日 11:00 JST"]
+    ASpr["apply-smoke.yml<br/>PR で examples 変更時"]
+    BM["bump-merge.yml"]
+    WM["wave-merge.yml"]
+  end
+  subgraph auto["Cursor Automations"]
+    BSP["schema-bump-postprocess<br/>月曜 08:00 JST"]
+    ASD["apply-smoke-diagnose<br/>月曜 09:00 JST"]
+    WS["wave-shipper<br/>毎朝 09:00 JST"]
+  end
+  SB --> BSP
+  BSP --> BM
+  ASm --> ASD
+  ASD --> ASpr
+  WS --> WM
+```
+
+Automations は 3 本だけです。
+
+| Automation | 指示の正本 | ペアの workflow | 受け持ち |
+| --- | --- | --- | --- |
+| schema-bump-postprocess | `.cursor/agents/schema-bump-postprocess.md` | `schema-bump.yml` → `bump-merge.yml` | 週次 bump PR の分類と機械修復 |
+| wave-shipper | `.cursor/agents/wave-shipper.md` | → `wave-merge.yml` | backlog からリソース追加 PR を開く |
+| apply-smoke-diagnose | `.cursor/agents/apply-smoke-diagnose.md` | `apply-smoke-monthly.yml` | 月次検証の失敗 issue を診断し fix PR を開く |
+
+<figure class="theme-figure">
+  <SiteImage src={automationsListLight} alt="Cursor の Automations 一覧。wave-shipper、apply-smoke-diagnose、schema-bump-postprocess の 3 本が Active" variant="inline" class="theme-light" />
+  <SiteImage src={automationsListDark} alt="Cursor の Automations 一覧。wave-shipper、apply-smoke-diagnose、schema-bump-postprocess の 3 本が Active" variant="inline" class="theme-dark" />
+</figure>
+
+時間軸で見ると、こうなります。
+時刻はすべて日本時間です。
+
+**月曜 07:00、schema-bump（GitHub Actions）。**
+HashiCorp の最新 provider から `schema.json` を更新します。
+新しい `google_*` リソースが増えていれば、キュレーション待ちの台帳に追記して PR を開きます。
+
+**月曜 08:00、schema-bump-postprocess（Automation）。**
+1 時間前に開いた bump PR を読み、そのまま merge できるもの、機械的に修復できるもの、人間に回すべきものに分類します。
+修復できる差分は push し、レポートとラベルを付けます。
+merge 自体は bump-merge workflow の仕事です。
+
+**毎朝 09:00、wave-shipper（Automation）。**
+台帳の先頭から 3〜6 リソースの製品グループを取り、ファクトリとサンプル、課金分類の台帳更新までを含んだ PR を開きます（この単位の追加作業を、リポジトリでは Wave と呼んでいます）。
+`wave/*` の PR がすでに開いていれば、その日は何もしません。
+仕掛かりを常に 1 件に制限することで、レビューが積み上がらないようにしています。
+
+<SiteImage src={wavePrSummary} alt="wave-shipper が実装した Wave PR。追加した 3 リソースと、コスト分類の根拠、追加を見送ったリソースの理由まで PR 本文にまとめてある" variant="inline" />
+
+上は wave-shipper が実装した実際の Wave PR です。
+追加した 3 リソースに加えて、コスト分類の根拠、あえて追加を見送ったリソースとその理由まで、エージェントが PR 本文に書いています。
+ひとつ正直に書いておくと、いまの Cursor では agent の GitHub トークンに PR を作成する権限がありません。
+そのため wave-shipper が実装した変更を PR として開く操作だけは、まだ私の手元に残っています。
+
+**PR 時、apply-smoke change-gate（GitHub Actions）。**
+サンプルに触れた PR では、変更されたサンプルだけを検証専用の GCP プロジェクトに apply して destroy します。
+
+**毎月 1 日 11:00、apply-smoke monthly（GitHub Actions）。**
+全サンプルのフル検証です。
+PR 時には飛ばしている高コストなサンプルも、ここでまとめて検証します。
+失敗すると issue が開きます。
+
+**月曜 09:00、apply-smoke-diagnose（Automation）。**
+未処理の失敗 issue を 1 件取り、ログから原因を分類して、直せるものは fix PR を開きます。
+merge はしません。
+
+どのペアでも役割は同じです。
+機械にできることは workflow が先にやり、判断が要る後始末だけが Automation に渡ります。
+
+## 設計原則は 3 つ
 
 ### 原則 1：判断はリポジトリに書く
 
@@ -122,86 +200,9 @@ merge は専用の workflow が、次の 3 つを機械的に確認してから�
 この PR は、変更したサンプルが「PR 時は skip して月次でだけ apply する」分類だったので、実 apply の実績という auto-merge の条件を満たしませんでした。
 merge workflow は設計どおり手を出さず、私が中身を確認して merge しています。
 
-## 週次ループの全体像
-
-スケジュール処理は、GitHub Actions（機械的な実行）と Automations（判断と起草）のペアで組んでいます。
-
-```mermaid
-flowchart TB
-  subgraph gha["GitHub Actions"]
-    SB["schema-bump.yml<br/>月曜 07:00 JST"]
-    ASm["apply-smoke-monthly.yml<br/>毎月 1 日 11:00 JST"]
-    ASpr["apply-smoke.yml<br/>PR で examples 変更時"]
-    BM["bump-merge.yml"]
-    WM["wave-merge.yml"]
-  end
-  subgraph auto["Cursor Automations"]
-    BSP["schema-bump-postprocess<br/>月曜 08:00 JST"]
-    ASD["apply-smoke-diagnose<br/>月曜 09:00 JST"]
-    WS["wave-shipper<br/>毎朝 09:00 JST"]
-  end
-  SB --> BSP
-  BSP --> BM
-  ASm --> ASD
-  ASD --> ASpr
-  WS --> WM
-```
-
-Automations は 3 本だけです。
-
-| Automation | 指示の正本 | ペアの workflow | 受け持ち |
-| --- | --- | --- | --- |
-| schema-bump-postprocess | `.cursor/agents/schema-bump-postprocess.md` | `schema-bump.yml` → `bump-merge.yml` | 週次 bump PR の分類と機械修復 |
-| wave-shipper | `.cursor/agents/wave-shipper.md` | → `wave-merge.yml` | backlog からリソース追加 PR を開く |
-| apply-smoke-diagnose | `.cursor/agents/apply-smoke-diagnose.md` | `apply-smoke-monthly.yml` | 月次検証の失敗 issue を診断し fix PR を開く |
-
-<figure class="theme-figure">
-  <SiteImage src={automationsListLight} alt="Cursor の Automations 一覧。wave-shipper、apply-smoke-diagnose、schema-bump-postprocess の 3 本が Active" variant="inline" class="theme-light" />
-  <SiteImage src={automationsListDark} alt="Cursor の Automations 一覧。wave-shipper、apply-smoke-diagnose、schema-bump-postprocess の 3 本が Active" variant="inline" class="theme-dark" />
-</figure>
-
-1 週間の流れで見ると、こうなります。
-時刻はすべて日本時間です。
-
-**月曜 07:00、schema-bump（GitHub Actions）。**
-HashiCorp の最新 provider から `schema.json` を更新します。
-新しい `google_*` リソースが増えていれば、キュレーション待ちの台帳に追記して PR を開きます。
-
-**月曜 08:00、schema-bump-postprocess（Automation）。**
-1 時間前に開いた bump PR を読み、そのまま merge できるもの、機械的に修復できるもの、人間に回すべきものに分類します。
-修復できる差分は push し、レポートとラベルを付けます。
-merge 自体は bump-merge workflow の仕事です。
-
-**毎朝 09:00、wave-shipper（Automation）。**
-台帳の先頭から 3〜6 リソースの製品グループを取り、ファクトリとサンプル、課金分類の台帳更新までを含んだ PR を開きます（この単位の追加作業を、リポジトリでは Wave と呼んでいます）。
-`wave/*` の PR がすでに開いていれば、その日は何もしません。
-仕掛かりを常に 1 件に制限することで、レビューが積み上がらないようにしています。
-
-<SiteImage src={wavePrSummary} alt="wave-shipper が実装した Wave PR。追加した 3 リソースと、コスト分類の根拠、追加を見送ったリソースの理由まで PR 本文にまとめてある" variant="inline" />
-
-上は wave-shipper が実装した実際の Wave PR です。
-追加した 3 リソースに加えて、コスト分類の根拠、あえて追加を見送ったリソースとその理由まで、エージェントが PR 本文に書いています。
-ひとつ正直に書いておくと、いまの Cursor では agent の GitHub トークンに PR を作成する権限がありません。
-そのため wave-shipper が実装した変更を PR として開く操作だけは、まだ私の手元に残っています。
-
-**PR 時、apply-smoke change-gate（GitHub Actions）。**
-サンプルに触れた PR では、変更されたサンプルだけを検証専用の GCP プロジェクトに apply して destroy します。
-
-**毎月 1 日 11:00、apply-smoke monthly（GitHub Actions）。**
-全サンプルのフル検証です。
-PR 時には飛ばしている高コストなサンプルも、ここでまとめて検証します。
-失敗すると issue が開きます。
-
-**月曜 09:00、apply-smoke-diagnose（Automation）。**
-未処理の失敗 issue を 1 件取り、ログから原因を分類して、直せるものは fix PR を開きます。
-merge はしません。
-
-どのペアでも役割は同じです。
-機械にできることは workflow が先にやり、判断が要る後始末だけが Automation に渡ります。
-
 ## 品質ゲートを Test Sizes で 3 層に分ける
 
-このループを安心して回すには、PR ごとに何をどこまで検証するかを決める必要があります。
+この保守ループを安心して回すには、PR ごとに何をどこまで検証するかを決める必要があります。
 TerraDart ではテストの層を、単体テストや結合テストという呼び方ではなく、[Google の Test Sizes](https://testing.googleblog.com/2010/12/test-sizes.html)（Small / Medium / Large）で整理しています。
 Test Sizes の要点は、テストを名前ではなく制約（ネットワークを使うか、外部システムに触るか、どれだけ時間をかけてよいか）で分類することです。
 
@@ -258,7 +259,7 @@ apply-smoke は作ってすぐ壊す検証なので、時間で課金される�
 
 台帳への分類は、wave-shipper が Wave を出荷するたびに、エージェント自身がやります。
 勘で `safe` と書かれては困るので、判断材料を機械で引けるようにしました。
-もともと GCP の見積もり用に作っていた自作の MCP サーバー gcp-cost-mcp-server（Cloud Billing Catalog API から SKU 単価を引けます）を、このループに組み込んであります。
+もともと GCP の見積もり用に作っていた自作の MCP サーバー gcp-cost-mcp-server（Cloud Billing Catalog API から SKU 単価を引けます）を、この保守ループに組み込んであります。
 
 分類の決まりは 3 つです。
 
@@ -292,9 +293,10 @@ apply-smoke は作ってすぐ壊す検証なので、時間で課金される�
   description="An MCP server that enables AI assistants to estimate Google Cloud costs, powered by Cloud Billing Catalog API and built with Genkit for Go"
 />
 
-## ファクトリが生まれる内側ループ
+## 補足：TerraDart の生成フロー
 
-外側ループの中で cloud agents が何を作っているのか、Terraform バインディングに興味がある方向けに内側だけ圧縮して置きます。
+ここまでが保守ループの本題です。
+Terraform バインディングに興味がある方向けに、cloud agents が作っている差分の中身だけを短く置きます。
 
 ユーザーが import する `terradart_google` のファクトリは、メンテナが `terradart wrap` という生成コマンドで作ってコミットしています。
 入力は 2 系統です。
@@ -311,27 +313,17 @@ wave-shipper が毎朝やっているのは、この override を書いてファ
 サンプル 1 本が代表パス 1 つを実クラウドで証明する、というのが Large 層のカバレッジの考え方です。
 生成パイプラインの詳細は TerraDart の [`AGENTS.md`](https://github.com/nozomi-koborinai/terradart/blob/main/AGENTS.md) に書いてあります。
 
-## 持ち帰りチェックリスト
-
-TerraDart 固有の事情を除くと、残るのは次の 5 点です。
-
-- [ ] Automations のプロンプトは正本を指す 1 行にして、手順はリポジトリ側に書いたか
-- [ ] エージェントに merge させず、別の workflow が変更範囲と CI（必要なら apply 実績）を確認してから merge する形にしたか
-- [ ] 実クラウドに触る検証は台帳で管理し、分類していないリソースは apply しない側に倒したか
-- [ ] 課金が読めない、組織専用など、人間に返す条件をエージェントの手順書に書いたか
-- [ ] ルールを文章で書いて終わりにせず、lint かスクリプトで機械的に閉じたか
-
 ## まとめ
 
-Automations（判断と起草）と GitHub Actions（実行とゲート）を分けると、ソロメンテナでも週次で OSS を回す外側ループが組めます。
-核は 3 つです。
+Automations（判断と起草）と GitHub Actions（実行とゲート）を分けると、ソロメンテナでも OSS の保守ループを継続的に回せます。
+TerraDart 固有の事情を除くと、核は 3 つです。
 
 - エージェントに merge させない
 - 実クラウドに触る検証は台帳で決め、分類していないものは動かさない
 - 判断はチャットではなくリポジトリに置いて、版管理する
 
 この構成は TerraDart で現役で動いていて、指示の正本もゲートもすべてリポジトリで読めます。
-続きが気になる方には、[`AGENTS.md`](https://github.com/nozomi-koborinai/terradart/blob/main/AGENTS.md) と Cursor の [Automations ドキュメント](https://cursor.com/docs/cloud-agent/automations.md)がそのまま実物です。
+続きが気になる方には、[`AGENTS.md`](https://github.com/nozomi-koborinai/terradart/blob/main/AGENTS.md) と Cursor の [Automations ドキュメント](https://cursor.com/docs/cloud-agent/automations.md) がそのまま実物です。
 
 ## 参考リンク
 

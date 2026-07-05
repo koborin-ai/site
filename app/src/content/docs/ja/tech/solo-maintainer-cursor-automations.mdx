@@ -42,7 +42,7 @@ Automations が起動する cloud agents は、判断と起草を受け持って
 テストと実クラウドへの apply、そして merge 前の再検証は GitHub Actions が受け持ちます。
 
 この記事で扱うのは TerraDart の使い方ではありません。
-ソロメンテナが、検証、出荷、上流への追従といった回り続ける保守ループを、エージェントと CI にどう分担させるか。その設計を実際の構成に沿って書きます。
+ソロメンテナーが、検証、出荷、上流への追従といった回り続ける保守ループを、エージェントと CI にどう分担させるか。その設計を実際の構成に沿って書きます。
 
 <RichLinkCard
   href="https://github.com/nozomi-koborinai/terradart"
@@ -89,7 +89,7 @@ flowchart TB
 
 Automations は 3 本だけです。
 
-| Automation | 指示の正本 | ペアの workflow | 受け持ち |
+| Automation | 指示ファイル | ペアの workflow | 受け持ち |
 | --- | --- | --- | --- |
 | schema-bump-postprocess | `.cursor/agents/schema-bump-postprocess.md` | `schema-bump.yml` → `bump-merge.yml` | 週次 bump PR の分類と機械修復 |
 | wave-shipper | `.cursor/agents/wave-shipper.md` | → `wave-merge.yml` | backlog からリソース追加 PR を開く |
@@ -144,22 +144,22 @@ merge はしません。
 ### 原則 1：判断はリポジトリに書く
 
 Automations の設定画面に、長い指示は置きません。
-UI に置くプロンプトは、正本を指す 1 行だけです。
+UI に置くプロンプトは、手順ファイルを指す 1 行だけです。
 
 <figure class="theme-figure">
-  <SiteImage src={waveShipperSettingsLight} alt="wave-shipper の設定画面。トリガーは毎日 09:00 GMT+9 で、Agent Instructions は正本ファイルを指す 1 行だけ" variant="inline" class="theme-light" />
-  <SiteImage src={waveShipperSettingsDark} alt="wave-shipper の設定画面。トリガーは毎日 09:00 GMT+9 で、Agent Instructions は正本ファイルを指す 1 行だけ" variant="inline" class="theme-dark" />
+  <SiteImage src={waveShipperSettingsLight} alt="wave-shipper の設定画面。トリガーは毎日 09:00 GMT+9 で、Agent Instructions は手順ファイルを指す 1 行だけ" variant="inline" class="theme-light" />
+  <SiteImage src={waveShipperSettingsDark} alt="wave-shipper の設定画面。トリガーは毎日 09:00 GMT+9 で、Agent Instructions は手順ファイルを指す 1 行だけ" variant="inline" class="theme-dark" />
 </figure>
 
 Agent Instructions の欄にあるのは `Read .cursor/agents/wave-shipper.md in the repository and follow it exactly.` という 1 行だけです。
 手順の詳細、台帳の更新ルール、人間へエスカレーションする条件は、すべてリポジトリにコミットしてあります。
 
-- 運用ガイドの正本：`AGENTS.md`
+- 運用ガイド：`AGENTS.md`
 - タスクごとの手順書：`.agents/skills/`（Agent Skills 形式）
 - 例外と負債の台帳：`tool/*.yaml`
 - 定期エージェントの指示書：`.cursor/agents/*.md`
 
-チャットと違ってリポジトリは版管理されているので、指示の変更が diff としてレビューでき、エージェント製品を乗り換えても指示が生き残ります。
+チャットと違ってリポジトリはバージョン管理されているので、指示の変更が diff としてレビューでき、エージェント製品を乗り換えても指示が生き残ります。
 Automation は起動装置で、判断の中身はリポジトリにある、という分担です。
 
 もうひとつ、文章で書いたルールには寿命があります。
@@ -229,7 +229,7 @@ apply-smoke を初めて全サンプルに回したとき、`terraform validate`
 
 ### 実クラウド apply を絞る台帳
 
-Large 層を無制限に回すと、ソロメンテナは請求と後片付けで潰れます。
+Large 層を無制限に回すと、ソロメンテナーは請求と後片付けで潰れます。
 TerraDart では、どのサンプルを apply してよいかを 3 枚の YAML 台帳で決めています。
 
 | 台帳 | 単位 | 役割 |
@@ -298,7 +298,7 @@ apply-smoke は作ってすぐ壊す検証なので、時間で課金される�
 ここまでが保守ループの本題です。
 Terraform バインディングに興味がある方向けに、cloud agents が作っている差分の中身だけを短く置きます。
 
-ユーザーが import する `terradart_google` のファクトリは、メンテナが `terradart wrap` という生成コマンドで作ってコミットしています。
+ユーザーが import する `terradart_google` のファクトリは、メンテナーが `terradart wrap` という生成コマンドで作ってコミットしています。
 入力は 2 系統です。
 
 ```text
@@ -315,14 +315,14 @@ wave-shipper が毎朝やっているのは、この override を書いてファ
 
 ## まとめ
 
-Automations（判断と起草）と GitHub Actions（実行とゲート）を分けると、ソロメンテナでも OSS の保守ループを継続的に回せます。
+Automations（判断と起草）と GitHub Actions（実行とゲート）を分けると、ソロメンテナーでも OSS の保守ループを継続的に回せます。
 TerraDart 固有の事情を除くと、核は 3 つです。
 
 - エージェントに merge させない
 - 実クラウドに触る検証は台帳で決め、分類していないものは動かさない
-- 判断はチャットではなくリポジトリに置いて、版管理する
+- 判断はチャットではなくリポジトリに置いて、バージョン管理する
 
-この構成は TerraDart で現役で動いていて、指示の正本もゲートもすべてリポジトリで読めます。
+この構成は TerraDart で現役で動いていて、指示ファイルもゲートもすべてリポジトリで読めます。
 
 ## 参考リンク
 

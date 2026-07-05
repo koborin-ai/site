@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - "infra/**"
-      - ".github/workflows/release-infra.yml"
     tags:
       - "infra-v*"
   workflow_dispatch:
@@ -20,6 +19,10 @@ on:
           - shared
           - dev
           - prod
+
+concurrency:
+  group: terraform-state
+  cancel-in-progress: false
 
 jobs:
   terraform-apply:

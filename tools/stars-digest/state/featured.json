@@ -17,6 +17,7 @@
     "github/gh-stack",
     "gomcpgo/api-wrapper-mcp",
     "google/adk-web",
+    "grafana/grafana",
     "hey-api/hey-api",
     "k1LoW/gh-wait",
     "kinopeee/cursorrules",
@@ -33,5 +34,5 @@
     "supabase/supabase",
     "supertone-inc/supertonic"
   ],
-  "lastProcessedStarsSha": "484aafbafa38eac277a974c44b6ab0789f17a7e8"
+  "lastProcessedStarsSha": "ea5ea4f4d6c3cb7591a19a376622bfde484be864"
 }

@@ -7,6 +7,10 @@ export const sidebar = [
     label: "Tech",
     items: [
       {
+        label: "Cursor Automations for Solo Maintainers",
+        slug: "tech/solo-maintainer-cursor-automations",
+      },
+      {
         label: "Stars Digest",
         translations: { ja: "star を掘り起こすエージェント" },
         slug: "tech/stars-digest",

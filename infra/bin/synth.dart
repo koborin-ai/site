@@ -1,7 +1,7 @@
 /// Synth entry point for koborin.ai infrastructure stacks.
 ///
 /// Run `dart run bin/synth.dart <stack>` to emit a single `main.tf.json`
-/// under `tf-out/<stack>/`.
+/// under `tf-out/<stack>/`. Supported stacks: shared, dev, prod.
 ///
 /// Required environment variables:
 /// - `GCP_PROJECT_ID` (all stacks)

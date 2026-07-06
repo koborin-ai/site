@@ -24,6 +24,7 @@
     "kosukesaigusa/claude-code-action-access-control",
     "leehack/genui_genkit",
     "mcollina/skills",
+    "mikoto2000/devcontainer.vim",
     "mswjs/cloudflare",
     "mvanhorn/last30days-skill",
     "openclaw/mcporter",
@@ -34,5 +35,5 @@
     "supabase/supabase",
     "supertone-inc/supertonic"
   ],
-  "lastProcessedStarsSha": "ea5ea4f4d6c3cb7591a19a376622bfde484be864"
+  "lastProcessedStarsSha": "e28ee9bb4dc9a8d0b37a8c7e5169e6ffc104f8e8"
 }

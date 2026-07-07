@@ -33,7 +33,8 @@
     "samchon/ttsc",
     "standardagents/arrow-js",
     "supabase/supabase",
-    "supertone-inc/supertonic"
+    "supertone-inc/supertonic",
+    "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "e28ee9bb4dc9a8d0b37a8c7e5169e6ffc104f8e8"
+  "lastProcessedStarsSha": "a52044e0b045439a8f7e4bf37f8b70a93dc7a570"
 }

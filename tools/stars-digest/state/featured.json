@@ -7,6 +7,7 @@
     "LyalinDotCom/TextToSpeechGenkitDemo",
     "Mintplex-Labs/anything-llm",
     "airano-ir/skillhub",
+    "ajeetdsouza/zoxide",
     "antirez/ds4",
     "awslabs/aidlc-workflows",
     "basecamp/omarchy",
@@ -36,5 +37,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "a52044e0b045439a8f7e4bf37f8b70a93dc7a570"
+  "lastProcessedStarsSha": "3defc5582482e2144cb9a5a7d36e2f5df5ad6fb4"
 }

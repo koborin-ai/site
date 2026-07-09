@@ -1,5 +1,6 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import { unified } from "@astrojs/markdown-remark";
 import rehypeMermaid from "rehype-mermaid";
 import remarkGfm from "remark-gfm";
 import { sidebar } from "./src/sidebar.ts";
@@ -8,17 +9,20 @@ export default defineConfig({
   site: "https://koborin.ai",
   srcDir: "src",
   // Static output mode (default) - all pages are pre-rendered at build time
+  // Keep unified() for rehype-mermaid; Sätteri (Astro 7 default) cannot run rehype plugins.
   markdown: {
-    remarkPlugins: [remarkGfm],
-    rehypePlugins: [
-      [
-        rehypeMermaid,
-        {
-          strategy: "inline-svg",
-          mermaidConfig: { theme: "neutral" },
-        },
+    processor: unified({
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        [
+          rehypeMermaid,
+          {
+            strategy: "inline-svg",
+            mermaidConfig: { theme: "neutral" },
+          },
+        ],
       ],
-    ],
+    }),
   },
   integrations: [
     starlight({

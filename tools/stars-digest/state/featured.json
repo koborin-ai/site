@@ -30,6 +30,7 @@
     "mvanhorn/last30days-skill",
     "openclaw/mcporter",
     "permitio/opal",
+    "remorses/playwriter",
     "romgrk/barbar.nvim",
     "samchon/ttsc",
     "standardagents/arrow-js",
@@ -37,5 +38,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "3defc5582482e2144cb9a5a7d36e2f5df5ad6fb4"
+  "lastProcessedStarsSha": "31cd5ace745d11120972cf1e3173b81452568167"
 }

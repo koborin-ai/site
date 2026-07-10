@@ -13,6 +13,7 @@
     "basecamp/omarchy",
     "chenglou/pretext",
     "dagucloud/dagu",
+    "danicat/speedgrapher",
     "gemini-cli-extensions/sre",
     "genkit-ai/opentelemetry-go-plugin",
     "github/gh-stack",
@@ -38,5 +39,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "31cd5ace745d11120972cf1e3173b81452568167"
+  "lastProcessedStarsSha": "afbd5f8575f7bfa337f7978d8594fc9667071e83"
 }

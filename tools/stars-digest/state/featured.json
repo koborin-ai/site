@@ -33,11 +33,12 @@
     "permitio/opal",
     "remorses/playwriter",
     "romgrk/barbar.nvim",
+    "salvadordeveloper/flutter-crypto-app",
     "samchon/ttsc",
     "standardagents/arrow-js",
     "supabase/supabase",
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "afbd5f8575f7bfa337f7978d8594fc9667071e83"
+  "lastProcessedStarsSha": "72a1e08eb30bab367835c1f3af19ad1958a1d578"
 }

@@ -25,6 +25,7 @@
     "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
     "leehack/genui_genkit",
+    "lint-staged/lint-staged",
     "mcollina/skills",
     "mikoto2000/devcontainer.vim",
     "mswjs/cloudflare",
@@ -40,5 +41,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "72a1e08eb30bab367835c1f3af19ad1958a1d578"
+  "lastProcessedStarsSha": "aa980953b0b3350a19c3ae2a7ce164d23cab3904"
 }

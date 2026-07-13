@@ -14,6 +14,7 @@
     "chenglou/pretext",
     "dagucloud/dagu",
     "danicat/speedgrapher",
+    "felangel/equatable",
     "gemini-cli-extensions/sre",
     "genkit-ai/opentelemetry-go-plugin",
     "github/gh-stack",
@@ -41,5 +42,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "aa980953b0b3350a19c3ae2a7ce164d23cab3904"
+  "lastProcessedStarsSha": "4855344043830799b67d4da16ce18e0e3ad24a56"
 }

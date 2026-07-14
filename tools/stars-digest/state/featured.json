@@ -2,6 +2,7 @@
   "mainFeatured": [
     "BasedHardware/omi",
     "DNLHC/glance.nvim",
+    "Egonex-AI/Understand-Anything",
     "FiloSottile/age",
     "LearningCircuit/local-deep-research",
     "LyalinDotCom/TextToSpeechGenkitDemo",
@@ -42,5 +43,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "4855344043830799b67d4da16ce18e0e3ad24a56"
+  "lastProcessedStarsSha": "01ebb87d3e532e9b35e8db4bec3cb91af7261b74"
 }

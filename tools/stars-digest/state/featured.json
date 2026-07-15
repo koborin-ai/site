@@ -23,6 +23,7 @@
     "google/adk-web",
     "grafana/grafana",
     "hey-api/hey-api",
+    "isomorphic-git/isomorphic-git",
     "k1LoW/gh-wait",
     "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
@@ -43,5 +44,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "01ebb87d3e532e9b35e8db4bec3cb91af7261b74"
+  "lastProcessedStarsSha": "6b6cc24aa7b3139ef3b55019e4ace858e68ea651"
 }

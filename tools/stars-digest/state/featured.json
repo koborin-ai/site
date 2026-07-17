@@ -13,6 +13,7 @@
     "awslabs/aidlc-workflows",
     "basecamp/omarchy",
     "chenglou/pretext",
+    "cursor/community-plugins",
     "dagucloud/dagu",
     "danicat/speedgrapher",
     "felangel/equatable",
@@ -44,5 +45,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "6b6cc24aa7b3139ef3b55019e4ace858e68ea651"
+  "lastProcessedStarsSha": "8e257ab99c5cb7fff81f2e48a790a56658f66372"
 }

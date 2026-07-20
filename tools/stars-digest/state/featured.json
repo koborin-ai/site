@@ -27,6 +27,7 @@
     "hey-api/hey-api",
     "isomorphic-git/isomorphic-git",
     "k1LoW/gh-wait",
+    "k1LoW/mo",
     "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
     "leehack/genui_genkit",
@@ -47,5 +48,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "7ca3d2a25a35e0ad707f870d624d236e7889ef2f"
+  "lastProcessedStarsSha": "2c03e804490f03d398a393337e29b6e896b531c0"
 }

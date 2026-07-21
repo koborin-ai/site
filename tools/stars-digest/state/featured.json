@@ -17,6 +17,7 @@
     "cursor/community-plugins",
     "dagucloud/dagu",
     "danicat/speedgrapher",
+    "evanderkoogh/otel-cf-workers",
     "felangel/equatable",
     "gemini-cli-extensions/sre",
     "genkit-ai/opentelemetry-go-plugin",
@@ -48,5 +49,5 @@
     "supertone-inc/supertonic",
     "voldikss/vim-translator"
   ],
-  "lastProcessedStarsSha": "2c03e804490f03d398a393337e29b6e896b531c0"
+  "lastProcessedStarsSha": "3a8751ba7074da98d450f6e646ddf3b44a317010"
 }

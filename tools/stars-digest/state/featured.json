@@ -47,7 +47,8 @@
     "standardagents/arrow-js",
     "supabase/supabase",
     "supertone-inc/supertonic",
-    "voldikss/vim-translator"
+    "voldikss/vim-translator",
+    "withastro/starlight"
   ],
-  "lastProcessedStarsSha": "3a8751ba7074da98d450f6e646ddf3b44a317010"
+  "lastProcessedStarsSha": "40fd3b3cd712875c6378042af6b4261ec609999d"
 }

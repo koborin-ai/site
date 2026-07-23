@@ -1,6 +1,7 @@
 {
   "mainFeatured": [
     "BasedHardware/omi",
+    "Cocoon-AI/architecture-diagram-generator",
     "DNLHC/glance.nvim",
     "Egonex-AI/Understand-Anything",
     "FiloSottile/age",
@@ -50,5 +51,5 @@
     "voldikss/vim-translator",
     "withastro/starlight"
   ],
-  "lastProcessedStarsSha": "40fd3b3cd712875c6378042af6b4261ec609999d"
+  "lastProcessedStarsSha": "afaa0db8747c5e8a61d2f0803ecca2a13570ef85"
 }

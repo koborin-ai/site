@@ -1,0 +1,99 @@
+---
+/**
+ * BeatTrack — thin per-track page body (listen + share + jacket).
+ */
+import type { ImageMetadata } from 'astro';
+import { getBeat, beatPath } from '../data/beats';
+import SiteImage from './SiteImage.astro';
+import BeatPlayer from './BeatPlayer.astro';
+import CopyLinkButton from './CopyLinkButton.astro';
+
+interface Props {
+  slug: string;
+  cover?: ImageMetadata;
+}
+
+const { slug, cover } = Astro.props;
+const beat = getBeat(slug);
+
+if (!beat) {
+  throw new Error(`Unknown beat slug: ${slug}`);
+}
+
+const shareUrl = new URL(beatPath(beat.slug), Astro.site).href;
+const dateLabel = new Date(`${beat.date}T00:00:00`).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+
+<section class="beat-track">
+  {
+    cover && (
+      <div class="beat-track-cover">
+        <SiteImage
+          src={cover}
+          alt={`${beat.title} cover`}
+          variant="articleHeader"
+          class="no-zoom"
+          style="width: 100%; height: auto;"
+        />
+      </div>
+    )
+  }
+
+  <p class="beat-track-meta">
+    <time datetime={beat.date}>{dateLabel}</time>
+    {beat.bpm != null && <span>· {beat.bpm} BPM</span>}
+    {beat.key && <span>· {beat.key}</span>}
+  </p>
+
+  <p class="beat-track-description">{beat.description}</p>
+
+  <BeatPlayer src={beat.audioSrc} title={beat.title} slug={beat.slug} />
+
+  <div class="beat-track-actions">
+    <CopyLinkButton url={shareUrl} />
+    {
+      beat.externalUrl && (
+        <a class="beat-action" href={beat.externalUrl} target="_blank" rel="noopener noreferrer">
+          Listen externally
+        </a>
+      )
+    }
+    <a class="beat-action" href="/beats/">All beats</a>
+  </div>
+</section>
+
+<style>
+  .beat-track {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-block: 0.5rem 1.5rem;
+  }
+
+  .beat-track-cover {
+    max-width: 28rem;
+    border-radius: var(--radius-md, 0.5rem);
+    overflow: hidden;
+  }
+
+  .beat-track-meta {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .beat-track-description {
+    margin: 0;
+  }
+
+  .beat-track-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+</style>

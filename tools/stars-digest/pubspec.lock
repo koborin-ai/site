@@ -17,6 +17,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "13.0.0"
+  antlr4:
+    dependency: transitive
+    description:
+      name: antlr4
+      sha256: "752b4a6e4ad97953652a2b2bbf5377f46c94b579d3372b50080c7e5858234a05"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.13.2"
   args:
     dependency: "direct main"
     description:
@@ -185,6 +193,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.4"
+  dotprompt:
+    dependency: transitive
+    description:
+      name: dotprompt
+      sha256: d2bc4b143566e424d881db36e6357cbc9140304624c2f8f77d225d783847b4ca
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1"
   email_validator:
     dependency: transitive
     description:
@@ -221,34 +237,34 @@ packages:
     dependency: "direct main"
     description:
       name: genkit
-      sha256: b55e406a0feacc25510fa1486ec2af0b9f7b6cacb786a2bf8672d2d00a562740
+      sha256: "6ba891c5d04e3d628676181494244b307efa3eaeef9daf118675a0b95e0a7680"
       url: "https://pub.dev"
     source: hosted
-    version: "0.13.2"
+    version: "0.15.1"
   genkit_google_genai:
     dependency: transitive
     description:
       name: genkit_google_genai
-      sha256: e5cb3a3764650d2ef05a8c0b33385e0deab2376d57046f1adaa2ba2c6d3ee8d9
+      sha256: "83623a9d9b2830f84efaf8b5f8e4ab05aeda12bbe61439518326903c7c99059d"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.7"
+    version: "0.2.12"
   genkit_vertex_auth:
     dependency: transitive
     description:
       name: genkit_vertex_auth
-      sha256: "4407de7568bd3e901cd87401335aa680107f705ff9be2284204fe6afb0b164dd"
+      sha256: fdbb0169a3efa920b9ed8e1801fc698a1bf03d1612d542ed3fd1aaafa42460ed
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.7"
+    version: "0.1.11"
   genkit_vertexai:
     dependency: "direct main"
     description:
       name: genkit_vertexai
-      sha256: "604cc22252f0bdc9448369209b1a62811b4bf67a4ddcb0e9de4618839d1969cb"
+      sha256: "52231c873511a0663d3b7be5462b77832fbd01836fb314846464fe6bdf460c83"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.7"
+    version: "0.2.12"
   glob:
     dependency: transitive
     description:
@@ -289,6 +305,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
+  handlebars_dart:
+    dependency: transitive
+    description:
+      name: handlebars_dart
+      sha256: "016a072264069ff879db1de710f535934dd4526c4770cb592d12b1da79876be9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1"
   http:
     dependency: transitive
     description:
@@ -469,10 +493,18 @@ packages:
     dependency: "direct main"
     description:
       name: schemantic
-      sha256: b593e339f89658b68ebaac3151379c65da487364512a6269daeddbce2407a70d
+      sha256: "3597f1c6bfcfc95e92bb215a8868be0494105b6b6c12228b184253616047d5d2"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.3"
+    version: "0.2.2"
+  schemantic_builder:
+    dependency: "direct dev"
+    description:
+      name: schemantic_builder
+      sha256: f19044619780efdf69a687149481df8c72bee26a013e348e2c0994e0c13e69ef
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.2"
   shelf:
     dependency: transitive
     description:

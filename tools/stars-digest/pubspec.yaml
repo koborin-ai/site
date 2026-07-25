@@ -5,9 +5,9 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
-  genkit: ^0.13.2
-  genkit_vertexai: ^0.2.7
-  schemantic: ^0.1.3
+  genkit: ^0.15.1
+  genkit_vertexai: ^0.2.12
+  schemantic: ^0.2.2
   args: ^2.5.0
   path: ^1.9.0
 
@@ -16,3 +16,4 @@ dev_dependencies:
   lints: ^4.0.0
   build_runner: ^2.4.0
   checks: ^0.3.1
+  schemantic_builder: ^0.1.2

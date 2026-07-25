@@ -70,4 +70,17 @@ export const sidebar = [
       },
     ],
   },
+  {
+    label: "Beats",
+    items: [
+      {
+        label: "All Beats",
+        slug: "beats",
+      },
+      {
+        label: "Slip Road",
+        slug: "beats/slip-road",
+      },
+    ],
+  },
 ];

@@ -10,6 +10,7 @@ export const collections = {
       extend: z.object({
         ogImage: z.string().optional(),
         publishedAt: z.coerce.date().optional(),
+        engagement: z.boolean().optional(),
       }),
     }),
   }),

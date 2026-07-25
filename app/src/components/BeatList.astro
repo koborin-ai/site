@@ -1,0 +1,33 @@
+---
+/**
+ * BeatList — renders the sorted beat catalog on /beats/.
+ */
+import type { ImageMetadata } from 'astro';
+import { getBeats } from '../data/beats';
+import BeatTrackCard from './BeatTrackCard.astro';
+import slipRoadCover from '../assets/og/beats-slip-road.jpg';
+
+const covers: Record<string, ImageMetadata> = {
+  'slip-road': slipRoadCover,
+};
+
+const items = getBeats();
+---
+
+{
+  items.length === 0 ? (
+    <p>Tracks coming soon.</p>
+  ) : (
+    <div class="beat-list">
+      {items.map((beat) => (
+        <BeatTrackCard beat={beat} cover={covers[beat.slug]} />
+      ))}
+    </div>
+  )
+}
+
+<style>
+  .beat-list {
+    margin-block: 1.5rem;
+  }
+</style>

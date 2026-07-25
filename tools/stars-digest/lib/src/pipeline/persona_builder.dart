@@ -25,8 +25,9 @@ Map<String, String> extractSections(String mdx) {
   final buffer = StringBuffer();
 
   void flush() {
-    if (currentTitle == null) return;
-    sections[currentTitle!] = buffer.toString().trim();
+    final title = currentTitle;
+    if (title == null) return;
+    sections[title] = buffer.toString().trim();
     buffer.clear();
   }
 

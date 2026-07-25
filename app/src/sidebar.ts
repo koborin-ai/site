@@ -21,11 +21,6 @@ export const sidebar = [
         slug: "tech/contextlint-lsp-and-editor-integration",
       },
       {
-        label: "Plugin Marketplace on koborin.ai",
-        translations: { ja: "koborin.ai に Plugin Marketplace を追加した" },
-        slug: "tech/plugin-marketplace",
-      },
-      {
         label: "Building contextlint",
         translations: { ja: "contextlint というリンターを作っている話" },
         slug: "tech/contextlint-introduction",

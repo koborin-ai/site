@@ -152,7 +152,6 @@ flowchart LR
 | `app-ci.yml` | PRs touching `app/` or `content/` | Runs Astro lint/typecheck/test/build | Blocks merges that break the app |
 | `app-release.yml` | Merge to `main`, `app-v*` tags, or `workflow_call` | Builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}-${TARGET_ENV}`) and applies Terraform to update Cloud Run | Reusable via `workflow_call` (used by `stars-digest.yml`); Cloud Build runs asynchronously |
 | `stars-digest.yml` | Daily cron (03:30 JST) or manual dispatch | Generates the `/stars` OSS newsletter, commits it, then deploys dev → prod | Calls `app-release.yml` via `workflow_call`; publishes a daily GitHub release |
-| `plugin-ci.yml` | PRs touching `plugins/` or `.claude-plugin/` | Validates plugin structure, JSON schemas, marketplace consistency | Blocks merges with invalid plugin packages |
 | `claude.yml` | `@claude` mention in issues/PR comments/reviews | Runs Claude Code Action to respond in-thread | Reads CI results on PRs; gated on the mention string |
 
 ## Tech Stack
@@ -245,12 +244,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   └── pubspec.yaml              # TerraDart dependencies
 ├── tools/
 │   └── stars-digest/              # Dart + Genkit CLI for the daily /stars newsletter
-├── .claude-plugin/                # Plugin marketplace manifest
-│   └── marketplace.json           # Registry of published plugins
-├── plugins/                       # Published Claude Code plugins
-│   ├── agent-team-fullstack/      # Agent Team orchestration plugin
-│   └── mermaid-diagram/           # Mermaid diagram workflow plugin
-├── .github/workflows/             # CI pipelines (infra plan/apply, app deploy, stars digest, plugin CI, Claude)
+├── .github/workflows/             # CI pipelines (infra plan/apply, app deploy, stars digest, Claude)
 ├── README.md                      # This file
 └── AGENTS.md                      # English operations guide for collaborators
 ```

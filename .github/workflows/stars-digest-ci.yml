@@ -1,0 +1,44 @@
+name: Stars Digest CI
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - "tools/stars-digest/**"
+      - ".github/workflows/stars-digest-ci.yml"
+      - ".github/workflows/stars-digest.yml"
+
+jobs:
+  quality:
+    name: Dart Quality Checks
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260 # v1.7.2
+
+      - name: Install dependencies
+        working-directory: tools/stars-digest
+        run: dart pub get
+
+      - name: Generate code
+        working-directory: tools/stars-digest
+        run: dart run build_runner build
+
+      - name: Check generated code is committed
+        run: git diff --exit-code -- 'tools/stars-digest/**/*.g.dart'
+
+      - name: Analyze
+        working-directory: tools/stars-digest
+        run: dart analyze
+
+      - name: Test
+        working-directory: tools/stars-digest
+        run: dart test

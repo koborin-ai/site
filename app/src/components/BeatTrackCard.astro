@@ -1,0 +1,141 @@
+---
+/**
+ * BeatTrackCard — one track row for the Beats index list.
+ */
+import type { ImageMetadata } from 'astro';
+import type { Beat } from '../data/beats';
+import { beatPath } from '../data/beats';
+import SiteImage from './SiteImage.astro';
+import BeatPlayer from './BeatPlayer.astro';
+import CopyLinkButton from './CopyLinkButton.astro';
+
+interface Props {
+  beat: Beat;
+  cover?: ImageMetadata;
+}
+
+const { beat, cover } = Astro.props;
+const trackHref = beatPath(beat.slug);
+const shareUrl = new URL(trackHref, Astro.site).href;
+const dateLabel = new Date(`${beat.date}T00:00:00`).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+
+<article class="beat-card">
+  {
+    cover && (
+      <a class="beat-card-cover" href={trackHref} aria-label={`${beat.title} details`}>
+        <SiteImage src={cover} alt={`${beat.title} cover`} variant="card" class="no-zoom" />
+      </a>
+    )
+  }
+
+  <div class="beat-card-body">
+    <header class="beat-card-header">
+      <h2 class="beat-card-title">
+        <a href={trackHref}>{beat.title}</a>
+      </h2>
+      <p class="beat-card-meta">
+        <time datetime={beat.date}>{dateLabel}</time>
+        {beat.bpm != null && <span>· {beat.bpm} BPM</span>}
+        {beat.key && <span>· {beat.key}</span>}
+      </p>
+    </header>
+
+    <p class="beat-card-description">{beat.description}</p>
+
+    <BeatPlayer src={beat.audioSrc} title={beat.title} slug={beat.slug} />
+
+    <div class="beat-card-actions">
+      <CopyLinkButton url={shareUrl} />
+      {
+        beat.externalUrl && (
+          <a class="beat-action" href={beat.externalUrl} target="_blank" rel="noopener noreferrer">
+            Listen externally
+          </a>
+        )
+      }
+      <a class="beat-action" href={trackHref}>Track page</a>
+    </div>
+  </div>
+</article>
+
+<style>
+  .beat-card {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 1.25rem;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+
+  .beat-card:first-child {
+    padding-top: 0.25rem;
+  }
+
+  .beat-card-cover {
+    display: block;
+    border-radius: var(--radius-md, 0.5rem);
+    overflow: hidden;
+    line-height: 0;
+  }
+
+  .beat-card-cover :global(img),
+  .beat-card-cover :global(picture) {
+    width: 100%;
+    height: auto;
+  }
+
+  .beat-card-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .beat-card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+
+  .beat-card-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .beat-card-title a:hover {
+    color: var(--sl-color-accent);
+  }
+
+  .beat-card-meta {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .beat-card-description {
+    margin: 0;
+    color: var(--sl-color-gray-2);
+  }
+
+  .beat-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 640px) {
+    .beat-card {
+      grid-template-columns: 1fr;
+    }
+
+    .beat-card-cover {
+      max-width: 10rem;
+    }
+  }
+</style>

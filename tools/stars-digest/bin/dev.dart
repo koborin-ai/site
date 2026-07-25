@@ -18,6 +18,7 @@ import 'package:stars_digest/stars_digest.dart';
 /// STARS_DIR and SITE_DIR are auto-detected for the standard sibling layout
 /// (StudioProjects/{stars, n-koborinai-me}); set those env vars only to override.
 Future<void> main() async {
+  final siteDir = _dir('SITE_DIR', _defaultSiteDir());
   final ai = Genkit(
     plugins: [
       vertexAI(
@@ -25,9 +26,9 @@ Future<void> main() async {
         location: 'global',
       ),
     ],
+    promptDir: p.join(siteDir, 'tools', 'stars-digest', 'prompts'),
   );
 
-  final siteDir = _dir('SITE_DIR', _defaultSiteDir());
   final starsDir = _dir(
     'STARS_DIR',
     p.normalize(p.join(siteDir, '..', 'stars')),
@@ -71,16 +72,7 @@ Future<void> main() async {
       lifeMdx: lifeMdx,
       steering: steering,
       state: state,
-      model: GenkitDigestModel(
-        ai,
-        promptPath: p.join(
-          siteDir,
-          'tools',
-          'stars-digest',
-          'prompts',
-          'digest.md',
-        ),
-      ),
+      model: GenkitDigestModel(ai),
     ),
   );
 

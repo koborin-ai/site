@@ -52,7 +52,7 @@ jobs:
           GOOGLE_CLOUD_PROJECT: ${{ secrets.PROJECT_ID }}
         run: |
           dart pub get
-          dart run build_runner build --delete-conflicting-outputs
+          dart run build_runner build
           DATE_JST=$(TZ=Asia/Tokyo date +%F)
           SUMMARY=$(dart run bin/generate.dart \
             --stars-dir "${GITHUB_WORKSPACE}/.stars" \

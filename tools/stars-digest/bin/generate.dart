@@ -59,13 +59,6 @@ Future<void> main(List<String> argv) async {
       ? File(steeringFile).readAsStringSync()
       : '';
 
-  final promptFile = p.join(
-    siteDir,
-    'tools',
-    'stars-digest',
-    'prompts',
-    'digest.md',
-  );
   final ai = Genkit(
     plugins: [
       vertexAI(
@@ -73,8 +66,9 @@ Future<void> main(List<String> argv) async {
         location: 'global',
       ),
     ],
+    promptDir: p.join(siteDir, 'tools', 'stars-digest', 'prompts'),
   );
-  final model = GenkitDigestModel(ai, promptPath: promptFile);
+  final model = GenkitDigestModel(ai);
 
   final summary = await runGenerate(
     ai: ai,

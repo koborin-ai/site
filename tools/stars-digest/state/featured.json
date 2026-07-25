@@ -49,8 +49,9 @@
     "standardagents/arrow-js",
     "supabase/supabase",
     "supertone-inc/supertonic",
+    "textlint-ja/textlint-rule-ja-no-mixed-period",
     "voldikss/vim-translator",
     "withastro/starlight"
   ],
-  "lastProcessedStarsSha": "afaa0db8747c5e8a61d2f0803ecca2a13570ef85"
+  "lastProcessedStarsSha": "f1564c93325c443e1f3a2866f55f3098b477c4fa"
 }

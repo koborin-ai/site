@@ -39,8 +39,6 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `infra/bin/synth.dart` | Synth entry point; emits `tf-out/<stack>/main.tf.json`. |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
 | `docs/assets/{article}/` | Mermaid sources and generated images for each spec document. |
-| `.claude-plugin/` | Plugin marketplace manifest (`marketplace.json`). |
-| `plugins/` | Published Claude Code plugins (each with `plugin.json` + `skills/`). |
 | `.github/workflows/` | CI/CD definitions. |
 
 ## Infrastructure Rules
@@ -309,7 +307,6 @@ Examples:
   - `release-infra.yml`: authenticated `terraform apply` for shared/dev/prod stacks (manual dispatch or tag based).
   - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run check-images`) on PRs touching `app/`.
   - `app-release.yml`: builds/pushes the Astro container with Cloud Build and applies `TF_VAR_image_uri` via Terraform for dev/prod deploys.
-  - `plugin-ci.yml`: validates plugin structure, JSON schemas, and marketplace ↔ plugin consistency on PRs touching `plugins/` or `.claude-plugin/`.
 - Workload Identity:
   - Pool ID: `github-actions-pool`
   - Provider ID: `actions-firebase-provider`

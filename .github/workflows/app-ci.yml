@@ -9,8 +9,6 @@ on:
     paths:
       - "app/**"
       - "content/**"
-      - "plugins/**"
-      - ".claude-plugin/**"
       - ".github/workflows/app-ci.yml"
       - ".github/workflows/app-release.yml"
       - ".github/scripts/compute-pr-labels.sh"

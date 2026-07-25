@@ -26,7 +26,7 @@ is_test_path() {
 
 is_behavior_path() {
   case "$1" in
-    app/* | content/* | infra/* | plugins/* | .claude-plugin/*) return 0 ;;
+    app/* | content/* | infra/*) return 0 ;;
     .github/workflows/*) return 0 ;;
     tools/stars-digest/*)
       if is_test_path "$1"; then

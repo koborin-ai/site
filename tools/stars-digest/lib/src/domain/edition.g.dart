@@ -60,7 +60,7 @@ base class Edition {
 
   /// The main deep-dive content.
   set main(MainContent value) {
-    _json['main'] = value;
+    _json['main'] = value.toJson();
   }
 
   /// New-arrival sub items (same order and count as the selected subs).
@@ -72,7 +72,7 @@ base class Edition {
 
   /// New-arrival sub items (same order and count as the selected subs).
   set subs(List<SubContent> value) {
-    _json['subs'] = value.toList();
+    _json['subs'] = value.map((e) => e.toJson()).toList();
   }
 
   @override
@@ -460,7 +460,7 @@ base class DigestResult {
   }
 
   set edition(Edition value) {
-    _json['edition'] = value;
+    _json['edition'] = value.toJson();
   }
 
   RepoRef get main {
@@ -468,7 +468,7 @@ base class DigestResult {
   }
 
   set main(RepoRef value) {
-    _json['main'] = value;
+    _json['main'] = value.toJson();
   }
 
   List<RepoRef> get subs {
@@ -478,7 +478,7 @@ base class DigestResult {
   }
 
   set subs(List<RepoRef> value) {
-    _json['subs'] = value.toList();
+    _json['subs'] = value.map((e) => e.toJson()).toList();
   }
 
   List<RepoRef> get overflow {
@@ -488,7 +488,7 @@ base class DigestResult {
   }
 
   set overflow(List<RepoRef> value) {
-    _json['overflow'] = value.toList();
+    _json['overflow'] = value.map((e) => e.toJson()).toList();
   }
 
   @override

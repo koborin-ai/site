@@ -23,6 +23,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
 | `app/cloudbuild.yaml` | Cloud Build configuration for Docker build from project root. |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
+| `app/src/content/docs/beats/` | Beats showcase (`index` list + per-track share pages). English only. |
+| `app/src/data/beats.ts` | Beat catalog (title, audio path, BPM/key, OG image, optional external URL). |
+| `app/public/audio/beats/` | MP3 files for on-site playback. |
 | `app/src/content/config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
@@ -103,7 +106,27 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`).
    - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
-4. **Image Conventions**:
+4. **Beats showcase**:
+   - **Purpose**: English-only instrumental showcase. List at `/beats/`; each track has a thin share page at `/beats/<slug>/` with its own jacket OG. Not included in RSS (tech/life only); pages still appear in `llms-full.txt` via the docs collection. No dedicated `/llms-beats.txt`.
+   - **Components** (`app/src/components/`):
+     - `BeatList.astro` — renders the catalog on `/beats/` (cover map lives here).
+     - `BeatTrackCard.astro` — one row on the list (cover, meta, player, actions).
+     - `BeatTrack.astro` — body of a per-track share page.
+     - `BeatPlayer.astro` — custom player (one track at a time). Root must use `not-content`.
+     - `CopyLinkButton.astro` — copies the track URL. Root must use `not-content`.
+   - **Actions**: Navigation links in the action row use class `beat-action` (ghost chrome matching Copy link), defined in `app/src/styles/custom.css`.
+   - **Sidebar**: Top-level Beats group (peer of Tech/Life): `All Beats` (`slug: "beats"`) first, then each track (e.g. `beats/slip-road`).
+   - **Page frontmatter**: `engagement: false`, `tableOfContents: false`, and `ogImage` on every Beats MDX page.
+   - **License note**: Short Splice note on the index only; no per-track sample/tool credits.
+   - **Adding a track** (all required):
+     1. Add an entry to `app/src/data/beats.ts` (`slug`, `title`, `description`, `date`, `bpm`/`key`, `audioSrc`, optional `externalUrl`, `ogImage`).
+     2. Place MP3 at `app/public/audio/beats/<slug>.mp3` (~192 kbps, no embedded artwork).
+     3. Place jacket at `app/public/og/beats-<slug>.jpg` (or `.png`) and the same file under `app/src/assets/og/`.
+     4. Create `app/src/content/docs/beats/<slug>.mdx` rendering `<BeatTrack slug="..." cover={...} />`.
+     5. Register the cover import in `BeatList.astro`.
+     6. Add a sidebar item under Beats in `app/src/sidebar.ts`.
+   - **Icon pitfall**: Interactive SVGs inside MDX must sit under Starlight's `not-content` (already on `BeatPlayer` / `CopyLinkButton`). ImageZoom must only attach to Mermaid `svg[id^="mermaid"]`, never UI icons.
+5. **Image Conventions**:
    - **MANDATORY**: All on-page images must be rendered through the `SiteImage` component (`app/src/components/SiteImage.astro`). Raw `<img>` tags and direct use of Astro's `<Image />` / `<Picture />` are forbidden in MDX and `.astro` files.
    - **Why**: `SiteImage` centralizes responsive `srcset`/`sizes`, quality, format (AVIF/WebP), and loading strategy per variant. Bypassing it breaks LCP budgets and ships multi-MB originals.
    - **Enforcement**: Going forward, prefer code review for `SiteImage` compliance until a dedicated CI check is added.
@@ -126,7 +149,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      <SiteImage src={myImage} alt="Description" variant="inline" />
      ```
 
-5. **OG Image Management**:
+6. **OG Image Management**:
    - **Image Location**: Place OG images in `app/public/og/<slug>.png` as PNG or JPEG.
    - **Auto-optimization**: CI automatically converts images to WebP format during build. No manual optimization required.
    - **Frontmatter**: Set `ogImage: /og/<slug>.png` in frontmatter (`.png` reference is auto-converted to `.webp` by `Head.astro`).
@@ -143,7 +166,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      ```
 
      Do **not** use `<SiteImage src="/og/<slug>.png" ... />` — `SiteImage` requires an imported asset so Astro can generate optimized variants at build time.
-6. **Article Dates**:
+7. **Article Dates**:
    - **Published Date**: Set `publishedAt: YYYY-MM-DD` in frontmatter when creating a new article.
    - **Updated Date**: Automatically extracted from Git history at build time via Starlight's built-in `lastUpdated` feature.
    - **Display**: Dates appear below the article title (e.g., `Published: Dec 1, 2024 · Updated: Jan 2, 2025`).
@@ -151,19 +174,19 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Same-day Updates**: If `publishedAt` and `lastUpdated` are within 1 day, only the published date is shown.
    - **CI/CD**: Uses `fetch-depth: 0` to clone full Git history. This is required because Cloud Build receives the project root (including `.git`) to enable `lastUpdated` feature.
    - **Local Development**: Updated date is shown for committed files. New uncommitted files show only the published date (if set).
-7. **Starlight Features**:
+8. **Starlight Features**:
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.
    - Social links and sidebar are configured in `astro.config.mjs`.
-8. **Testing**: run `npm run lint && npm run test && npm run typecheck && npm run check-images` in `app/` before committing.
-9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
-10. **Docker & Deployment**:
+9. **Testing**: run `npm run lint && npm run test && npm run typecheck && npm run check-images` in `app/` before committing.
+10. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; Cloud Run log analysis dashboards will be defined once telemetry stack lands.
+11. **Docker & Deployment**:
    - The app builds as a static site (`output: "static"` in Astro config) and is served via nginx.
    - Dockerfile uses multi-stage build: `node:22-slim` for build, `nginx:alpine` for runtime.
    - **Build context**: Cloud Build receives the project root (not just `app/`) so that `.git` is available for the `lastUpdated` feature. The `cloudbuild.yaml` specifies `app/Dockerfile` location.
    - nginx configuration is at `app/nginx/nginx.conf` (port 8080 for Cloud Run compatibility).
    - All pages are pre-rendered at build time; no Node.js runtime required in production.
-11. **LLM Context Files (llms.txt)**:
+12. **LLM Context Files (llms.txt)**:
    - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
    - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
    - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese) - all articles with full Markdown body.
@@ -176,7 +199,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Add a new category: Create `app/src/pages/llms-{category}.txt.ts` (English) and `app/src/pages/llms-ja-{category}.txt.ts` (Japanese), then update `app/src/pages/llms.txt.ts` index.
      - Change output format: Edit `app/src/utils/llms.ts`.
      - Existing articles are auto-included; no endpoint changes needed for new content.
-12. **RichLinkCard Component**:
+13. **RichLinkCard Component**:
     - Use `RichLinkCard` instead of Starlight's built-in `LinkCard` for external links in MDX.
     - **Location**: `app/src/components/RichLinkCard.astro`
     - **Import**: `import RichLinkCard from '../../../../components/RichLinkCard.astro';`
@@ -199,7 +222,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
       - Only use this for quick prototyping or when you don't know the page title/description.
       - Always replace with manual specification before committing.
     - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description), thumbnail (og:image → favicon).
-13. **RSS Feeds**:
+14. **RSS Feeds**:
     - The site provides RSS feeds for blog aggregation services.
     - **English feed**: `/rss.xml` - includes `tech/` and `life/` categories.
     - **Japanese feed**: `/ja/rss.xml` - includes `ja/tech/` and `ja/life/` categories.
@@ -208,7 +231,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
     - **Static files**: Generated at build time via Astro endpoints using `@astrojs/rss`. Zero runtime overhead.
     - **Implementation**: `app/src/pages/rss.xml.ts` (English), `app/src/pages/ja/rss.xml.ts` (Japanese).
     - **Sorted by date**: Articles are sorted by `publishedAt` date (newest first).
-14. **Engagement Features (Giscus)**:
+15. **Engagement Features (Giscus)**:
     - Articles (pages with `publishedAt`) display an engagement footer with share buttons and Giscus comments.
     - **Components**:
       - `app/src/components/Footer.astro`: Starlight Footer override that conditionally renders engagement UI.

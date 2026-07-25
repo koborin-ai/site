@@ -33,8 +33,9 @@ Currently published plugins:
 
 1. **Infrastructure**: Never run `terraform apply` locally. All infra changes go through GitHub Actions.
 2. **Content Creation**: Create MDX files under `app/src/content/docs/` and update `app/src/sidebar.ts`.
-3. **Testing**: Run `npm run lint && npm run typecheck && npm run test` in `app/` before committing.
-4. **Plugins**: Plugin structure and marketplace.json are validated by `plugin-ci.yml` on PRs touching `plugins/` or `.claude-plugin/`.
+3. **Beats showcase**: Instrumentals at `/beats/` (catalog in `app/src/data/beats.ts`). For add-track steps, components, and sidebar rules, see **Beats showcase** in [AGENTS.md](./AGENTS.md).
+4. **Testing**: Run `npm run lint && npm run typecheck && npm run test` in `app/` before committing.
+5. **Plugins**: Plugin structure and marketplace.json are validated by `plugin-ci.yml` on PRs touching `plugins/` or `.claude-plugin/`.
 
 ### Common Commands
 

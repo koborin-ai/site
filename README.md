@@ -217,15 +217,19 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   │   ├── life/             # Life article images
 │   │   │   └── og/               # Open Graph images
 │   │   ├── content/
-│   │   │   └── docs/             # MDX pages: tech/, life/, stars/, ja/ (Starlight)
+│   │   │   └── docs/             # MDX pages: tech/, life/, beats/, stars/, ja/ (Starlight)
 │   │   ├── content.config.ts    # Content Collections schema (extends docsSchema)
+│   │   ├── data/
+│   │   │   └── beats.ts          # Beat catalog for /beats/
 │   │   ├── utils/
 │   │   │   └── llms.ts           # Shared logic for llms.txt generation
 │   │   ├── pages/                # Astro endpoints (llms.txt, RSS, /stars/rss.xml)
 │   │   └── styles/
 │   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
 │   ├── public/
+│   │   ├── audio/beats/          # Beat MP3s for on-site playback
 │   │   ├── favicon.png           # Browser tab icon
+│   │   ├── og/                   # Open Graph source images
 │   │   └── robots.txt
 │   ├── nginx/
 │   │   └── nginx.conf            # nginx configuration for static serving

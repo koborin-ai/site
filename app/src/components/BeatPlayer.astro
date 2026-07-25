@@ -1,0 +1,291 @@
+---
+/**
+ * BeatPlayer — thin custom audio player. Only one instance plays at a time.
+ */
+interface Props {
+  src: string;
+  title: string;
+  slug: string;
+}
+
+const { src, title, slug } = Astro.props;
+---
+
+<div class="beat-player not-content" data-beat-player data-slug={slug}>
+  <audio class="beat-audio" preload="metadata" src={src} data-beat-audio aria-label={`Audio for ${title}`}
+  ></audio>
+
+  <button type="button" class="beat-play-btn" data-beat-play aria-label={`Play ${title}`}>
+    <span class="beat-play-icon" aria-hidden="true">
+      <svg class="icon-play" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M9 7.5v9l7.5-4.5L9 7.5z"></path>
+      </svg>
+      <svg class="icon-pause" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 7h3v10H8V7zm5 0h3v10h-3V7z"></path>
+      </svg>
+    </span>
+  </button>
+
+  <input
+    type="range"
+    class="beat-seek"
+    data-beat-seek
+    min="0"
+    max="1000"
+    value="0"
+    step="1"
+    aria-label={`Seek ${title}`}
+  />
+
+  <div class="beat-time" aria-hidden="true">
+    <span data-beat-current>0:00</span>
+    <span class="beat-time-sep">/</span>
+    <span data-beat-duration>0:00</span>
+  </div>
+</div>
+
+<script>
+  const SEEK_MAX = 1000;
+
+  function formatTime(seconds: number): string {
+    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+    const total = Math.floor(seconds);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function stopOthers(except: HTMLAudioElement) {
+    document.querySelectorAll<HTMLAudioElement>('[data-beat-audio]').forEach((audio) => {
+      if (audio !== except && !audio.paused) {
+        audio.pause();
+      }
+    });
+    document.querySelectorAll<HTMLElement>('[data-beat-player]').forEach((player) => {
+      const audio = player.querySelector<HTMLAudioElement>('[data-beat-audio]');
+      if (audio && audio !== except) {
+        player.classList.remove('is-playing');
+        const btn = player.querySelector<HTMLButtonElement>('[data-beat-play]');
+        if (btn) {
+          const title = audio.getAttribute('aria-label')?.replace(/^Audio for /, '') ?? 'track';
+          btn.setAttribute('aria-label', `Play ${title}`);
+        }
+      }
+    });
+  }
+
+  function bindPlayer(player: HTMLElement) {
+    if (player.dataset.bound === 'true') return;
+    player.dataset.bound = 'true';
+
+    const audio = player.querySelector<HTMLAudioElement>('[data-beat-audio]');
+    const playBtn = player.querySelector<HTMLButtonElement>('[data-beat-play]');
+    const seek = player.querySelector<HTMLInputElement>('[data-beat-seek]');
+    const currentEl = player.querySelector<HTMLElement>('[data-beat-current]');
+    const durationEl = player.querySelector<HTMLElement>('[data-beat-duration]');
+    if (!audio || !playBtn || !seek || !currentEl || !durationEl) return;
+
+    const title = audio.getAttribute('aria-label')?.replace(/^Audio for /, '') ?? 'track';
+    let seeking = false;
+
+    const syncPlayState = () => {
+      const playing = !audio.paused;
+      player.classList.toggle('is-playing', playing);
+      playBtn.setAttribute('aria-label', playing ? `Pause ${title}` : `Play ${title}`);
+    };
+
+    const syncTime = () => {
+      currentEl.textContent = formatTime(audio.currentTime);
+      if (!seeking && Number.isFinite(audio.duration) && audio.duration > 0) {
+        seek.value = String(Math.round((audio.currentTime / audio.duration) * SEEK_MAX));
+      }
+    };
+
+    const syncDuration = () => {
+      durationEl.textContent = formatTime(audio.duration);
+    };
+
+    playBtn.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (audio.paused) {
+        stopOthers(audio);
+        try {
+          await audio.play();
+        } catch (err) {
+          console.error('Failed to play audio:', err);
+        }
+      } else {
+        audio.pause();
+      }
+      syncPlayState();
+    });
+
+    seek.addEventListener('pointerdown', () => {
+      seeking = true;
+    });
+    seek.addEventListener('pointerup', () => {
+      seeking = false;
+    });
+    seek.addEventListener('input', () => {
+      if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+      const ratio = Number(seek.value) / SEEK_MAX;
+      audio.currentTime = ratio * audio.duration;
+      currentEl.textContent = formatTime(audio.currentTime);
+    });
+
+    audio.addEventListener('play', syncPlayState);
+    audio.addEventListener('pause', syncPlayState);
+    audio.addEventListener('ended', () => {
+      syncPlayState();
+      seek.value = '0';
+      currentEl.textContent = '0:00';
+    });
+    audio.addEventListener('timeupdate', syncTime);
+    audio.addEventListener('loadedmetadata', () => {
+      syncDuration();
+      syncTime();
+    });
+
+    if (audio.readyState >= 1) {
+      syncDuration();
+      syncTime();
+    }
+    syncPlayState();
+  }
+
+  function bindAllPlayers() {
+    document.querySelectorAll<HTMLElement>('[data-beat-player]').forEach(bindPlayer);
+  }
+
+  bindAllPlayers();
+  document.addEventListener('astro:page-load', bindAllPlayers);
+</script>
+
+<style>
+  .beat-player {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    max-width: 36rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--color-bg-card, var(--sl-color-gray-6));
+    border: 1px solid var(--color-border, var(--sl-color-gray-5));
+    border-radius: var(--radius-md, 0.5rem);
+  }
+
+  .beat-audio {
+    display: none;
+  }
+
+  .beat-play-btn {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    color: #fff;
+    background: var(--color-accent, #4285f4);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 150ms ease, transform 150ms ease;
+  }
+
+  .beat-play-btn:hover {
+    background: var(--color-accent-hover, #5a9bff);
+  }
+
+  .beat-play-btn:active {
+    transform: scale(0.96);
+  }
+
+  .beat-play-icon {
+    display: grid;
+    place-items: center;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .beat-play-icon svg {
+    grid-area: 1 / 1;
+    display: block;
+    width: 1.125rem;
+    height: 1.125rem;
+    max-width: none;
+  }
+
+  .beat-play-icon .icon-play {
+    /* Triangle reads left-heavy; nudge for optical center */
+    transform: translateX(1px);
+  }
+
+  .beat-play-icon .icon-pause {
+    opacity: 0;
+  }
+
+  .beat-player.is-playing .beat-play-icon .icon-play {
+    opacity: 0;
+  }
+
+  .beat-player.is-playing .beat-play-icon .icon-pause {
+    opacity: 1;
+  }
+
+  .beat-seek {
+    flex: 1;
+    min-width: 0;
+    height: 0.35rem;
+    margin: 0;
+    cursor: pointer;
+    appearance: none;
+    background: transparent;
+  }
+
+  .beat-seek::-webkit-slider-runnable-track {
+    height: 0.35rem;
+    background: var(--color-border-hover, var(--sl-color-gray-4));
+    border-radius: 999px;
+  }
+
+  .beat-seek::-webkit-slider-thumb {
+    appearance: none;
+    width: 0.85rem;
+    height: 0.85rem;
+    margin-top: -0.25rem;
+    background: var(--color-accent, #4285f4);
+    border: none;
+    border-radius: 999px;
+  }
+
+  .beat-seek::-moz-range-track {
+    height: 0.35rem;
+    background: var(--color-border-hover, var(--sl-color-gray-4));
+    border-radius: 999px;
+  }
+
+  .beat-seek::-moz-range-thumb {
+    width: 0.85rem;
+    height: 0.85rem;
+    background: var(--color-accent, #4285f4);
+    border: none;
+    border-radius: 999px;
+  }
+
+  .beat-time {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.2rem;
+    min-width: 5.5rem;
+    justify-content: flex-end;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted, var(--sl-color-gray-3));
+  }
+
+  .beat-time-sep {
+    opacity: 0.7;
+  }
+</style>

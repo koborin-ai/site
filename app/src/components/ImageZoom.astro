@@ -12,7 +12,7 @@
       '.sl-markdown-content img:not(.medium-zoom-image)'
     );
     const zoomable = Array.from(candidates).filter(
-      (img) => !img.closest('a')
+      (img) => !img.closest('a') && !img.classList.contains('no-zoom')
     );
     mediumZoom(zoomable, {
       margin: 24,
@@ -20,18 +20,20 @@
       scrollOffset: 0,
     });
 
-    // Custom zoom for Mermaid SVG diagrams
+    // Custom zoom for Mermaid SVG diagrams only (never UI icons like play buttons)
     initMermaidZoom();
   }
 
   function initMermaidZoom() {
-    const mermaidSvgs = document.querySelectorAll('.sl-markdown-content svg:not(.sl-anchor-icon svg)');
-    
+    const mermaidSvgs = document.querySelectorAll(
+      '.sl-markdown-content svg[id^="mermaid"]'
+    );
+
     mermaidSvgs.forEach((svg) => {
       // Skip if already processed
       if (svg.hasAttribute('data-zoomable')) return;
       svg.setAttribute('data-zoomable', 'true');
-      
+
       svg.addEventListener('click', () => {
         openSvgModal(svg as SVGElement);
       });

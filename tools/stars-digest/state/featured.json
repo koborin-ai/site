@@ -46,6 +46,7 @@
     "salvadordeveloper/flutter-crypto-app",
     "samchon/ttsc",
     "seydx/node-av",
+    "shikijs/shiki",
     "standardagents/arrow-js",
     "supabase/supabase",
     "supertone-inc/supertonic",
@@ -53,5 +54,5 @@
     "voldikss/vim-translator",
     "withastro/starlight"
   ],
-  "lastProcessedStarsSha": "f1564c93325c443e1f3a2866f55f3098b477c4fa"
+  "lastProcessedStarsSha": "f595934552983d8fefc42900a1fac314baae552f"
 }

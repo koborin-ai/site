@@ -112,6 +112,10 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - `BeatTrack.astro` — body of a per-track share page.
      - `BeatPlayer.astro` — custom player (one track at a time). Root must use `not-content`.
      - `CopyLinkButton.astro` — copies the track URL. Root must use `not-content`.
+   - **Playback modes** (toggle on each player; shared via `localStorage` key `koborin-beat-playback-mode`):
+     - `once` (default) — play the current track, then stop.
+     - `repeat` — loop the current track.
+     - `queue` — when a track ends, play the next `[data-beat-player]` on the page in DOM order (wraps to the first). On a single-track page this behaves like repeat.
    - **Actions**: Navigation links in the action row use class `beat-action` (ghost chrome matching Copy link), defined in `app/src/styles/custom.css`.
    - **Sidebar**: Top-level Beats group (peer of Tech/Life): `All Beats` (`slug: "beats"`) first, then each track (e.g. `beats/slip-road`).
    - **Page frontmatter**: `engagement: false`, `tableOfContents: false`, and `ogImage` on every Beats MDX page.

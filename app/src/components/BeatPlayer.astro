@@ -1,6 +1,7 @@
 ---
 /**
  * BeatPlayer — thin custom audio player. Only one instance plays at a time.
+ * Supports playback modes: once, repeat one, and queue (play all on the page).
  */
 interface Props {
   src: string;
@@ -42,10 +43,78 @@ const { src, title, slug } = Astro.props;
     <span class="beat-time-sep">/</span>
     <span data-beat-duration>0:00</span>
   </div>
+
+  <button
+    type="button"
+    class="beat-mode-btn"
+    data-beat-mode
+    aria-label="Playback mode: Play once"
+    title="Play once"
+  >
+    <span class="beat-mode-icon" aria-hidden="true">
+      <!-- Play once: forward to end (no loop) -->
+      <svg class="icon-mode-once" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h11"></path>
+        <path d="m13 6 6 6-6 6"></path>
+        <path d="M19 6v12"></path>
+      </svg>
+      <!-- Repeat one track -->
+      <svg class="icon-mode-repeat" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m17 2 4 4-4 4"></path>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+        <path d="m7 22-4-4 4-4"></path>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+        <text x="12" y="14.5" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor" stroke="none">1</text>
+      </svg>
+      <!-- Play all tracks in page order, wrapping -->
+      <svg class="icon-mode-queue" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m17 2 4 4-4 4"></path>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+        <path d="m7 22-4-4 4-4"></path>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+      </svg>
+    </span>
+  </button>
 </div>
 
 <script>
   const SEEK_MAX = 1000;
+  const MODE_STORAGE_KEY = 'koborin-beat-playback-mode';
+  const MODES = ['once', 'repeat', 'queue'] as const;
+  type PlaybackMode = (typeof MODES)[number];
+
+  const MODE_META: Record<
+    PlaybackMode,
+    { label: string; title: string }
+  > = {
+    once: { label: 'Play once', title: 'Play once' },
+    repeat: { label: 'Repeat track', title: 'Repeat this track' },
+    queue: { label: 'Play all', title: 'Play all tracks in order' },
+  };
+
+  let playbackMode: PlaybackMode = 'once';
+
+  function isPlaybackMode(value: string | null): value is PlaybackMode {
+    return value === 'once' || value === 'repeat' || value === 'queue';
+  }
+
+  function loadPlaybackMode(): PlaybackMode {
+    try {
+      const stored = localStorage.getItem(MODE_STORAGE_KEY);
+      if (isPlaybackMode(stored)) return stored;
+    } catch {
+      // Ignore storage access errors (private mode, etc.)
+    }
+    return 'once';
+  }
+
+  function savePlaybackMode(mode: PlaybackMode) {
+    try {
+      localStorage.setItem(MODE_STORAGE_KEY, mode);
+    } catch {
+      // Ignore storage access errors
+    }
+  }
 
   function formatTime(seconds: number): string {
     if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
@@ -55,13 +124,42 @@ const { src, title, slug } = Astro.props;
     return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
+  function getPlayers(): HTMLElement[] {
+    return Array.from(document.querySelectorAll<HTMLElement>('[data-beat-player]'));
+  }
+
+  function syncModeUi(player: HTMLElement) {
+    const modeBtn = player.querySelector<HTMLButtonElement>('[data-beat-mode]');
+    if (!modeBtn) return;
+    const meta = MODE_META[playbackMode];
+    modeBtn.dataset.mode = playbackMode;
+    modeBtn.setAttribute('aria-label', `Playback mode: ${meta.label}`);
+    modeBtn.setAttribute('title', meta.title);
+  }
+
+  function syncAllModeUi() {
+    getPlayers().forEach(syncModeUi);
+  }
+
+  function setPlaybackMode(mode: PlaybackMode) {
+    playbackMode = mode;
+    savePlaybackMode(mode);
+    syncAllModeUi();
+  }
+
+  function cyclePlaybackMode() {
+    const index = MODES.indexOf(playbackMode);
+    const next = MODES[(index + 1) % MODES.length];
+    setPlaybackMode(next);
+  }
+
   function stopOthers(except: HTMLAudioElement) {
     document.querySelectorAll<HTMLAudioElement>('[data-beat-audio]').forEach((audio) => {
       if (audio !== except && !audio.paused) {
         audio.pause();
       }
     });
-    document.querySelectorAll<HTMLElement>('[data-beat-player]').forEach((player) => {
+    getPlayers().forEach((player) => {
       const audio = player.querySelector<HTMLAudioElement>('[data-beat-audio]');
       if (audio && audio !== except) {
         player.classList.remove('is-playing');
@@ -74,16 +172,39 @@ const { src, title, slug } = Astro.props;
     });
   }
 
+  async function playPlayer(player: HTMLElement) {
+    const audio = player.querySelector<HTMLAudioElement>('[data-beat-audio]');
+    if (!audio) return;
+    stopOthers(audio);
+    audio.currentTime = 0;
+    try {
+      await audio.play();
+    } catch (err) {
+      console.error('Failed to play audio:', err);
+    }
+  }
+
+  async function playNextInQueue(current: HTMLElement) {
+    const players = getPlayers();
+    if (players.length === 0) return;
+    const index = players.indexOf(current);
+    if (index < 0) return;
+    const next = players[(index + 1) % players.length];
+    // Single-track page: queue wraps to the same player (same as repeat).
+    await playPlayer(next);
+  }
+
   function bindPlayer(player: HTMLElement) {
     if (player.dataset.bound === 'true') return;
     player.dataset.bound = 'true';
 
     const audio = player.querySelector<HTMLAudioElement>('[data-beat-audio]');
     const playBtn = player.querySelector<HTMLButtonElement>('[data-beat-play]');
+    const modeBtn = player.querySelector<HTMLButtonElement>('[data-beat-mode]');
     const seek = player.querySelector<HTMLInputElement>('[data-beat-seek]');
     const currentEl = player.querySelector<HTMLElement>('[data-beat-current]');
     const durationEl = player.querySelector<HTMLElement>('[data-beat-duration]');
-    if (!audio || !playBtn || !seek || !currentEl || !durationEl) return;
+    if (!audio || !playBtn || !modeBtn || !seek || !currentEl || !durationEl) return;
 
     const title = audio.getAttribute('aria-label')?.replace(/^Audio for /, '') ?? 'track';
     let seeking = false;
@@ -105,6 +226,12 @@ const { src, title, slug } = Astro.props;
       durationEl.textContent = formatTime(audio.duration);
     };
 
+    const resetToStart = () => {
+      seek.value = '0';
+      currentEl.textContent = '0:00';
+      audio.currentTime = 0;
+    };
+
     playBtn.addEventListener('click', async (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -119,6 +246,12 @@ const { src, title, slug } = Astro.props;
         audio.pause();
       }
       syncPlayState();
+    });
+
+    modeBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      cyclePlaybackMode();
     });
 
     seek.addEventListener('pointerdown', () => {
@@ -138,8 +271,26 @@ const { src, title, slug } = Astro.props;
     audio.addEventListener('pause', syncPlayState);
     audio.addEventListener('ended', () => {
       syncPlayState();
-      seek.value = '0';
-      currentEl.textContent = '0:00';
+
+      if (playbackMode === 'repeat') {
+        void (async () => {
+          resetToStart();
+          try {
+            await audio.play();
+          } catch (err) {
+            console.error('Failed to repeat audio:', err);
+          }
+        })();
+        return;
+      }
+
+      if (playbackMode === 'queue') {
+        void playNextInQueue(player);
+        return;
+      }
+
+      // once
+      resetToStart();
     });
     audio.addEventListener('timeupdate', syncTime);
     audio.addEventListener('loadedmetadata', () => {
@@ -152,10 +303,13 @@ const { src, title, slug } = Astro.props;
       syncTime();
     }
     syncPlayState();
+    syncModeUi(player);
   }
 
   function bindAllPlayers() {
+    playbackMode = loadPlaybackMode();
     document.querySelectorAll<HTMLElement>('[data-beat-player]').forEach(bindPlayer);
+    syncAllModeUi();
   }
 
   bindAllPlayers();
@@ -287,5 +441,59 @@ const { src, title, slug } = Astro.props;
 
   .beat-time-sep {
     opacity: 0.7;
+  }
+
+  .beat-mode-btn {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    color: var(--color-text-muted, var(--sl-color-gray-3));
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md, 0.5rem);
+    cursor: pointer;
+    transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+  }
+
+  .beat-mode-btn:hover {
+    color: var(--sl-color-accent);
+    background: color-mix(in srgb, var(--sl-color-accent) 12%, transparent);
+  }
+
+  .beat-mode-btn[data-mode='repeat'],
+  .beat-mode-btn[data-mode='queue'] {
+    color: var(--sl-color-accent);
+  }
+
+  .beat-mode-icon {
+    display: grid;
+    place-items: center;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .beat-mode-icon svg {
+    grid-area: 1 / 1;
+    display: block;
+    width: 1.125rem;
+    height: 1.125rem;
+    max-width: none;
+    opacity: 0;
+  }
+
+  .beat-mode-btn[data-mode='once'] .icon-mode-once,
+  .beat-mode-btn:not([data-mode]) .icon-mode-once {
+    opacity: 1;
+  }
+
+  .beat-mode-btn[data-mode='repeat'] .icon-mode-repeat {
+    opacity: 1;
+  }
+
+  .beat-mode-btn[data-mode='queue'] .icon-mode-queue {
+    opacity: 1;
   }
 </style>

@@ -33,6 +33,7 @@
     "k1LoW/mo",
     "kinopeee/cursorrules",
     "kosukesaigusa/claude-code-action-access-control",
+    "kosukesaigusa/mottai-flutter-app",
     "leehack/genui_genkit",
     "lint-staged/lint-staged",
     "mcollina/skills",
@@ -54,5 +55,5 @@
     "voldikss/vim-translator",
     "withastro/starlight"
   ],
-  "lastProcessedStarsSha": "f595934552983d8fefc42900a1fac314baae552f"
+  "lastProcessedStarsSha": "9767c45fbf59964ed6e0bf0295ffd843b0c29ea2"
 }

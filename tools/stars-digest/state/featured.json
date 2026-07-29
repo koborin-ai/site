@@ -5,6 +5,7 @@
     "DNLHC/glance.nvim",
     "Egonex-AI/Understand-Anything",
     "FiloSottile/age",
+    "KeygraphHQ/shannon",
     "LearningCircuit/local-deep-research",
     "LyalinDotCom/TextToSpeechGenkitDemo",
     "Mintplex-Labs/anything-llm",
@@ -56,5 +57,5 @@
     "voldikss/vim-translator",
     "withastro/starlight"
   ],
-  "lastProcessedStarsSha": "46f476a0720b232b0074222f4e14df85835d3d06"
+  "lastProcessedStarsSha": "33787c24b11d820b3b70edf206a844fb0174e999"
 }

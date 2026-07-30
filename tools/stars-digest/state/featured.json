@@ -9,6 +9,7 @@
     "LearningCircuit/local-deep-research",
     "LyalinDotCom/TextToSpeechGenkitDemo",
     "Mintplex-Labs/anything-llm",
+    "Vanilagy/turbores",
     "Zhengqbbb/cz-git",
     "airano-ir/skillhub",
     "ajeetdsouza/zoxide",
@@ -57,5 +58,5 @@
     "voldikss/vim-translator",
     "withastro/starlight"
   ],
-  "lastProcessedStarsSha": "33787c24b11d820b3b70edf206a844fb0174e999"
+  "lastProcessedStarsSha": "ffe50c487f757ddd1ad1490db2a869a182802c58"
 }

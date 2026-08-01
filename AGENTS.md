@@ -20,6 +20,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | Path | Purpose |
 | --- | --- |
 | `.gcloudignore` | Excludes files from Cloud Build upload (infra/, docs/, etc.). |
+| `process-compose.yaml` | Optional local process orchestration (Astro `npm run dev`). |
 | `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
 | `app/cloudbuild.yaml` | Cloud Build configuration for Docker build from project root. |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
@@ -497,7 +498,7 @@ Rules for AI agents during task execution:
 
 ### Primary product
 
-The main local runtime is the **Astro + Starlight app** under `app/`. There is no docker-compose, database, or local API backend. Production serves static files via nginx on Cloud Run.
+The main local runtime is the **Astro + Starlight app** under `app/`. There is no docker-compose, database, or local API backend. Optional local process orchestration uses root `process-compose.yaml`. Production serves static files via nginx on Cloud Run.
 
 ### Toolchain versions
 
@@ -515,7 +516,9 @@ npm run build               # requires Playwright Chromium (see below)
 npm run preview             # serve dist/ after build
 ```
 
-Use **tmux** for long-running processes such as `npm run dev`.
+Use **tmux** for long-running processes such as `npm run dev`, or optionally
+[`process-compose`](https://github.com/F1bonacc1/process-compose) via the root
+`process-compose.yaml` (`process-compose up`).
 
 ### Playwright (required for full `npm run build`)
 

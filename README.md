@@ -207,6 +207,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 ```text
 .
 ├── .gcloudignore                  # Excludes files from Cloud Build upload
+├── process-compose.yaml           # Optional local process orchestration
 ├── app/                           # Astro + Starlight application (Static, nginx)
 │   ├── cloudbuild.yaml            # Cloud Build config for Docker build
 │   ├── src/
@@ -335,10 +336,13 @@ To add a new article or page:
 
 ```bash
 # Node.js >= 20, npm 10 recommended
-npm install
+npm install --prefix app
 
 # Run Astro dev server (app directory)
 npm run dev --prefix app
+
+# Or orchestrate with process-compose (optional; see process-compose.yaml)
+process-compose up
 
 # Analyze infrastructure (infra directory)
 cd infra && dart analyze

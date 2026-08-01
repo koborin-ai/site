@@ -1,0 +1,25 @@
+# Local process orchestration (Docker Compose for non-containerized apps).
+# Install: https://f1bonacc1.github.io/process-compose/installation/
+# Run:    process-compose up
+# Headless: process-compose up -t=false
+version: "0.5"
+
+processes:
+  app:
+    description: Astro + Starlight dev server
+    command: npm run dev -- --host 127.0.0.1 --port 4321
+    working_dir: ./app
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        scheme: http
+        path: /
+        port: 4321
+      initial_delay_seconds: 1
+      period_seconds: 2
+      timeout_seconds: 3
+      failure_threshold: 30
+    availability:
+      restart: on_failure
+      backoff_seconds: 2
+      max_restarts: 3

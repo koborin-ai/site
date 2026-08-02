@@ -6,9 +6,11 @@ import type { ImageMetadata } from 'astro';
 import { getBeats } from '../data/beats';
 import BeatTrackCard from './BeatTrackCard.astro';
 import slipRoadCover from '../assets/og/beats-slip-road.jpg';
+import sunsetReflectionCover from '../assets/og/beats-sunset-reflection.jpg';
 
 const covers: Record<string, ImageMetadata> = {
   'slip-road': slipRoadCover,
+  'sunset-reflection': sunsetReflectionCover,
 };
 
 const items = getBeats();

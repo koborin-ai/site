@@ -22,6 +22,17 @@ export interface Beat {
  */
 export const beats: Beat[] = [
   {
+    slug: 'sunset-reflection',
+    title: 'Sunset Reflection',
+    description:
+      'A warm 80 BPM soul instrumental built around a melodic stack loop, sparse verses, and fuller hooks.',
+    date: '2026-08-02',
+    bpm: 80,
+    key: 'B minor',
+    audioSrc: '/audio/beats/sunset-reflection.mp3',
+    ogImage: '/og/beats-sunset-reflection.jpg',
+  },
+  {
     slug: 'slip-road',
     title: 'Slip Road',
     description:

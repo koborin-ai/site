@@ -1,5 +1,0 @@
-{
-  "name": "stars-digest-dev",
-  "private": true,
-  "description": "Anchors the Genkit CLI (`genkit start`) project root to this Dart package. The genkit JS CLI locates the project root by walking up for a package.json; without this file it climbs past the repo and watches the wrong .genkit/runtimes directory, so the Dev UI never connects to the Dart reflection server (which registers under this package's .genkit/runtimes). Dart tooling ignores this file."
-}

@@ -123,7 +123,6 @@ flowchart LR
         releaseInfra[release-infra.yml]
         appCI[app-ci.yml]
         appRelease[app-release.yml]
-        starsDigest[stars-digest.yml]
     end
 
     subgraph Cloud Build
@@ -135,13 +134,10 @@ flowchart LR
         envStacks[Dev/Prod Stacks]
     end
 
-    starsDigest -->|daily cron| genEdition[Generate edition\nDart + Genkit + Gemini]
-
     planInfra --> sharedStack
     releaseInfra --> sharedStack
     releaseInfra --> envStacks
     appCI -->|PR validation| GitHub
-    genEdition -->|commit /stars + workflow_call| appRelease
     appRelease --> buildApp --> envStacks
 ```
 
@@ -150,8 +146,7 @@ flowchart LR
 | `plan-infra.yml` | PRs touching infra | `dart analyze` + `terraform plan` for shared/dev/prod stacks | No apply; reviewers inspect plan output |
 | `release-infra.yml` | `infra-v*` tags or manual dispatch | Applies shared/dev/prod stacks via Terraform | Workload Identity SA has infra IAM roles |
 | `app-ci.yml` | PRs touching `app/` or `content/` | Runs Astro lint/typecheck/test/build | Blocks merges that break the app |
-| `app-release.yml` | Merge to `main`, `app-v*` tags, or `workflow_call` | Builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}-${TARGET_ENV}`) and applies Terraform to update Cloud Run | Reusable via `workflow_call` (used by `stars-digest.yml`); Cloud Build runs asynchronously |
-| `stars-digest.yml` | Daily cron (03:30 JST) or manual dispatch | Generates the `/stars` OSS newsletter, commits it, then deploys dev → prod | Calls `app-release.yml` via `workflow_call`; publishes a daily GitHub release |
+| `app-release.yml` | Merge to `main`, `app-v*` tags, or `workflow_call` | Builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}-${TARGET_ENV}`) and applies Terraform to update Cloud Run | Cloud Build runs asynchronously |
 | `claude.yml` | `@claude` mention in issues/PR comments/reviews | Runs Claude Code Action to respond in-thread | Reads CI results on PRs; gated on the mention string |
 
 ## Tech Stack
@@ -163,28 +158,9 @@ flowchart LR
   - Optional custom `/api/track` endpoint writing to Cloud Logging → BigQuery for privacy-friendly metrics.
   - Cloud Monitoring dashboards + alert policies for Cloud Run metrics.
 - **Infrastructure**: TerraDart (Dart) targeting Google Cloud via Terraform.
-- **Stars Digest**: Dart CLI built on Genkit (`genkit` + `genkit_vertexai`) that calls Gemini on Vertex AI to generate the daily `/stars` OSS newsletter. See [Stars Digest](#stars-digest).
-- **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra, `app-ci.yml` / `app-release.yml` handle the Astro app, and `stars-digest.yml` runs the daily newsletter.
+- **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra; `app-ci.yml` / `app-release.yml` handle the Astro app.
 - **Testing**: Vitest for app tests, `dart analyze` for infra, Playwright for Mermaid rendering in production builds.
 - **LLM Context**: Machine-readable `llms.txt` files for AI assistants. Auto-generated at build time.
-
-## Stars Digest
-
-`tools/stars-digest/` is a Dart package that generates the daily [`/stars`](https://koborin.ai/stars) personalized OSS newsletter. It reads the starred-repos data from a local clone of the private [`koborin-ai/stars`](https://github.com/koborin-ai/stars) repo, picks one main deep-dive plus up to five new arrivals, and writes structured Japanese prose via Gemini (on Vertex AI) through [Genkit](https://genkit.dev). A deterministic stub keeps `--dry-run` fully offline.
-
-```bash
-cd tools/stars-digest
-dart pub get
-dart run build_runner build
-
-# Generate today's edition (Asia/Tokyo); needs GEMINI_API_KEY / GOOGLE_API_KEY
-dart run bin/generate.dart --stars-dir <path/to/stars> --site-dir <repo-root>
-
-# Offline dry-run (no Gemini call)
-dart run bin/generate.dart --stars-dir <path/to/stars> --site-dir <repo-root> --dry-run
-```
-
-Each edition is written to `app/src/content/docs/stars/<YYYY-MM-DD>.md` and surfaced on the `/stars` index page and its RSS feed (`/stars/rss.xml`). The newsletter is personal, so `/stars` is excluded from search indexing (`noindex`, `robots.txt` Disallow, sitemap filter, and `pagefind: false`). In CI, `stars-digest.yml` runs the generator on a daily cron, commits the new edition, and deploys it through `app-release.yml`. For interactive prompt iteration, the Genkit Developer UI runs locally via `genkit start -o -- dart run bin/dev.dart` (details in `tools/stars-digest/README.md`).
 
 ## LLM Context Files (llms.txt)
 
@@ -216,13 +192,13 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   │   ├── life/             # Life article images
 │   │   │   └── og/               # Open Graph images
 │   │   ├── content/
-│   │   │   └── docs/             # MDX pages: tech/, life/, beats/, stars/, ja/ (Starlight)
+│   │   │   └── docs/             # MDX pages: tech/, life/, beats/, ja/ (Starlight)
 │   │   ├── content.config.ts    # Content Collections schema (extends docsSchema)
 │   │   ├── data/
 │   │   │   └── beats.ts          # Beat catalog for /beats/
 │   │   ├── utils/
 │   │   │   └── llms.ts           # Shared logic for llms.txt generation
-│   │   ├── pages/                # Astro endpoints (llms.txt, RSS, /stars/rss.xml)
+│   │   ├── pages/                # Astro endpoints (llms.txt, RSS)
 │   │   └── styles/
 │   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
 │   ├── public/
@@ -242,9 +218,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   ├── dev_stack.dart        # Dev Cloud Run
 │   │   └── prod_stack.dart       # Prod Cloud Run
 │   └── pubspec.yaml              # TerraDart dependencies
-├── tools/
-│   └── stars-digest/              # Dart + Genkit CLI for the daily /stars newsletter
-├── .github/workflows/             # CI pipelines (infra plan/apply, app deploy, stars digest, Claude)
+├── .github/workflows/             # CI pipelines (infra plan/apply, app deploy, Claude)
 ├── README.md                      # This file
 └── AGENTS.md                      # English operations guide for collaborators
 ```
@@ -408,7 +382,7 @@ cd infra && dart analyze
 | `GISCUS_REPO_ID` | Giscus repository ID for the comments widget | GitHub Secrets |
 | `GISCUS_CATEGORY_ID` | Giscus discussion category ID | GitHub Secrets |
 
-`app-release.yml` writes these into `app/.env` at build time: `PUBLIC_GA_MEASUREMENT_ID` for **prod** builds only, and `PUBLIC_GISCUS_REPO_ID` / `PUBLIC_GISCUS_CATEGORY_ID` for both dev and prod. Separately, `stars-digest.yml` authenticates to Vertex AI via Workload Identity (`STARS_DIGEST_SERVICE_ACCOUNT`) to call Gemini — no API key is stored.
+`app-release.yml` writes these into `app/.env` at build time: `PUBLIC_GA_MEASUREMENT_ID` for **prod** builds only, and `PUBLIC_GISCUS_REPO_ID` / `PUBLIC_GISCUS_CATEGORY_ID` for both dev and prod.
 
 ## Documentation
 

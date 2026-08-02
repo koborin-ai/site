@@ -42,6 +42,7 @@ void main() {
     check(md).contains('publishedAt: 2026-05-31');
     check(md).contains('draft: false');
     check(md).contains('lastUpdated: false');
+    check(md).contains('pagefind: false');
     check(md).contains('https://github.com/main/repo');
     check(md).contains('活用1');
     check(md).contains('https://github.com/sub/one');
@@ -57,6 +58,7 @@ void main() {
       ],
     );
     check(md).contains('starmap × Genkit (Dart) + Gemini');
+    check(md).contains('pagefind: false');
     final iNew = md.indexOf('2026-05-31');
     final iOld = md.indexOf('2026-05-30');
     check(iNew < iOld).isTrue();

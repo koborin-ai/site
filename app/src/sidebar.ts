@@ -73,6 +73,10 @@ export const sidebar = [
         slug: "beats",
       },
       {
+        label: "Sunset Reflection",
+        slug: "beats/sunset-reflection",
+      },
+      {
         label: "Slip Road",
         slug: "beats/slip-road",
       },

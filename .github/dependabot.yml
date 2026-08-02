@@ -14,13 +14,14 @@ updates:
         update-types:
           - version-update:semver-major
 
-  - package-ecosystem: gomod
+  - package-ecosystem: pub
     directory: /infra
     schedule:
       interval: weekly
     groups:
-      go-dependencies:
-        dependency-type: production
+      dart-dependencies:
+        patterns:
+          - "*"
 
   - package-ecosystem: github-actions
     directory: /

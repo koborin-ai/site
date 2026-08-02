@@ -301,41 +301,6 @@ final class SharedStack extends Stack {
         ),
       );
     }
-
-    final starsDigestSa = add(
-      GoogleServiceAccount(
-        localName: 'stars_digest_sa',
-        accountId: TfArg.literal('stars-digest'),
-        displayName: TfArg.literal('stars-digest'),
-        description: TfArg.literal(
-          'Service account for the stars-digest GitHub Action to call Vertex AI',
-        ),
-      ),
-    );
-
-    add(
-      GoogleServiceAccountIamMember(
-        localName: 'stars_digest_wif_user',
-        serviceAccountId: TfArg.ref(starsDigestSa.name),
-        role: TfArg.literal('roles/iam.workloadIdentityUser'),
-        member: TfArg.literal(wifPrincipal),
-        dependsOn: [ResourceDependency(wifPool)],
-      ),
-    );
-
-    add(
-      GoogleProjectIamMember(
-        localName: 'stars_digest_sa_aiplatform_user',
-        project: TfArg.literal(projectId),
-        role: TfArg.literal('roles/aiplatform.user'),
-        member: TfArg.ref(starsDigestSa.iamMember),
-      ),
-    );
-
-    addExport(
-      'STARS_DIGEST_SERVICE_ACCOUNT',
-      ResourceIdExport(starsDigestSa.email, emitTerraformOutput: true),
-    );
   }
 
   List<ResourceDependency> _enableApis() {

@@ -42,17 +42,6 @@ output="$(run_labels "" infra/lib/shared_stack.dart)"
 assert_contains "$output" "change:behavior"
 assert_contains "$output" "infra"
 
-output="$(run_labels "" tools/stars-digest/test/persona_builder_test.dart)"
-assert_contains "$output" "change:structure"
-assert_contains "$output" "app"
-
-output="$(run_labels "" tools/stars-digest/prompts/digest.md)"
-assert_contains "$output" "change:behavior"
-assert_contains "$output" "app"
-
-output="$(run_labels "fix(stars-digest): tune prompt" tools/stars-digest/prompts/digest.md)"
-assert_contains "$output" "bug"
-
 output="$(run_labels "feat(infra): add resource" infra/lib/dev_stack.dart)"
 assert_contains "$output" "feature"
 

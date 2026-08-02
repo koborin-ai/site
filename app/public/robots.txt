@@ -1,6 +1,3 @@
-# Public docs may be indexed; the personal stars newsletter may not.
+# Allow all bots to index the site.
 User-agent: *
 Allow: /
-
-Disallow: /stars/
-Disallow: /ja/stars/

@@ -41,6 +41,10 @@ dart run bin/generate.dart \
 
 Requires `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) in the environment unless `--dry-run`.
 
+Generated pages set `pagefind: false` so editions stay out of on-site search.
+Site-level search-engine exclusion for `/stars` lives in the Astro app (`Head.astro`,
+`robots.txt`, sitemap filter, nginx `X-Robots-Tag`).
+
 ## Genkit Developer UI
 
 Iterate on the prompt and Edition output interactively.

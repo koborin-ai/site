@@ -1,3 +1,6 @@
-# Allow all bots to index the site while in development.
+# Public docs may be indexed; the personal stars newsletter may not.
 User-agent: *
 Allow: /
+
+Disallow: /stars/
+Disallow: /ja/stars/

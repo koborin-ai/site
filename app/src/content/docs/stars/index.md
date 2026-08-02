@@ -2,6 +2,7 @@
 title: Stars
 description: Star した OSS の毎日のパーソナル・ニュースレター
 lastUpdated: false
+pagefind: false
 ---
 
 Star した OSS を、私のスタックと関心を踏まえて毎日1号お届けする個人用ニュースレターです。

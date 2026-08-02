@@ -12,11 +12,18 @@ const ogImagePath = ogImage ? normalizeToWebp(ogImage) : '/og/index.webp';
 const ogImageUrl = new URL(ogImagePath, Astro.site).href;
 
 const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
+
+// Personal newsletter: keep /stars out of search indexes.
+const pathname = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isStarsPage = pathname === '/stars' || pathname.startsWith('/stars/')
+  || pathname === '/ja/stars' || pathname.startsWith('/ja/stars/');
 ---
 
 <Default {...Astro.props}>
   <slot />
 </Default>
+
+{isStarsPage && <meta name="robots" content="noindex, nofollow" />}
 
 <meta property="og:image" content={ogImageUrl} />
 <meta property="og:image:width" content="1200" />

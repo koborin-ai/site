@@ -184,7 +184,7 @@ dart run bin/generate.dart --stars-dir <path/to/stars> --site-dir <repo-root>
 dart run bin/generate.dart --stars-dir <path/to/stars> --site-dir <repo-root> --dry-run
 ```
 
-Each edition is written to `app/src/content/docs/stars/<YYYY-MM-DD>.md` and surfaced on the `/stars` index page and its RSS feed (`/stars/rss.xml`). In CI, `stars-digest.yml` runs the generator on a daily cron, commits the new edition, and deploys it through `app-release.yml`. For interactive prompt iteration, the Genkit Developer UI runs locally via `genkit start -o -- dart run bin/dev.dart` (details in `tools/stars-digest/README.md`).
+Each edition is written to `app/src/content/docs/stars/<YYYY-MM-DD>.md` and surfaced on the `/stars` index page and its RSS feed (`/stars/rss.xml`). The newsletter is personal, so `/stars` is excluded from search indexing (`noindex`, `robots.txt` Disallow, sitemap filter, and `pagefind: false`). In CI, `stars-digest.yml` runs the generator on a daily cron, commits the new edition, and deploys it through `app-release.yml`. For interactive prompt iteration, the Genkit Developer UI runs locally via `genkit start -o -- dart run bin/dev.dart` (details in `tools/stars-digest/README.md`).
 
 ## LLM Context Files (llms.txt)
 

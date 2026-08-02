@@ -1,6 +1,5 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
-import sitemap from "@astrojs/sitemap";
 import { unified } from "@astrojs/markdown-remark";
 import rehypeMermaid from "rehype-mermaid";
 import remarkGfm from "remark-gfm";
@@ -88,17 +87,6 @@ export default defineConfig({
       ],
       // Disable Starlight's default 404 page to allow custom pages
       disable404Route: true,
-    }),
-    // Own sitemap so /stars can be filtered out (Starlight skips its own when this exists).
-    sitemap({
-      i18n: {
-        defaultLocale: "root",
-        locales: {
-          root: "en",
-          ja: "ja",
-        },
-      },
-      filter: (page) => !page.includes("/stars/"),
     }),
   ],
 });

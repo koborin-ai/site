@@ -28,12 +28,6 @@ is_behavior_path() {
   case "$1" in
     app/* | content/* | infra/*) return 0 ;;
     .github/workflows/*) return 0 ;;
-    tools/stars-digest/*)
-      if is_test_path "$1"; then
-        return 1
-      fi
-      return 0
-      ;;
     *) return 1 ;;
   esac
 }
@@ -49,7 +43,7 @@ is_structure_path() {
 
 is_app_path() {
   case "$1" in
-    app/* | content/* | tools/stars-digest/*) return 0 ;;
+    app/* | content/*) return 0 ;;
     *) return 1 ;;
   esac
 }

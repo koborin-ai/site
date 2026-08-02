@@ -15,6 +15,10 @@ import starsDigestOg from '../../../../assets/og/stars-digest.png';
 
 <SiteImage src={starsDigestOg} alt="star した OSS を、「自分」を読んだエージェントが掘り起こす" variant="articleHeader" style="width: 100%; height: auto;" />
 
+:::note[廃止]
+個人用ニュースレター `/stars` は廃止しました。この記事は、当時作っていた仕組みの記録として残しています。
+:::
+
 私は GitHub で気になったリポジトリを見つけると、とりあえず star を付けます。ただ、付けたあとに見返すことはほとんどありません。その先で何かをするわけでもなく、数だけが増えていきます。
 
 この「積んだまま」をどうにかしたくて、star したリポジトリの中から毎朝ひとつを選んで、自分宛てに紹介してくれる仕組みを作りました。選んで紹介文を書いているのは私ではなく、AI エージェントです。そのエージェントは、私がこのサイトに書いてきた記事を読んでいます。
@@ -91,9 +95,7 @@ final response = await ai.generate(
   <SiteImage src={devUiDark} alt="Genkit Developer UI で stars-digest の starsDigest フローを動かしている画面" variant="inline" class="theme-dark" />
 </figure>
 
-実際のニュースレターは、こちらで公開しています。
-
-<RichLinkCard href="/stars/" title="koborin.ai/stars" description="star した OSS を、毎朝ひとつ自分宛てに紹介するニュースレター" />
+ニュースレター本体は公開していましたが、いまは廃止しています。
 
 ## エージェントが読む「私」
 

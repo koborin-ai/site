@@ -5,10 +5,12 @@
 import type { ImageMetadata } from 'astro';
 import { getBeats } from '../data/beats';
 import BeatTrackCard from './BeatTrackCard.astro';
+import lanternSlopeCover from '../assets/og/beats-lantern-slope.jpg';
 import slipRoadCover from '../assets/og/beats-slip-road.jpg';
 import sunsetReflectionCover from '../assets/og/beats-sunset-reflection.jpg';
 
 const covers: Record<string, ImageMetadata> = {
+  'lantern-slope': lanternSlopeCover,
   'slip-road': slipRoadCover,
   'sunset-reflection': sunsetReflectionCover,
 };

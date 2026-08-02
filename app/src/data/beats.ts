@@ -22,6 +22,17 @@ export interface Beat {
  */
 export const beats: Beat[] = [
   {
+    slug: 'lantern-slope',
+    title: 'Lantern Slope',
+    description:
+      'A moody 90 BPM D minor instrumental with koto, airy vocal riffs, sparse verses, and heavier hooks.',
+    date: '2026-08-02',
+    bpm: 90,
+    key: 'D minor',
+    audioSrc: '/audio/beats/lantern-slope.mp3',
+    ogImage: '/og/beats-lantern-slope.jpg',
+  },
+  {
     slug: 'sunset-reflection',
     title: 'Sunset Reflection',
     description:

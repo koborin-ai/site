@@ -18,7 +18,7 @@ export interface Beat {
  * Beat catalog. Sorted newest-first at read time via getBeats().
  * Add a track here, place the MP3 under public/audio/beats/,
  * add OG art under public/og/ + src/assets/og/, create beats/<slug>.mdx,
- * register the cover in BeatList.astro, and add a sidebar entry under Beats.
+ * and register the cover in BeatList.astro.
  */
 export const beats: Beat[] = [
   {

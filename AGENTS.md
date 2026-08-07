@@ -117,7 +117,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - `repeat` — loop the current track.
      - `queue` — when a track ends, play the next `[data-beat-player]` on the page in DOM order (wraps to the first). On a single-track page this behaves like repeat.
    - **Actions**: Navigation links in the action row use class `beat-action` (ghost chrome matching Copy link), defined in `app/src/styles/custom.css`.
-   - **Sidebar**: Top-level Beats group (peer of Tech/Life): `All Beats` (`slug: "beats"`) first, then each track (e.g. `beats/slip-road`).
+   - **Sidebar**: Not listed in the site sidebar. Reachable via `/beats/` (and links from Home / About).
    - **Page frontmatter**: `engagement: false`, `tableOfContents: false`, and `ogImage` on every Beats MDX page.
    - **License note**: Short Splice note on the index only; no per-track sample/tool credits.
    - **Adding a track** (all required):
@@ -126,7 +126,6 @@ This document is a quick guide for any contributors or AI agents that touch the 
      3. Place jacket at `app/public/og/beats-<slug>.jpg` (or `.png`) and the same file under `app/src/assets/og/`.
      4. Create `app/src/content/docs/beats/<slug>.mdx` rendering `<BeatTrack slug="..." cover={...} />`.
      5. Register the cover import in `BeatList.astro`.
-     6. Add a sidebar item under Beats in `app/src/sidebar.ts`.
    - **Icon pitfall**: Interactive SVGs inside MDX must sit under Starlight's `not-content` (already on `BeatPlayer` / `CopyLinkButton`). ImageZoom must only attach to Mermaid `svg[id^="mermaid"]`, never UI icons.
 5. **Image Conventions**:
    - **MANDATORY**: All on-page images must be rendered through the `SiteImage` component (`app/src/components/SiteImage.astro`). Raw `<img>` tags and direct use of Astro's `<Image />` / `<Picture />` are forbidden in MDX and `.astro` files.

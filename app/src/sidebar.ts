@@ -65,25 +65,4 @@ export const sidebar = [
       },
     ],
   },
-  {
-    label: "Beats",
-    items: [
-      {
-        label: "All Beats",
-        slug: "beats",
-      },
-      {
-        label: "Lantern Slope",
-        slug: "beats/lantern-slope",
-      },
-      {
-        label: "Sunset Reflection",
-        slug: "beats/sunset-reflection",
-      },
-      {
-        label: "Slip Road",
-        slug: "beats/slip-road",
-      },
-    ],
-  },
 ];

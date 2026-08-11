@@ -1,6 +1,6 @@
 ---
 title: Where I Stand as an Engineer
-description: Technology is the goal, not the means. But my day job keeps pulling me toward the business side. This is an attempt to sort out where I stand right now.
+description: Developer experience is where I feel the most energy—whether that means adopting OSS, shaping tools for how a team works, or growing a personal project into something larger.
 ogImage: /og/where-i-stand-as-an-engineer.png
 publishedAt: 2026-06-28
 draft: true
@@ -11,94 +11,66 @@ import whereIStandOg from '../../../assets/og/where-i-stand-as-an-engineer.png';
 
 <SiteImage src={whereIStandOg} alt="Where I Stand as an Engineer" variant="articleHeader" style="width: 100%; height: auto;" />
 
-## Anyone Can Learn, Anyone Can Build
+## Developer Experience Is Where I Feel the Most Energy
 
-AI has become ordinary.
+When life gets easier for the people writing code, the whole team moves differently. I feel that most clearly in concrete moments.
 
-Code completion, sure—but ask for a spec and you get an outline back. UI prototypes take minutes, not days. My English is still rough, but with translation in the loop I can work with people overseas. Things that used to mean "spend a few years first" increasingly mean "just try it and see."
+Untangling a local verification flow so anyone can start it the same way. Rethinking how specs and context are handled for a workflow built around LLMs. Fixing a tool or a README and watching the tone of team conversation shift.
 
-That's not a bad thing. I design by sparring with LLMs and I'm building [TerraDart](https://terradart.dev) while writing this post. I feel the convenience.
+That's when I feel the most energy.
 
-For someone who has lived by technology, though, it also feels like a threat somewhere in the background.
+As I wrote in [Reflections on 2025](/life/reflections-on-2025/), at [Google Cloud Next '25](https://cloud.withgoogle.com/next/25) I said the same thing in broken English: improving developer experience is my biggest joy and where I find the most meaning.
 
-Anyone can learn the tech now. Anyone can build what they want, faster than before. What used to be obvious no longer is. Being an engineer is less and less about whether you can write code.
+At my current job I also do pre-sales and team leadership. Time with sales hearing customer problems, and weekly 1-on-1s with my reports, doesn't conflict with improving developer experience inside project teams. If anything, knowing where the friction is makes it easier to know where to act.
 
-For a long time I thought of myself as "someone who only has technology." I loved programming and believed that going deep was the whole point. As I wrote in [Everything Has Meaning](/life/everything-has-meaning/), I meant it in my first job.
+## Choosing What Fits the Moment
 
-That belief is shaking.
+How a team builds changes from project to project. How LLMs are used changes with the team and the season.
 
-It feels like AI is thinning out the value of what I've built. Or maybe it isn't—I don't know. But the anxiety that it might is real. And sometimes I wonder if I'm still clinging to the "tech-only" frame to escape that anxiety.
+So when I'm improving developer experience, I don't think the answer always has to be the same. If existing OSS is enough, use it. If it doesn't fit the internal context, build something that does. Both are investments in the same direction.
 
-## Days Further from Writing Code
+It's less "I have to build it myself" and more "get the best fit for how this team develops right now."
 
-At my current job I also do pre-sales. I work with sales to hear customer problems and propose what our technology can do. If it lands, we get the deal. It's not enough for the technology alone to stick. As I wrote in [Everything Has Meaning](/life/everything-has-meaning/), when the person across the table isn't an engineer, you have to raise the level of abstraction. You listen in business language and propose change in business terms.
+## At Work — Adopting process-compose
 
-AI is pushing engineers into more of those conversations. I'm in that flow too. I still think of technology as the goal, so even in proposals I end up anchored on "what can this technology solve?" The hours I spend translating into business language are unlike my old self.
+On project teams, the same bottlenecks in local development and verification tend to repeat.
 
-I'm also a team lead. Weekly 1-on-1s with my reports matter to me. It's not a role for steering technical direction. People are scattered across different projects, so the conversations are about careers and what they want to learn next.
+Spin up several processes. Respect dependency order. Follow steps in a README by hand, every time. A new teammate loses half a day just getting the environment running. A lot of that friction comes from how developer experience is designed—not from the complexity of the feature itself.
 
-It's not that I dislike 1-on-1s or the team. If anything, I think I've been lucky with the people around me—my manager who does 1-on-1s with me, and the people I lead.
+That's where I used [process-compose](https://github.com/F1bonacc1/process-compose). It's OSS by F1bonacc1: define non-containerized applications in YAML and orchestrate startup order and dependencies together. A single Go binary—often without dealing with Dockerfiles, volumes, or network definitions.
 
-Still, something in me catches. I defined an engineer as someone who writes code. Less time writing still feels off.
+It's not my OSS. It was still enough to cut the repetition in local development. We consolidated startup in `process-compose.yaml` and made it possible to develop while watching process state from the TUI or CLI. Long README steps collapsed toward a single startup command.
 
-I don't want to walk away from the technology I've spent years growing. In the AI era, I can't always tell whether I want to protect the "tech-only" identity because I genuinely love the work or because I'm afraid.
+Improving developer experience doesn't always mean opening a new repository. When a good tool already exists, bring it into the team's context. process-compose is one example of that.
 
-That doesn't mean I'm walking away from what I've been given. I'm still showing up.
+## At Work — Putting contextlint to Use
 
-## What Came from Going Deep
+[contextlint](https://contextlint.dev) is something I built—a linter for consistency in Markdown and specs that fits well with LLM-driven development workflows.
 
-Maybe I'm clinging to "tech-only" out of anxiety. When I think that way, everything I do starts to look defensive.
+I also put it to use internally. Drift between specs and implementation, the granularity of context passed to AI, checks before review—the guardrails you need change with how development is run. contextlint lets you define rules for that context.
 
-But it's also true that going deep on technology led to meaningful connections.
+The reception was good. Less "here's a tool" and more "if you're developing this way, these checks make life easier."
 
-Through [Genkit](https://genkit.dev/), a product I love, I connected with an engineer overseas, co-authored a book, and finally met in person. I wrote more in [Reflections on 2025](/life/reflections-on-2025/), but my story with [Xavi Portilla](https://www.linkedin.com/in/xavierportillaedo/), based in Spain, started online. Last summer he DM'd me out of love for the product, and for about four months we traded drafts across the time zone.
+Use OSS when it fits. Build when the team's way of working needs something shaped for it. contextlint is the latter.
 
-We first met in person at [Google Cloud Next '26](https://cloud.withgoogle.com/next/26) in Las Vegas. [I posted about it on LinkedIn](https://www.linkedin.com/feed/update/urn:li:activity:7452836889671147520).
+## TerraDart — Growing Beyond a Personal Project
 
-Xavi is deeply involved in the Genkit community and OSS. He works on Kubernetes-related OSS too. He's a Google Developer Expert in AI, and I hear he was recently recognized in Go as well. During the book he was blunt about structure. I remember him saying there's no need to rush. I see him as someone who practices how to deliver technology—not just someone with a good personality.
+[TerraDart](https://terradart.dev) is a pre-alpha attempt at type-safe IaC in Dart for the Go / Flutter stack. Author typed GCP resources in Dart, emit standard `*.tf.json`, and keep your existing `terraform apply` pipeline.
 
-I don't want to believe this happened only because I ran from anxiety into technology. For me, at least, this connection came from choosing to go deep.
+It started as a personal project. Now I'm moving it forward with feedback from Google's Go and Flutter product managers. Design direction, how it feels for developers, how it connects to the ecosystem—perspectives I couldn't get from a solo repository are coming in.
 
-## What Makes Up Who I Am Now
+It feels less like a side project and more like something larger, with outside eyes on it. The axis hasn't changed: I want to improve developer experience. The motivation is still to let people who work in Dart / Flutter reach IaC from that context.
 
-Writing this far, I feel like things are sorting themselves out a little.
-
-Technology is not a means to me. It's the goal. I want to go deep on what I love, and when something is missing, I want to build what helps the developers who use it. OSS, internal tooling, articles—the shape changes, but the root is the same.
-
-On top of that, there's me as a person. Blogging, posting on social, speaking, making slides—putting my thinking out there. I think of that as self-branding. Criticism scares me a little. Still, if feedback can flow back into the product, that's a good thing.
-
-Another layer is putting specific technology out into the world. I love Genkit, so I wrote on Medium, contributed to an Awesome list, and co-authored a book. I think of that as tech branding. It comes from wanting the technology to be used more and understood more.
-
-None of this finishes alone. Meeting Xavi is the obvious example. You enter a community, talk, and build something together. It's not one-way broadcasting. There's a back-and-forth.
-
-These four things overlap into the engineer I am now, I think. Craft. Self-branding. Tech branding. Connection with community. They don't separate cleanly. They're all tangled.
-
-## Toward Better Developer Experience
-
-Of those four, the direction that fits best is making developer experience better.
-
-It's close to what people call platform engineering. Less about the application feature itself, more about the environment where the people who build that feature can move without getting lost—safely and quickly. On a new project, that might mean cloud architecture, application architecture, and the development foundation: test environments, static analysis, linters, CI/CD. Lately, for building with AI, it's also close to making tools that make developers' lives easier. [contextlint](https://contextlint.dev) and [gcp-cost-mcp-server](https://github.com/nozomi-koborinai/gcp-cost-mcp-server) are what I have in mind.
-
-I'm not formally assigned to work in that direction, though. Pre-sales and management fill the days, so catching up on technology mostly happens outside work hours. That feeds the anxiety. Maybe I never quite know what the goal is.
-
-Within days that lean business-side, the place I want to stand as an engineer is close to here. Less about shipping end-user features directly, more about laying groundwork so developers can build more easily. That doesn't contradict the feeling that technology is the goal.
-
-[TerraDart](https://terradart.dev), which I'm advancing while writing this post, sits on the same line. I'll write more about it another time, but this is the center of what I'm working on with my hands now.
+I'll write more on [terradart.dev](https://terradart.dev) and elsewhere. For this post, it's enough to say it's one of the things I'm spending the most time on right now.
 
 ## How I Work Now
 
-I write far less code myself than I used to. More time goes to designing from scratch and sparring with LLMs. A large share of my day goes there. Working on [TerraDart](https://terradart.dev) while writing this article and gathering demo material is a typical day lately.
+When I'm designing or building for developer experience, I spend more time sparring with LLMs. Think through the design from scratch, push back on recommendations with things like "in this team's context, isn't something missing here?" I don't hand everything over—as long as the audience is human, some judgments still need to stay human.
 
-That doesn't mean I hand everything to the LLM. As long as the audience is human, I think some judgments still have to be human.
-
-For OSS, there's developer experience: the experience of the user and the experience of the maintainer. For blog posts, talks, and internal or external docs, I think in terms of readability, editability, presentation, who I'm talking to and how, and how deep to go. Machines don't optimize all of that in one shot. Not yet, at least.
-
-LLMs have unknown unknowns too, like humans do. Missing context, limits of training, shallow understanding of niche domains. Humans aren't the only ones who don't know what they don't know. So I try not to swallow recommendations or reject them outright—I push back to understand. Even in areas I think I know, I may only be seeing the tip of the iceberg.
-
-For that dialogue I use [grilling](https://www.skills.sh/mattpocock/skills/grilling), a skill from [Matt Pocock](https://github.com/mattpocock). One question at a time instead of a wall of output. The LLM still proposes. I answer with things like "from experience, isn't this missing something?" or "for security, wouldn't this be better?" Without domain knowledge you'd probably just follow the recommendation. Experience matters, of course—but I think what keeps me questioning is also the assumption that we may both have blind spots.
+For OSS, there's the experience of users and maintainers. For internal tooling, onboarding and day-to-day operating cost matter. For posts and talks, who you're talking to and how deep to go. Machines don't optimize all of that in one shot yet.
 
 ---
 
-I'm facing anxieties I can't fully see while pursuing the developer experience this AI era calls for. Building [TerraDart](https://terradart.dev) and [contextlint](https://contextlint.dev) is part of that. I plan to keep updating who I am now—not only by building, but by putting things out there.
+Developer experience is where I feel the most energy. Whether that means adopting existing OSS like process-compose, building for how a team works like [contextlint](https://contextlint.dev), or growing something past the personal-project frame like [TerraDart](https://terradart.dev), the root is the same.
 
-I think that's where I stand today.
+That's where I stand today.

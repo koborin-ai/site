@@ -34,9 +34,9 @@ is_behavior_path() {
 
 is_structure_path() {
   case "$1" in
-    README.md | AGENTS.md | CLAUDE.md) return 0 ;;
+    README.md | AGENTS.md) return 0 ;;
     .github/release.yml) return 0 ;;
-    docs/* | .claude/skills/* | .cursor/*) return 0 ;;
+    docs/* | .cursor/*) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -57,7 +57,7 @@ is_infra_path() {
 
 is_doc_path() {
   case "$1" in
-    docs/* | README.md | AGENTS.md | CLAUDE.md | .claude/skills/*) return 0 ;;
+    docs/* | README.md | AGENTS.md | .cursor/*) return 0 ;;
     *) return 1 ;;
   esac
 }

@@ -85,6 +85,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Author pages under `app/src/content/docs/`. Use YAML frontmatter with `title`, `description`.
    - Mark drafts with `draft: true` in frontmatter to exclude from navigation.
    - Starlight automatically generates navigation from the directory structure and sidebar config in `astro.config.mjs`.
+   - **Drafts are not covered by `npm run build`**: draft pages are excluded from production builds, so a broken draft (missing image import, bad MDX) passes CI and only fails once rendered. Open every draft you touched in `npm run dev` before considering it done, and re-run `npm run build` after removing `draft: true` so the page enters the build for the first time under your own eyes.
+   - `starlight-auto-drafts` keeps draft slugs in `app/src/sidebar.ts` from breaking production builds. Sidebar entries for drafts show a DRAFT badge in dev and disappear in production.
 2. **Adding new content**:
    - Create `.mdx` file under `app/src/content/docs/` (or subdirectory for categories like `blog/`, `guides/`).
    - Add frontmatter: `title` (required), `description` (required), `publishedAt` (required for articles, `YYYY-MM-DD`), `draft` (optional, boolean).
@@ -465,6 +467,7 @@ All five commands must complete successfully with no errors.
    - **New conventions or rules**: Add to `AGENTS.md` under the appropriate section.
 2. For infra: `dart analyze` in `infra/` - must pass.
 3. For app: `npm run build && npm run lint && npm run typecheck && npm run test && npm run check-images` in `app/` - all must pass.
+   - If the change touches a page with `draft: true`, these commands skip it. Also open the page in `npm run dev` and confirm it renders.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual GCP steps (e.g., DNS imports, current gaps like IAP enablement) in the PR description.
 6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):

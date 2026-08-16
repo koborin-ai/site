@@ -40,12 +40,12 @@ Treat as **Behavior Change** if the diff touches any of:
 - `app/src/**` (components/layouts/pages)
 - `app/public/**` or `app/src/assets/**` (published assets)
 - `app/astro.config.mjs`, `app/nginx/**`, `app/Dockerfile`
-- `infra/src/**` (Pulumi stacks)
+- `infra/lib/**`, `infra/bin/**` (TerraDart stacks)
 - `.github/workflows/**` (CI behavior)
 
 Treat as **Structure Change** candidates if the diff touches only:
 
-- `README.md`, `AGENTS.md`, `CLAUDE.md`
+- `README.md`, `AGENTS.md`
 - `.github/release.yml`
 - other non-deployed repository documentation files
 
@@ -66,7 +66,7 @@ Return:
 ## Notes
 
 - App CI uses the PR label to decide whether to skip `npm audit` and `npm run build` (fast path for `change:structure`).
-- Infra: never run `pulumi preview`/`pulumi up` locally (CI only).
+- Infra: never run `terraform plan`/`terraform apply` locally (CI only).
 
 ## Examples
 
@@ -79,5 +79,3 @@ Return:
 
 - Changed: `AGENTS.md` wording only
 - Result: Structure Change → label `change:structure`
-
-

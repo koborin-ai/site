@@ -1,0 +1,114 @@
+---
+title: 開発者基盤をつくり続ける
+description: 変化の速い Agentic AI 時代に、サイドプロジェクトの contextlint と TerraDart をつくりながら考えている、開発者基盤との向き合い方。
+ogImage: /og/keep-building-developer-platforms.png
+publishedAt: 2026-08-16
+draft: true
+---
+
+import SiteImage from '../../../../components/SiteImage.astro';
+import keepBuildingOg from '../../../../assets/og/keep-building-developer-platforms.png';
+import contextlintSlack from '../../../../assets/life/keep-building-developer-platforms/contextlint-slack.png';
+import terradartAlphaPost from '../../../../assets/life/keep-building-developer-platforms/terradart-alpha-post.png';
+import terradartTalk from '../../../../assets/life/keep-building-developer-platforms/terradart-talk.png';
+import terradartArchitecture from '../../../../assets/life/keep-building-developer-platforms/terradart-architecture.png';
+
+<SiteImage src={keepBuildingOg} alt="開発者基盤をつくり続ける" variant="articleHeader" style="width: 100%; height: auto;" />
+
+昨今の Agentic AI の著しい成長とそのパワーを感じながら、今後の自分のエンジニア（特にソフトウェアエンジニア）としての理想を考えてみることにした。
+最近の本業での役割は、大まかにこんな感じだと思う。
+1 週間をイメージしながら整理してみる。
+
+- チームメンバーとの 1on1 × 5 名
+- SIer 企業としての案件獲得のためのプリセールス
+- PM 兼テックリード × 2 案件
+- 運用保守 1 案件
+
+どの役割も、自分のいい経験になっている。
+その中で一番熱が沸くのは、DX（開発者体験）について考えているときだ。
+
+## contextlint をつくった理由
+
+最近の開発では、要件や仕様、設計を Markdown で書いて SSOT として扱い、それを基に AI にコードを書いてもらう進め方が増えた。
+この進め方だと、ドキュメントが壊れていれば、そこから生まれるコードにも影響が出る。
+
+ただ、実際にやってみると、ドキュメント間の整合性を保ち続けるのが難しかった。
+要件 ID を別のファイルから参照しているとき、その ID を消したり変えたりすると参照先が壊れる。
+しかも、エラーも出ないしテストも落ちない。
+ファイルが増えるほど、手作業では追いつかなくなる。
+
+整合性のチェックも LLM に任せる手はある。
+ただ、ID が重複していないか、リンク先のファイルが存在するかといった Yes/No で決まる問題に対して、実行するたびに違う答えが返ってくるのは扱いにくい。
+結局は自分で確認し直すことになるし、ドキュメントが増えるほどトークンも時間も食う。
+条件さえ決まれば機械的に判定できるものは静的解析に任せて、人間の判断は最小限にしたい。
+そう思って contextlint をつくり始めた。
+
+社内では AI 駆動開発を推進する動きも出ており、個人で開発している contextlint も紹介してみた。
+そこそこ評判が良く、使ってくれる人も多くいた。
+
+<SiteImage src={contextlintSlack} alt="社内で紹介した contextlint" variant="inline" />
+
+## TerraDart をつくっている理由
+
+サイドプロジェクトでは、TerraDart というものも開発している。
+これは CDK for Terraform や Pulumi のような、アプリ言語でインフラを記述するものである。
+もともとは CDK for Terraform を TypeScript で書いていたのだが、2025 年 12 月にアーカイブになりショックを受けた。
+
+当時は TypeScript でフルスタック開発をしていたので、言語のスイッチングコストがなく、覚えやすく、コードベースに他の依存関係を入れなくていいのも良かった。
+さらに、ディレクトリ構造もアプリと似せられて、インフラとしてのコードの見通しが良い。
+そこが気に入っていたので、なおさらだった。
+
+HashiCorp 社が本体の Terraform HCL にリソースを注力すると聞いたことがある。
+そうだとすると、アプリ言語でインフラを書く選択肢が本体から出てくるとは限らない。
+そんな中、私は Dart 言語が趣味で書き心地も好きなので、Flutter / Dart 開発者に向けた取り組みとして CDK for Terraform の Dart 版を作り始めた。
+
+Flutter は、Genkit Dart がそろそろ GA になるとか、Cloud Functions for Firebase の Dart 版ができあがったりと、モバイルや Web のフロントエンド領域だけでなく、バックエンド領域にも手を伸ばしつつある。
+そんな中、インフラはというと、Flutter エンジニアだと Firebase や GCP が多いだろう。
+そこに対しては、コンソール操作か Terraform を使うことが多いと予想している。
+
+なので、そんなフルスタック Dart 開発者向けに、私は熱を持って開発している。
+2026 年 8 月には、[pre-alpha から alpha へ更新が完了した](https://x.com/fender_kn/status/2088570690559742424)。
+Terraform Google provider を Dart で実装したのだ。
+今後は Cloudflare や他のサードパーティ製のツールとの連携も視野に入れている。
+
+<SiteImage src={terradartAlphaPost} alt="TerraDart が alpha になったことを伝えるポスト" variant="inline" />
+
+発表資料は [Type-safe IaC for Dart](https://speakerdeck.com/coborinai/type-safe-iac-for-dart) にまとめている。
+
+<SiteImage src={terradartTalk} alt="TerraDart の発表" variant="inline" />
+
+<SiteImage src={terradartArchitecture} alt="TerraDart で構成したアーキテクチャ" variant="inline" />
+
+## 用語は変わっても、積み上がるもの
+
+AI 時代は毎日のように新しいモデルが発表され、そのためのツールも発表されて、エコシステムがとてつもないスピードで拡大している。
+そのような状況では、日々の開発者の環境を整えていくことが必要なのかもしれない。
+そして、それを明日には捨てる覚悟で臨む必要もあると考えている。
+そのために、技術の大きなトレンドを追い、具体のツールを理解していくという具体と抽象の関係はやはり重要であると考えている。
+
+今でも「プロンプトエンジニアリング」から始まり、「ループエンジニアリング」「グラフエンジニアリング」（2026/08 時点）という用語がある。
+よくよくそれらを見ていくと、今までウォーターフォールやアジャイルで開発していたようなプラクティスが、別の用語で出てきただけのように感じる場面も少なくない。
+
+道具そのものは入れ替わっていくが、その下にある考え方は積み上がっていく。
+大枠として今までの知識を持っておきつつ、その時々で最適なものを選んでいけばいいと思う。
+
+## それでも、つくり続ける
+
+以前登壇した FlutterGakkai #10 では、とある登壇者がこう言っていた。
+AI 時代は、ニッチな課題を見つけて、そこに人一倍の熱を持って開発していく。
+いわゆる「開発者としての狂気を振りかざす」ということだ。
+
+Agentic AI と協働していく人間にとって、やはり技術のスイッチングコストは大きい。
+さらに、判断するレイヤーがより抽象度の高いところにどんどん上がっている。
+そして、その判断の軸はドメイン領域に影響してくる。
+
+もちろん、ドメインに近づくほど、LLM の学習対象になっていない独自のナレッジがあったりする。
+そちらをよくよく考えるためには、技術面のスイッチングコストを最小限にして、人間にも AI にも耐えうる程度の認知負荷に収めていく必要があると思っている。
+
+そんな中、技術面のエンジニアリングは面白い、楽しいということが大事で、それが私の大切にしている開発者体験でもあると思っている。
+なので、ドメイン側への理解を深めることはもちろんなのだが、それによってエンジニアリング全てが LLM によってつまらなくなってはいけない。
+それを充実させていくことが、今後のソフトウェアエンジニア（プラットフォームエンジニア、SRE など）が大事にしていく部分なのかもしれない。
+
+開発者体験を良くするには、それを支える土台が要る。
+技術的な複雑さはブラックボックスとして隠しつつ、安全は担保する。
+そういう広い意味での「開発者基盤」を、何かを捨てて何かを取り入れる覚悟や勇気を持ちながら、つくり続けていきたい。

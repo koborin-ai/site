@@ -3,6 +3,7 @@ import starlight from "@astrojs/starlight";
 import { unified } from "@astrojs/markdown-remark";
 import rehypeMermaid from "rehype-mermaid";
 import remarkGfm from "remark-gfm";
+import starlightAutoDrafts from "starlight-auto-drafts";
 import { sidebar } from "./src/sidebar.ts";
 
 export default defineConfig({
@@ -26,6 +27,7 @@ export default defineConfig({
   },
   integrations: [
     starlight({
+      plugins: [starlightAutoDrafts()],
       title: "koborin.ai",
       defaultLocale: "root",
       locales: {

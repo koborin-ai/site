@@ -3,12 +3,111 @@ title: Keep Building Developer Platforms
 description: How I think about developer platforms in the fast-moving Agentic AI era, while building my side projects contextlint and TerraDart.
 ogImage: /og/keep-building-developer-platforms.png
 publishedAt: 2026-08-16
-draft: true
 ---
 
 import SiteImage from '../../../components/SiteImage.astro';
 import keepBuildingOg from '../../../assets/og/keep-building-developer-platforms.png';
+import contextlintSlack from '../../../assets/life/keep-building-developer-platforms/contextlint-slack.png';
+import terradartAlphaPost from '../../../assets/life/keep-building-developer-platforms/terradart-alpha-post.png';
+import terradartTalk from '../../../assets/life/keep-building-developer-platforms/terradart-talk.png';
+import terradartArchitecture from '../../../assets/life/keep-building-developer-platforms/terradart-architecture.png';
 
 <SiteImage src={keepBuildingOg} alt="Keep Building Developer Platforms" variant="articleHeader" style="width: 100%; height: auto;" />
 
-{/* Write the English version here after the Japanese draft is ready. */}
+Watching how fast Agentic AI has grown, and feeling its power, I decided to think about what I want to be as an engineer (a software engineer in particular) from here.
+Here is roughly what my day job looks like at the moment.
+I sketched it out by picturing a typical week.
+
+- 1-on-1s with five team members
+- Pre-sales, as an SIer trying to win projects
+- PM and tech lead on two projects
+- Maintenance and operations on one project
+
+Every one of these has been good experience for me.
+Among them, the one that fires me up the most is thinking about DX (developer experience).
+
+## Why I Built contextlint
+
+Lately I write requirements, specs, and designs in Markdown, treat them as the source of truth, and have AI write code from them.
+When you work this way, broken documents lead to code that inherits the damage.
+
+In practice, though, keeping those documents consistent with each other turned out to be hard.
+When a requirement ID is referenced from another file, deleting or renaming that ID breaks the reference.
+No error is raised, and no test fails.
+The more files there are, the less doing this by hand keeps up.
+
+Handing the consistency check to an LLM is one option.
+But for questions that resolve to yes or no, like whether an ID is duplicated or whether a linked file exists, getting a different answer on every run is awkward to work with.
+You end up verifying it yourself anyway, and the more documents you have, the more tokens and time it costs.
+Anything that can be decided mechanically once the conditions are fixed should go to static analysis, so that human judgment is spent elsewhere.
+That is what made me start building contextlint.
+
+There is also a push for AI-driven development inside the company, so I introduced contextlint, which I build on my own time.
+It went over reasonably well, and quite a few people started using it.
+
+<SiteImage src={contextlintSlack} alt="Introducing contextlint internally" variant="inline" />
+
+## Why I Am Building TerraDart
+
+Another side project of mine is TerraDart.
+Like CDK for Terraform or Pulumi, it lets you describe infrastructure in an application language.
+I had been writing CDK for Terraform in TypeScript, and it was a shock when the project was archived in December 2025.
+
+I was doing full-stack development in TypeScript at the time, so there was no switching cost between languages, it was easy to pick up, and I did not have to pull another dependency into the codebase.
+On top of that, I could mirror the application's directory structure, which kept the infrastructure code easy to follow.
+I liked it for those reasons, which made the news land harder.
+
+I have heard that HashiCorp is concentrating its resources on Terraform HCL itself.
+If that is the case, an option for writing infrastructure in an application language may not come from upstream.
+Meanwhile, Dart is a language I enjoy as a hobby and like the feel of writing, so I started building a Dart version of CDK for Terraform for Flutter and Dart developers.
+
+Flutter is reaching past mobile and web frontends into the backend, with Genkit Dart approaching GA and a Dart version of Cloud Functions for Firebase now available.
+As for infrastructure, Flutter engineers are probably on Firebase or GCP more often than not.
+My guess is that they reach for either the console or Terraform.
+
+So I am building this with real enthusiasm, for full-stack Dart developers.
+In August 2026, [the update from pre-alpha to alpha was completed](https://x.com/fender_kn/status/2088570690559742424).
+I implemented the Terraform Google provider in Dart.
+Integrations with Cloudflare and other third-party tools are on my list next.
+
+<SiteImage src={terradartAlphaPost} alt="A post announcing that TerraDart reached alpha" variant="inline" />
+
+The slides are up as [Type-safe IaC for Dart](https://speakerdeck.com/coborinai/type-safe-iac-for-dart).
+
+<SiteImage src={terradartTalk} alt="Presenting TerraDart" variant="inline" />
+
+<SiteImage src={terradartArchitecture} alt="An architecture built with TerraDart" variant="inline" />
+
+## The Words Change, the Ideas Accumulate
+
+In the AI era, new models ship almost daily, tools ship alongside them, and the ecosystem is expanding at tremendous speed.
+In a situation like that, maybe what is needed is to keep the day-to-day environment in order for developers.
+And to go in ready to throw that away tomorrow.
+Which is why following the broad technical trends while understanding the concrete tools, that relationship between the abstract and the specific, still matters.
+
+Even now there is a run of terms, starting with "prompt engineering" and continuing into "loop engineering" and "graph engineering" (as of August 2026).
+Look closely at them, though, and more than a few feel like practices from our waterfall and agile days showing up under new names.
+
+The tools themselves get swapped out, but the thinking underneath them accumulates.
+Hold on to what you already know as the broad outline, and pick whatever fits best at the time.
+
+## Building Anyway
+
+At FlutterGakkai #10, where I gave a talk, one of the other speakers said something like this.
+In the AI era, you find a niche problem and build against it with more passion than anyone else.
+Wielding your madness as a developer, so to speak.
+
+For people working alongside Agentic AI, the switching cost of technology is still heavy.
+And the layer where judgment happens keeps moving up in abstraction.
+That judgment, in turn, leans on the domain.
+
+The closer you get to the domain, of course, the more you run into knowledge that no LLM was trained on.
+To think that through properly, the switching cost on the technical side has to be minimal, and the cognitive load has to stay within what both humans and AI can bear.
+
+Through all of that, it matters that engineering itself stays interesting and fun, and that is part of what developer experience means to me.
+Deepening domain understanding is a given, but it cannot come at the price of engineering as a whole becoming dull because an LLM does it.
+Keeping that alive may be what software engineers (platform engineers, SREs, and others) will need to care about going forward.
+
+Making developer experience better takes a foundation underneath it.
+Hide the technical complexity behind a black box, and keep it safe.
+That is the "developer platform" I mean, in the broadest sense, and I want to keep building it, with the nerve to let some things go and take other things on.

@@ -223,7 +223,7 @@ To add a new article or page:
 
 - Infra applies use `infra-v*` tags (or a `main` push under `infra/`) to trigger `release-infra.yml` for the `site` stack.
 - App deploys use `app-v*` tags or a `main` merge under `app/` to drive `app-release.yml` (`wrangler deploy`).
-- GitHub release notes are generated via `.github/release.yml`.
+- GitHub release notes are generated via `.github/release.yml`. Label each PR with `app`, `infra`, `feature`, `bug`, or `doc` so the notes stay segmented by domain; apply the `ignore` label to omit a PR entirely.
 
 ## Local Setup
 

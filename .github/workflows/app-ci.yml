@@ -11,7 +11,6 @@ on:
       - "content/**"
       - ".github/workflows/app-ci.yml"
       - ".github/workflows/app-release.yml"
-      - ".github/scripts/compute-pr-labels.sh"
 
 jobs:
   quality:
@@ -25,32 +24,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine change type (paths)
-        id: change-type
-        run: |
-          mapfile -t files < <(
-            git diff --name-only \
-              "${{ github.event.pull_request.base.sha }}" \
-              "${{ github.event.pull_request.head.sha }}"
-          )
-
-          if ((${#files[@]} == 0)); then
-            echo "type=behavior" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          change_label=$(
-            .github/scripts/compute-pr-labels.sh "${files[@]}" \
-              | grep -E '^change:' \
-              | head -n 1
-          )
-
-          if [[ "$change_label" == "change:structure" ]]; then
-            echo "type=structure" >> "$GITHUB_OUTPUT"
-          else
-            echo "type=behavior" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
@@ -63,28 +36,23 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Chromium
-        if: steps.change-type.outputs.type == 'behavior'
         working-directory: app
         run: npx playwright install chromium
 
       - name: Install image optimization tools
-        if: steps.change-type.outputs.type == 'behavior'
         run: |
           sudo apt-get update
           sudo apt-get install -y webp imagemagick
 
       - name: Optimize OG images
-        if: steps.change-type.outputs.type == 'behavior'
         working-directory: app
         run: ./scripts/optimize-og-images.sh
 
       - name: Check image usage in MDX
-        if: steps.change-type.outputs.type == 'behavior'
         working-directory: app
         run: ./scripts/check-image-usage.sh
 
       - name: Security audit
-        if: steps.change-type.outputs.type == 'behavior'
         working-directory: app
         run: npm audit --audit-level=critical --omit=dev
 
@@ -93,7 +61,5 @@ jobs:
         run: npm run lint
 
       - name: Build
-        if: steps.change-type.outputs.type == 'behavior'
         working-directory: app
         run: npm run build
-

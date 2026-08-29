@@ -9,16 +9,6 @@ on:
     tags:
       - "infra-v*"
   workflow_dispatch:
-    inputs:
-      stack:
-        description: "Stack to deploy"
-        required: true
-        default: "dev"
-        type: choice
-        options:
-          - shared
-          - dev
-          - prod
 
 concurrency:
   group: terraform-state
@@ -28,22 +18,12 @@ jobs:
   terraform-apply:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
-      id-token: write
       contents: read
     timeout-minutes: 30
-
-    environment: ${{ github.event.inputs.stack == 'shared' && 'shared (infra)' || ((startsWith(github.ref, 'refs/tags/infra-v') || github.event.inputs.stack == 'prod') && 'production (infra)' || 'development (infra)') }}
+    environment: production (infra)
 
     env:
-      PROJECT_ID: ${{ secrets.PROJECT_ID }}
-      PROJECT_NUMBER: ${{ secrets.PROJECT_NUMBER }}
-      REGION: asia-northeast1
-      WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-      SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
-      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-      IAP_USER: ${{ secrets.IAP_USER }}
-      OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
-      OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
     steps:
       - name: Checkout code
@@ -52,93 +32,48 @@ jobs:
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
         with:
-          sdk: "3.8"
+          sdk: "3.13"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.11.4"
 
-      - name: Decide target stack
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/infra-v* ]]; then
-            echo "INFRA_STACK=prod" >> "$GITHUB_ENV"
-          elif [ "${{ github.ref_name }}" = "main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            echo "INFRA_STACK=dev" >> "$GITHUB_ENV"
-          else
-            echo "INFRA_STACK=${{ github.event.inputs.stack }}" >> "$GITHUB_ENV"
-          fi
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
-        with:
-          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ env.SERVICE_ACCOUNT }}
-          create_credentials_file: true
-          export_environment_variables: true
-
-      - name: Get current Cloud Run image (if exists)
-        if: env.INFRA_STACK != 'shared'
-        id: current-image
-        run: |
-          if [ "$INFRA_STACK" = "prod" ]; then
-            SERVICE_NAME="koborin-ai-web-prod"
-          else
-            SERVICE_NAME="koborin-ai-web-dev"
-          fi
-          CURRENT_IMAGE=$(gcloud run services describe "${SERVICE_NAME}" \
-            --region="${{ env.REGION }}" \
-            --project="${{ env.PROJECT_ID }}" \
-            --format='value(spec.template.spec.containers[0].image)' 2>/dev/null || echo "gcr.io/cloudrun/hello")
-          echo "CURRENT_IMAGE=${CURRENT_IMAGE}" >> "$GITHUB_OUTPUT"
-          echo "Current image: ${CURRENT_IMAGE}"
-
       - name: Synth Terraform config
         working-directory: infra
         env:
-          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
-          GCP_PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
-          TERRAFORM_BACKEND: gcs
-          TERRAFORM_STATE_BUCKET: ${{ env.BUCKET_NAME }}
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+          TERRAFORM_STATE_BUCKET: koborin-ai-tfstate
+          SITE_APEX_CONTENT: ${{ vars.SITE_APEX_CONTENT }}
+          SITE_APEX_TTL: ${{ vars.SITE_APEX_TTL }}
+          SITE_APEX_PROXIED: ${{ vars.SITE_APEX_PROXIED }}
+          SITE_ATTACH_CUSTOM_DOMAIN: ${{ vars.SITE_ATTACH_CUSTOM_DOMAIN }}
         run: |
           set -euo pipefail
           dart pub get
           dart analyze
-          dart run bin/synth.dart "${INFRA_STACK}"
+          dart run bin/synth.dart site
 
       - name: Terraform Init
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
+        working-directory: infra/tf-out/site
+        env: &terraform_cloudflare
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: terraform init -input=false
 
       - name: Terraform Plan (pre-apply)
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
-        env:
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        working-directory: infra/tf-out/site
+        env: *terraform_cloudflare
         run: terraform plan -no-color -input=false
 
       - name: Terraform Apply
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
-        env:
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        working-directory: infra/tf-out/site
+        env: *terraform_cloudflare
         run: terraform apply -auto-approve -input=false
 
       - name: Terraform Plan (verify no drift)
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
-        env:
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        working-directory: infra/tf-out/site
+        env: *terraform_cloudflare
         run: |
           set +e
           terraform plan -detailed-exitcode -input=false

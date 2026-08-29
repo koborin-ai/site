@@ -1,90 +1,61 @@
-/// Synth entry point for koborin.ai infrastructure stacks.
+/// Synth entry point for koborin.ai infrastructure.
 ///
-/// Run `dart run bin/synth.dart <stack>` to emit a single `main.tf.json`
-/// under `tf-out/<stack>/`. Supported stacks: shared, dev, prod.
+/// Run `dart run bin/synth.dart site` to emit `tf-out/site/main.tf.json`.
 ///
 /// Required environment variables:
-/// - `GCP_PROJECT_ID` (all stacks)
-/// - `GCP_PROJECT_NUMBER` (shared, dev)
+/// - `CLOUDFLARE_ACCOUNT_ID`
+/// - `SITE_APEX_CONTENT` (used when `SITE_ATTACH_CUSTOM_DOMAIN` is not true)
 library;
 
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:koborin_ai_infra/dev_stack.dart';
-import 'package:koborin_ai_infra/prod_stack.dart';
-import 'package:koborin_ai_infra/shared_stack.dart';
+import 'package:koborin_ai_infra/site_stack.dart';
 import 'package:koborin_ai_infra/terraform_variables.dart';
 import 'package:terradart_core/terradart_core.dart';
 
 Future<void> main(List<String> args) async {
-  final stackName = args.isNotEmpty ? args.first : 'shared';
+  final stackName = args.isNotEmpty ? args.first : 'site';
 
   switch (stackName) {
-    case 'shared':
-      await _synthShared();
-      return;
-    case 'dev':
-      await _synthDev();
-      return;
-    case 'prod':
-      await _synthProd();
+    case 'site':
+      await _synthSite();
       return;
     default:
       stderr.writeln(
-        'error: unknown stack "$stackName". Valid stacks: shared, dev, prod',
+        'error: unknown stack "$stackName". Valid stacks: site',
       );
       exit(64);
   }
 }
 
-Future<void> _synthShared() async {
-  final projectId = _requireEnv('GCP_PROJECT_ID');
-  final projectNumber = _requireEnv('GCP_PROJECT_NUMBER');
+Future<void> _synthSite() async {
+  final accountId = _requireEnv('CLOUDFLARE_ACCOUNT_ID');
+  final attachCustomDomain =
+      Platform.environment['SITE_ATTACH_CUSTOM_DOMAIN'] == 'true';
+  final apexContent = attachCustomDomain
+      ? (Platform.environment['SITE_APEX_CONTENT'] ?? '203.0.113.10')
+      : _requireEnv('SITE_APEX_CONTENT');
+  final apexTtl = _envNum('SITE_APEX_TTL', 1);
+  final apexProxied = Platform.environment['SITE_APEX_PROXIED'] == 'true';
 
-  const outputDir = 'tf-out/shared';
-  final stack = SharedStack(
-    projectId: projectId,
-    projectNumber: projectNumber,
+  const outputDir = 'tf-out/site';
+  final stack = SiteStack(
+    accountId: accountId,
+    zoneName: 'koborin.ai',
+    workerName: 'koborin-ai-web',
+    attachCustomDomain: attachCustomDomain,
+    apexName: 'koborin.ai',
+    apexContent: apexContent,
+    apexTtl: apexTtl,
+    apexProxied: apexProxied,
   );
 
   await _synthStack(
     outputDir: outputDir,
     stack: stack,
-    variables: sharedStackTerraformVariables,
-    backendPrefix: 'terraform/shared',
-  );
-}
-
-Future<void> _synthDev() async {
-  final projectId = _requireEnv('GCP_PROJECT_ID');
-  final projectNumber = _requireEnv('GCP_PROJECT_NUMBER');
-
-  const outputDir = 'tf-out/dev';
-  final stack = DevStack(
-    projectId: projectId,
-    projectNumber: projectNumber,
-  );
-
-  await _synthStack(
-    outputDir: outputDir,
-    stack: stack,
-    variables: devStackTerraformVariables,
-    backendPrefix: 'terraform/dev',
-  );
-}
-
-Future<void> _synthProd() async {
-  final projectId = _requireEnv('GCP_PROJECT_ID');
-
-  const outputDir = 'tf-out/prod';
-  final stack = ProdStack(projectId: projectId);
-
-  await _synthStack(
-    outputDir: outputDir,
-    stack: stack,
-    variables: prodStackTerraformVariables,
-    backendPrefix: 'terraform/prod',
+    variables: siteStackTerraformVariables,
+    backendPrefix: 'terraform/site',
   );
 }
 
@@ -97,23 +68,34 @@ Future<void> _synthStack({
   await _cleanOutputDir(outputDir);
 
   final result = stack.synth();
-  final tfJson = Map<String, dynamic>.from(result.tfJson)
-    ..['variable'] = variables;
-
-  if (Platform.environment['TERRAFORM_BACKEND'] == 'gcs') {
-    final terraform = Map<String, dynamic>.from(
-      tfJson['terraform'] as Map<String, dynamic>,
-    );
-    terraform['backend'] = {
-      'gcs': {
-        'bucket':
-            Platform.environment['TERRAFORM_STATE_BUCKET'] ??
-                'n-koborinai-me-backend',
-        'prefix': backendPrefix,
-      },
-    };
-    tfJson['terraform'] = terraform;
+  final tfJson = Map<String, dynamic>.from(result.tfJson);
+  if (variables.isNotEmpty) {
+    tfJson['variable'] = variables;
   }
+
+  final accountId = _requireEnv('CLOUDFLARE_ACCOUNT_ID');
+  final bucket = Platform.environment['TERRAFORM_STATE_BUCKET'] ??
+      'koborin-ai-tfstate';
+  final terraform = Map<String, dynamic>.from(
+    tfJson['terraform'] as Map<String, dynamic>,
+  );
+  terraform['backend'] = {
+    's3': {
+      'bucket': bucket,
+      'key': '$backendPrefix/terraform.tfstate',
+      'region': 'auto',
+      'endpoints': {
+        's3': 'https://$accountId.r2.cloudflarestorage.com',
+      },
+      'skip_credentials_validation': true,
+      'skip_region_validation': true,
+      'skip_requesting_account_id': true,
+      'skip_metadata_api_check': true,
+      'skip_s3_checksum': true,
+      'use_path_style': true,
+    },
+  };
+  tfJson['terraform'] = terraform;
 
   final out = Directory(outputDir);
   await out.create(recursive: true);
@@ -131,6 +113,16 @@ String _requireEnv(String name) {
     exit(64);
   }
   return value;
+}
+
+/// GitHub Actions injects `${{ vars.NAME }}` as `""` when the variable is
+/// missing, so `?? fallback` does not apply.
+num _envNum(String name, num fallback) {
+  final raw = Platform.environment[name];
+  if (raw == null || raw.isEmpty) {
+    return fallback;
+  }
+  return num.parse(raw);
 }
 
 Future<void> _cleanOutputDir(String outputDir) async {

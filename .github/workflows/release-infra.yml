@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "infra/**"
+      - ".tool-versions"
       - "mise.toml"
     tags:
       - "infra-v*"

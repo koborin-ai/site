@@ -1,16 +1,8 @@
-# Single source of truth for the toolchain.
+# Task definitions for the repository. Tool versions live in `.tool-versions`,
+# which mise reads natively and `actions/setup-node` accepts as a
+# `node-version-file`, so CI and laptops resolve the same versions from one file.
 #
-# Locally: `mise install` provisions everything (`curl https://mise.run | sh` first).
-# In CI: `actions/setup-node` reads `node-version-file: mise.toml`, and the infra
-# and scripts workflows install these same versions through `jdx/mise-action`.
-# Bump a version here and every environment follows.
-
-[tools]
-node = "22"
-dart = "3.13"
-terraform = "1.11.4"
-actionlint = "1.7.12"
-shellcheck = "0.11.0"
+# Locally: install mise (`curl https://mise.run | sh`), then `mise install`.
 
 [tasks.check]
 description = "Run every quality gate in the repository"

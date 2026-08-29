@@ -9,6 +9,7 @@
 node = "22"
 dart = "3.13"
 terraform = "1.11.4"
+actionlint = "1.7.12"
 shellcheck = "0.11.0"
 
 [tasks.check]
@@ -25,9 +26,10 @@ description = "TerraDart: static analysis and synth unit tests"
 dir = "infra"
 run = ["dart pub get", "dart analyze", "dart test"]
 
-[tasks."check:scripts"]
-description = "Shell scripts: shellcheck and the PR label test suite"
+[tasks."check:automation"]
+description = "Workflows and shell scripts: actionlint, shellcheck, label tests"
 run = [
+  "actionlint",
   "shellcheck .github/scripts/*.sh app/scripts/*.sh",
   "./.github/scripts/test-compute-pr-labels.sh",
 ]

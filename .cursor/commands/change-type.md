@@ -39,7 +39,7 @@ Treat as **Behavior Change** if the diff touches any of:
 - `app/src/content/docs/**` (published content)
 - `app/src/**` (components/layouts/pages)
 - `app/public/**` or `app/src/assets/**` (published assets)
-- `app/astro.config.mjs`, `app/nginx/**`, `app/Dockerfile`
+- `app/astro.config.mjs`, `app/wrangler.jsonc`
 - `infra/lib/**`, `infra/bin/**` (TerraDart stacks)
 - `.github/workflows/**` (CI behavior)
 

@@ -100,7 +100,7 @@ Pick the variant by *rendered* size, not source dimensions:
 #### Rules for a new article
 
 1. **Article header image (OG image)**: place the same PNG in **both**
-   - `app/public/og/<slug>.png` — consumed by OG meta tags and nginx's WebP redirect (do not remove).
+   - `app/public/og/<slug>.png` — consumed by OG meta tags (`Head.astro` rewrites to `.webp`; do not remove).
    - `app/src/assets/og/<slug>.png` — imported by `SiteImage` so Astro can generate optimized variants.
 
    Size it like the existing ones (1424x752). Standard OG cards crop to roughly 1.91:1, so a squarer image loses its top and bottom on social.

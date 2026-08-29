@@ -4,161 +4,86 @@
 
 Technical proving ground for exploring AI, cloud architecture, and continuous learning.
 
-Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) runs on Cloud Run behind a global HTTPS load balancer, and the entire stack (app + infra) lives in this monorepo with TerraDart (Dart → Terraform).
+Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) is served as Cloudflare Worker static assets. App deploys use wrangler. DNS and the custom domain are a TerraDart `site` stack applied from GitHub Actions.
 
 ## Architecture
 
-Dev/Prod share the same HTTPS load balancer and Artifact Registry; only Cloud Run scaling/access policies differ.
+The only public host is `koborin.ai`. There is no `dev.koborin.ai`.
 
 ```mermaid
----
-title: "Google Cloud Project"
----
 flowchart LR
-    subgraph TF_STATE["Terraform Backend State - GCS"]
-        STATE_SHARED["shared"]
-        STATE_DEV["dev"]
-        STATE_PROD["prod"]
+    subgraph GH["GitHub Actions"]
+        APP["app-release"]
+        INFRA["release-infra"]
     end
-    
-    subgraph SHARED["Shared Resources"]
-        APIS["APIs"]
-        ARTIFACT["Artifact Registry"]
-        WIF["Workload Identity<br/>Pool/Provider"]
+
+    subgraph CF["Cloudflare"]
+        DNS["Zone"]
+        WORKER["Worker"]
+        R2["R2 state"]
     end
-    
-    subgraph DNS["Cloudflare DNS (manual)"]
-        DEV_DOMAIN["dev.koborin.ai<br/>A record"]
-        PROD_DOMAIN["koborin.ai<br/>A record"]
-    end
-    
-    subgraph LB["Unified HTTPS LB - shared"]
-        STATIC_IP["Static IP<br/>PREMIUM tier"]
-        SSL_CERT["Managed SSL Cert<br/>multi-domain"]
-        URL_MAP["URL Map<br/>host routing"]
-        HTTPS_PROXY["HTTPS Proxy"]
-    end
-    
-    subgraph DEV_BACKEND["Dev Backend"]
-        DEV_IAP["IAP<br/>+ X-Robots-Tag"]
-        DEV_NEG["Serverless NEG"]
-        DEV_CR["Cloud Run<br/>koborin-ai-web-dev (Astro)<br/>(LB-only ingress)"]
-    end
-    
-    subgraph PROD_BACKEND["Prod Backend"]
-        PROD_NEG["Serverless NEG"]
-        PROD_CR["Cloud Run<br/>koborin-ai-web-prod (Astro)<br/>(LB-only ingress)"]
-    end
-    
-    subgraph CICD["GitHub Actions"]
-        GH_WIF["Workload Identity<br/>Federation"]
-        DEPLOYER_SA["Deployer SA"]
-    end
-    
-    STATE_SHARED -.-> SHARED
-    STATE_SHARED -.-> LB
-    STATE_DEV -.-> DEV_BACKEND
-    STATE_PROD -.-> PROD_BACKEND
-    
-    ARTIFACT -.->|"Container Image"| DEV_CR
-    ARTIFACT -.->|"Container Image"| PROD_CR
-    
-    DEV_DOMAIN --> STATIC_IP
-    PROD_DOMAIN --> STATIC_IP
-    STATIC_IP --> SSL_CERT
-    SSL_CERT --> HTTPS_PROXY
-    HTTPS_PROXY --> URL_MAP
-    
-    URL_MAP -->|"dev host"| DEV_IAP
-    URL_MAP -->|"prod host"| PROD_NEG
-    
-    DEV_IAP --> DEV_NEG
-    DEV_NEG --> DEV_CR
-    PROD_NEG --> PROD_CR
-    
-    GH_WIF -.->|"Authenticate"| WIF
-    WIF -.->|"Impersonate"| DEPLOYER_SA
-    DEPLOYER_SA -.->|"plan/apply"| TF_STATE
-    
-    style TF_STATE fill:#E8E8E8,color:#000,stroke:#666,stroke-width:2px
-    style STATE_SHARED fill:#F5F5F5,color:#000
-    style STATE_DEV fill:#F5F5F5,color:#000
-    style STATE_PROD fill:#F5F5F5,color:#000
-    style APIS fill:#9E9E9E,color:#fff
-    style ARTIFACT fill:#9E9E9E,color:#fff
-    style WIF fill:#9E9E9E,color:#fff
-    style STATIC_IP fill:#00B6AC,color:#fff
-    style SSL_CERT fill:#00B6AC,color:#fff
-    style URL_MAP fill:#00B6AC,color:#fff
-    style HTTPS_PROXY fill:#00B6AC,color:#fff
-    style DEV_IAP fill:#F76560,color:#fff
-    style DEV_CR fill:#4A90E2,color:#fff
-    style PROD_CR fill:#4A90E2,color:#fff
-    style GH_WIF fill:#FFB74D,color:#000
-    style DEPLOYER_SA fill:#FFB74D,color:#000
+
+    APP -->|"wrangler"| WORKER
+    INFRA -->|"apply"| DNS
+    INFRA -.-> R2
+    DNS -->|"custom domain"| WORKER
 ```
 
-> DNS is hosted in Cloudflare. Terraform does **not** manage DNS records; add/update `koborin.ai` / `dev.koborin.ai` A records manually whenever the load balancer IP changes.
+| Abbreviation | Full Name | Description |
+| --- | --- | --- |
+| Worker | [Cloudflare Workers](https://developers.cloudflare.com/workers/) | Serves the static Astro site |
+| Custom domain | [Workers custom domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) | Attaches `koborin.ai` to Worker `koborin-ai-web` |
+| R2 | [Cloudflare R2](https://developers.cloudflare.com/r2/) | Terraform state bucket `koborin-ai-tfstate` |
+| Wrangler | [Wrangler](https://developers.cloudflare.com/workers/wrangler/) | Uploads `app/dist` |
 
 ### Environment matrix
 
-| Layer | Dev (`dev.koborin.ai`) | Prod (`koborin.ai`) |
-| --- | --- | --- |
-| Runtime | Cloud Run (`koborin-ai-web-dev`) | Cloud Run (`koborin-ai-web-prod`) |
-| Access | IAP allow list + `X-Robots-Tag: noindex` | Public (no IAP) |
-| Ingress | `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` | `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` |
-| Scaling | Min: 0, Max: 1 | Min: 0, Max: 10 |
-| Env Vars | `NODE_ENV=development`, `NEXT_PUBLIC_ENV=dev` | `NODE_ENV=production`, `NEXT_PUBLIC_ENV=prod` |
-| Content | Same MDX content (no env-specific filtering) | Same MDX content (no env-specific filtering) |
-| Analytics | GA4 (debug view) + optional server events | GA4 + server events + Cloud Monitoring |
+| Layer | Production (`koborin.ai`) |
+| --- | --- |
+| Runtime | Cloudflare Worker `koborin-ai-web` (static assets) |
+| Access | Public |
+| Content | Same MDX content (no env-specific filtering) |
+| Analytics | GA4 + Giscus on article pages |
 
 ## CI/CD
 
-Infrastructure and application deploys are each handled by dedicated GitHub Actions workflows using Workload Identity Federation.
+Infrastructure and application deploys are each handled by dedicated GitHub Actions workflows. Cloudflare auth is a scoped API token.
 
 ```mermaid
 flowchart LR
-    subgraph GitHub Actions
+    subgraph Actions["GitHub Actions"]
         planInfra[plan-infra.yml]
         releaseInfra[release-infra.yml]
         appCI[app-ci.yml]
         appRelease[app-release.yml]
     end
 
-    subgraph Cloud Build
-        buildApp[Docker Build\n+ Artifact Registry]
+    subgraph Cloudflare["Cloudflare"]
+        worker[Worker]
+        siteStack[site stack]
     end
 
-    subgraph Terraform
-        sharedStack[Shared Stack]
-        envStacks[Dev/Prod Stacks]
-    end
-
-    planInfra --> sharedStack
-    releaseInfra --> sharedStack
-    releaseInfra --> envStacks
+    planInfra --> siteStack
+    releaseInfra --> siteStack
     appCI -->|PR validation| GitHub
-    appRelease --> buildApp --> envStacks
+    appRelease --> worker
 ```
 
 | Workflow | Trigger | Purpose | Notes |
 | --- | --- | --- | --- |
-| `plan-infra.yml` | PRs touching infra | `dart analyze` + `terraform plan` for shared/dev/prod stacks | No apply; reviewers inspect plan output |
-| `release-infra.yml` | `infra-v*` tags or manual dispatch | Applies shared/dev/prod stacks via Terraform | Workload Identity SA has infra IAM roles |
-| `app-ci.yml` | PRs touching `app/` or `content/` | Runs Astro lint/typecheck/test/build | Blocks merges that break the app |
-| `app-release.yml` | Merge to `main`, `app-v*` tags, or `workflow_call` | Builds + pushes Docker image (tag = `${GITHUB_SHA}-${GITHUB_RUN_ID}-${TARGET_ENV}`) and applies Terraform to update Cloud Run | Cloud Build runs asynchronously |
+| `plan-infra.yml` | PRs touching infra | `dart analyze` + `terraform plan` for the `site` stack | No apply |
+| `release-infra.yml` | `infra-v*` tags, `main` infra push, or manual dispatch | Applies the `site` stack | State is in R2 |
+| `app-ci.yml` | PRs touching `app/` | Runs Astro lint/typecheck/test/build | Blocks merges that break the app |
+| `app-release.yml` | Merge to `main` or `workflow_dispatch` | Builds the static site and runs `wrangler deploy` | Uses `CLOUDFLARE_API_TOKEN` |
 | `claude.yml` | `@claude` mention in issues/PR comments/reviews | Runs Claude Code Action to respond in-thread | Reads CI results on PRs; gated on the mention string |
 
 ## Tech Stack
 
 - **Frontend**: Astro with Starlight (documentation theme), TypeScript.
 - **Content Management**: MDX stored under `app/src/content/docs/` within git. Frontmatter is validated via Zod schemas (from Starlight) to keep metadata type-safe. Drafts can be marked with `draft: true` in frontmatter.
-- **Analytics & o11y**:
-  - Google Analytics 4 for baseline PV/engagement.
-  - Optional custom `/api/track` endpoint writing to Cloud Logging → BigQuery for privacy-friendly metrics.
-  - Cloud Monitoring dashboards + alert policies for Cloud Run metrics.
-- **Infrastructure**: TerraDart (Dart) targeting Google Cloud via Terraform.
-- **CI/CD**: GitHub Actions with Workload Identity. `plan-infra.yml` / `release-infra.yml` drive infra; `app-ci.yml` / `app-release.yml` handle the Astro app.
+- **Analytics**: Google Analytics 4 for baseline PV/engagement.
+- **Infrastructure**: TerraDart (Dart) targeting Cloudflare via Terraform. State is in R2.
+- **CI/CD**: GitHub Actions with a Cloudflare API token. `plan-infra.yml` / `release-infra.yml` drive infra; `app-ci.yml` / `app-release.yml` handle the Astro app.
 - **Testing**: Vitest for app tests, `dart analyze` for infra, Playwright for Mermaid rendering in production builds.
 - **LLM Context**: Machine-readable `llms.txt` files for AI assistants. Auto-generated at build time.
 
@@ -182,9 +107,8 @@ These files are **auto-generated** at build time from Content Collections. Artic
 
 ```text
 .
-├── .gcloudignore                  # Excludes files from Cloud Build upload
-├── app/                           # Astro + Starlight application (Static, nginx)
-│   ├── cloudbuild.yaml            # Cloud Build config for Docker build
+├── app/                           # Astro + Starlight application (static)
+│   ├── wrangler.jsonc            # Worker name and dist/ assets
 │   ├── src/
 │   │   ├── assets/               # Images organized by category
 │   │   │   ├── _shared/          # Common assets (header logo)
@@ -206,19 +130,14 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   ├── favicon.png           # Browser tab icon
 │   │   ├── og/                   # Open Graph source images
 │   │   └── robots.txt
-│   ├── nginx/
-│   │   └── nginx.conf            # nginx configuration for static serving
-│   ├── Dockerfile                # Multi-stage build (node → nginx:alpine)
 │   └── astro.config.mjs          # Starlight integration config
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
-├── infra/                         # TerraDart stacks (shared/dev/prod)
-│   ├── bin/synth.dart            # Synth entry point → tf-out/<stack>/main.tf.json
+├── infra/                         # TerraDart site stack
+│   ├── bin/synth.dart            # Synth entry point → tf-out/site/main.tf.json
 │   ├── lib/                      # Stack definitions
-│   │   ├── shared_stack.dart     # Shared resources (LB, APIs, WIF)
-│   │   ├── dev_stack.dart        # Dev Cloud Run
-│   │   └── prod_stack.dart       # Prod Cloud Run
+│   │   └── site_stack.dart       # Zone lookup + Workers custom domain
 │   └── pubspec.yaml              # TerraDart dependencies
-├── .github/workflows/             # CI pipelines (infra plan/apply, app deploy, Claude)
+├── .github/workflows/             # CI pipelines (infra plan/apply, app deploy)
 ├── README.md                      # This file
 └── AGENTS.md                      # English operations guide for collaborators
 ```
@@ -239,21 +158,21 @@ For performance, images are automatically converted to WebP format. **Authors ca
 
 | Image Type | Location | What You Do | What Happens Automatically |
 | --- | --- | --- | --- |
-| OG images | `app/public/og/` | Place PNG/JPEG, reference as `.png` | CI converts to WebP, nginx serves WebP |
+| OG images | `app/public/og/` | Place PNG/JPEG, reference as `.png` | CI converts to WebP; `Head.astro` references `.webp` |
 | Blog images | `app/src/assets/{category}/{article}/` | Place PNG/JPEG in article folder | Astro optimizes to WebP |
 
 **Example workflow for OG images**:
 
 1. Place image: `app/public/og/my-article.png`
 2. Frontmatter: `ogImage: /og/my-article.png`
-3. Article display: `![](/og/my-article.png)`
+3. Article display: import the copy under `app/src/assets/og/` and render it with `SiteImage`
 
-That's it! The CI pipeline (`app/scripts/optimize-og-images.sh`) generates WebP versions, and nginx automatically serves them.
+That's it! The CI pipeline (`app/scripts/optimize-og-images.sh`) generates WebP versions.
 
 ## Workflow Overview
 
-1. **Infra changes**: edit TerraDart stacks → `dart analyze` → open PR → GitHub Actions runs `terraform plan` → reviewer approves → merge triggers apply on the right environment.
-2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run check-images && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml` which builds the container, pushes to Artifact Registry, and applies the new image via Terraform.
+1. **Infra changes**: edit TerraDart stacks → `dart analyze` → open PR → GitHub Actions runs `terraform plan` → reviewer approves → merge triggers apply of the `site` stack.
+2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run check-images && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml`, which builds the static site and runs `wrangler deploy`.
 3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `npm run lint`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
 
 ### Adding New Content
@@ -301,78 +220,43 @@ To add a new article or page:
 
 ## Release Strategy
 
-- Infra applies use `infra-v*` tags to trigger `release-infra.yml`. Tag the repo after merging infra PRs even if app work is still ongoing; this ensures the latest load balancer/stateful resources are deployed before app images roll out.
-- App deploys use `app-v*` tags to drive `app-release.yml`. Tagging after a successful `main` merge guarantees that the latest container image is built and the Cloud Run service is updated via Terraform.
+- Infra applies use `infra-v*` tags (or a `main` push under `infra/`) to trigger `release-infra.yml` for the `site` stack.
+- App deploys use `app-v*` tags or a `main` merge under `app/` to drive `app-release.yml` (`wrangler deploy`).
 - GitHub release notes are generated via `.github/release.yml`. Label each PR with `app`, `infra`, `feature`, `bug`, or `doc` so the notes stay segmented by domain; apply the `ignore` label to omit a PR entirely.
 
-## Local Setup (once the app repo is initialized)
+## Local Setup
 
 ```bash
-# Node.js >= 20, npm 10 recommended
-npm install
+# Node.js 22
+npm install --prefix app
 
-# Run Astro dev server (app directory)
+# Run Astro dev server
 npm run dev --prefix app
 
-# Analyze infrastructure (infra directory)
+# Analyze infrastructure
 cd infra && dart analyze
 ```
 
 ## Infrastructure Dev Notes
 
 - TerraDart stacks are located in `infra/lib/`.
-- Synth emits Terraform JSON via `dart run bin/synth.dart <stack>`.
-- Each stack uses a GCS backend at `gs://<BUCKET_NAME>/terraform/<stack>`.
+- Synth emits Terraform JSON via `dart run bin/synth.dart site`.
+- State is in R2: `koborin-ai-tfstate` / `terraform/site/terraform.tfstate`.
+- Never run `terraform apply` locally. Apply goes through GitHub Actions.
 
-### Shared Stack
+### Site Stack
 
-- **API enablement**: Run, Compute, IAM, Artifact Registry, IAP, Monitoring, Logging, Certificate Manager.
-- **Artifact Registry**: Container images repository (`koborin-ai-web`).
-- **Global static IP**: PREMIUM tier for HTTPS load balancer.
-- **Managed SSL Certificate**: Multi-domain (`koborin.ai`, `dev.koborin.ai`).
-- **HTTPS Load Balancer**:
-  - Serverless NEGs (dev/prod) referencing Cloud Run services by name.
-  - Backend Services:
-    - Dev: IAP enabled + `X-Robots-Tag: noindex, nofollow` header.
-    - Prod: No IAP, logging enabled.
-  - URL Map (host-based routing).
-  - Target HTTPS Proxy.
-  - Global Forwarding Rule.
-- **Workload Identity Federation**:
-  - Pool: `github-actions-pool`.
-  - Provider: `actions-firebase-provider` (OIDC issuer: `https://token.actions.githubusercontent.com`).
-  - Service Account: `github-actions-service@{project}.iam.gserviceaccount.com`.
-  - IAM binding: Subject-based binding for repository `koborin-ai/site`.
-  - Project IAM roles (Artifact Registry, Run, Compute, IAM, etc.) granted to the deployer service account.
-- **DNS**: Records live in Cloudflare and are managed manually (A records point to the LB IP).
-
-### Dev Stack
-
-- **Cloud Run Service**: `koborin-ai-web-dev`.
-  - Ingress: `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` (LB-only access).
-  - Execution Environment: Gen2.
-  - Environment Variables:
-    - `NODE_ENV=development` (runtime mode).
-    - `NEXT_PUBLIC_ENV=dev` (client-side environment identifier).
-  - Scaling: Min 0, Max 1.
-
-### Prod Stack
-
-- **Cloud Run Service**: `koborin-ai-web-prod`.
-  - Ingress: `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` (LB-only access).
-  - Execution Environment: Gen2.
-  - Environment Variables:
-    - `NODE_ENV=production` (runtime mode).
-    - `NEXT_PUBLIC_ENV=prod` (client-side environment identifier).
-  - Scaling: Min 0, Max 10.
+- **Zone lookup**: `data.cloudflare_zone` for `koborin.ai` (the zone is not created here).
+- **Custom domain**: `cloudflare_workers_custom_domain` attaches Worker `koborin-ai-web` to `koborin.ai`.
+- **Unmanaged DNS**: MX and GitHub organization verification TXT stay in the dashboard.
 
 ## Contact & Analytics Design (planned)
 
 - Contact form will post to `/api/contact` (Astro API Route) with:
-  - Payload validation (Zod), reCAPTCHA enforcement, structured logging to Cloud Logging.
-  - Notification via SendGrid or Gmail API (configured via Secret Manager).
-- `/api/track` endpoint will receive custom events and forward to Cloud Logging/BigQuery.
-- GA4 integration via gtag.js (prod only, injected at build time via `PUBLIC_GA_MEASUREMENT_ID`).
+  - Payload validation (Zod), reCAPTCHA enforcement, structured logging.
+  - Notification via SendGrid or Gmail API.
+- `/api/track` endpoint will receive custom events.
+- GA4 integration via gtag.js (injected at build time via `PUBLIC_GA_MEASUREMENT_ID`).
 
 ## Environment Variables
 
@@ -381,8 +265,11 @@ cd infra && dart analyze
 | `GA_MEASUREMENT_ID` | GA4 Measurement ID (e.g., `G-XXXXXXXXXX`) | GitHub Secrets |
 | `GISCUS_REPO_ID` | Giscus repository ID for the comments widget | GitHub Secrets |
 | `GISCUS_CATEGORY_ID` | Giscus discussion category ID | GitHub Secrets |
+| `CLOUDFLARE_API_TOKEN` | Scoped token for wrangler and Terraform | GitHub Secrets |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | GitHub Variables |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | Terraform state in R2 | GitHub Secrets |
 
-`app-release.yml` writes these into `app/.env` at build time: `PUBLIC_GA_MEASUREMENT_ID` for **prod** builds only, and `PUBLIC_GISCUS_REPO_ID` / `PUBLIC_GISCUS_CATEGORY_ID` for both dev and prod.
+`app-release.yml` writes GA and Giscus values into `app/.env` at build time as `PUBLIC_*`.
 
 ## Documentation
 

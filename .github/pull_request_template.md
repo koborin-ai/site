@@ -1,10 +1,3 @@
-## Areas
-
-- [ ] `app`
-- [ ] `infra`
-- [ ] `docs/meta`
-- [ ] `ci`
-
 ## Summary
 
 - What changed?

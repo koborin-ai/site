@@ -29,6 +29,7 @@
     "playwright": "^1.62.1",
     "react": "^19.2.8",
     "rehype-mermaid": "^3.0.0",
+    "remark-gfm": "^4.0.1",
     "starlight-auto-drafts": "^0.3.0"
   },
   "devDependencies": {

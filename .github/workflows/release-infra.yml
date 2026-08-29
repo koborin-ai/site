@@ -25,14 +25,6 @@ on:
         required: false
         type: boolean
         default: false
-      zone_id:
-        description: "Cloudflare zone ID (import only)"
-        required: false
-        type: string
-      record_id:
-        description: "Cloudflare DNS record ID (import only)"
-        required: false
-        type: string
 
 concurrency:
   group: terraform-state
@@ -142,15 +134,15 @@ jobs:
       - name: Import apex A record
         if: env.INFRA_STACK == 'site' && github.event.inputs.import_apex == 'true'
         working-directory: infra/tf-out/site
-        env:
-          ZONE_ID: ${{ github.event.inputs.zone_id }}
-          RECORD_ID: ${{ github.event.inputs.record_id }}
         run: |
           set -euo pipefail
-          if [[ ! "$ZONE_ID" =~ ^[a-f0-9]{32}$ ]] || [[ ! "$RECORD_ID" =~ ^[a-f0-9]{32}$ ]]; then
-            echo "zone_id and record_id must be 32-character hex IDs"
-            exit 1
-          fi
+          ZONE_JSON="$(curl -sS -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/zones?name=koborin.ai")"
+          ZONE_ID="$(printf '%s' "$ZONE_JSON" | python3 -c "import json,sys; r=json.load(sys.stdin); assert r.get('success'), r; print(r['result'][0]['id'])")"
+          RECORD_JSON="$(curl -sS -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?name=koborin.ai&type=A")"
+          RECORD_ID="$(printf '%s' "$RECORD_JSON" | python3 -c "import json,sys; r=json.load(sys.stdin); assert r.get('success'), r; recs=r['result']; assert len(recs)==1, recs; print(recs[0]['id'])")"
+          echo "Importing cloudflare_dns_record.apex ${ZONE_ID}/${RECORD_ID}"
           terraform import cloudflare_dns_record.apex "${ZONE_ID}/${RECORD_ID}"
 
       - name: Terraform Plan (pre-apply)

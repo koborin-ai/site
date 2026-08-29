@@ -9,6 +9,7 @@ on:
     paths:
       - "app/**"
       - "content/**"
+      - "mise.toml"
       - ".github/workflows/app-ci.yml"
       - ".github/workflows/app-release.yml"
 
@@ -27,7 +28,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version-file: mise.toml
           cache: npm
           cache-dependency-path: app/package-lock.json
 
@@ -48,17 +49,13 @@ jobs:
         working-directory: app
         run: ./scripts/optimize-og-images.sh
 
-      - name: Check image usage in MDX
-        working-directory: app
-        run: ./scripts/check-image-usage.sh
-
       - name: Security audit
         working-directory: app
         run: npm audit --audit-level=critical --omit=dev
 
-      - name: Astro check (lint/typecheck/tests)
+      - name: Quality checks (oxlint, astro check, Vitest, images)
         working-directory: app
-        run: npm run lint
+        run: npm run check
 
       - name: Build
         working-directory: app

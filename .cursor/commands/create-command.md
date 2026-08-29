@@ -260,7 +260,7 @@ Goal: Run the application and infrastructure test suites and summarize the resul
 
 **Generated definition (excerpt):**
 
-```markdown
+````markdown
 # /test-all
 
 ## Overview
@@ -293,7 +293,7 @@ No arguments or options.
 - Partial failure: print `❌` plus the failing suite and logs.
 - Execution error: show the stack trace with guidance.
 ...
-```
+````
 
 ### Example 2: Complex workflow command
 

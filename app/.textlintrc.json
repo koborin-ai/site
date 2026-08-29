@@ -1,0 +1,16 @@
+{
+  "plugins": {
+    "@textlint/markdown": {
+      "extensions": [".mdx"]
+    }
+  },
+  "rules": {
+    "@textlint-ja/preset-ai-writing": {
+      "no-ai-list-formatting": false,
+      "no-ai-hype-expressions": true,
+      "no-ai-emphasis-patterns": true,
+      "no-ai-colon-continuation": true,
+      "ai-tech-writing-guideline": true
+    }
+  }
+}

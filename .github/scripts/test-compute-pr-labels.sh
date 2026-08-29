@@ -31,26 +31,25 @@ assert_not_contains() {
 }
 
 output="$(run_labels "" app/src/content/docs/tech/foo.mdx)"
-assert_contains "$output" "change:behavior"
 assert_contains "$output" "app"
+assert_not_contains "$output" "change:behavior"
+assert_not_contains "$output" "change:structure"
 
 output="$(run_labels "" AGENTS.md README.md)"
-assert_contains "$output" "change:structure"
 assert_contains "$output" "doc"
+assert_not_contains "$output" "change:structure"
 
 output="$(run_labels "" infra/lib/site_stack.dart)"
-assert_contains "$output" "change:behavior"
 assert_contains "$output" "infra"
 
 output="$(run_labels "feat(infra): add resource" infra/lib/site_stack.dart)"
 assert_contains "$output" "feature"
 
 output="$(run_labels "" .github/workflows/app-ci.yml)"
-assert_contains "$output" "change:behavior"
 assert_contains "$output" "ci"
 
 output="$(run_labels "" app/src/foo.ts AGENTS.md)"
-assert_contains "$output" "change:behavior"
-assert_not_contains "$output" "change:structure"
+assert_contains "$output" "app"
+assert_contains "$output" "doc"
 
 echo "All compute-pr-labels tests passed."

@@ -1,9 +1,8 @@
+import 'package:terradart_cloudflare/data.dart';
 import 'package:terradart_cloudflare/dns.dart';
 import 'package:terradart_cloudflare/provider.dart';
+import 'package:terradart_cloudflare/workers.dart';
 import 'package:terradart_core/terradart_core.dart';
-
-import 'cloudflare_workers_custom_domain.dart';
-import 'cloudflare_zone_lookup.dart';
 
 /// Cloudflare edge for koborin.ai. Does not upload Worker assets.
 final class SiteStack extends Stack {
@@ -16,9 +15,13 @@ final class SiteStack extends Stack {
     required String apexContent,
     required num apexTtl,
     required bool apexProxied,
+    super.backend,
   }) : super(providers: [const CloudflareProvider()]) {
     final zone = addData(
-      CloudflareZoneLookup(localName: 'koborin', zoneName: zoneName),
+      DataCloudflareZone(
+        localName: 'koborin',
+        filter: DataZoneFilter(name: TfArg.literal(zoneName)),
+      ),
     );
 
     if (attachCustomDomain) {

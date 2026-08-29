@@ -402,40 +402,6 @@ Examples:
 
 Before committing any code changes, ensure all quality checks pass:
 
-## Change Types (Behavior vs Structure)
-
-This repo distinguishes between **behavior changes** (externally observable) and **structure changes** (internal-only).
-Use these change types to decide PR labels and the appropriate level of testing.
-
-### Definitions
-
-- **Behavior Change**: Any change that can affect what users/production systems observe.
-  - App: UI/UX changes, content changes under `app/src/content/docs/`, routing/sidebar changes, asset changes under `app/public/` or `app/src/assets/`, build/runtime config changes (e.g. `app/astro.config.mjs`, `app/wrangler.jsonc`).
-  - Infra: Any TerraDart/Terraform change that could change the deployed resources/configuration.
-  - CI: Workflow changes that can change what checks run or how deployments happen.
-- **Structure Change**: Changes intended to preserve external behavior while improving maintainability.
-  - Examples: refactors, renames, formatting, comment-only changes, internal documentation updates, reorganization that does not change URLs/output.
-
-When in doubt, treat it as **Behavior Change**.
-
-### Required PR labels
-
-Add exactly one:
-
-- `change:behavior`
-- `change:structure`
-
-These are in addition to the existing domain labels (`app`, `infra`, `doc`, etc.).
-
-**Automation**: `.github/workflows/label-pr.yml` applies these labels from the diff (and PR title for `feature` / `bug`) via `.github/scripts/compute-pr-labels.sh`. PRs labeled `ignore` are skipped. Manual overrides are synced on the next `synchronize` unless you keep labels outside the managed set.
-
-### How CI uses the change type
-
-- **App CI (`.github/workflows/app-ci.yml`)**:
-  - Uses the same path heuristics as `.github/scripts/compute-pr-labels.sh` (not the PR label state), so fast vs full checks do not race with label automation.
-  - Default is **Behavior Change** (full checks).
-  - If the diff is structure-only, CI runs a **fast** check (skips `npm audit` and `npm run build`).
-
 ### Infrastructure (`infra/`)
 
 ```bash
@@ -469,9 +435,6 @@ All five commands must complete successfully with no errors.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual Cloudflare or DNS steps (e.g., unmanaged MX/TXT) in the PR description.
 6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
-   - **Change type** (exactly one, required for CI behavior):
-     - `change:behavior` — URLs, output, UI, config, or infra changes that affect users/production.
-     - `change:structure` — Internal refactors, renames, or formatting with no external impact. CI skips `npm audit` and `npm run build`.
    - **Domain labels** (one or more):
      - `app` — Changes under `app/`.
      - `infra` — Changes under `infra/`.

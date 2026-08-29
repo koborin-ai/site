@@ -1,10 +1,3 @@
-## Change type
-
-Select one and apply the matching GitHub label:
-
-- [ ] `change:behavior` (externally observable behavior changes)
-- [ ] `change:structure` (refactor / internal-only; no intended behavior change)
-
 ## Areas
 
 - [ ] `app`
@@ -21,17 +14,13 @@ Select one and apply the matching GitHub label:
 
 ### App
 
-- Behavior change:
-  - `cd app && npm run lint && npm run build`
-- Structure change:
-  - `cd app && npm run lint`
+- `cd app && npm run lint && npm run build`
 
 ### Infra
 
-- `cd infra && npm run build && npm run lint && npm run typecheck`
+- `cd infra && dart analyze`
 
 ## Review notes
 
 - What could break?
-- Any manual GCP steps?
-
+- Any manual Cloudflare or DNS steps?

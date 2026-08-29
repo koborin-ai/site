@@ -76,7 +76,7 @@ flowchart LR
 | `plan-infra.yml` | PRs touching infra | `mise run check:infra` + `terraform plan` for the `site` stack | No apply |
 | `release-infra.yml` | `infra-v*` tags, `main` infra push, or manual dispatch | Applies the `site` stack | State is in R2 |
 | `app-ci.yml` | PRs touching `app/` | Runs `npm run check` and the production build | Blocks merges that break the app |
-| `automation-ci.yml` | PRs touching workflows or shell scripts | `mise run check:automation` (actionlint, shellcheck, label tests) | Guards the automation itself |
+| `automation-ci.yml` | PRs touching workflows, shell scripts or Markdown | `mise run check:automation` + `check:docs` (actionlint, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
 | `app-release.yml` | Merge to `main` or `workflow_dispatch` | Builds the static site and runs `wrangler deploy` | Uses `CLOUDFLARE_API_TOKEN` |
 
 Tool versions come from `.tool-versions`. `actions/setup-node` reads it through `node-version-file`, and the infra and automation workflows install from it with `jdx/mise-action`.
@@ -89,7 +89,7 @@ Tool versions come from `.tool-versions`. `actions/setup-node` reads it through 
 - **Infrastructure**: TerraDart (Dart) targeting Cloudflare via Terraform. State is in R2.
 - **CI/CD**: GitHub Actions with a Cloudflare API token. `plan-infra.yml` / `release-infra.yml` drive infra; `app-ci.yml` / `app-release.yml` handle the Astro app.
 - **Toolchain**: [mise](https://mise.jdx.dev/) pins Node, Dart, Terraform, actionlint, and shellcheck for both laptops and CI.
-- **Quality gates**: oxlint and `astro check` for the app, Vitest for app unit tests, `dart analyze` + `dart test` for infra, actionlint and shellcheck for the automation. `mise run check` runs all of it.
+- **Quality gates**: oxlint and `astro check` for the app, Vitest for app unit tests, `dart analyze` + `dart test` for infra, actionlint and shellcheck for the automation, markdownlint for the docs. `mise run check` runs all of it.
 - **LLM Context**: Machine-readable `llms.txt` files for AI assistants. Auto-generated at build time.
 
 ## LLM Context Files (llms.txt)

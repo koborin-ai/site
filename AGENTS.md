@@ -111,7 +111,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
 4. **Beats showcase**:
- - **Purpose**: English-only instrumental showcase. List at `/beats/`; each track has a thin share page at `/beats/<slug>/` with its own jacket OG. Not included in RSS (tech/life only); pages still appear in `llms-full.txt` via the docs collection. No dedicated `/llms-beats.txt`.
+   - **Purpose**: English-only instrumental showcase. List at `/beats/`; each track has a thin share page at `/beats/<slug>/` with its own jacket OG. Not included in RSS (tech/life only); pages still appear in `llms-full.txt` via the docs collection. No dedicated `/llms-beats.txt`.
    - **Components** (`app/src/components/`):
      - `BeatList.astro` — renders the catalog on `/beats/` (cover map lives here).
      - `BeatTrackCard.astro` — one row on the list (cover, meta, player, actions).
@@ -185,76 +185,80 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.
    - Social links and sidebar are configured in `astro.config.mjs`.
-9. **Testing**: run `mise run check` from the repository root before committing. It covers the app (`npm run check`: oxlint, `astro check`, Vitest, image usage), the infra (`dart analyze`, `dart test`), and the automation (actionlint, shellcheck, PR label tests). Run `npm run build` in `app/` as well whenever content or configuration changes.
+9. **Testing**: run `mise run check` from the repository root before committing. It covers the app (`npm run check`: oxlint, `astro check`, Vitest, image usage), the infra (`dart analyze`, `dart test`), the automation (actionlint, shellcheck, PR label tests), and the docs (markdownlint). Run `npm run build` in `app/` as well whenever content or configuration changes.
 10. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 11. **Workers deployment**:
-   - The app builds as a static site (`output: "static"` in Astro config). Wrangler uploads `app/dist` as Worker static assets.
-   - Worker name and assets directory live in `app/wrangler.jsonc`. There is no `main` script and no `routes` block. Set `not_found_handling` to `404-page` so `404.html` is served.
-   - `app/public/_headers` is copied into `dist/` and sets `Content-Type: text/plain; charset=utf-8` on `*.txt` (Astro response headers are not kept on uploaded files).
-   - `app-release.yml` runs `npm run build` then `wrangler deploy`.
-   - All pages are pre-rendered at build time; no Node.js runtime is required in production.
+    - The app builds as a static site (`output: "static"` in Astro config). Wrangler uploads `app/dist` as Worker static assets.
+    - Worker name and assets directory live in `app/wrangler.jsonc`. There is no `main` script and no `routes` block. Set `not_found_handling` to `404-page` so `404.html` is served.
+    - `app/public/_headers` is copied into `dist/` and sets `Content-Type: text/plain; charset=utf-8` on `*.txt` (Astro response headers are not kept on uploaded files).
+    - `app-release.yml` runs `npm run build` then `wrangler deploy`.
+    - All pages are pre-rendered at build time; no Node.js runtime is required in production.
 12. **LLM Context Files (llms.txt)**:
-   - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
-   - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
-   - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese) - all articles with full Markdown body.
-   - **Category files**: `/llms-{category}.txt` (English), `/llms-ja-{category}.txt` (Japanese) for filtered subsets (tech, life).
-   - English is the default language (no prefix), Japanese uses `ja` prefix.
-   - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
-   - **Static files**: Generated at build time via Astro endpoints. Zero runtime overhead.
-   - **Implementation**: `app/src/utils/llms.ts` (shared logic), `app/src/pages/llms*.txt.ts` (endpoints).
-   - **When to modify endpoints**:
-     - Add a new category: Create `app/src/pages/llms-{category}.txt.ts` (English) and `app/src/pages/llms-ja-{category}.txt.ts` (Japanese), then update `app/src/pages/llms.txt.ts` index.
-     - Change output format: Edit `app/src/utils/llms.ts`.
-     - Existing articles are auto-included; no endpoint changes needed for new content.
-13. **RichLinkCard Component**:
-    - Use `RichLinkCard` instead of Starlight's built-in `LinkCard` for external links in MDX.
-    - **Location**: `app/src/components/RichLinkCard.astro`
-    - **Import**: `import RichLinkCard from '../../../../components/RichLinkCard.astro';`
-    - **Recommended usage** (always specify `title` and `description` for performance):
-      ```mdx
-      <RichLinkCard
-        href="https://example.com"
-        title="Page Title"
-        description="Page description text."
-      />
-      ```
-    - **Why manual specification is preferred**:
-      - In dev mode (`npm run dev`), OG metadata is fetched on every page request, causing slow page loads (1-2+ seconds).
-      - Some sites (O'Reilly, Google Cloud docs) have slow response times (up to 9 seconds).
-      - Manual specification skips all fetches, resulting in instant page loads in dev mode.
-    - **URL-only usage** (auto-fetches OG metadata - use sparingly):
-      ```mdx
-      <RichLinkCard href="https://example.com" />
-      ```
-      - Only use this for quick prototyping or when you don't know the page title/description.
-      - Always replace with manual specification before committing.
-    - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description), thumbnail (og:image → favicon).
-14. **RSS Feeds**:
-    - The site provides RSS feeds for blog aggregation services.
-    - **English feed**: `/rss.xml` - includes `tech/` and `life/` categories.
-    - **Japanese feed**: `/ja/rss.xml` - includes `ja/tech/` and `ja/life/` categories.
-    - **Excluded**: `about-me/` pages are not included in RSS feeds (not blog articles).
+    - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
+    - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
+    - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese) - all articles with full Markdown body.
+    - **Category files**: `/llms-{category}.txt` (English), `/llms-ja-{category}.txt` (Japanese) for filtered subsets (tech, life).
+    - English is the default language (no prefix), Japanese uses `ja` prefix.
     - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
-    - **Static files**: Generated at build time via Astro endpoints using `@astrojs/rss`. Zero runtime overhead.
-    - **Implementation**: `app/src/pages/rss.xml.ts` (English), `app/src/pages/ja/rss.xml.ts` (Japanese).
-    - **Sorted by date**: Articles are sorted by `publishedAt` date (newest first).
+    - **Static files**: Generated at build time via Astro endpoints. Zero runtime overhead.
+    - **Implementation**: `app/src/utils/llms.ts` (shared logic), `app/src/pages/llms*.txt.ts` (endpoints).
+    - **When to modify endpoints**:
+      - Add a new category: Create `app/src/pages/llms-{category}.txt.ts` (English) and `app/src/pages/llms-ja-{category}.txt.ts` (Japanese), then update `app/src/pages/llms.txt.ts` index.
+      - Change output format: Edit `app/src/utils/llms.ts`.
+      - Existing articles are auto-included; no endpoint changes needed for new content.
+13. **RichLinkCard Component**:
+     - Use `RichLinkCard` instead of Starlight's built-in `LinkCard` for external links in MDX.
+     - **Location**: `app/src/components/RichLinkCard.astro`
+     - **Import**: `import RichLinkCard from '../../../../components/RichLinkCard.astro';`
+     - **Recommended usage** (always specify `title` and `description` for performance):
+
+       ```mdx
+       <RichLinkCard
+         href="https://example.com"
+         title="Page Title"
+         description="Page description text."
+       />
+       ```
+
+     - **Why manual specification is preferred**:
+       - In dev mode (`npm run dev`), OG metadata is fetched on every page request, causing slow page loads (1-2+ seconds).
+       - Some sites (O'Reilly, Google Cloud docs) have slow response times (up to 9 seconds).
+       - Manual specification skips all fetches, resulting in instant page loads in dev mode.
+     - **URL-only usage** (auto-fetches OG metadata - use sparingly):
+
+       ```mdx
+       <RichLinkCard href="https://example.com" />
+       ```
+
+       - Only use this for quick prototyping or when you don't know the page title/description.
+       - Always replace with manual specification before committing.
+     - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description), thumbnail (og:image → favicon).
+14. **RSS Feeds**:
+     - The site provides RSS feeds for blog aggregation services.
+     - **English feed**: `/rss.xml` - includes `tech/` and `life/` categories.
+     - **Japanese feed**: `/ja/rss.xml` - includes `ja/tech/` and `ja/life/` categories.
+     - **Excluded**: `about-me/` pages are not included in RSS feeds (not blog articles).
+     - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
+     - **Static files**: Generated at build time via Astro endpoints using `@astrojs/rss`. Zero runtime overhead.
+     - **Implementation**: `app/src/pages/rss.xml.ts` (English), `app/src/pages/ja/rss.xml.ts` (Japanese).
+     - **Sorted by date**: Articles are sorted by `publishedAt` date (newest first).
 15. **Engagement Features (Giscus)**:
-    - Articles (pages with `publishedAt`) display an engagement footer with share buttons and Giscus comments.
-    - **Components**:
-      - `app/src/components/Footer.astro`: Starlight Footer override that conditionally renders engagement UI.
-      - `app/src/components/EngagementFooter.astro`: Container for share buttons and Giscus.
-      - `app/src/components/ShareButtons.astro`: Share links (X, Bluesky, Mastodon, Hatena Bookmark, copy link).
-      - `app/src/components/Giscus.astro`: GitHub Discussions-based comments (only renders if configured).
-    - **Display logic**: Engagement UI appears on pages with `publishedAt` frontmatter. Override with `engagement: true/false` in frontmatter.
-    - **Giscus setup** (requires GitHub Secrets):
-      - Enable Discussions on the GitHub repository.
-      - Install the `giscus` GitHub App.
-      - Create a category for comments (e.g., "Comments").
-      - Get configuration values from [giscus.app](https://giscus.app/).
-      - Add GitHub Secrets: `GISCUS_REPO_ID`, `GISCUS_CATEGORY_ID` (IDs only; repo/category are hardcoded in `Giscus.astro`).
-      - CI injects these as `PUBLIC_GISCUS_*_ID` environment variables in `app/.env` at build time.
-    - **Theme sync**: Giscus theme automatically syncs with Starlight's light/dark mode toggle.
-    - **Localization**: UI labels and Giscus `lang` switch based on `/ja/` path prefix.
+     - Articles (pages with `publishedAt`) display an engagement footer with share buttons and Giscus comments.
+     - **Components**:
+       - `app/src/components/Footer.astro`: Starlight Footer override that conditionally renders engagement UI.
+       - `app/src/components/EngagementFooter.astro`: Container for share buttons and Giscus.
+       - `app/src/components/ShareButtons.astro`: Share links (X, Bluesky, Mastodon, Hatena Bookmark, copy link).
+       - `app/src/components/Giscus.astro`: GitHub Discussions-based comments (only renders if configured).
+     - **Display logic**: Engagement UI appears on pages with `publishedAt` frontmatter. Override with `engagement: true/false` in frontmatter.
+     - **Giscus setup** (requires GitHub Secrets):
+       - Enable Discussions on the GitHub repository.
+       - Install the `giscus` GitHub App.
+       - Create a category for comments (e.g., "Comments").
+       - Get configuration values from [giscus.app](https://giscus.app/).
+       - Add GitHub Secrets: `GISCUS_REPO_ID`, `GISCUS_CATEGORY_ID` (IDs only; repo/category are hardcoded in `Giscus.astro`).
+       - CI injects these as `PUBLIC_GISCUS_*_ID` environment variables in `app/.env` at build time.
+     - **Theme sync**: Giscus theme automatically syncs with Starlight's light/dark mode toggle.
+     - **Localization**: UI labels and Giscus `lang` switch based on `/ja/` path prefix.
 
 ## Astro Development Best Practices
 
@@ -317,7 +321,7 @@ Examples:
   - `plan-infra.yml`: `mise run check:infra` + `terraform plan` for the `site` stack (no apply).
   - `release-infra.yml`: `mise run check:infra` then authenticated `terraform apply` for the `site` stack (manual dispatch, `main` infra push, or `infra-v*` tag).
   - `app-ci.yml`: `npm run check` plus `npm audit` and the production build, on PRs touching `app/`.
-  - `automation-ci.yml`: `mise run check:automation` on PRs touching `.github/workflows/`, `.github/scripts/`, `app/scripts/`, `.tool-versions`, or `mise.toml`.
+  - `automation-ci.yml`: `mise run check:automation` and `mise run check:docs` on PRs touching `.github/workflows/`, `.github/scripts/`, `app/scripts/`, any `.md`, `.markdownlint.yaml`, `.tool-versions`, or `mise.toml`.
   - `app-release.yml`: builds the static site and runs `wrangler deploy` for Worker `koborin-ai-web`.
 - Toolchain: every workflow takes its versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump versions in `.tool-versions`, never in a workflow.
 - Cloudflare auth:
@@ -379,9 +383,7 @@ Examples:
    - **Full Name requirements**:
      - Use the official name from the primary source (vendor documentation).
      - Make the full name a hyperlink to the official documentation page.
-   - **MCP tools for terminology lookup**:
-     - Google Cloud terms: Use `google-cloud-mcp` (`search_documentation` → `read_documentation`).
-     - Other libraries/frameworks: Use `context7` MCP (`resolve-library-id` → `query-docs`).
+   - **Where to look terms up**: Cloudflare terms come from `developers.cloudflare.com`. For libraries and frameworks, use whatever documentation MCP your client has configured; the repository does not ship one.
    - **Example**:
 
      ```markdown
@@ -445,6 +447,7 @@ npm run build         # Astro build; needs Playwright Chromium
 
 ```bash
 mise run check:automation  # actionlint, shellcheck, PR label tests
+mise run check:docs        # markdownlint over every tracked .md
 ```
 
 ## Pull Request Checklist
@@ -455,7 +458,7 @@ mise run check:automation  # actionlint, shellcheck, PR label tests
 2. `mise run check` from the repository root - must pass.
 3. For app changes, also run `npm run build` in `app/` - must pass.
    - If the change touches a page with `draft: true`, these commands skip it. Also open the page in `npm run dev` and confirm it renders.
-4. Ensure all Markdown files pass linting (no MD0xx errors).
+4. Markdown lint is part of `mise run check` (`check:docs`); no separate step.
 5. Mention any manual Cloudflare or DNS steps (e.g., unmanaged MX/TXT) in the PR description.
 6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
    - **Domain labels** (one or more):

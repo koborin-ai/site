@@ -33,8 +33,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/pages/ja/rss.xml.ts` | RSS feed endpoint for Japanese articles. |
 | `infra/` | TerraDart infrastructure (`site` stack). |
 | `infra/lib/site_stack.dart` | Zone lookup and Workers custom domain for `koborin.ai`. |
-| `infra/lib/cloudflare_zone_lookup.dart` | Local `data.cloudflare_zone` wrapper. |
-| `infra/lib/cloudflare_workers_custom_domain.dart` | Local `cloudflare_workers_custom_domain` wrapper. |
+| `infra/lib/r2_backend.dart` | `StackBackend` pointing Terraform state at R2. |
 | `infra/bin/synth.dart` | Synth entry point; emits `tf-out/site/main.tf.json`. |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
 | `docs/assets/{article}/` | Mermaid sources and generated images for each spec document. |
@@ -72,10 +71,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 8. **File Organization**:
 
-   - `infra/bin/synth.dart`: Entry point; synthesizes the `site` stack to `tf-out/site/main.tf.json`.
-   - `infra/lib/site_stack.dart`: Zone lookup and Workers custom domain.
-   - `infra/lib/cloudflare_zone_lookup.dart` / `cloudflare_workers_custom_domain.dart`: Local wrappers (`terradart_cloudflare` is not patched).
-   - `infra/lib/terraform_variables.dart`: Empty site `variable` map so synth omits the block.
+   - `infra/bin/synth.dart`: Entry point; builds the stack and calls `Stack.writeTo('tf-out/site')`.
+   - `infra/lib/site_stack.dart`: Zone lookup and Workers custom domain, both from the `terradart_cloudflare` catalog. Prefer catalog types over hand-written wrappers.
+   - `infra/lib/r2_backend.dart`: `StackBackend` for the R2 state. A stand-in until `terradart_core` ships `S3Backend`; delete it then.
    - `infra/pubspec.yaml`: TerraDart dependencies (`terradart_core`, `terradart_cloudflare`).
 
 ## Application Rules

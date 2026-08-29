@@ -320,7 +320,7 @@ Examples:
 
 - Tag infra releases as `infra-v*` to force `release-infra.yml` to apply the `site` stack.
 - Tag app releases as `app-v*` once `main` includes the desired content; this runs `app-release.yml` and deploys Worker `koborin-ai-web`.
-- GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
+- GitHub release notes respect `.github/release.yml`.
 
 ## Contact Flow & Analytics
 
@@ -434,14 +434,6 @@ All five commands must complete successfully with no errors.
    - If the change touches a page with `draft: true`, these commands skip it. Also open the page in `npm run dev` and confirm it renders.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual Cloudflare or DNS steps (e.g., unmanaged MX/TXT) in the PR description.
-6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
-   - **Domain labels** (one or more):
-     - `app` — Changes under `app/`.
-     - `infra` — Changes under `infra/`.
-     - `doc` — Documentation updates (`README.md`, `AGENTS.md`, `docs/`).
-     - `ci` — Workflow changes under `.github/workflows/`.
-   - **Category labels** (optional, for release notes):
-     - `feature`, `bug`, `ignore`.
 
 ## Agent Execution Rules
 

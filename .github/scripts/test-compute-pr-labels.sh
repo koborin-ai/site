@@ -38,11 +38,11 @@ output="$(run_labels "" AGENTS.md README.md)"
 assert_contains "$output" "change:structure"
 assert_contains "$output" "doc"
 
-output="$(run_labels "" infra/lib/shared_stack.dart)"
+output="$(run_labels "" infra/lib/site_stack.dart)"
 assert_contains "$output" "change:behavior"
 assert_contains "$output" "infra"
 
-output="$(run_labels "feat(infra): add resource" infra/lib/dev_stack.dart)"
+output="$(run_labels "feat(infra): add resource" infra/lib/site_stack.dart)"
 assert_contains "$output" "feature"
 
 output="$(run_labels "" .github/workflows/app-ci.yml)"

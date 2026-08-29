@@ -8,7 +8,6 @@ environment:
 dependencies:
   terradart_cloudflare: ^0.26.0
   terradart_core: ^0.26.0
-  terradart_google: ^0.26.0
 
 dev_dependencies:
   lints: ^6.0.0

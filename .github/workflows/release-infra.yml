@@ -9,30 +9,6 @@ on:
     tags:
       - "infra-v*"
   workflow_dispatch:
-    inputs:
-      stack:
-        description: "Stack to deploy"
-        required: true
-        default: "site"
-        type: choice
-        options:
-          - site
-          - shared
-          - dev
-          - prod
-      import_apex:
-        description: "Import the existing koborin.ai A record into site state"
-        required: false
-        type: boolean
-        default: false
-      action:
-        description: "apply or destroy. destroy is refused for the site stack"
-        required: false
-        type: choice
-        options:
-          - apply
-          - destroy
-        default: apply
 
 concurrency:
   group: terraform-state
@@ -42,22 +18,11 @@ jobs:
   terraform-apply:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
-      id-token: write
       contents: read
-    timeout-minutes: 45
-
-    environment: ${{ github.event.inputs.stack == 'shared' && 'shared (infra)' || (github.event.inputs.stack == 'dev' && 'development (infra)' || 'production (infra)') }}
+    timeout-minutes: 30
+    environment: production (infra)
 
     env:
-      PROJECT_ID: ${{ secrets.PROJECT_ID }}
-      PROJECT_NUMBER: ${{ secrets.PROJECT_NUMBER }}
-      REGION: asia-northeast1
-      WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-      SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
-      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-      IAP_USER: ${{ secrets.IAP_USER }}
-      OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
-      OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -77,60 +42,10 @@ jobs:
         with:
           terraform_version: "1.11.4"
 
-      - name: Decide target stack
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/infra-v* ]]; then
-            echo "INFRA_STACK=prod" >> "$GITHUB_ENV"
-          elif [ "${{ github.ref_name }}" = "main" ] && [ "${{ github.event.inputs.stack }}" = "site" ]; then
-            echo "INFRA_STACK=site" >> "$GITHUB_ENV"
-          elif [ "${{ github.ref_name }}" = "main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            echo "INFRA_STACK=site" >> "$GITHUB_ENV"
-          else
-            echo "INFRA_STACK=${{ github.event.inputs.stack }}" >> "$GITHUB_ENV"
-          fi
-
-      - name: Refuse to destroy the site stack
-        if: env.INFRA_STACK == 'site' && github.event.inputs.action == 'destroy'
-        run: |
-          echo "Refusing to destroy the site stack"
-          exit 1
-
-      - name: Authenticate to Google Cloud
-        if: env.INFRA_STACK != 'site'
-        uses: google-github-actions/auth@v3
-        with:
-          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ env.SERVICE_ACCOUNT }}
-          create_credentials_file: true
-          export_environment_variables: true
-
-      - name: Get current Cloud Run image (if exists)
-        if: env.INFRA_STACK != 'site' && env.INFRA_STACK != 'shared'
-        id: current-image
-        run: |
-          if [ "$INFRA_STACK" = "prod" ]; then
-            SERVICE_NAME="koborin-ai-web-prod"
-          else
-            SERVICE_NAME="koborin-ai-web-dev"
-          fi
-          CURRENT_IMAGE=$(gcloud run services describe "${SERVICE_NAME}" \
-            --region="${{ env.REGION }}" \
-            --project="${{ env.PROJECT_ID }}" \
-            --format='value(spec.template.spec.containers[0].image)' 2>/dev/null || echo "gcr.io/cloudrun/hello")
-          echo "CURRENT_IMAGE=${CURRENT_IMAGE}" >> "$GITHUB_OUTPUT"
-          echo "Current image: ${CURRENT_IMAGE}"
-
       - name: Synth Terraform config
         working-directory: infra
         env:
-          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
-          GCP_PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
-          TERRAFORM_BACKEND: ${{ env.INFRA_STACK == 'site' && 'r2' || 'gcs' }}
-          TERRAFORM_STATE_BUCKET: ${{ env.INFRA_STACK == 'site' && 'koborin-ai-tfstate' || secrets.BUCKET_NAME }}
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+          TERRAFORM_STATE_BUCKET: koborin-ai-tfstate
           SITE_APEX_CONTENT: ${{ vars.SITE_APEX_CONTENT }}
           SITE_APEX_TTL: ${{ vars.SITE_APEX_TTL }}
           SITE_APEX_PROXIED: ${{ vars.SITE_APEX_PROXIED }}
@@ -139,54 +54,22 @@ jobs:
           set -euo pipefail
           dart pub get
           dart analyze
-          dart run bin/synth.dart "${INFRA_STACK}"
+          dart run bin/synth.dart site
 
       - name: Terraform Init
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
+        working-directory: infra/tf-out/site
         run: terraform init -input=false
 
-      - name: Import apex A record
-        if: env.INFRA_STACK == 'site' && github.event.inputs.import_apex == 'true'
-        working-directory: infra/tf-out/site
-        run: |
-          set -euo pipefail
-          ZONE_JSON="$(curl -sS -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            "https://api.cloudflare.com/client/v4/zones?name=koborin.ai")"
-          ZONE_ID="$(printf '%s' "$ZONE_JSON" | python3 -c "import json,sys; r=json.load(sys.stdin); assert r.get('success'), r; print(r['result'][0]['id'])")"
-          RECORD_JSON="$(curl -sS -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?name=koborin.ai&type=A")"
-          RECORD_ID="$(printf '%s' "$RECORD_JSON" | python3 -c "import json,sys; r=json.load(sys.stdin); assert r.get('success'), r; recs=r['result']; assert len(recs)==1, recs; print(recs[0]['id'])")"
-          echo "Importing cloudflare_dns_record.apex ${ZONE_ID}/${RECORD_ID}"
-          terraform import cloudflare_dns_record.apex "${ZONE_ID}/${RECORD_ID}"
-
       - name: Terraform Plan (pre-apply)
-        if: github.event.inputs.action != 'destroy'
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
-        env:
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        working-directory: infra/tf-out/site
         run: terraform plan -no-color -input=false
 
       - name: Terraform Apply
-        if: github.event.inputs.action != 'destroy'
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
-        env:
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        working-directory: infra/tf-out/site
         run: terraform apply -auto-approve -input=false
 
       - name: Terraform Plan (verify no drift)
-        if: github.event.inputs.action != 'destroy'
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
-        env:
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        working-directory: infra/tf-out/site
         run: |
           set +e
           terraform plan -detailed-exitcode -input=false
@@ -199,23 +82,3 @@ jobs:
           if [ "$EXIT_CODE" -ne 0 ]; then
             exit "$EXIT_CODE"
           fi
-
-      - name: Unlock deletion protection
-        if: env.INFRA_STACK != 'site' && github.event.inputs.action == 'destroy'
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
-        env:
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
-        run: terraform apply -auto-approve -input=false
-
-      - name: Terraform Destroy
-        if: env.INFRA_STACK != 'site' && github.event.inputs.action == 'destroy'
-        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
-        env:
-          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
-          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
-          TF_VAR_iap_user: ${{ env.IAP_USER }}
-          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
-        run: terraform destroy -auto-approve -input=false

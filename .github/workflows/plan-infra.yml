@@ -13,9 +13,10 @@ on:
       stack:
         description: "Stack to preview"
         required: true
-        default: "dev"
+        default: "site"
         type: choice
         options:
+          - site
           - shared
           - dev
           - prod
@@ -44,6 +45,10 @@ jobs:
       IAP_USER: ${{ secrets.IAP_USER }}
       OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
       OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
 
     steps:
       - name: Checkout code
@@ -62,12 +67,13 @@ jobs:
       - name: Decide target stack
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "INFRA_STACK=dev" >> "$GITHUB_ENV"
+            echo "INFRA_STACK=site" >> "$GITHUB_ENV"
           else
             echo "INFRA_STACK=${{ github.event.inputs.stack }}" >> "$GITHUB_ENV"
           fi
 
       - name: Authenticate to Google Cloud
+        if: env.INFRA_STACK != 'site'
         uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
@@ -76,7 +82,7 @@ jobs:
           export_environment_variables: true
 
       - name: Get current Cloud Run image (if exists)
-        if: env.INFRA_STACK != 'shared'
+        if: env.INFRA_STACK != 'site' && env.INFRA_STACK != 'shared'
         id: current-image
         run: |
           if [ "$INFRA_STACK" = "prod" ]; then
@@ -96,12 +102,16 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
           GCP_PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
-          TERRAFORM_BACKEND: gcs
-          TERRAFORM_STATE_BUCKET: ${{ env.BUCKET_NAME }}
+          TERRAFORM_BACKEND: ${{ env.INFRA_STACK == 'site' && 'r2' || 'gcs' }}
+          TERRAFORM_STATE_BUCKET: ${{ env.INFRA_STACK == 'site' && 'koborin-ai-tfstate' || secrets.BUCKET_NAME }}
           TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
           TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
           TF_VAR_iap_user: ${{ env.IAP_USER }}
           TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+          SITE_APEX_CONTENT: ${{ vars.SITE_APEX_CONTENT }}
+          SITE_APEX_TTL: ${{ vars.SITE_APEX_TTL }}
+          SITE_APEX_PROXIED: ${{ vars.SITE_APEX_PROXIED }}
+          SITE_ATTACH_CUSTOM_DOMAIN: ${{ vars.SITE_ATTACH_CUSTOM_DOMAIN }}
         run: |
           set -euo pipefail
           dart pub get

@@ -23,10 +23,7 @@ jobs:
     environment: production (infra)
 
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
 
     steps:
       - name: Checkout code
@@ -58,18 +55,25 @@ jobs:
 
       - name: Terraform Init
         working-directory: infra/tf-out/site
+        env: &terraform_cloudflare
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: terraform init -input=false
 
       - name: Terraform Plan (pre-apply)
         working-directory: infra/tf-out/site
+        env: *terraform_cloudflare
         run: terraform plan -no-color -input=false
 
       - name: Terraform Apply
         working-directory: infra/tf-out/site
+        env: *terraform_cloudflare
         run: terraform apply -auto-approve -input=false
 
       - name: Terraform Plan (verify no drift)
         working-directory: infra/tf-out/site
+        env: *terraform_cloudflare
         run: |
           set +e
           terraform plan -detailed-exitcode -input=false

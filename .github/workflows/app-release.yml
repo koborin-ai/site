@@ -28,7 +28,6 @@ jobs:
       GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
       GISCUS_REPO_ID: ${{ secrets.GISCUS_REPO_ID }}
       GISCUS_CATEGORY_ID: ${{ secrets.GISCUS_CATEGORY_ID }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
     steps:
@@ -78,4 +77,6 @@ jobs:
 
       - name: Deploy Worker
         working-directory: app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npm run deploy

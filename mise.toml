@@ -1,0 +1,27 @@
+# Task definitions for the repository. Tool versions live in `.tool-versions`,
+# which mise reads natively and `actions/setup-node` accepts as a
+# `node-version-file`, so CI and laptops resolve the same versions from one file.
+#
+# Locally: install mise (`curl https://mise.run | sh`), then `mise install`.
+
+[tasks.check]
+description = "Run every quality gate in the repository"
+depends = ["check:*"]
+
+[tasks."check:app"]
+description = "Astro app: oxlint, astro check, Vitest, image usage"
+dir = "app"
+run = "npm run check"
+
+[tasks."check:infra"]
+description = "TerraDart: static analysis and synth unit tests"
+dir = "infra"
+run = ["dart pub get", "dart analyze", "dart test"]
+
+[tasks."check:automation"]
+description = "Workflows and shell scripts: actionlint, shellcheck, label tests"
+run = [
+  "actionlint",
+  "shellcheck .github/scripts/*.sh app/scripts/*.sh",
+  "./.github/scripts/test-compute-pr-labels.sh",
+]

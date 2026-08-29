@@ -7,11 +7,11 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "lint": "astro check",
+    "lint": "oxlint",
     "typecheck": "astro check",
-    "test": "astro check",
+    "test": "vitest run",
     "check-images": "./scripts/check-image-usage.sh",
-    "ci": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run check-images",
     "deploy": "wrangler deploy",
     "new-article": "hygen article new"
   },
@@ -29,14 +29,17 @@
     "playwright": "^1.62.1",
     "react": "^19.2.8",
     "rehype-mermaid": "^3.0.0",
+    "remark-gfm": "^4.0.1",
     "starlight-auto-drafts": "^0.3.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.3",
     "hygen": "^6.2.11",
+    "oxlint": "^1.80.0",
     "textlint": "^15.8.0",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.11",
     "wrangler": "^4.126.0"
   }
 }

@@ -57,7 +57,7 @@ export const beats: Beat[] = [
 ];
 
 export function getBeats(): Beat[] {
-  return [...beats].sort((a, b) => b.date.localeCompare(a.date));
+  return beats.toSorted((a, b) => b.date.localeCompare(a.date));
 }
 
 export function getBeat(slug: string): Beat | undefined {

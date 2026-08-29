@@ -12,6 +12,7 @@
     "test": "astro check",
     "check-images": "./scripts/check-image-usage.sh",
     "ci": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "deploy": "wrangler deploy",
     "new-article": "hygen article new"
   },
   "keywords": [],
@@ -35,6 +36,7 @@
     "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.3",
     "hygen": "^6.2.11",
     "textlint": "^15.8.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wrangler": "^4.126.0"
   }
 }

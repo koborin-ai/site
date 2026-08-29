@@ -19,7 +19,11 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 | Path | Purpose |
 | --- | --- |
+| `.tool-versions` | Node, Dart, Terraform, actionlint, and shellcheck versions. The only place they are declared. |
+| `mise.toml` | The `check` task tree that fans out to app, infra, and automation. |
 | `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
+| `app/.oxlintrc.json` | oxlint rules; covers `.ts` and the client `<script>` blocks in `.astro`. |
+| `app/vitest.config.ts` | Vitest wired through Astro's `getViteConfig`. |
 | `app/wrangler.jsonc` | Worker name `koborin-ai-web`, `assets.directory` `./dist`, and `not_found_handling` `404-page`. |
 | `app/public/_headers` | Worker static-asset header rules (UTF-8 on `*.txt`). |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
@@ -36,8 +40,11 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `infra/lib/cloudflare_zone_lookup.dart` | Local `data.cloudflare_zone` wrapper. |
 | `infra/lib/cloudflare_workers_custom_domain.dart` | Local `cloudflare_workers_custom_domain` wrapper. |
 | `infra/bin/synth.dart` | Synth entry point; emits `tf-out/site/main.tf.json`. |
+| `infra/test/` | `dart test` coverage for the synthesized Terraform JSON. |
 | `docs/` | Specifications, e.g. contact flow, o11y notes. |
 | `docs/assets/{article}/` | Mermaid sources and generated images for each spec document. |
+| `.github/actionlint.yaml` | Declares the Blacksmith runner labels so actionlint stays clean. |
+| `.github/scripts/` | Shell helpers (`compute-pr-labels.sh`) plus their test suite. |
 | `.github/workflows/` | CI/CD definitions. |
 
 ## Infrastructure Rules
@@ -180,7 +187,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.
    - Social links and sidebar are configured in `astro.config.mjs`.
-9. **Testing**: run `npm run lint && npm run test && npm run typecheck && npm run check-images` in `app/` before committing.
+9. **Testing**: run `mise run check` from the repository root before committing. It covers the app (`npm run check`: oxlint, `astro check`, Vitest, image usage), the infra (`dart analyze`, `dart test`), and the automation (actionlint, shellcheck, PR label tests). Run `npm run build` in `app/` as well whenever content or configuration changes.
 10. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 11. **Workers deployment**:
    - The app builds as a static site (`output: "static"` in Astro config). Wrangler uploads `app/dist` as Worker static assets.
@@ -294,9 +301,11 @@ When adding or updating dependencies (GitHub Actions, Go modules, npm packages, 
 
 1. **Always check for the latest stable version** before adding a new dependency.
 2. **Use specific major versions** for GitHub Actions (e.g., `@v6` not `@main` or `@latest`).
-3. **Prefer version pins from project files** (e.g. `pubspec.yaml` for Dart, `go-version-file` for Go in other packages) over hardcoded versions in workflows.
+3. **Prefer version pins from project files** over hardcoded versions in workflows: `.tool-versions` for Node, Dart, Terraform, actionlint, and shellcheck; `package.json` for npm; `pubspec.yaml` for pub.
 4. **Verify compatibility** with existing dependencies before upgrading.
 5. **Document breaking changes** in PR descriptions when upgrading major versions.
+
+Dependabot covers npm (`app/`), pub (`infra/`), and GitHub Actions. It does not understand `.tool-versions`, so Node, Dart, Terraform, actionlint, and shellcheck are bumped by hand there.
 
 Examples:
 
@@ -307,10 +316,12 @@ Examples:
 ## CI/CD Expectations
 
 - Workflows:
-  - `plan-infra.yml`: `dart analyze` + `terraform plan` for the `site` stack (no apply).
-  - `release-infra.yml`: authenticated `terraform apply` for the `site` stack (manual dispatch, `main` infra push, or `infra-v*` tag).
-  - `app-ci.yml`: Astro app quality checks (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run check-images`) on PRs touching `app/`.
+  - `plan-infra.yml`: `mise run check:infra` + `terraform plan` for the `site` stack (no apply).
+  - `release-infra.yml`: `mise run check:infra` then authenticated `terraform apply` for the `site` stack (manual dispatch, `main` infra push, or `infra-v*` tag).
+  - `app-ci.yml`: `npm run check` plus `npm audit` and the production build, on PRs touching `app/`.
+  - `automation-ci.yml`: `mise run check:automation` on PRs touching `.github/workflows/`, `.github/scripts/`, `app/scripts/`, `.tool-versions`, or `mise.toml`.
   - `app-release.yml`: builds the static site and runs `wrangler deploy` for Worker `koborin-ai-web`.
+- Toolchain: every workflow takes its versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump versions in `.tool-versions`, never in a workflow.
 - Cloudflare auth:
   - Secret: `CLOUDFLARE_API_TOKEN` (scoped to this account and zone).
   - Variable: `CLOUDFLARE_ACCOUNT_ID`.
@@ -400,37 +411,51 @@ Examples:
 
 ## Code Quality Standards
 
-Before committing any code changes, ensure all quality checks pass:
+Before committing any code changes, ensure all quality checks pass.
+
+### Everything at once
+
+```bash
+mise run check
+```
+
+This is the command to reach for. It runs the three task groups below in parallel and takes under ten seconds.
 
 ### Infrastructure (`infra/`)
 
 ```bash
-cd infra
-dart analyze
+mise run check:infra  # dart pub get, dart analyze, dart test
 ```
 
-All commands must complete successfully with no errors. CI also runs `terraform plan` via `plan-infra.yml`.
+CI also runs `terraform plan` via `plan-infra.yml`.
 
 ### Application (`app/`)
 
 ```bash
 cd app
-npm run build         # Astro build
-npm run lint          # ESLint checks
-npm run typecheck     # TypeScript type checking
+npm run lint          # oxlint over .ts and .astro <script> blocks
+npm run typecheck     # astro check (types + Astro diagnostics)
 npm run test          # Vitest unit tests
 npm run check-images  # Image usage validation
+npm run check         # All four of the above
+npm run build         # Astro build; needs Playwright Chromium
 ```
 
-All five commands must complete successfully with no errors.
+`npm run build` is not part of `check` because it takes 40 seconds and needs Chromium. Run it whenever content, assets, or configuration change.
+
+### Automation (`.github/`)
+
+```bash
+mise run check:automation  # actionlint, shellcheck, PR label tests
+```
 
 ## Pull Request Checklist
 
 1. Update relevant docs (`README.md`, `AGENTS.md`, or files under `docs/`) when changing behavior.
    - **Directory structure changes** (e.g., `app/src/assets/`, `infra/lib/`): Update "Repository Layout" sections in both `README.md` and `AGENTS.md`.
    - **New conventions or rules**: Add to `AGENTS.md` under the appropriate section.
-2. For infra: `dart analyze` in `infra/` - must pass.
-3. For app: `npm run build && npm run lint && npm run typecheck && npm run test && npm run check-images` in `app/` - all must pass.
+2. `mise run check` from the repository root - must pass.
+3. For app changes, also run `npm run build` in `app/` - must pass.
    - If the change touches a page with `draft: true`, these commands skip it. Also open the page in `npm run dev` and confirm it renders.
 4. Ensure all Markdown files pass linting (no MD0xx errors).
 5. Mention any manual Cloudflare or DNS steps (e.g., unmanaged MX/TXT) in the PR description.
@@ -464,19 +489,27 @@ The main local runtime is the **Astro + Starlight app** under `app/`. There is n
 
 ### Toolchain versions
 
-- **Node.js 22** (matches `app-ci.yml`). All npm commands run from `app/`.
-- **Dart 3.10+** for `infra/` (TerraDart synth; CI uses 3.13).
+`.tool-versions` at the repository root is the only place versions are declared. The VM image does not ship Dart, Terraform, actionlint, or shellcheck, so install them once per fresh environment:
+
+```bash
+curl https://mise.run | sh
+export PATH="$HOME/.local/bin:$PATH"
+mise install                # ~4s for the whole toolchain
+```
+
+Prefix commands with `mise exec --` (or activate mise in the shell) so they use the pinned versions rather than whatever the image happens to have.
 
 ### App development
 
 ```bash
 cd app
 npm run dev                 # http://localhost:4321
-npm run lint                # astro check (lint + typecheck + tests)
-npm run check-images
+npm run check               # oxlint, astro check, Vitest, image usage
 npm run build               # requires Playwright Chromium (see below)
 npm run preview             # serve dist/ after build
 ```
+
+From the repository root, `mise run check` additionally covers `infra/` and `.github/`.
 
 Use **tmux** for long-running processes such as `npm run dev`.
 
@@ -488,18 +521,18 @@ CI installs Chromium for Mermaid diagram rendering during production builds. Aft
 cd app && npx playwright install chromium
 ```
 
-`npm run dev` does not need Playwright (Mermaid uses inline SVG in dev).
+The image may carry a stale browser build; if the build reports a missing executable, rerun that command. `npm run dev` does not need Playwright (Mermaid uses inline SVG in dev).
 
 ### Infrastructure
 
 ```bash
-cd infra && dart analyze
+mise run check:infra
 ```
 
 Never run `terraform apply` locally. Infra changes go through GitHub Actions only.
 
 ### Optional tooling
 
-- **webp / imagemagick**: Used by `app/scripts/optimize-og-images.sh` in CI behavior builds. Not required for local dev or `npm run build`.
+- **webp / imagemagick**: Used by `app/scripts/optimize-og-images.sh`, which CI installs via apt. Not required for local dev or `npm run build`.
 - **Giscus / GA4**: Set `PUBLIC_GISCUS_*` and `PUBLIC_GA_MEASUREMENT_ID` in `app/.env` to mirror production engagement features. The site works without them.
 

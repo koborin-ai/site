@@ -77,3 +77,7 @@ __pycache__/
 
 # Wrangler
 app/.wrangler/
+
+# mise local overrides
+mise.local.toml
+.mise.local.toml

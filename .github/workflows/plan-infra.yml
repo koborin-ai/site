@@ -7,6 +7,7 @@ on:
       - synchronize
     paths:
       - "infra/**"
+      - ".tool-versions"
       - "mise.toml"
       - ".github/workflows/plan-infra.yml"
   workflow_dispatch:

@@ -7,6 +7,7 @@ on:
     paths:
       - "app/**"
       - "content/**"
+      - ".tool-versions"
       - "mise.toml"
       - ".github/workflows/app-release.yml"
       - ".github/workflows/app-ci.yml"
@@ -51,7 +52,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version-file: mise.toml
+          node-version-file: .tool-versions
           cache: npm
           cache-dependency-path: app/package-lock.json
 

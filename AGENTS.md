@@ -305,6 +305,8 @@ When adding or updating dependencies (GitHub Actions, Go modules, npm packages, 
 4. **Verify compatibility** with existing dependencies before upgrading.
 5. **Document breaking changes** in PR descriptions when upgrading major versions.
 
+Dependabot covers npm (`app/`), pub (`infra/`), and GitHub Actions. It does not understand `.tool-versions`, so Node, Dart, Terraform, actionlint, and shellcheck are bumped by hand there.
+
 Examples:
 
 - GitHub Actions: Check the action's releases page (e.g., `actions/setup-go` → use `@v6` if latest).

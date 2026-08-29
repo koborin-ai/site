@@ -25,6 +25,14 @@ on:
         required: false
         type: boolean
         default: false
+      action:
+        description: "apply or destroy. destroy is refused for the site stack"
+        required: false
+        type: choice
+        options:
+          - apply
+          - destroy
+        default: apply
 
 concurrency:
   group: terraform-state
@@ -36,7 +44,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     environment: ${{ github.event.inputs.stack == 'shared' && 'shared (infra)' || (github.event.inputs.stack == 'dev' && 'development (infra)' || 'production (infra)') }}
 
@@ -80,6 +88,12 @@ jobs:
           else
             echo "INFRA_STACK=${{ github.event.inputs.stack }}" >> "$GITHUB_ENV"
           fi
+
+      - name: Refuse to destroy the site stack
+        if: env.INFRA_STACK == 'site' && github.event.inputs.action == 'destroy'
+        run: |
+          echo "Refusing to destroy the site stack"
+          exit 1
 
       - name: Authenticate to Google Cloud
         if: env.INFRA_STACK != 'site'
@@ -146,6 +160,7 @@ jobs:
           terraform import cloudflare_dns_record.apex "${ZONE_ID}/${RECORD_ID}"
 
       - name: Terraform Plan (pre-apply)
+        if: github.event.inputs.action != 'destroy'
         working-directory: infra/tf-out/${{ env.INFRA_STACK }}
         env:
           TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
@@ -155,6 +170,7 @@ jobs:
         run: terraform plan -no-color -input=false
 
       - name: Terraform Apply
+        if: github.event.inputs.action != 'destroy'
         working-directory: infra/tf-out/${{ env.INFRA_STACK }}
         env:
           TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
@@ -164,6 +180,7 @@ jobs:
         run: terraform apply -auto-approve -input=false
 
       - name: Terraform Plan (verify no drift)
+        if: github.event.inputs.action != 'destroy'
         working-directory: infra/tf-out/${{ env.INFRA_STACK }}
         env:
           TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
@@ -182,3 +199,13 @@ jobs:
           if [ "$EXIT_CODE" -ne 0 ]; then
             exit "$EXIT_CODE"
           fi
+
+      - name: Terraform Destroy
+        if: env.INFRA_STACK != 'site' && github.event.inputs.action == 'destroy'
+        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
+        env:
+          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
+          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
+          TF_VAR_iap_user: ${{ env.IAP_USER }}
+          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        run: terraform destroy -auto-approve -input=false

@@ -126,6 +126,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   └── styles/
 │   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
 │   ├── public/
+│   │   ├── _headers               # Worker static-asset header rules
 │   │   ├── audio/beats/          # Beat MP3s for on-site playback
 │   │   ├── favicon.png           # Browser tab icon
 │   │   ├── og/                   # Open Graph source images

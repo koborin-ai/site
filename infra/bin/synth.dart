@@ -36,7 +36,7 @@ Future<void> _synthSite() async {
   final apexContent = attachCustomDomain
       ? (Platform.environment['SITE_APEX_CONTENT'] ?? '203.0.113.10')
       : _requireEnv('SITE_APEX_CONTENT');
-  final apexTtl = num.parse(Platform.environment['SITE_APEX_TTL'] ?? '1');
+  final apexTtl = _envNum('SITE_APEX_TTL', 1);
   final apexProxied = Platform.environment['SITE_APEX_PROXIED'] == 'true';
 
   const outputDir = 'tf-out/site';
@@ -113,6 +113,16 @@ String _requireEnv(String name) {
     exit(64);
   }
   return value;
+}
+
+/// GitHub Actions injects `${{ vars.NAME }}` as `""` when the variable is
+/// missing, so `?? fallback` does not apply.
+num _envNum(String name, num fallback) {
+  final raw = Platform.environment[name];
+  if (raw == null || raw.isEmpty) {
+    return fallback;
+  }
+  return num.parse(raw);
 }
 
 Future<void> _cleanOutputDir(String outputDir) async {

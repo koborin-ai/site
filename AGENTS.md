@@ -20,7 +20,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | Path | Purpose |
 | --- | --- |
 | `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
-| `app/wrangler.jsonc` | Worker name `koborin-ai-web` and `assets.directory` `./dist`. |
+| `app/wrangler.jsonc` | Worker name `koborin-ai-web`, `assets.directory` `./dist`, and `not_found_handling` `404-page`. |
+| `app/public/_headers` | Worker static-asset header rules (UTF-8 on `*.txt`). |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content/docs/beats/` | Beats showcase (`index` list + per-track share pages). English only. |
 | `app/src/data/beats.ts` | Beat catalog (title, audio path, BPM/key, OG image, optional external URL). |
@@ -183,7 +184,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 10. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 11. **Workers deployment**:
    - The app builds as a static site (`output: "static"` in Astro config). Wrangler uploads `app/dist` as Worker static assets.
-   - Worker name and assets directory live in `app/wrangler.jsonc`. There is no `main` script and no `routes` block.
+   - Worker name and assets directory live in `app/wrangler.jsonc`. There is no `main` script and no `routes` block. Set `not_found_handling` to `404-page` so `404.html` is served.
+   - `app/public/_headers` is copied into `dist/` and sets `Content-Type: text/plain; charset=utf-8` on `*.txt` (Astro response headers are not kept on uploaded files).
    - `app-release.yml` runs `npm run build` then `wrangler deploy`.
    - All pages are pre-rendered at build time; no Node.js runtime is required in production.
 12. **LLM Context Files (llms.txt)**:

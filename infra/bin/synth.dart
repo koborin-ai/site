@@ -132,8 +132,10 @@ Future<void> _synthStack({
   await _cleanOutputDir(outputDir);
 
   final result = stack.synth();
-  final tfJson = Map<String, dynamic>.from(result.tfJson)
-    ..['variable'] = variables;
+  final tfJson = Map<String, dynamic>.from(result.tfJson);
+  if (variables.isNotEmpty) {
+    tfJson['variable'] = variables;
+  }
 
   if (Platform.environment['TERRAFORM_BACKEND'] == 'gcs') {
     final terraform = Map<String, dynamic>.from(

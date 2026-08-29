@@ -1,0 +1,33 @@
+# Single source of truth for the toolchain.
+#
+# Locally: `mise install` provisions everything (`curl https://mise.run | sh` first).
+# In CI: `actions/setup-node` reads `node-version-file: mise.toml`, and the infra
+# and scripts workflows install these same versions through `jdx/mise-action`.
+# Bump a version here and every environment follows.
+
+[tools]
+node = "22"
+dart = "3.13"
+terraform = "1.11.4"
+shellcheck = "0.11.0"
+
+[tasks.check]
+description = "Run every quality gate in the repository"
+depends = ["check:*"]
+
+[tasks."check:app"]
+description = "Astro app: oxlint, astro check, Vitest, image usage"
+dir = "app"
+run = "npm run check"
+
+[tasks."check:infra"]
+description = "TerraDart: static analysis and synth unit tests"
+dir = "infra"
+run = ["dart pub get", "dart analyze", "dart test"]
+
+[tasks."check:scripts"]
+description = "Shell scripts: shellcheck and the PR label test suite"
+run = [
+  "shellcheck .github/scripts/*.sh app/scripts/*.sh",
+  "./.github/scripts/test-compute-pr-labels.sh",
+]

@@ -30,6 +30,12 @@ const Map<String, Map<String, Object>> devStackTerraformVariables = {
   },
 };
 
+/// Terraform `variable` blocks for the site stack.
+///
+/// Site values are injected at synth time from environment variables, not
+/// Terraform variables.
+const Map<String, Map<String, Object>> siteStackTerraformVariables = {};
+
 /// Terraform `variable` blocks for the prod stack.
 const Map<String, Map<String, Object>> prodStackTerraformVariables = {
   'image_uri': {

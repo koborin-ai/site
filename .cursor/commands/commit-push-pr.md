@@ -16,7 +16,7 @@
 
 ## Prerequisites
 
-- Local quality checks already ran manually (app: `npm run lint`, `npm run test`, `npm run typecheck`; infra: `terraform fmt -check && terraform validate` in each stack under `infra/`). This command will not block on failures.
+- Local quality checks already ran manually (`mise run check` from the repository root, plus `npm run build --prefix app` for app changes). This command will not block on failures.
 - GitHub CLI (`gh`) is installed and authenticated (`gh auth status`).
 - Run the command from the base branch (usually `main`) with your worktree containing uncommitted changes, or from an existing feature branch if you want to reuse it.
 

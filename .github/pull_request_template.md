@@ -12,13 +12,8 @@
 
 ## Verification
 
-### App
-
-- `cd app && npm run lint && npm run build`
-
-### Infra
-
-- `cd infra && dart analyze`
+- `mise run check` (app + infra + automation)
+- `cd app && npm run build` for app changes
 
 ## Review notes
 

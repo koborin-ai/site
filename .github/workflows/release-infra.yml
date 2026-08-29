@@ -5,6 +5,8 @@ on:
     branches:
       - main
     paths:
+      # Toolchain files are deliberately absent: a shellcheck bump should not
+      # apply production infrastructure. plan-infra covers them on the PR.
       - "infra/**"
     tags:
       - "infra-v*"
@@ -29,15 +31,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: "3.13"
+      - name: Setup toolchain
+        uses: jdx/mise-action@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: "1.11.4"
+      - name: Analyze and test
+        run: mise run check:infra
 
       - name: Synth Terraform config
         working-directory: infra
@@ -47,11 +45,7 @@ jobs:
           SITE_APEX_TTL: ${{ vars.SITE_APEX_TTL }}
           SITE_APEX_PROXIED: ${{ vars.SITE_APEX_PROXIED }}
           SITE_ATTACH_CUSTOM_DOMAIN: ${{ vars.SITE_ATTACH_CUSTOM_DOMAIN }}
-        run: |
-          set -euo pipefail
-          dart pub get
-          dart analyze
-          dart run bin/synth.dart site
+        run: dart run bin/synth.dart site
 
       - name: Terraform Init
         working-directory: infra/tf-out/site

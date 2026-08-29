@@ -1,0 +1,31 @@
+name: Automation CI
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - ".github/workflows/**"
+      - ".github/scripts/**"
+      - ".github/actionlint.yaml"
+      - "app/scripts/**"
+      - ".tool-versions"
+      - "mise.toml"
+
+jobs:
+  automation:
+    name: Workflow and script checks
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup toolchain
+        uses: jdx/mise-action@v4
+
+      - name: Lint workflows and scripts
+        run: mise run check:automation

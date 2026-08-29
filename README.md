@@ -55,6 +55,7 @@ flowchart LR
         planInfra[plan-infra.yml]
         releaseInfra[release-infra.yml]
         appCI[app-ci.yml]
+        automationCI[automation-ci.yml]
         appRelease[app-release.yml]
     end
 
@@ -66,16 +67,19 @@ flowchart LR
     planInfra --> siteStack
     releaseInfra --> siteStack
     appCI -->|PR validation| GitHub
+    automationCI -->|PR validation| GitHub
     appRelease --> worker
 ```
 
 | Workflow | Trigger | Purpose | Notes |
 | --- | --- | --- | --- |
-| `plan-infra.yml` | PRs touching infra | `dart analyze` + `terraform plan` for the `site` stack | No apply |
+| `plan-infra.yml` | PRs touching infra | `mise run check:infra` + `terraform plan` for the `site` stack | No apply |
 | `release-infra.yml` | `infra-v*` tags, `main` infra push, or manual dispatch | Applies the `site` stack | State is in R2 |
-| `app-ci.yml` | PRs touching `app/` | Runs Astro lint/typecheck/test/build | Blocks merges that break the app |
+| `app-ci.yml` | PRs touching `app/` | Runs `npm run check` and the production build | Blocks merges that break the app |
+| `automation-ci.yml` | PRs touching workflows or shell scripts | `mise run check:automation` (actionlint, shellcheck, label tests) | Guards the automation itself |
 | `app-release.yml` | Merge to `main` or `workflow_dispatch` | Builds the static site and runs `wrangler deploy` | Uses `CLOUDFLARE_API_TOKEN` |
-| `claude.yml` | `@claude` mention in issues/PR comments/reviews | Runs Claude Code Action to respond in-thread | Reads CI results on PRs; gated on the mention string |
+
+Tool versions come from `.tool-versions`. `actions/setup-node` reads it through `node-version-file`, and the infra and automation workflows install from it with `jdx/mise-action`.
 
 ## Tech Stack
 
@@ -84,7 +88,8 @@ flowchart LR
 - **Analytics**: Google Analytics 4 for baseline PV/engagement.
 - **Infrastructure**: TerraDart (Dart) targeting Cloudflare via Terraform. State is in R2.
 - **CI/CD**: GitHub Actions with a Cloudflare API token. `plan-infra.yml` / `release-infra.yml` drive infra; `app-ci.yml` / `app-release.yml` handle the Astro app.
-- **Testing**: Vitest for app tests, `dart analyze` for infra, Playwright for Mermaid rendering in production builds.
+- **Toolchain**: [mise](https://mise.jdx.dev/) pins Node, Dart, Terraform, actionlint, and shellcheck for both laptops and CI.
+- **Quality gates**: oxlint and `astro check` for the app, Vitest for app unit tests, `dart analyze` + `dart test` for infra, actionlint and shellcheck for the automation. `mise run check` runs all of it.
 - **LLM Context**: Machine-readable `llms.txt` files for AI assistants. Auto-generated at build time.
 
 ## LLM Context Files (llms.txt)
@@ -107,8 +112,12 @@ These files are **auto-generated** at build time from Content Collections. Artic
 
 ```text
 .
+├── .tool-versions                 # Node, Dart, Terraform, actionlint, shellcheck
+├── mise.toml                      # Repo-wide check tasks
 ├── app/                           # Astro + Starlight application (static)
 │   ├── wrangler.jsonc            # Worker name and dist/ assets
+│   ├── .oxlintrc.json            # oxlint rules for TS and .astro scripts
+│   ├── vitest.config.ts          # Vitest via Astro's getViteConfig
 │   ├── src/
 │   │   ├── assets/               # Images organized by category
 │   │   │   ├── _shared/          # Common assets (header logo)
@@ -119,9 +128,11 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   │   └── docs/             # MDX pages: tech/, life/, beats/, ja/ (Starlight)
 │   │   ├── content.config.ts    # Content Collections schema (extends docsSchema)
 │   │   ├── data/
-│   │   │   └── beats.ts          # Beat catalog for /beats/
+│   │   │   ├── beats.ts          # Beat catalog for /beats/
+│   │   │   └── beats.test.ts     # Vitest coverage for the catalog helpers
 │   │   ├── utils/
-│   │   │   └── llms.ts           # Shared logic for llms.txt generation
+│   │   │   ├── llms.ts           # Shared logic for llms.txt generation
+│   │   │   └── llms.test.ts      # Vitest coverage for llms.txt rendering
 │   │   ├── pages/                # Astro endpoints (llms.txt, RSS)
 │   │   └── styles/
 │   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
@@ -137,8 +148,12 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   ├── bin/synth.dart            # Synth entry point → tf-out/site/main.tf.json
 │   ├── lib/                      # Stack definitions
 │   │   └── site_stack.dart       # Zone lookup + Workers custom domain
+│   ├── test/                     # dart test coverage for the synth output
 │   └── pubspec.yaml              # TerraDart dependencies
-├── .github/workflows/             # CI pipelines (infra plan/apply, app deploy)
+├── .github/
+│   ├── actionlint.yaml           # Self-hosted runner labels for actionlint
+│   ├── scripts/                  # Shell helpers + their test suite
+│   └── workflows/                # CI pipelines (infra plan/apply, app deploy)
 ├── README.md                      # This file
 └── AGENTS.md                      # English operations guide for collaborators
 ```
@@ -172,9 +187,9 @@ That's it! The CI pipeline (`app/scripts/optimize-og-images.sh`) generates WebP 
 
 ## Workflow Overview
 
-1. **Infra changes**: edit TerraDart stacks → `dart analyze` → open PR → GitHub Actions runs `terraform plan` → reviewer approves → merge triggers apply of the `site` stack.
-2. **App changes**: edit Astro/MDX → `npm run lint && npm run test && npm run typecheck && npm run check-images && npm run build` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml`, which builds the static site and runs `wrangler deploy`.
-3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `npm run lint`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
+1. **Infra changes**: edit TerraDart stacks → `mise run check:infra` → open PR → GitHub Actions runs `terraform plan` → reviewer approves → merge triggers apply of the `site` stack.
+2. **App changes**: edit Astro/MDX → `mise run check` and `npm run build --prefix app` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml`, which builds the static site and runs `wrangler deploy`.
+3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `mise run check:app`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
 
 ### Adding New Content
 
@@ -227,16 +242,23 @@ To add a new article or page:
 
 ## Local Setup
 
+Tool versions live in `.tool-versions`, so [mise](https://mise.jdx.dev/) is the only prerequisite.
+
 ```bash
-# Node.js 22
+# Install mise once, then provision Node, Dart, Terraform, actionlint, shellcheck
+curl https://mise.run | sh
+mise install
+
 npm install --prefix app
 
 # Run Astro dev server
 npm run dev --prefix app
 
-# Analyze infrastructure
-cd infra && dart analyze
+# Run every quality gate (app + infra + automation)
+mise run check
 ```
+
+`mise run check` does not build the site. Run `npm run build --prefix app` for that; it needs Playwright Chromium (`npx playwright install chromium` in `app/`) to render Mermaid diagrams.
 
 ## Infrastructure Dev Notes
 

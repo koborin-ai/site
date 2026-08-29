@@ -504,7 +504,7 @@ The main local runtime is the **Astro + Starlight app** under `app/`. There is n
 ### Toolchain versions
 
 - **Node.js 22** (matches `app-ci.yml`). All npm commands run from `app/`.
-- **Dart 3.8+** for `infra/` (TerraDart synth).
+- **Dart 3.10+** for `infra/` (TerraDart synth; CI uses 3.13).
 
 ### App development
 

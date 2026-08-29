@@ -24,6 +24,7 @@ final class ProdStack extends Stack {
         name: TfArg.literal(_serviceName),
         location: TfArg.literal(_region),
         ingress: TfArg.literal(Ingress.internalLoadBalancer),
+        deletionProtection: TfArg.literal(false),
         template: CloudRunV2ServiceTemplate(
           executionEnvironment: TfArg.literal(ExecutionEnvironment.gen2),
           containers: [

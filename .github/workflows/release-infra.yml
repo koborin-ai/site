@@ -200,6 +200,16 @@ jobs:
             exit "$EXIT_CODE"
           fi
 
+      - name: Unlock deletion protection
+        if: env.INFRA_STACK != 'site' && github.event.inputs.action == 'destroy'
+        working-directory: infra/tf-out/${{ env.INFRA_STACK }}
+        env:
+          TF_VAR_oauth_client_id: ${{ env.OAUTH_CLIENT_ID }}
+          TF_VAR_oauth_client_secret: ${{ env.OAUTH_CLIENT_SECRET }}
+          TF_VAR_iap_user: ${{ env.IAP_USER }}
+          TF_VAR_image_uri: ${{ steps.current-image.outputs.CURRENT_IMAGE }}
+        run: terraform apply -auto-approve -input=false
+
       - name: Terraform Destroy
         if: env.INFRA_STACK != 'site' && github.event.inputs.action == 'destroy'
         working-directory: infra/tf-out/${{ env.INFRA_STACK }}

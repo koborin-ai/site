@@ -9,207 +9,73 @@ on:
       - "content/**"
       - ".github/workflows/app-release.yml"
       - ".github/workflows/app-ci.yml"
-    tags:
-      - "app-v*"
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Environment to deploy app to"
-        required: true
-        default: "dev"
-        type: choice
-        options:
-          - dev
-          - prod
-  workflow_call:
-    inputs:
-      environment:
-        description: "Environment to deploy app to"
-        required: true
-        type: string
-      ref:
-        description: "Git ref to checkout and build (defaults to the triggering SHA)"
-        required: false
-        type: string
 
-# Prevent concurrent deployments to avoid Terraform state conflicts
-# When multiple triggers occur (e.g., main merge + tag push), jobs queue up
 concurrency:
   group: app-release
   cancel-in-progress: false
 
 jobs:
   release:
-    name: Build, Package, and Deploy
+    name: Build and Deploy
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
-      id-token: write
       contents: read
     timeout-minutes: 30
-
-    environment: ${{ (startsWith(github.ref, 'refs/tags/app-v') || inputs.environment == 'prod') && 'production (app)' || 'development (app)' }}
+    environment: production (app)
 
     env:
-      PROJECT_ID: ${{ secrets.PROJECT_ID }}
-      PROJECT_NUMBER: ${{ secrets.PROJECT_NUMBER }}
-      REGION: asia-northeast1
-      WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-      SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT_MAIL }}
-      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
       GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
       GISCUS_REPO_ID: ${{ secrets.GISCUS_REPO_ID }}
       GISCUS_CATEGORY_ID: ${{ secrets.GISCUS_CATEGORY_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.ref || github.sha }}
-          # Fetch full Git history for Starlight's lastUpdated feature
           fetch-depth: 0
-
-      - name: Decide deployment environment
-        id: decide-env
-        run: |
-          TARGET_ENV="dev"
-          SERVICE_NAME="koborin-ai-web-dev"
-          if [[ "${GITHUB_REF}" == refs/tags/app-v* ]]; then
-            TARGET_ENV="prod"
-            SERVICE_NAME="koborin-ai-web-prod"
-          elif [[ -n "${{ inputs.environment }}" ]]; then
-            TARGET_ENV="${{ inputs.environment }}"
-            if [[ "${TARGET_ENV}" == "prod" ]]; then
-              SERVICE_NAME="koborin-ai-web-prod"
-            fi
-          fi
-          echo "TARGET_ENV=${TARGET_ENV}" >> "$GITHUB_ENV"
-          echo "SERVICE_NAME=${SERVICE_NAME}" >> "$GITHUB_ENV"
 
       - name: Create .env file
         run: |
-          # Start with empty .env
           : > ./app/.env
-          
-          # Add GA4 for prod only
-          if [[ "${{ env.TARGET_ENV }}" == "prod" ]]; then
+          if [[ -n "${{ env.GA_MEASUREMENT_ID }}" ]]; then
             echo "PUBLIC_GA_MEASUREMENT_ID=${{ env.GA_MEASUREMENT_ID }}" >> ./app/.env
           fi
-          
-          # Add Giscus config (both dev and prod)
-          # Note: REPO and CATEGORY are hardcoded in Giscus.astro (public info)
           if [[ -n "${{ env.GISCUS_REPO_ID }}" ]]; then
             echo "PUBLIC_GISCUS_REPO_ID=${{ env.GISCUS_REPO_ID }}" >> ./app/.env
             echo "PUBLIC_GISCUS_CATEGORY_ID=${{ env.GISCUS_CATEGORY_ID }}" >> ./app/.env
           fi
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ env.SERVICE_ACCOUNT }}
-          create_credentials_file: true
-          export_environment_variables: true
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
 
-      - name: Setup Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v3
-        with:
-          version: latest
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
 
-      - name: Configure gcloud defaults
+      - name: Install Playwright Chromium
+        working-directory: app
+        run: npx playwright install chromium
+
+      - name: Install image optimization tools
         run: |
-          gcloud config set project "${{ env.PROJECT_ID }}"
-          gcloud config set run/region "${{ env.REGION }}"
+          sudo apt-get update
+          sudo apt-get install -y webp imagemagick
 
-      - name: Build and push Docker image
-        id: build-image
-        run: |
-          IMAGE_TAG="${GITHUB_SHA}-${GITHUB_RUN_ID}-${TARGET_ENV}"
-          IMAGE_URI="asia-northeast1-docker.pkg.dev/${{ env.PROJECT_ID }}/koborin-ai-web/app:${IMAGE_TAG}"
+      - name: Optimize OG images
+        working-directory: app
+        run: ./scripts/optimize-og-images.sh
 
-          # Submit entire project (including .git) so Starlight can access Git history
-          # for the lastUpdated feature. The Dockerfile handles building from app/ subdirectory.
-          BUILD_ID=$(gcloud builds submit "." \
-            --config="./app/cloudbuild.yaml" \
-            --substitutions="_IMAGE_URI=${IMAGE_URI}" \
-            --project="${{ env.PROJECT_ID }}" \
-            --region="${{ env.REGION }}" \
-            --async \
-            --format="value(name)")
+      - name: Build
+        working-directory: app
+        run: npm run build
 
-          echo "Build started with ID: ${BUILD_ID}"
-
-          while true; do
-            STATUS=$(gcloud builds describe "${BUILD_ID}" \
-              --project="${{ env.PROJECT_ID }}" \
-              --region="${{ env.REGION }}" \
-              --format="value(status)")
-
-            if [[ "${STATUS}" == "SUCCESS" ]]; then
-              echo "Build completed successfully"
-              break
-            elif [[ "${STATUS}" == "FAILURE" || "${STATUS}" == "INTERNAL_ERROR" || "${STATUS}" == "TIMEOUT" || "${STATUS}" == "CANCELLED" ]]; then
-              echo "Build failed with status: ${STATUS}"
-              exit 1
-            fi
-
-            sleep 5
-          done
-
-          echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_ENV"
-
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: "3.8"
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: "1.11.4"
-
-      - name: Synth Terraform config
-        working-directory: infra
-        env:
-          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
-          GCP_PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
-          TERRAFORM_BACKEND: gcs
-          TERRAFORM_STATE_BUCKET: ${{ env.BUCKET_NAME }}
-          TF_VAR_image_uri: ${{ env.IMAGE_URI }}
-        run: |
-          set -euo pipefail
-          dart pub get
-          dart analyze
-          dart run bin/synth.dart "${TARGET_ENV}"
-
-      - name: Terraform Init
-        working-directory: infra/tf-out/${{ env.TARGET_ENV }}
-        run: terraform init -input=false
-
-      - name: Terraform Plan
-        working-directory: infra/tf-out/${{ env.TARGET_ENV }}
-        env:
-          TF_VAR_image_uri: ${{ env.IMAGE_URI }}
-        run: terraform plan -no-color -input=false
-
-      - name: Terraform Apply
-        working-directory: infra/tf-out/${{ env.TARGET_ENV }}
-        env:
-          TF_VAR_image_uri: ${{ env.IMAGE_URI }}
-        run: terraform apply -auto-approve -input=false
-
-      - name: Retrieve deployed service URL
-        id: service-url
-        run: |
-          URL=$(gcloud run services describe ${SERVICE_NAME} \
-            --region=${REGION} \
-            --project=${PROJECT_ID} \
-            --format='value(status.url)')
-          echo "SERVICE_URL=${URL}" >> "$GITHUB_OUTPUT"
-          echo "Deployed to: ${URL}"
-
-      - name: Deployment summary
-        run: |
-          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: ${TARGET_ENV}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Region**: ${REGION}" >> $GITHUB_STEP_SUMMARY
+      - name: Deploy Worker
+        working-directory: app
+        run: npm run deploy

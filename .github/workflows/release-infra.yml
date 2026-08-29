@@ -5,9 +5,9 @@ on:
     branches:
       - main
     paths:
+      # Toolchain files are deliberately absent: a shellcheck bump should not
+      # apply production infrastructure. plan-infra covers them on the PR.
       - "infra/**"
-      - ".tool-versions"
-      - "mise.toml"
     tags:
       - "infra-v*"
   workflow_dispatch:

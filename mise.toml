@@ -25,3 +25,10 @@ run = [
   "shellcheck .github/scripts/*.sh app/scripts/*.sh",
   "./.github/scripts/test-compute-pr-labels.sh",
 ]
+
+# Not in .tool-versions: mise's npm backend refuses markdownlint-cli2 because a
+# transitive dependency lost its publish provenance, and waiving that check for
+# a docs linter is a bad trade. The version is pinned here instead.
+[tasks."check:docs"]
+description = "Markdown docs: markdownlint over every tracked .md"
+run = 'npx --yes markdownlint-cli2@0.23.2 "**/*.md" "!**/node_modules/**"'

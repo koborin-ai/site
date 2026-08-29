@@ -11,12 +11,14 @@ on:
       - ".github/scripts/**"
       - ".github/actionlint.yaml"
       - "app/scripts/**"
+      - "**/*.md"
+      - ".markdownlint.yaml"
       - ".tool-versions"
       - "mise.toml"
 
 jobs:
   automation:
-    name: Workflow and script checks
+    name: Workflow, script and doc checks
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 10
 
@@ -29,3 +31,6 @@ jobs:
 
       - name: Lint workflows and scripts
         run: mise run check:automation
+
+      - name: Lint Markdown docs
+        run: mise run check:docs

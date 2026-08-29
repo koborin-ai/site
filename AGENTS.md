@@ -185,7 +185,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
    - Customize appearance via CSS variables or override components as needed.
    - Social links and sidebar are configured in `astro.config.mjs`.
-9. **Testing**: run `mise run check` from the repository root before committing. It covers the app (`npm run check`: oxlint, `astro check`, Vitest, image usage), the infra (`dart analyze`, `dart test`), and the automation (actionlint, shellcheck, PR label tests). Run `npm run build` in `app/` as well whenever content or configuration changes.
+9. **Testing**: run `mise run check` from the repository root before committing. It covers the app (`npm run check`: oxlint, `astro check`, Vitest, image usage), the infra (`dart analyze`, `dart test`), the automation (actionlint, shellcheck, PR label tests), and the docs (markdownlint). Run `npm run build` in `app/` as well whenever content or configuration changes.
 10. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 11. **Workers deployment**:
     - The app builds as a static site (`output: "static"` in Astro config). Wrangler uploads `app/dist` as Worker static assets.
@@ -321,7 +321,7 @@ Examples:
   - `plan-infra.yml`: `mise run check:infra` + `terraform plan` for the `site` stack (no apply).
   - `release-infra.yml`: `mise run check:infra` then authenticated `terraform apply` for the `site` stack (manual dispatch, `main` infra push, or `infra-v*` tag).
   - `app-ci.yml`: `npm run check` plus `npm audit` and the production build, on PRs touching `app/`.
-  - `automation-ci.yml`: `mise run check:automation` on PRs touching `.github/workflows/`, `.github/scripts/`, `app/scripts/`, `.tool-versions`, or `mise.toml`.
+  - `automation-ci.yml`: `mise run check:automation` and `mise run check:docs` on PRs touching `.github/workflows/`, `.github/scripts/`, `app/scripts/`, any `.md`, `.markdownlint.yaml`, `.tool-versions`, or `mise.toml`.
   - `app-release.yml`: builds the static site and runs `wrangler deploy` for Worker `koborin-ai-web`.
 - Toolchain: every workflow takes its versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump versions in `.tool-versions`, never in a workflow.
 - Cloudflare auth:
@@ -383,9 +383,7 @@ Examples:
    - **Full Name requirements**:
      - Use the official name from the primary source (vendor documentation).
      - Make the full name a hyperlink to the official documentation page.
-   - **MCP tools for terminology lookup**:
-     - Google Cloud terms: Use `google-cloud-mcp` (`search_documentation` → `read_documentation`).
-     - Other libraries/frameworks: Use `context7` MCP (`resolve-library-id` → `query-docs`).
+   - **Where to look terms up**: Cloudflare terms come from `developers.cloudflare.com`. For libraries and frameworks, use whatever documentation MCP your client has configured; the repository does not ship one.
    - **Example**:
 
      ```markdown
@@ -449,6 +447,7 @@ npm run build         # Astro build; needs Playwright Chromium
 
 ```bash
 mise run check:automation  # actionlint, shellcheck, PR label tests
+mise run check:docs        # markdownlint over every tracked .md
 ```
 
 ## Pull Request Checklist
@@ -459,7 +458,7 @@ mise run check:automation  # actionlint, shellcheck, PR label tests
 2. `mise run check` from the repository root - must pass.
 3. For app changes, also run `npm run build` in `app/` - must pass.
    - If the change touches a page with `draft: true`, these commands skip it. Also open the page in `npm run dev` and confirm it renders.
-4. Ensure all Markdown files pass linting (no MD0xx errors).
+4. Markdown lint is part of `mise run check` (`check:docs`); no separate step.
 5. Mention any manual Cloudflare or DNS steps (e.g., unmanaged MX/TXT) in the PR description.
 6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
    - **Domain labels** (one or more):

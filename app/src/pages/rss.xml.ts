@@ -20,7 +20,7 @@ export async function GET(context: APIContext) {
   });
 
   // Sort by publishedAt date (newest first)
-  const sortedArticles = articles.sort((a, b) => {
+  const sortedArticles = articles.toSorted((a, b) => {
     const dateA = a.data.publishedAt?.getTime() ?? 0;
     const dateB = b.data.publishedAt?.getTime() ?? 0;
     return dateB - dateA;

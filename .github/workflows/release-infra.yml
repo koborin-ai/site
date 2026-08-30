@@ -39,13 +39,7 @@ jobs:
 
       - name: Synth Terraform config
         working-directory: infra
-        env:
-          TERRAFORM_STATE_BUCKET: koborin-ai-tfstate
-          SITE_APEX_CONTENT: ${{ vars.SITE_APEX_CONTENT }}
-          SITE_APEX_TTL: ${{ vars.SITE_APEX_TTL }}
-          SITE_APEX_PROXIED: ${{ vars.SITE_APEX_PROXIED }}
-          SITE_ATTACH_CUSTOM_DOMAIN: ${{ vars.SITE_ATTACH_CUSTOM_DOMAIN }}
-        run: dart run bin/synth.dart site
+        run: dart run bin/synth.dart
 
       - name: Terraform Init
         working-directory: infra/tf-out/site

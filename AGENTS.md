@@ -23,6 +23,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `mise.toml` | The `check` task tree that fans out to app, infra, and automation. |
 | `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
 | `app/.oxlintrc.json` | oxlint rules; covers `.ts` and the client `<script>` blocks in `.astro`. |
+| `app/.textlintrc.json` | textlint AI-writing preset for article prose; advisory, not a gate. |
 | `app/vitest.config.ts` | Vitest wired through Astro's `getViteConfig`. |
 | `app/wrangler.jsonc` | Worker name `koborin-ai-web`, `assets.directory` `./dist`, and `not_found_handling` `404-page`. |
 | `app/public/_headers` | Worker static-asset header rules (UTF-8 on `*.txt`). |
@@ -91,6 +92,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Starlight automatically generates navigation from the directory structure and sidebar config in `astro.config.mjs`.
    - **Drafts are not covered by `npm run build`**: draft pages are excluded from production builds, so a broken draft (missing image import, bad MDX) passes CI and only fails once rendered. Open every draft you touched in `npm run dev` before considering it done, and re-run `npm run build` after removing `draft: true` so the page enters the build for the first time under your own eyes.
    - `starlight-auto-drafts` keeps draft slugs in `app/src/sidebar.ts` from breaking production builds. Sidebar entries for drafts show a DRAFT badge in dev and disappear in production.
+   - **Prose review while drafting**: `npx textlint <file>` in `app/` reads the article back for AI-writing tells (English-calque `〜：` lead-ins, absolute claims, mechanical emphasis). It only reacts to Japanese; all 18 English articles report zero. Treat every hit as a suggestion to read again, not a rule.
 2. **Adding new content**:
    - Create `.mdx` file under `app/src/content/docs/` (or subdirectory for categories like `blog/`, `guides/`).
    - Add frontmatter: `title` (required), `description` (required), `publishedAt` (required for articles, `YYYY-MM-DD`), `draft` (optional, boolean).
@@ -439,9 +441,21 @@ npm run test          # Vitest unit tests
 npm run check-images  # Image usage validation
 npm run check         # All four of the above
 npm run build         # Astro build; needs Playwright Chromium
+npm run lint:prose    # textlint over the articles; advisory, see below
 ```
 
 `npm run build` is not part of `check` because it takes 40 seconds and needs Chromium. Run it whenever content, assets, or configuration change.
+
+`npm run lint:prose` is not part of `check` either, for a different reason. Measured against the current 32 articles, the `@textlint-ja` AI-writing preset disagrees with the house style rather than finding defects:
+
+| Rule | Hits | Verdict |
+| --- | --- | --- |
+| `no-ai-list-formatting` | 209 | Disabled. 191 are `- **Term**: description`, the convention this very file is written in. |
+| `no-ai-colon-continuation` | 33 | Kept. Flags `〜は以下の通りです：`, which is ordinary Japanese; read the suggestion, then decide. |
+| `ai-tech-writing-guideline` | 12 | Kept. Advisory; per-rule `severity` is ignored inside a preset, so it cannot be downgraded. |
+| `no-ai-hype-expressions` | 4 | Kept, but all four current hits are false positives on essay prose. |
+
+Gating on 49 stylistic disagreements would force a rewrite of the author's Japanese voice, so this stays a drafting aid. If you decide you agree with a rule, promoting it is a config change plus adding the script to `check`.
 
 ### Automation (`.github/`)
 

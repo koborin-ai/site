@@ -263,7 +263,7 @@ mise run check
 ## Infrastructure Dev Notes
 
 - TerraDart stacks are located in `infra/lib/`.
-- Synth emits Terraform JSON via `dart run bin/synth.dart site`.
+- Synth emits Terraform JSON via `dart run bin/synth.dart`.
 - State is in R2: `koborin-ai-tfstate` / `terraform/site/terraform.tfstate`.
 - Never run `terraform apply` locally. Apply goes through GitHub Actions.
 

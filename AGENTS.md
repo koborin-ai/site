@@ -51,7 +51,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 1. **Plan/Apply**: never run `terraform apply` locally. All infra changes go through GitHub Actions with a scoped Cloudflare API token. Local `terraform plan` after import is OK for verification.
 2. **State backend**: Cloudflare R2 bucket `koborin-ai-tfstate`. Key: `terraform/site/terraform.tfstate`.
-3. **Stacks**: One Terraform root module (`site`) is synthesized via `dart run bin/synth.dart site`.
+3. **Stacks**: One Terraform root module (`site`) is synthesized via `dart run bin/synth.dart`.
 4. **Environments**:
 
    - Production host: `koborin.ai` only. There is no `dev.koborin.ai`.
@@ -66,7 +66,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 6. **Configuration Management**:
 
-   - Synth reads `CLOUDFLARE_ACCOUNT_ID` and `SITE_ATTACH_CUSTOM_DOMAIN` from the environment.
+   - Synth reads one environment variable, `CLOUDFLARE_ACCOUNT_ID`. The
+     state bucket and key are constants in `bin/synth.dart`.
    - Cloudflare credentials stay in GitHub Secrets (`CLOUDFLARE_API_TOKEN`, `R2_*`) and are never baked into synth output.
    - Site Terraform `variable` blocks stay empty; Terraform rejects `variable: {}`.
 

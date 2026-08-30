@@ -9,8 +9,8 @@ library;
 
 import 'dart:io';
 
-import 'package:koborin_ai_infra/r2_backend.dart';
 import 'package:koborin_ai_infra/site_stack.dart';
+import 'package:terradart_core/terradart_core.dart';
 
 Future<void> main(List<String> args) async {
   final stackName = args.isNotEmpty ? args.first : 'site';
@@ -36,11 +36,11 @@ Future<void> main(List<String> args) async {
     apexContent: apexContent,
     apexTtl: _envNum('SITE_APEX_TTL', 1),
     apexProxied: Platform.environment['SITE_APEX_PROXIED'] == 'true',
-    backend: R2Backend(
+    backend: S3Backend.r2(
+      accountId: accountId,
       bucket: Platform.environment['TERRAFORM_STATE_BUCKET'] ??
           'koborin-ai-tfstate',
       key: 'terraform/site/terraform.tfstate',
-      accountId: accountId,
     ),
   );
 

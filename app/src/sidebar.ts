@@ -50,6 +50,7 @@ export const sidebar = [
     items: [
       {
         label: "The Distraction of Anxiety, the Consumption of AI",
+        translations: { ja: "不安という気晴らし、AI という消費" },
         slug: "life/anxiety-as-distraction-ai-as-consumption",
       },
       {

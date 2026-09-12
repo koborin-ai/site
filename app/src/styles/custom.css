@@ -837,26 +837,4 @@
   }
 }
 
-/* Beats action row: ghost links matching CopyLinkButton chrome */
-.sl-markdown-content a.beat-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.7rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1rem;
-  color: var(--sl-color-gray-2);
-  background: var(--sl-color-gray-6);
-  border: 1px solid var(--sl-color-gray-5);
-  border-radius: var(--radius-md, 0.5rem);
-  text-decoration: none;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
-}
-
-.sl-markdown-content a.beat-action:hover {
-  color: var(--sl-color-white);
-  background: var(--sl-color-gray-5);
-  border-color: var(--sl-color-gray-4);
-}
 

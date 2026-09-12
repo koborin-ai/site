@@ -49,6 +49,10 @@ export const sidebar = [
     label: "Life",
     items: [
       {
+        label: "The Distraction of Anxiety, the Consumption of AI",
+        slug: "life/anxiety-as-distraction-ai-as-consumption",
+      },
+      {
         label: "Keep Building Developer Platforms",
         translations: { ja: "開発者基盤をつくり続ける" },
         slug: "life/keep-building-developer-platforms",

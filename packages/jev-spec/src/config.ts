@@ -1,6 +1,7 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import { createJiti } from 'jiti';
 import type { JevSpecConfig } from './types.js';
 
 export const DEFAULT_CONFIG_FILENAMES = [
@@ -24,6 +25,23 @@ export async function findConfigFile(cwd: string = process.cwd()): Promise<strin
   return null;
 }
 
+async function importConfigModule(resolvedPath: string): Promise<unknown> {
+  if (resolvedPath.endsWith('.ts')) {
+    const jiti = createJiti(import.meta.url, {
+      interopDefault: true,
+    });
+    const imported = await jiti.import(resolvedPath);
+    if (imported && typeof imported === 'object' && 'default' in imported) {
+      return (imported as { default: unknown }).default;
+    }
+    return imported;
+  }
+
+  const fileUrl = pathToFileURL(resolvedPath).href;
+  const imported = await import(fileUrl);
+  return imported.default ?? imported;
+}
+
 export async function loadConfig(
   configPath?: string,
   cwd: string = process.cwd()
@@ -40,12 +58,9 @@ export async function loadConfig(
     );
   }
 
-  // Import dynamic config module
-  const fileUrl = pathToFileURL(resolvedPath).href;
-  const imported = await import(fileUrl);
-  const config = imported.default || imported;
+  const config = await importConfigModule(resolvedPath);
 
-  if (!config || !config.zones) {
+  if (!config || typeof config !== 'object' || !('zones' in config)) {
     throw new Error(`Invalid configuration in ${resolvedPath}: "zones" object is required.`);
   }
 

@@ -18,6 +18,8 @@ export const expect = (actual: any) => ({
   },
   toBeGreaterThan: (num: number) => assert.ok(actual > num, `Expected ${actual} > ${num}`),
   toBeGreaterThanOrEqual: (num: number) => assert.ok(actual >= num, `Expected ${actual} >= ${num}`),
+  toBeInstanceOf: (ctor: new (...args: any[]) => any) =>
+    assert.ok(actual instanceof ctor, `Expected value to be instance of ${ctor.name}`),
   toThrow: (pattern?: RegExp | string) => {
     if (pattern instanceof RegExp) {
       assert.throws(actual, pattern);

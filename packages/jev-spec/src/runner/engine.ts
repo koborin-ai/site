@@ -9,11 +9,13 @@ import type {
   ZoneCheckResult,
   AssertionEvaluation,
 } from '../types.js';
+import type { GitDiffOptions } from '../context/types.js';
 
 export interface RunOptions {
   readonly cwd?: string;
   readonly zone?: string;
   readonly evaluator?: JevEvaluator;
+  readonly gitDiff?: GitDiffOptions;
 }
 
 export async function runVerification(
@@ -24,9 +26,7 @@ export async function runVerification(
   const evaluator = options.evaluator ?? createJevEvaluator(config.client);
   const startTime = Date.now();
 
-  const zoneNames = options.zone
-    ? [options.zone]
-    : Object.keys(config.zones);
+  const zoneNames = options.zone ? [options.zone] : Object.keys(config.zones);
 
   const zoneResults: ZoneCheckResult[] = [];
 
@@ -38,26 +38,37 @@ export async function runVerification(
 
     const zoneStart = Date.now();
 
-    // 1. Load Spec
     const parsedSpec = await loadSpec(zoneConfig.specPath, cwd, zoneConfig.specFilter);
 
-    // 2. Extract Code
-    const codeContext = await extractCodeContext(zoneConfig.codePaths, cwd);
+    const codeContext = await extractCodeContext(zoneConfig.codePaths, {
+      cwd,
+      gitDiff: options.gitDiff,
+    });
 
-    // 3. Jev Parallel Evaluation
     const rubricResults = await evaluator.evaluate({
       specContext: parsedSpec.filteredText,
       codeContext: codeContext.combinedPromptContext,
       rubrics: zoneConfig.rubrics,
     });
 
-    // 4. Assertions
     const evaluations: AssertionEvaluation[] = [];
     let zonePassed = true;
 
     for (const [name, rubric] of Object.entries(zoneConfig.rubrics)) {
       const typedRubric = rubric as AnyRubric;
       const result = rubricResults[name];
+      if (!result) {
+        zonePassed = false;
+        evaluations.push({
+          rubricName: name,
+          rubric: typedRubric,
+          result: { type: 'noul', probability: 0 },
+          passed: false,
+          reason: 'Evaluator did not return a result for this rubric',
+        });
+        continue;
+      }
+
       const assertion = zoneConfig.assertions[name];
       const ev = assertRubric(name, typedRubric, result, assertion);
       if (!ev.passed) {
@@ -67,7 +78,6 @@ export async function runVerification(
     }
 
     const zoneDuration = Date.now() - zoneStart;
-    // Estimate token costs (approx 0.042 USD per 1M input tokens, ~4 chars per token)
     const totalChars = parsedSpec.filteredText.length + codeContext.combinedPromptContext.length;
     const estTokens = Math.ceil(totalChars / 4);
     const estCost = (estTokens / 1_000_000) * 0.042;

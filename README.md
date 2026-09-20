@@ -89,7 +89,7 @@ Tool versions come from `.tool-versions`. `actions/setup-node` reads it through 
 - **Infrastructure**: TerraDart (Dart) targeting Cloudflare via Terraform. State is in R2.
 - **CI/CD**: GitHub Actions with a Cloudflare API token. `plan-infra.yml` / `release-infra.yml` drive infra; `app-ci.yml` / `app-release.yml` handle the Astro app.
 - **Toolchain**: [mise](https://mise.jdx.dev/) pins Node, Dart, Terraform, actionlint, and shellcheck for both laptops and CI.
-- **Quality gates**: oxlint and `astro check` for the app, Vitest for app unit tests, `dart analyze` + `dart test` for infra, actionlint and shellcheck for the automation, markdownlint for the docs. `mise run check` runs all of it.
+- **Quality gates**: oxlint and `astro check` for the app, Vitest for app unit tests, `dart analyze` + `dart test` for infra, actionlint and shellcheck for the automation, markdownlint for the docs, and TypeScript checks + test suite for `packages/jev-spec`. `mise run check` runs all of it.
 - **LLM Context**: Machine-readable `llms.txt` files for AI assistants. Auto-generated at build time.
 
 ## LLM Context Files (llms.txt)

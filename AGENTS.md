@@ -43,6 +43,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `.github/actionlint.yaml` | Declares the Blacksmith runner labels so actionlint stays clean. |
 | `.github/scripts/` | Shell helpers (`compute-pr-labels.sh`) plus their test suite. |
 | `.github/workflows/` | CI/CD definitions. |
+| `packages/jev-spec/` | `jev-spec` OSS: semantic verification engine powered by TypeSafe AI Jev. |
 
 ## Infrastructure Rules
 

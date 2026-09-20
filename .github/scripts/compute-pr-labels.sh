@@ -12,7 +12,7 @@ PR_TITLE="${PR_TITLE:-}"
 
 is_app_path() {
   case "$1" in
-    app/* | content/*) return 0 ;;
+    app/* | content/* | packages/*) return 0 ;;
     *) return 1 ;;
   esac
 }

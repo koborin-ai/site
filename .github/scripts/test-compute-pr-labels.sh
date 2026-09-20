@@ -35,6 +35,9 @@ assert_contains "$output" "app"
 assert_not_contains "$output" "change:behavior"
 assert_not_contains "$output" "change:structure"
 
+output="$(run_labels "" packages/jev-spec/src/index.ts)"
+assert_contains "$output" "app"
+
 output="$(run_labels "" AGENTS.md README.md)"
 assert_contains "$output" "doc"
 assert_not_contains "$output" "change:structure"

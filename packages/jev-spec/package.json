@@ -1,0 +1,31 @@
+{
+  "name": "jev-spec",
+  "version": "0.1.0",
+  "description": "Specification-Driven Semantic Verification Engine for AI Code & Specs powered by TypeSafe AI Jev",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "jev-spec": "./bin/jev-spec.js"
+  },
+  "scripts": {
+    "build": "/workspace/app/node_modules/typescript/bin/tsc -p tsconfig.json",
+    "test": "node --test 'dist-test/test/**/*.test.js'",
+    "pretest": "/workspace/app/node_modules/typescript/bin/tsc -p tsconfig.json && /workspace/app/node_modules/typescript/bin/tsc -p tsconfig.test.json",
+    "check": "/workspace/app/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit && /workspace/app/node_modules/typescript/bin/tsc -p tsconfig.test.json --noEmit"
+  },
+  "keywords": [
+    "typesafe-ai",
+    "jev",
+    "sdd",
+    "specification-driven-development",
+    "semantic-verification",
+    "linter"
+  ],
+  "author": "Nozomi Koborinai",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  }
+}

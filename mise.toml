@@ -8,6 +8,11 @@
 description = "Run every quality gate in the repository"
 depends = ["check:*"]
 
+[tasks."check:jev-spec"]
+description = "jev-spec: TypeScript check and unit tests"
+dir = "packages/jev-spec"
+run = "npm test"
+
 [tasks."check:app"]
 description = "Astro app: oxlint, astro check, Vitest, image usage"
 dir = "app"

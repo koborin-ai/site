@@ -33,6 +33,8 @@ terraform.tfstate.backup
 
 # Build artifacts
 lib/
+dist/
+dist-test/
 !tools/**/lib/
 !infra/lib/
 *.js.map

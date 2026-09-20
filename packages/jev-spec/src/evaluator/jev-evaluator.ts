@@ -29,6 +29,16 @@ export interface EvaluationUsage {
   readonly outputTokens: number;
 }
 
+export class JevSpecConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'JevSpecConfigurationError';
+  }
+}
+
+const MISSING_API_KEY_MESSAGE =
+  'API key is required. Set TYPESAFE_AI_API_KEY (or TYPESAFE_API_KEY) environment variable, or configure client.apiKey in jev-spec.config.';
+
 /**
  * Resolves API key from config or environment variables.
  */
@@ -224,6 +234,7 @@ export class LiveJevEvaluator implements JevEvaluator {
 
 /**
  * Creates an appropriate evaluator based on configuration.
+ * Requires an API key unless mock mode is explicitly enabled.
  */
 export function createJevEvaluator(config?: JevClientConfig): JevEvaluator {
   if (config?.mock) {
@@ -232,7 +243,7 @@ export function createJevEvaluator(config?: JevClientConfig): JevEvaluator {
 
   const apiKey = resolveApiKey(config);
   if (!apiKey) {
-    return new MockJevEvaluator();
+    throw new JevSpecConfigurationError(MISSING_API_KEY_MESSAGE);
   }
 
   return new LiveJevEvaluator(config);

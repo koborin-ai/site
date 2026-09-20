@@ -3,6 +3,7 @@ import { expect } from './test-utils.js';
 import {
   MockJevEvaluator,
   LiveJevEvaluator,
+  JevSpecConfigurationError,
   createJevEvaluator,
   resolveApiKey,
 } from '../src/evaluator/jev-evaluator.js';
@@ -34,11 +35,22 @@ describe('Jev evaluator', () => {
     expect(resolveApiKey()).toBe('from-ai-key');
   });
 
-  it('uses mock evaluator when mock flag is set or API key is missing', () => {
+  it('uses mock evaluator only when mock flag is explicitly set', () => {
     delete process.env.TYPESAFE_AI_API_KEY;
     delete process.env.TYPESAFE_API_KEY;
     expect(createJevEvaluator({ mock: true })).toBeInstanceOf(MockJevEvaluator);
-    expect(createJevEvaluator({})).toBeInstanceOf(MockJevEvaluator);
+  });
+
+  it('throws when API key is missing and mock mode is not enabled', () => {
+    delete process.env.TYPESAFE_AI_API_KEY;
+    delete process.env.TYPESAFE_API_KEY;
+    try {
+      createJevEvaluator({});
+      throw new Error('expected createJevEvaluator to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(JevSpecConfigurationError);
+      expect((error as Error).message).toContain('API key is required');
+    }
   });
 
   it('uses live evaluator when API key is present', () => {

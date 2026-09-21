@@ -77,11 +77,17 @@ The model jev-spec asks is not a general-purpose chat LLM. It is Jev, a model fr
   description="System One models make fast, structured decisions for software. Jev is TypeSafe's flagship model and the first System One model."
 />
 
-According to the official description, a System One model understands natural language as an LLM does, but it does not generate text. It returns typed answers and probabilities. A question of the kind called Noul, one that can be answered with yes or no, comes back as the probability of yes, a number between 0 and 1. The model writes no explanation of its reasoning and no code.
+According to the official description, a System One model understands natural language as an LLM does, but it does not generate text. Rather than weaving text autoregressively token by token, it runs a single forward pass over shared context (spec and code) and directly outputs calibrated probabilities for typed decision primitives.
 
-That property suits a build gate. Ask a general-purpose LLM "does this code satisfy the requirement?" and you get prose back: you have to parse it, its shape changes from run to run, and you pay for every generated token. Jev's answer is a number from the start, so all that is left is a comparison with a threshold. It is priced on input tokens only, and output is free ([prices](https://docs.typesafe.ai/models)).
+Jev provides three core decision primitives:
 
-To be clear, I am not going to argue that "Jev is not an LLM, so the concerns of the previous article do not apply". Jev, too, is a model that reads natural language and answers with probabilities, and nothing guarantees that an answer is right. TypeSafe itself writes that calibration is measured across groups of predictions and does not guarantee that an individual answer is correct. That is why I had to measure for myself.
+- **`noul` (boolean proposition)** — answers a proposition with yes or no, returning a calibrated probability of yes as a number between 0 and 1
+- **`choice` (categorical distribution)** — evaluates a discrete categorical distribution across declared, mutually exclusive options (such as `compliant`, `vulnerable`, or `inconclusive`)
+- **`score` (ordinal rubric)** — evaluates an ordered scale (such as a 4-level maturity scale from stub to production-ready), returning an expected score
+
+That property suits a build gate. Ask a general-purpose LLM "does this code satisfy the requirement?" and you get prose back: you have to parse it, its shape changes from run to run, and you pay for every generated token. Jev's answer is a number from the start, so all that is left is a comparison with a threshold. Evaluating all primitives in a single forward pass means multiple questions run in parallel without latency spikes (around 70–400ms). It is priced on input tokens only ($0.042 per million input tokens), and output is free ([prices](https://docs.typesafe.ai/models)).
+
+To be clear, I am not going to argue that "Jev is not an LLM, so the concerns of the previous article do not apply". Jev, too, is a model that reads natural language and answers with probabilities, and nothing guarantees that an individual answer is right. TypeSafe itself writes that calibration is measured across groups of predictions and does not guarantee that an individual answer is correct. Having calibrated probabilities is what allows deterministic threshold assertions (such as `minProbability: 0.85`), but whether each specific question behaves as intended still had to be measured with my own hands.
 
 :::note
 jev-spec is an independent open-source project that I develop on my own. It is not affiliated with or endorsed by TypeSafe AI. What this article says about Jev's properties and prices is based on the official documentation as of September 2026.
@@ -93,10 +99,12 @@ It does four things:
 
 1. **Reads the spec** — extracts only the needed parts of a Markdown specification, by heading, tag or requirement ID
 2. **Reads the code** — reads the files that implement those requirements
-3. **Asks** — puts one focused question per requirement to Jev, which reads the spec and the code once and answers every question with a probability
+3. **Asks** — puts focused questions (rubrics) to Jev, which reads the spec and code in a single forward pass and returns probabilities and scores in parallel
 4. **Compares** — compares each probability with a threshold, and exits with code 1 if any assertion is violated
 
-The configuration is TypeScript. One part of a spec paired with the code that implements it is called a **target**.
+`jev-spec` v0.3.0 is authored in TypeScript (supporting TypeScript 7) and provides dual runtime support for both Node.js (22+) and Bun.
+
+In the configuration, one part of a spec paired with the code that implements it is called a **target**, defined via the `targets` DSL (updated in v0.3.0 from earlier `zones`).
 
 ```typescript
 import { defineConfig, noul } from 'jev-spec';
@@ -122,7 +130,7 @@ export default defineConfig({
 });
 ```
 
-A question is called a **rubric**, and the comparison with a threshold an **assertion**. A run prints the probability and the verdict for every requirement (the layout is what the CLI prints; the probabilities are illustrative).
+A question is called a **rubric**, and the comparison with a threshold an **assertion**. While `noul` handles binary pass/fail checks against requirements, the DSL also supports `choice` for multi-class classification and `score` for ordinal evaluations. A run prints the probability and the verdict for every requirement (the layout is what the CLI prints; the probabilities are illustrative).
 
 ```text
 $ npx jev-spec check
@@ -153,9 +161,9 @@ This is the main part. jev-spec has specifications of its own (`docs/specs/`) an
 
 ### Cost
 
-A full run on itself, 8 targets and 22 questions, took under four seconds. By the estimate that jev-spec prints in its report, one such run costs about $0.0006. One target took 0.3 to 0.9 seconds. The CLI itself starts in about 0.1 seconds on Node, so the request is where the time goes.
+A full run on itself, 8 targets and 22 questions, took under four seconds. By the estimate that jev-spec prints in its report, one such run costs about $0.0006. One target took 0.3 to 0.9 seconds. The CLI itself starts in about 0.1 seconds on Node (and even faster on Bun), so the network request is where almost all the time goes.
 
-What worried me in the previous article was that tokens grow with the documents. jev-spec sends one request per target, and what it sends is the excerpt of the spec for that target and one to three files. It never sends the whole repository. Running it on every commit did not add up to an amount I would notice.
+What worried me in the previous article was that tokens grow with the documents. jev-spec sends one request per target, consisting of the spec excerpt and one to three code files. Jev evaluates all rubrics in that target within a single forward pass. It never loads the entire repository into context, and it does not make repetitive round-trips per question. Running it on every commit did not add up to an amount I would notice.
 
 ### Reproducibility
 

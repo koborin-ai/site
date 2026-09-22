@@ -77,7 +77,7 @@ The model jev-spec asks is not a general-purpose chat LLM. It is Jev, a model fr
   description="System One models make fast, structured decisions for software. Jev is TypeSafe's flagship model and the first System One model."
 />
 
-According to the official description, a System One model understands natural language as an LLM does, but it does not generate text. Rather than weaving text autoregressively token by token, it runs a single forward pass over shared context (spec and code) and directly outputs calibrated probabilities for typed decision primitives.
+According to the official description, a System One model understands natural language as an LLM does, but it does not generate text. Rather than generating text token by token (without autoregressive text decoding), it evaluates the shared context (spec and code) directly in a single pass and outputs calibrated probabilities for typed decision primitives.
 
 Jev provides three core decision primitives:
 
@@ -85,7 +85,7 @@ Jev provides three core decision primitives:
 - **`choice` (categorical distribution)** — evaluates a discrete categorical distribution across declared, mutually exclusive options (such as `compliant`, `vulnerable`, or `inconclusive`)
 - **`score` (ordinal rubric)** — evaluates an ordered scale (such as a 4-level maturity scale from stub to production-ready), returning an expected score
 
-That property suits a build gate. Ask a general-purpose LLM "does this code satisfy the requirement?" and you get prose back: you have to parse it, its shape changes from run to run, and you pay for every generated token. Jev's answer is a number from the start, so all that is left is a comparison with a threshold. Evaluating all primitives in a single forward pass means multiple questions run in parallel without latency spikes (around 70–400ms). It is priced on input tokens only ($0.042 per million input tokens), and output is free ([prices](https://docs.typesafe.ai/models)).
+That property suits a build gate. Ask a general-purpose LLM "does this code satisfy the requirement?" and you get prose back: you have to parse it, its shape changes from run to run, and you pay for every generated token. Jev's answer is a number from the start, so all that is left is a comparison with a threshold. Because Jev evaluates the spec and code directly in a single evaluation rather than generating text token by token, multiple questions run in parallel without latency spikes—responding in tenths of a second (around 70–400ms). With no output tokens to generate, it costs virtually nothing ($0.042 per million input tokens, with free output; [prices](https://docs.typesafe.ai/models)).
 
 To be clear, I am not going to argue that "Jev is not an LLM, so the concerns of the previous article do not apply". Jev, too, is a model that reads natural language and answers with probabilities, and nothing guarantees that an individual answer is right. TypeSafe itself writes that calibration is measured across groups of predictions and does not guarantee that an individual answer is correct. Having calibrated probabilities is what allows deterministic threshold assertions (such as `minProbability: 0.85`), but whether each specific question behaves as intended still had to be measured with my own hands.
 
@@ -99,12 +99,12 @@ It does four things:
 
 1. **Reads the spec** — extracts only the needed parts of a Markdown specification, by heading, tag or requirement ID
 2. **Reads the code** — reads the files that implement those requirements
-3. **Asks** — puts focused questions (rubrics) to Jev, which reads the spec and code in a single forward pass and returns probabilities and scores in parallel
+3. **Asks** — puts focused questions (rubrics) to Jev, which evaluates the spec and code directly in a single pass and returns probabilities and scores in parallel
 4. **Compares** — compares each probability with a threshold, and exits with code 1 if any assertion is violated
 
-`jev-spec` v0.3.0 is authored in TypeScript (supporting TypeScript 7) and provides dual runtime support for both Node.js (22+) and Bun.
+jev-spec is configured in TypeScript (supporting TypeScript 7) and provides dual runtime support for both Node.js (22+) and Bun.
 
-In the configuration, one part of a spec paired with the code that implements it is called a **target**, defined via the `targets` DSL (updated in v0.3.0 from earlier `zones`).
+In the configuration, one part of a spec paired with the code that implements it is called a **target**, defined via the `targets` DSL.
 
 ```typescript
 import { defineConfig, noul } from 'jev-spec';
@@ -161,9 +161,9 @@ This is the main part. jev-spec has specifications of its own (`docs/specs/`) an
 
 ### Cost
 
-A full run on itself, 8 targets and 22 questions, took under four seconds. By the estimate that jev-spec prints in its report, one such run costs about $0.0006. One target took 0.3 to 0.9 seconds. The CLI itself starts in about 0.1 seconds on Node (and even faster on Bun), so the network request is where almost all the time goes.
+Running checks across every target in the entire repository (rather than scoping to staged diffs) took under four seconds on jev-spec itself, covering 8 targets and 22 questions. By the estimate that jev-spec prints in its report, one such run costs about $0.0006. One target took 0.3 to 0.9 seconds. The CLI itself starts in about 0.1 seconds on Node (and even faster on Bun), so the network request is where almost all the time goes.
 
-What worried me in the previous article was that tokens grow with the documents. jev-spec sends one request per target, consisting of the spec excerpt and one to three code files. Jev evaluates all rubrics in that target within a single forward pass. It never loads the entire repository into context, and it does not make repetitive round-trips per question. Running it on every commit did not add up to an amount I would notice.
+What worried me in the previous article was that tokens grow with the documents. jev-spec sends one request per target, consisting of the spec excerpt and one to three code files. Jev evaluates all rubrics in that target in a single pass. It never loads the entire repository into context, and it does not make repetitive round-trips per question. Running it on every commit did not add up to an amount I would notice.
 
 ### Reproducibility
 
@@ -173,7 +173,7 @@ Answers in the middle were unstable, though. One question about broken code rang
 
 Two decisions came out of this. First, put the threshold nearer to the side where the answers are stable, the correct code: a question that expects yes passes at 0.85 or more, one that expects no at 0.3 or less. Second, a question that cannot clearly separate intact code from broken code does not go into the gate.
 
-One more thing helps reproducibility: pinning the model version. Without it, requests go to the alias `jev-latest`, which moves every time a new model ships, so a result can change with no change in the repository. Since 0.3.0, `client.model` takes a versioned ID, and every report prints the model that actually answered.
+One more thing helps reproducibility: pinning the model version. Without it, requests go to the alias `jev-latest`, which moves every time a new model ships, so a result can change with no change in the repository. For this reason, `client.model` accepts a versioned ID, and every report prints the model that actually answered.
 
 It will never be "same input, same output" the way static analysis is. But when only questions whose answers about correct code sit well away from the threshold go into the gate, correct code does not fail for no reason. Answers about broken code move more, so I cannot claim that nothing slips through. That leads to the third concern.
 
@@ -207,7 +207,7 @@ For the record, 22 of 22 is not a benchmark of the model's accuracy. It is what 
 
 ## What the First Runs Against the Real API Taught Me
 
-The development of 0.3.0 was the first time I checked jev-spec systematically against the real API, using its own specifications. The first result was a disappointment.
+When I first checked jev-spec systematically against the real API using its own specifications, the result was a disappointment.
 
 At that point a question restated its requirement:
 
@@ -262,7 +262,7 @@ In the first run against the real API, the question about whether every caught e
 
 `--staged` originally sent the model only the lines around a change. On a commit that changed a single comment line, four questions about exit codes all failed, at 0.49 to 0.64. With the whole files they pass at 0.92 to 0.97. The code the questions ask about simply was not in the fragment that was sent.
 
-The pre-commit hook that the README recommended was unusable in that form. 0.3.0 changes the design: the diff only chooses which targets to check, and each chosen target is sent in full.
+The pre-commit hook that the README recommended was unusable in that form. So the design was adjusted: the diff is used only to choose which targets to check, and each chosen target is sent in full.
 
 All three passed the tests. They only showed up when a sentence in the spec was held against the code.
 
@@ -274,7 +274,7 @@ A few things to know before you use it.
 - **English works best** — per TypeSafe's documentation, English is Jev's primary training language, and [other languages, CJK scripts included, are handled but not equally well](https://docs.typesafe.ai/models#language-support). I write my specs in English. With specs in another language, tune the thresholds on your own documents before you gate on them
 - **Claims inside the code can move the answer** — content that argues for its own classification, such as a comment saying "this function satisfies the requirement", can move the answer; TypeSafe lists this among the [known limitations](https://docs.typesafe.ai/model-jaggedness/jev-1.13#adversarial-content). In my experiments, a stale explanatory comment once kept a probe from being caught and once did not
 - **Counting, comparing dates and multi-step reasoning are weak spots** — write requirements and questions that avoid them
-- **A commit that changes only a spec selects nothing in a diff run** — only code changes choose targets, so keep a full run in CI
+- **A commit that changes only a spec selects nothing in a diff run** — only code changes choose targets, so keep running checks across all targets (a full repository check) in CI
 
 ## Closing
 

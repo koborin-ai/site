@@ -1,0 +1,248 @@
+---
+title: "AI が速くコードを書く時代に、仕様書との乖離を止めるために jev-spec という OSS を作っている話"
+description: "AI による高速なコード生成が進む中で深刻化する仕様書とコードの乖離。従来の LLM の限界、TypeSafe AI の決定モデル Jev の可能性、そして毎コミットで乖離を検出する OSS「jev-spec」の仕組みと実測結果。"
+ogImage: /og/jev-spec-introduction.png
+publishedAt: 2026-09-22
+---
+
+import RichLinkCard from '../../../../components/RichLinkCard.astro';
+import SiteImage from '../../../../components/SiteImage.astro';
+import jevSpecIntroductionOg from '../../../../assets/og/jev-spec-introduction.png';
+
+<SiteImage src={jevSpecIntroductionOg} alt="jev-spec: Catch spec drift on every commit." variant="articleHeader" style="width: 100%; height: auto;" />
+
+## AI がコードを速く書く現場で起きていること
+
+半年ほど前に、Markdown ドキュメント間の整合性を静的解析する contextlint というリンターの [記事](/ja/tech/contextlint-introduction/) を書きました。仕様駆動開発（SDD）の現場では、要件や設計、受け入れ基準を Markdown に書き起こし、それを Cursor や Claude Code などの AI コーディングエージェントへの入力として渡す開発スタイルが定着しつつあります。
+
+AI は驚くべき速度でコードを書き進めてくれます。しかしコードの生成速度が上がるほど、開発者が元の仕様書を読み返す機会は相対的に減っていきます。日々のレビューでは目先のコード差分や動作確認に意識が向きがちで、仕様書の一文一文と実装されたコードの振る舞いが一致しているかまでを常に確認し続けるのは困難です。その結果、仕様書とコードのあいだに誰も気づかないまま乖離が蓄積していきます。
+
+仕様書の中に `REQ-AUTH-02`（認証に関する要件 ID）のような記述が存在し、書式が正しく、ドキュメント間で正しく参照されている。ここまでは静的解析で確認できます。しかし「`src/auth/session.ts` は今も `REQ-AUTH-02` のとおりに動くのか」は、文書の構文解析だけでは分かりません。
+
+この問題に対処するため、現場では Cursor のスラッシュコマンドや Claude Code の Agent Skill を作成し、定期的にコードベースを巡回して仕様書との乖離を検知しようとする工夫も見られます。「このコードが仕様書の要件を満たしているか照合してほしい」とエージェントに依頼するアプローチです。
+
+しかし、このアプローチを毎回のコミットで回すことには無理があります。巨大なコードと仕様書をプロンプトに詰め込んで汎用の LLM エージェントを走らせると、1 回の実行に数分単位の時間がかかり、トークン消費による費用もかさみます。あまりに遅く、あまりに高価であるため、毎回の `git commit` を遮る pre-commit フックに組み込むことはできません。結果として乖離の検知は「気が向いたときに走らせる重い調査」にとどまり、日々の開発の裏側で乖離が進行していくことになります。
+
+「毎回のコミットで、コンマ数秒のうちに仕様書とコードの乖離を止められないか」。この課題意識から開発を始めたのが、今回紹介する OSS `jev-spec` です。
+
+<RichLinkCard
+  href="https://github.com/nozomi-koborinai/jev-spec"
+  title="jev-spec"
+  description="Catch spec drift on every commit: check your code against your Markdown specs with TypeSafe AI's Jev model."
+/>
+
+## 従来の LLM の限界と、Jev というアプローチ
+
+コミットのたびに仕様書とコードを突き合わせるゲートを作ろうとしたとき、従来の LLM には構造的な壁が存在していました。
+
+汎用の LLM は、トークンを 1 つずつ順番に生成していく自己回帰的なデコーディングを行います。JSON モードや Structured Outputs を使って出力スキーマを厳格に指定したとしても、モデルが内部で文字列をトークン単位で逐次デコードしている点に変わりはありません。この逐次デコーディングこそが、数秒から数十秒におよぶ待ち時間と、生成トークンごとの課金を生む根本的な原因です。ローカルの pre-commit で開発者の作業リズムを崩さないためには、検証は 1 秒未満で終わる必要があります。待ち時間が長く、実行のたびに課金が発生する仕組みを、毎回のコミットに挟むことはできません。
+
+この制約に対して新しい切り口を提示したのが、TypeSafe AI が開発した Jev というモデルです。TypeSafe はこれを「System One モデル」と呼んでいます。
+
+<RichLinkCard
+  href="https://docs.typesafe.ai/concepts/system-one"
+  title="System One - TypeSafe"
+  description="System One models make fast, structured decisions for software. Jev is TypeSafe's flagship model and the first System One model."
+/>
+
+Jev の仕組みを正確に説明すると、自由形式の文章を自己回帰的に逐次生成するデコーディングを行いません。その代わりに、与えられたコンテキストや状態（テキスト、データ、アプリケーションの状態など）を一度の評価で直接推論し、型付けされた決定プリミティブ（確からしさを表す確率やスコア）を出力します。jev-spec はこの能力を活かし、仕様書とコードをコンテキストとして Jev に渡し、要件ごとの Rubric に対する確率を得ます。
+
+文章の逐次生成を行わないため、出力トークンの待ち時間がなく、出力トークンに対する課金もありません。入力トークン費用も 100 万トークンあたり $0.042 と極めて低価格に抑えられており、応答時間はわずか 70〜400ms 程度で完了します。
+
+Jev には 3 つの決定プリミティブが備わっています。
+
+- **`noul`（真偽判定）** — Yes か No で答えられる命題に対し、真である確率を 0 から 1 の数値で返す
+- **`choice`（カテゴリ分類）** — 宣言された排他的な選択肢（たとえば `compliant`、`vulnerable`、`inconclusive` など）に対する離散確率分布を返す
+- **`score`（順序評価）** — 未実装から本番水準までといった段階的な評価尺度に対して、期待スコアと各段階の確率を返す
+
+ここでいう確率には、統計用語でいう「較正（calibration：キャリブレーション）」が施されています。少し馴染みがない言葉かもしれませんが、要するに「モデルが 80% の確率と言ったときは、本当に約 80% の割合で正解になるよう、数値の目盛りが調整されている」という意味です（天気予報で『降水確率 80%』と言われた日が 100 日あったら、そのうち約 80 日は実際に雨が降る、という感覚です）。
+
+Jev の答えは最初から信頼できる数値として得られるため、自然言語のパース処理を挟む必要がありません。得られた確率をしきい値（たとえば `minProbability: 0.85`）と比較するだけで、確定的な合否判定を下せます。
+
+:::note
+jev-spec は個人で開発している独立したオープンソースのプロジェクトです。TypeSafe AI とは提携しておらず、公認も受けていません。Jev の性質や価格についての記述は、2026 年 9 月時点の公式ドキュメントに基づいています。
+:::
+
+## 広がる可能性と、jev-spec の着想
+
+ここで触れておきたいのは、Jev は仕様書の検証のためだけに作られたモデルではないという点です。
+
+[X（旧 Twitter）](https://x.com) のコミュニティを見渡すと、開発者たちはこの超高速かつ安価な決定プリミティブを活用し、これまでのソフトウェア開発では難しかった新しい体験を試行錯誤しています。
+
+象徴的な例として、Marcus Lowe 氏の [スマートクリップボードのデモ](https://x.com/marcus_lowe/status/2101886533146161275) では、クリップボードにコピーされた氏名や連絡先といったテキストを瞬時に判別し、対応する入力フィールドへミリ秒単位でルーティングする UI/UX が示されています。OkinaAudio 氏の [Ableton 向けクリエイティブ・オーディオ・ワークフロー](https://x.com/okinaaudio/status/2101156959546450049) では、高速なオーディオと UI の相互作用が実演されています。
+
+自由形式のテキスト生成とは異なり、ミリ秒単位で型付けされた決定を下すという System One モデルならではの特性は、新しいソフトウェアの相互作用を可能にします。エンジニアとして、この技術の流れには素直な興奮を覚えます。
+
+そして、この Jev の特性に触れたとき、Markdown ドキュメントの静的解析ツール contextlint を作ってきた私の頭にひとつの発想が浮かびました。
+
+「この高速な決定プリミティブがあれば、毎回の git commit でコードが仕様を満たしているか判定できるのではないか」
+
+この高速な決定モデルを、仕様駆動開発の現場でも活用できないかと考えたのが jev-spec を作り始めたきっかけです。
+
+## jev-spec の仕組み
+
+jev-spec が行っている処理の流れは次の 4 つです。
+
+1. **仕様書を読む** — Markdown の仕様書から、見出しやタグ、要件 ID に基づいて必要な部分を抽出する
+2. **コードを読む** — その要件を実装しているソースコードを読み込む
+3. **Rubric を評価する** — 要件ごとに焦点を絞った問い（Rubric）を Jev に送る。Jev は仕様書とコードをコンテキストとして一度の評価で直接推論し、すべての Rubric に対して並列に確率を返す
+4. **比べる** — 返ってきた確率をしきい値（Assertion）と比較し、1 つでも違反があれば検証エラー（チェック失敗）として判定する
+
+判定の問いを **Rubric**、しきい値との比較を **Assertion** と呼びます。合否判定では真偽判定を行う `noul` が中心になりますが、DSL では選択肢を判定する `choice` や段階評価の `score` も利用できます。
+
+言語処理系には、新しい Go 製コンパイラによって高速なコンパイルと厳密な型安全性を実現した **TypeScript 7** を採用しています。さらに実行ランタイムとして、Node.js（22 以上）と Bun の双方を公式にサポートするデュアルランタイム構成をとっています。
+
+## jev-spec の基本的な使い方
+
+実際のプロジェクトで jev-spec を導入する際の流れはシンプルです。
+
+### 1. インストール
+
+パッケージマネージャーを使って開発依存（devDependencies）に追加します。
+
+```bash
+npm install -D jev-spec
+# または
+bun add -d jev-spec
+```
+
+### 2. 設定ファイルの作成（jev.config.ts）
+
+プロジェクトルートに `jev.config.ts` を作成し、仕様書とコードの対応関係を `targets` の中に記述します。
+
+```typescript
+import { defineConfig, noul } from 'jev-spec';
+
+export default defineConfig({
+  client: { model: 'jev-1.13.0' },
+  targets: {
+    auth: {
+      specPath: 'docs/specs/auth-requirements.md',
+      codePaths: ['src/auth/**/*.ts', '!src/auth/**/*.test.ts'],
+      rubrics: {
+        'REQ-AUTH-01': noul(
+          'Is the signature of a session token checked before access to a protected resource is granted?'
+        ),
+        'REQ-AUTH-02': noul('Is a token rejected when its ID is on the revocation list?'),
+      },
+      assertions: {
+        'REQ-AUTH-01': { minProbability: 0.85 },
+        'REQ-AUTH-02': { minProbability: 0.85 },
+      },
+    },
+  },
+});
+```
+
+`defineConfig` で設定する主な項目は次の通りです。
+
+- **`specPath`** — 対象となる Markdown 仕様書のファイルパス
+- **`codePaths`** — 要件を実装しているコードの glob パターン（テストファイルを除外するなどの指定が可能）
+- **`rubrics`** — `noul(...)` を使って、コードが満たすべき要件を自然言語の問いとして記述（キーには要件 ID などを指定）
+- **`assertions`** — 合格とみなす最小確率のしきい値（例: `minProbability: 0.85`）
+
+### 3. API キーの設定
+
+Jev の推論を実行するために、TypeSafe AI の API キーを環境変数に設定します。
+
+```bash
+export TYPESAFE_AI_API_KEY="your-api-key"
+```
+
+### 4. チェックの実行
+
+設定が完了したら、CLI からチェックを実行します。
+
+すべてのターゲットを網羅的に検証する場合は、引数なしで実行します。
+
+```bash
+npx jev-spec check
+# または
+bunx jev-spec check
+```
+
+Git でステージングされている変更だけを対象にして高速に検証する場合は、`--staged` フラグを付けます。差分に関連するターゲットだけが自動で選択され、それ以外は `SKIPPED` となります。
+
+```bash
+npx jev-spec check --staged
+```
+
+実行結果はターミナルに見やすく整形されて出力されます。
+
+```text
+$ npx jev-spec check
+
+=== jev-spec Check Report ===
+
+Target: auth [✖ FAILED]
+  Spec files: docs/specs/auth-requirements.md
+  Code files: src/auth/session.ts
+  Model: jev-1.13.0
+    ✔ REQ-AUTH-01: probability: 0.97
+    ✖ REQ-AUTH-02: probability: 0.08
+       └─ Violation: Probability 0.08 is below minimum threshold 0.85
+
+Overall: ✖ CHECKS FAILED
+
+$ echo $?
+1
+```
+
+要件 ID ごとに確率としきい値の比較結果が表示されるため、どの要件とコードが乖離しているのかを一目で特定できます。
+
+### 5. ワークフローへの組み込み
+
+jev-spec の真価は、開発フローの日常的なゲートとして組み込むことで発揮されます。
+
+- **pre-commit フックでの差分チェック** — husky や simple-git-hooks などを使い、コミット時に `npx jev-spec check --staged` を実行します。ミリ秒単位で変更対象のターゲットのみを判定するため、開発者の作業リズムを崩さずに仕様とのずれをコミット前に防げます
+- **CI での全体検証** — GitHub Actions などの CI パイプラインで、リポジトリ全体を対象に `npx jev-spec check` を実行します。プルリクエストの時点で仕様書とコードの整合性を確実に担保します
+
+## 実測で確かめたこと
+
+確率で答えるモデルをビルドゲートに置くにあたり、コストと再現性について、自分自身の仕様書（`docs/specs/`）を持つ jev-spec のリポジトリで実測を行いました。以下の数値はすべて 2026 年 9 月 21 日に `jev-1.13.0` に対して計測した結果です。
+
+### コストの実測
+
+リポジトリ全体を対象に 8 つのターゲット、合計 22 個の Rubric すべてをチェックした場合でも、所要時間は約 4 秒で完了しました。1 ターゲットあたりにかかる時間は 0.3〜0.9 秒程度です。CLI の起動そのものは Node.js で約 0.1 秒、Bun ではさらに高速で、所要時間の大半は API との通信時間でした。
+
+レポートに出力された見積もりコストは、1 回の実行あたり約 $0.0006 でした。リポジトリ全体をプロンプトに詰め込むのではなく、ターゲットごとに必要な仕様書の抜粋と数ファイルのコードだけを送り、Jev が一度の評価ですべての Rubric にまとめて答えるため、コミットごとに実行しても気になる金額にはなりません。
+
+### 再現性とモデル固定
+
+同じコードに対して同じ Rubric を 5 回繰り返したとき、正しいコードに対する確信度のばらつきは 0.00〜0.03 の範囲内に収まりました。0.96 が 0.95 になる程度の揺らぎであり、設定ファイルで指定した 0.85 という例示のしきい値（minProbability）を割り込むことはありませんでした。
+
+しきい値は固定値ではなく、要件の性質に応じて設定ファイルで個別に調整できます。また、`latest` などのエイリアスが指すモデルが更新されると判定結果が意図せず変動する恐れがあるため、設定の `client.model` にはバージョン付きの ID（`jev-1.13.0` など）を指定して固定することを推奨しています。モデルを明示的に固定することで、意図しない判定のずれを防ぎ、レポートにも実際に判定したモデル名が明記されます。
+
+## 静的解析と決定モデルの役割分担・おわりに
+
+jev-spec を実戦で運用するにあたっては、その限界も把握しておく必要があります。
+
+- **証明ではなくチェックであること** — 合格は確率がしきい値を超えたことを意味し、数学的な正しさの証明ではありません。そのためツール内の用語も verify ではなく check に統一しています
+- **英語での記述が推奨されていること** — Jev の公式ドキュメントでは英語での記述が推奨されており、[日本語を含む CJK 言語は英語と同等の精度ではないとされています](https://docs.typesafe.ai/models#language-support)。ただし実用上は、日本語で書かれた仕様書や Rubric でも十分に意図を理解し、実用的な精度で判定を行えます
+- **コード内の自己主張コメントに影響されうること** — 「この関数は要件を満たしている」といった自己主張的なコメントがあると、モデルの判断が引っ張られる可能性があります
+- **厳密な計算や日時の比較は不得手であること** — 数値のカウントや日時の比較、多段の論理推論を要する確認は Rubric から外し、通常のユニットテストで担保します
+
+静的解析ツール contextlint と、意味検証エンジン jev-spec の役割分担を整理すると、次のようになります。
+
+| | contextlint | jev-spec |
+| :--- | :--- | :--- |
+| 検証対象 | 文書どうしの整合性 | 仕様書とコードの一致 |
+| アプローチ | ルールベースの静的解析 | モデルによる Rubric の判定としきい値比較 |
+| 結果 | 決定的 | 確率的 |
+| AI への依存 | なし | あり（TypeSafe AI の Jev） |
+
+AI がコードを高速に書き出す時代だからこそ、コードと仕様書の乖離を放置せず、開発のリズムを損なわない速度で守り続ける仕組みが求められています。
+
+jev-spec は私の思いつきで始めたものですが、仕様書を Markdown で管理し、コードとの乖離をどう防ぐか悩んでいる方は、ぜひ試してみてください。
+
+<RichLinkCard
+  href="https://www.npmjs.com/package/jev-spec"
+  title="jev-spec - npm"
+  description="Catch spec drift on every commit: check your code against your Markdown specs with TypeSafe AI's Jev model."
+/>
+
+<RichLinkCard
+  href="/ja/tech/contextlint-introduction/"
+  title="Markdown ドキュメント間の整合性を静的解析する contextlint というリンターを作っている話"
+  description="前の記事：SDD で直面した Markdown の整合性課題を解決するルールベースリンター contextlint の紹介"
+/>

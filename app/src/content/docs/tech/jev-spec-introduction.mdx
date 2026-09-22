@@ -35,7 +35,7 @@ Yet running this approach on every commit is impractical. Stuffing substantial c
 
 When attempting to build a pre-commit gate that reconciles code against specifications, traditional LLMs face structural bottlenecks.
 
-Standard LLMs generate strings autoregressively, decoding one token at a time. Even when using JSON mode or Structured Outputs to enforce a strict schema, the model is still decoding tokens sequentially under the hood. This sequential decoding is the root cause of high latency (seconds to tens of seconds) and per-token input/output billing. To avoid breaking a developer's flow during a local pre-commit check, verification must finish in under a second. High latency and recurrent token billing make traditional LLMs ill-suited for every commit.
+General-purpose LLMs are fundamentally autoregressive: they choose the next token conditioned on tokens already produced. JSON mode and Structured Outputs still sample the output as a token sequence that fits the schema. The schema only constrains which tokens are legal next. It does not change the generation method. Longer output increases wait time and output-token cost. Wait time also includes input processing, reasoning-token generation, and the first schema compilation. Billing is not limited to output tokens. Input tokens are charged separately. To avoid breaking a developer's flow during a local pre-commit check, verification must finish in under a second. High latency and recurrent token billing make traditional LLMs ill-suited for every commit.
 
 A fresh architectural direction arrived with Jev, a model developed by TypeSafe AI. TypeSafe categorizes Jev as a "System One model."
 

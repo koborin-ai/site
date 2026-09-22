@@ -96,6 +96,13 @@ jev-spec が行っている処理の流れは次の 4 つです。
 
 実際のプロジェクトで jev-spec を導入する際の流れはシンプルです。
 
+Agent Skills 対応のクライアント（Claude Code、Cursor、Codex、Antigravity CLI、GitHub Copilot）では、`gh skill install nozomi-koborinai/jev-spec <スキル名>` で導入できます。
+
+| スキル | 役割 |
+| --- | --- |
+| `jev-spec-init` | 仕様とコードの対応付けから Rubric の作成までを行う |
+| `jev-spec-fix` | 失敗したチェックの修正を支援する |
+
 ### 1. インストール
 
 パッケージマネージャーを使って開発依存（devDependencies）に追加します。

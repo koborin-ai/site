@@ -17,7 +17,7 @@ About six months ago, I wrote [an article](/tech/contextlint-introduction/) abou
 
 AI writes code at breathtaking speed. However, as the velocity of code generation increases, the frequency with which human developers reread original specifications drops proportionally. In day-to-day code reviews, attention naturally gravitates toward immediate diffs and runtime smoke tests. Reviewing whether every sentence in the specification still holds against the generated code is rarely feasible. As a result, discrepancies between specifications and code accumulate unnoticed beneath the surface.
 
-Static analysis can confirm that a specification contains an entry such as `REQ-AUTH-02` (an authentication requirement ID), follows the expected format, and is properly referenced across documents. But whether `src/auth/session.ts` still behaves according to `REQ-AUTH-02` cannot be verified by parsing document syntax alone.
+Static analysis (contextlint and similar tools) can confirm that a specification contains an entry such as `REQ-AUTH-02` (an authentication requirement ID), follows the expected format, and is properly referenced across documents. But whether `src/auth/session.ts` still behaves according to `REQ-AUTH-02` cannot be verified by parsing document syntax alone.
 
 To counter this drift, some teams create custom slash commands or Agent Skills in Cursor or Claude Code to periodically crawl the codebase and check alignment against specifications. In practice, this means asking an agent: "Check whether this code satisfies all requirements in the spec and flag any omissions."
 
@@ -55,8 +55,6 @@ Jev provides three core decision primitives:
 - **`choice` (Categorical distribution)** — evaluates a discrete probability distribution across declared, mutually exclusive options (such as `compliant`, `vulnerable`, or `inconclusive`)
 - **`score` (Ordinal rubric)** — evaluates an ordered rubric (such as a multi-tier maturity scale from stub to production-grade), returning an expected score and level probabilities
 
-The probabilities returned here are statistically calibrated—meaning that when Jev reports an 80% probability, roughly 80% of those predictions actually turn out to be true, much like a reliable weather forecast where an "80% chance of rain" produces rain on 80 out of 100 days.
-
 Because Jev's output is numeric and grounded from the start, there is no need to parse natural language. Comparing the returned probability against a deterministic threshold (such as `minProbability: 0.85`) produces an immediate pass or fail verdict.
 
 :::note
@@ -75,7 +73,7 @@ Unlike open-ended text generation models, executing fast, inexpensive, type-safe
 
 Seeing Jev's characteristics firsthand sparked an immediate question from my background building contextlint:
 
-"If we have a decision primitive this fast and lightweight, could we verify whether code satisfies its specification on every single git commit?"
+"If we have a decision primitive this fast and lightweight, could we verify whether code satisfies the spec and the requirements that belong to it on every single git commit?"
 
 Exploring whether this fast decision model could be applied to Specification-Driven Development is what motivated me to start building jev-spec.
 
@@ -96,7 +94,11 @@ For speed and rigorous type safety, jev-spec adopts **TypeScript 7**, powered by
 
 Getting started with jev-spec in your project is straightforward.
 
-Agent Skills clients (Claude Code, Cursor, Codex, Antigravity CLI, and GitHub Copilot) can install one with `gh skill install nozomi-koborinai/jev-spec <skill-name>`.
+Agent Skills clients (Claude Code, Cursor, Codex, Antigravity CLI, and GitHub Copilot) can install a skill with the following command:
+
+```zsh
+gh skill install nozomi-koborinai/jev-spec <skill-name>
+```
 
 | Skill | Role |
 | --- | --- |

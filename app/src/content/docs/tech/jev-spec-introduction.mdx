@@ -1,6 +1,6 @@
 ---
-title: "I Wrote That LLMs Are Not Suited for Verification. Then I Built jev-spec, Which Asks a Model Whether Code Still Matches Its Spec"
-description: "An introduction to jev-spec, which catches drift between Markdown specs and code on every commit, and a record of measuring the three things that worried me about gating a build on a model that answers with probabilities: cost, reproducibility and doubt."
+title: "Stopping Spec Drift in the Era of Fast AI Coding: Building an OSS Called jev-spec"
+description: "As AI code generation accelerates, the gap between markdown specifications and code (spec drift) quietly widens. An introduction to the limits of traditional LLMs, the emerging potential of TypeSafe AI's Jev decision model, and how jev-spec catches drift on every commit."
 ogImage: /og/jev-spec-introduction.png
 publishedAt: 2026-09-22
 draft: true
@@ -12,15 +12,19 @@ import jevSpecIntroductionOg from '../../../assets/og/jev-spec-introduction.png'
 
 <SiteImage src={jevSpecIntroductionOg} alt="jev-spec: Catch spec drift on every commit." variant="articleHeader" style="width: 100%; height: auto;" />
 
-## Introduction
+## The Reality of Fast AI Coding and Spec Drift
 
-About six months ago I wrote [an article](/tech/contextlint-introduction/) about contextlint, a linter that statically analyzes the consistency of Markdown documents. In Specification-Driven Development (SDD), the Markdown that holds the requirements and the specifications is the input an AI writes code from. When those documents contradict each other, the code that comes out of them suffers. contextlint guards that part.
+About six months ago, I wrote [an article](/tech/contextlint-introduction/) about contextlint, a linter that statically analyzes the consistency of Markdown documents. In Specification-Driven Development (SDD), teams write detailed requirements, architectural decisions, and acceptance criteria in Markdown, feeding them into AI coding agents like Cursor or Claude Code.
 
-But even when the documents agree with each other, one place is still unchecked: the gap between a specification and the code that was written from it.
+AI writes code at breathtaking speed. However, as the velocity of code generation increases, the frequency with which human developers reread original specifications drops proportionally. In day-to-day code reviews, attention naturally gravitates toward immediate diffs and runtime smoke tests. Reviewing whether every sentence in the specification still holds against the generated code is rarely feasible. As a result, a quiet "spec drift" accumulates beneath the surface.
 
-That a requirement called `REQ-AUTH-02` exists, is well formed and is referenced from the right place is something static analysis can tell you. Whether `src/auth/session.ts` still does what `REQ-AUTH-02` says is not. The faster an AI writes code, the less often a person rereads the specification, and the two drift apart a little at a time without anyone noticing.
+Static analysis can confirm that a requirement named `REQ-AUTH-02` exists, follows the expected format, and is properly referenced across documents. But whether `src/auth/session.ts` still behaves according to `REQ-AUTH-02` cannot be verified by parsing document syntax alone.
 
-I want to catch that drift on every commit, so I am building a tool called jev-spec.
+To counter this drift, some teams create custom slash commands or Agent Skills in Cursor or Claude Code to periodically crawl the codebase and check alignment against specifications. In practice, this means asking an agent: "Check whether this code satisfies all requirements in the spec and flag any omissions."
+
+Yet running this approach on every commit is impractical. Stuffing substantial codebases and full specifications into prompts and running general-purpose LLM agents takes minutes per run and consumes significant token costs. It is far too slow and expensive to act as a pre-commit hook gating `git commit`. Consequently, drift detection remains an occasional, heavy audit run only when someone remembers, while spec drift continues to accumulate unnoticed during daily development.
+
+"Could we catch the drift between specifications and code in tenths of a second on every single commit?" This question led me to develop an open-source tool called `jev-spec`.
 
 <RichLinkCard
   href="https://github.com/nozomi-koborinai/jev-spec"
@@ -28,48 +32,13 @@ I want to catch that drift on every commit, so I am building a tool called jev-s
   description="Catch spec drift on every commit: check your code against your Markdown specs with TypeSafe AI's Jev model."
 />
 
-This article introduces jev-spec. Before that, there is something I have to face honestly. jev-spec puts questions to an AI model and decides pass or fail from the probabilities that come back. And in the previous article I wrote that LLMs are not suited for verification.
+## The Limits of Traditional LLMs and the Arrival of Jev
 
-## What I Wrote Before
+When attempting to build a pre-commit gate that reconciles code against specifications, traditional LLMs face structural bottlenecks.
 
-The contextlint article has a section called "Why Static Analysis, Not LLMs". It gives three reasons:
+Standard LLMs generate strings autoregressively, decoding one token at a time. Even when using JSON mode or Structured Outputs to enforce a strict schema, the model is still decoding tokens sequentially under the hood. This sequential decoding is the root cause of high latency (seconds to tens of seconds) and per-token input/output billing. To avoid breaking a developer's flow during a local pre-commit check, verification must finish in under a second. High latency and recurrent token billing make traditional LLMs ill-suited for every commit.
 
-- **Cost** — every target file has to go into the context, so checks get slower and more expensive as the documents grow
-- **Reproducibility** — LLM output is non-deterministic, and a probabilistic answer is a poor fit for a yes/no problem
-- **Doubt** — being told "it's probably fine" still leaves you needing to verify it yourself
-
-I still think all three are right. Whether a required column exists, whether an ID is duplicated, whether a linked file exists: when the condition can be decided mechanically, there is no reason to ask a model. contextlint stays a static analysis tool with no dependency on AI.
-
-## Why Ask a Model Anyway
-
-So why does jev-spec ask a model? Because it checks something static analysis cannot decide.
-
-Take a requirement such as "The signature of a session token is checked before access to a protected resource is granted." I know of no way to decide from a syntax tree or a pattern match whether code does what that sentence says. Function names, variable names and the shape of the implementation change with whoever, or whichever AI, wrote it. This is exactly what a person looks at in code review: they read for meaning and judge whether it matches.
-
-So the two tools guard different places.
-
-```mermaid
-flowchart LR
-  specs["Specs"]
-  code["Code"]
-  cl["contextlint"]
-  js["jev-spec"]
-  gate["Build gate"]
-
-  specs -->|"docs agree with docs"| cl
-  specs --> js
-  code --> js
-  cl --> gate
-  js -->|"spec and code drift"| gate
-```
-
-What can be decided mechanically goes to static analysis, and only what needs meaning to be read goes to a model. With that division, this does not contradict the previous article.
-
-But as long as a model is being asked, the three concerns from that article apply to jev-spec in full. Explaining the division of labor does not answer them, so the second half of this article checks them one by one with measurements.
-
-## Jev Is a Model That Does Not Generate Text
-
-The model jev-spec asks is not a general-purpose chat LLM. It is Jev, a model from TypeSafe AI, which TypeSafe calls a System One model.
+A fresh architectural direction arrived with Jev, a model developed by TypeSafe AI. TypeSafe categorizes Jev as a "System One model."
 
 <RichLinkCard
   href="https://docs.typesafe.ai/concepts/system-one"
@@ -77,34 +46,50 @@ The model jev-spec asks is not a general-purpose chat LLM. It is Jev, a model fr
   description="System One models make fast, structured decisions for software. Jev is TypeSafe's flagship model and the first System One model."
 />
 
-According to the official description, a System One model understands natural language as an LLM does, but it does not generate text. Rather than generating text token by token (without autoregressive text decoding), it evaluates the shared context (spec and code) directly in a single pass and outputs calibrated probabilities for typed decision primitives.
+To describe it accurately: Jev does not perform free-form autoregressive text generation or sequential token decoding. Instead, given a shared context (spec and code), it directly evaluates the inputs in a single evaluation and outputs typed decision primitives: calibrated probabilities and scores.
+
+Because it does not generate text token by token, there is no waiting on output decoding, and output tokens are free. Input token costs are negligible ($0.042 per million input tokens), and response times clock in at just 70 to 400ms.
 
 Jev provides three core decision primitives:
 
-- **`noul` (boolean proposition)** — answers a proposition with yes or no, returning a calibrated probability of yes as a number between 0 and 1
-- **`choice` (categorical distribution)** — evaluates a discrete categorical distribution across declared, mutually exclusive options (such as `compliant`, `vulnerable`, or `inconclusive`)
-- **`score` (ordinal rubric)** — evaluates an ordered scale (such as a 4-level maturity scale from stub to production-ready), returning an expected score
+- **`noul` (Boolean proposition)** — evaluates a proposition answerable with yes or no, returning a calibrated probability between 0 and 1
+- **`choice` (Categorical distribution)** — evaluates a discrete probability distribution across declared, mutually exclusive options (such as `compliant`, `vulnerable`, or `inconclusive`)
+- **`score` (Ordinal rubric)** — evaluates an ordered rubric (such as a multi-tier maturity scale from stub to production-grade), returning an expected score and level probabilities
 
-That property suits a build gate. Ask a general-purpose LLM "does this code satisfy the requirement?" and you get prose back: you have to parse it, its shape changes from run to run, and you pay for every generated token. Jev's answer is a number from the start, so all that is left is a comparison with a threshold. Because Jev evaluates the spec and code directly in a single evaluation rather than generating text token by token, multiple questions run in parallel without latency spikes—responding in tenths of a second (around 70–400ms). With no output tokens to generate, it costs virtually nothing ($0.042 per million input tokens, with free output; [prices](https://docs.typesafe.ai/models)).
-
-To be clear, I am not going to argue that "Jev is not an LLM, so the concerns of the previous article do not apply". Jev, too, is a model that reads natural language and answers with probabilities, and nothing guarantees that an individual answer is right. TypeSafe itself writes that calibration is measured across groups of predictions and does not guarantee that an individual answer is correct. Having calibrated probabilities is what allows deterministic threshold assertions (such as `minProbability: 0.85`), but whether each specific question behaves as intended still had to be measured with my own hands.
+Because Jev's output is numeric from the start, there is no need to parse natural language. Comparing the returned probability against a deterministic threshold (such as `minProbability: 0.85`) produces an immediate pass or fail verdict.
 
 :::note
-jev-spec is an independent open-source project that I develop on my own. It is not affiliated with or endorsed by TypeSafe AI. What this article says about Jev's properties and prices is based on the official documentation as of September 2026.
+jev-spec is an independent open-source project that I develop on my own. It is not affiliated with or endorsed by TypeSafe AI. Descriptions of Jev's properties and pricing reflect the official documentation as of September 2026.
 :::
+
+## Expanding Horizons: Jev's Broader Potential and the Genesis of jev-spec
+
+It is worth emphasizing that Jev was not designed exclusively for specification verification.
+
+Observing the developer community on X, engineers are leveraging this ultra-fast, low-cost decision primitive to build software interactions that were previously unviable.
+
+A prime example is Marcus Lowe's smart clipboard demo. The system instantly evaluates copied text, recognizes whether it contains contact details or personal credentials, and routes the content to corresponding form fields in milliseconds. Other developers are experimenting with high-speed game logic (such as Tetris move evaluations), block-by-block on-chain trading decisions, and rapid browser automation that assesses visual UI elements on the fly.
+
+Instead of verbose, slow prose generation, executing fast, inexpensive, type-safe decisions unlocks entirely new user interfaces and interaction paradigms. As a software engineer, watching this architectural shift unfold is genuinely exciting.
+
+Seeing Jev's capabilities firsthand sparked an immediate idea from my background building contextlint:
+
+"If we have a decision primitive this fast and cheap, could we verify whether code satisfies its specification on every single git commit?"
+
+jev-spec is one concrete application born from that insight, addressing the practical challenges of Specification-Driven Development amidst the broader wave of Jev's potential.
 
 ## How jev-spec Works
 
-It does four things:
+The operational pipeline in jev-spec consists of four steps:
 
-1. **Reads the spec** — extracts only the needed parts of a Markdown specification, by heading, tag or requirement ID
-2. **Reads the code** — reads the files that implement those requirements
-3. **Asks** — puts focused questions (rubrics) to Jev, which evaluates the spec and code directly in a single pass and returns probabilities and scores in parallel
-4. **Compares** — compares each probability with a threshold, and exits with code 1 if any assertion is violated
+1. **Read the spec** — extracts the relevant sections of a Markdown specification based on headings, tags, or requirement IDs
+2. **Read the code** — loads the source files implementing those requirements
+3. **Ask** — submits focused rubrics to Jev, which evaluates the spec and code directly in a single pass and returns probabilities in parallel
+4. **Compare** — evaluates the probabilities against defined threshold assertions, exiting with code 1 if any assertion fails
 
-jev-spec is configured in TypeScript (supporting TypeScript 7) and provides dual runtime support for both Node.js (22+) and Bun.
+jev-spec is configured in TypeScript. For speed and rigorous type safety, it adopts **TypeScript 7**, powered by the new Go compiler. Furthermore, it provides official dual runtime support for both Node.js (22+) and Bun.
 
-In the configuration, one part of a spec paired with the code that implements it is called a **target**, defined via the `targets` DSL.
+In the configuration file, pairings of specification scopes and the code implementing them are defined as **targets** via the `targets` DSL:
 
 ```typescript
 import { defineConfig, noul } from 'jev-spec';
@@ -130,7 +115,11 @@ export default defineConfig({
 });
 ```
 
-A question is called a **rubric**, and the comparison with a threshold an **assertion**. While `noul` handles binary pass/fail checks against requirements, the DSL also supports `choice` for multi-class classification and `score` for ordinal evaluations. A run prints the probability and the verdict for every requirement (the layout is what the CLI prints; the probabilities are illustrative).
+A question is called a **Rubric**, and the comparison with a threshold is an **Assertion**. While binary verification with `noul` is most common for specs, the DSL also supports `choice` and `score`.
+
+jev-spec is designed for pre-commit hooks and CI pipelines. Running `npx jev-spec check --staged` (or `bunx jev-spec check --staged`) in a pre-commit hook inspects only targets affected by staged Git diffs, completing in roughly 0.3 seconds. Unaffected targets are marked as `SKIPPED`.
+
+The CLI report output looks like this:
 
 ```text
 $ npx jev-spec check
@@ -151,46 +140,42 @@ $ echo $?
 1
 ```
 
-Name a rubric after its requirement, and a failure tells you which requirement drifted.
+Naming rubrics after requirement IDs ensures that when a check fails, the report immediately identifies which requirement drifted.
 
-jev-spec belongs in a pre-commit hook and in CI. With `--staged` or `--diff` (a diff run), only the targets that the change touches are checked, and the others are reported as `SKIPPED`. The [README](https://github.com/nozomi-koborinai/jev-spec#readme) has the details.
+## What Real-World Measurements Revealed
 
-## Checking the Three Concerns with Measurements
+Gating builds on a probabilistic model raised three natural concerns: cost, reproducibility, and doubt. To address them, I conducted empirical measurements on jev-spec's own repository, which maintains its own specs (`docs/specs/`). The numbers below were recorded on September 21, 2026 using `jev-1.13.0`.
 
-This is the main part. jev-spec has specifications of its own (`docs/specs/`) and checks its own code against them. Every number below was measured in that repository on September 21, 2026 against `jev-1.13.0`.
+### Measured Cost
 
-### Cost
+Checking all 8 targets and 22 rubrics across the entire repository completed in approximately 4 seconds. Individual targets took between 0.3 and 0.9 seconds. CLI startup alone took roughly 0.1 seconds on Node.js (and was even faster on Bun); the vast majority of runtime was spent on network requests.
 
-Running checks across every target in the entire repository (rather than scoping to staged diffs) took under four seconds on jev-spec itself, covering 8 targets and 22 questions. By the estimate that jev-spec prints in its report, one such run costs about $0.0006. One target took 0.3 to 0.9 seconds. The CLI itself starts in about 0.1 seconds on Node (and even faster on Bun), so the network request is where almost all the time goes.
+The estimated cost reported by the CLI was approximately $0.0006 per full run. Rather than stuffing the entire codebase into context, jev-spec transmits only the relevant spec excerpt and a handful of files per target. Jev evaluates all rubrics in that target in a single pass. The cost of running this on every commit is negligible.
 
-What worried me in the previous article was that tokens grow with the documents. jev-spec sends one request per target, consisting of the spec excerpt and one to three code files. Jev evaluates all rubrics in that target in a single pass. It never loads the entire repository into context, and it does not make repetitive round-trips per question. Running it on every commit did not add up to an amount I would notice.
+### Reproducibility and Model Pinning
 
-### Reproducibility
+Repeating identical rubrics over identical code five times yielded a confidence variance of 0.00 to 0.03 on clean code. A probability moving from 0.96 to 0.95 remains safely above the 0.85 threshold.
 
-Asking the same question about the same code five times, a confident answer about correct code moved by 0.00 to 0.03. That is 0.96 becoming 0.95, nowhere near crossing a threshold of 0.85.
+In contrast, probabilities on broken or intermediate code fluctuated significantly, with spreads between 0.33 and 0.72. Rubrics hovering near the threshold (e.g. flipping between 0.82 and 0.86) risk erratic pass/fail outcomes.
 
-Answers in the middle were unstable, though. One question about broken code ranged from 0.33 to 0.72, a spread of 0.4. A question that sits right next to its threshold flips between pass and fail from run to run; one moved between 0.82 and 0.86.
+This observation led to two operational guidelines. First, set assertion thresholds close to the stable region of correct code: pass thresholds for affirmative rubrics sit at 0.85 or higher, while negative rubrics require 0.3 or lower. Second, rubrics that cannot cleanly distinguish intact code from broken code are excluded from the gate.
 
-Two decisions came out of this. First, put the threshold nearer to the side where the answers are stable, the correct code: a question that expects yes passes at 0.85 or more, one that expects no at 0.3 or less. Second, a question that cannot clearly separate intact code from broken code does not go into the gate.
+To avoid unexpected shifts from upstream model changes, `client.model` supports pinning explicit versions (such as `jev-1.13.0`). The CLI report always prints the exact model version that produced the evaluation.
 
-One more thing helps reproducibility: pinning the model version. Without it, requests go to the alias `jev-latest`, which moves every time a new model ships, so a result can change with no change in the repository. For this reason, `client.model` accepts a versioned ID, and every report prints the model that actually answered.
+### Addressing Doubt with Probes
 
-It will never be "same input, same output" the way static analysis is. But when only questions whose answers about correct code sit well away from the threshold go into the gate, correct code does not fail for no reason. Answers about broken code move more, so I cannot claim that nothing slips through. That leads to the third concern.
+The concern that "a model saying 'probably fine' leaves lingering doubt" was addressed through deliberately broken code patches called "probes."
 
-### Doubt
-
-My answer to "it's probably fine" is to break the code on purpose and see what happens.
-
-For every requirement I wrote a small patch that breaks that requirement and nothing else. I call these probes. The probe for the requirement "the command exits with 1 when an assertion is violated" is just this:
+For every requirement, I authored a minimal code patch designed to violate that requirement alone. For instance, the probe testing the requirement "the command exits with code 1 upon assertion failure" is:
 
 ```diff
 -    return result.passed ? 0 : 1;
 +    return 0;
 ```
 
-`npm run probes` checks both the intact code and a copy with the patch applied. A question has to pass on the intact code and fail on the broken copy: only a question that does both has earned its place in the gate. A question that only ever passes checks nothing.
+Running `npm run probes` checks both the clean codebase and the patched copy. A rubric must pass on intact code and fail on the probe; any rubric that passes unconditionally checks nothing.
 
-The result: 22 of 22 caught. An excerpt:
+In practice, all 22 probes were caught (22/22). Below is an excerpt:
 
 | Requirement | Intact code | Broken code | Result |
 | :--- | :--- | :--- | :--- |
@@ -201,97 +186,78 @@ The result: 22 of 22 caught. An excerpt:
 | REQ-GIT-01 | 0.04 | 0.92 | caught |
 | REQ-PATH-03 | 0.07 | 0.95 | caught |
 
-The last two ask whether something forbidden happens, so correct code scores low. The full table is in [docs/probe-results.md](https://github.com/nozomi-koborinai/jev-spec/blob/main/docs/probe-results.md).
+The last two rubrics ask whether forbidden behavior occurred, so correct code yields low probabilities. The full dataset is documented in [docs/probe-results.md](https://github.com/nozomi-koborinai/jev-spec/blob/main/docs/probe-results.md).
 
-For the record, 22 of 22 is not a benchmark of the model's accuracy. It is what I got for 22 requirements, written in English, in my own repository, after rewriting the questions until they caught their probes. What matters is not the number. It is that every requirement has been shown to have a question that does not miss broken code, and that the same check can be repeated when the model version changes.
+This 22/22 rate is not a synthetic benchmark of the model's generalized capability. It reflects empirical validation within my repository, refining rubric phrasing until broken code was consistently flagged. What matters is having verified that each rubric catches regressions, and being able to re-run the same validation when bumping model versions.
 
-## What the First Runs Against the Real API Taught Me
+### Lessons from Writing Rubrics
 
-When I first checked jev-spec systematically against the real API using its own specifications, the result was a disappointment.
+Testing against the live API revealed that rubric phrasing substantially influences evaluation sharpness:
 
-At that point a question restated its requirement:
+- **Ask directly about mechanism rather than restating requirements** — repeating requirement prose causes the model to read it as a given assertion, biasing it toward yes. Phrasing questions around concrete code mechanics creates a clean separation between intact and broken code
+- **Keep requirement IDs in rubric names, not question text** — prepending "Does the code satisfy REQ-PATH-01:" inflated probabilities on broken code. Rubric names are not passed to the model prompt, making them the proper place for requirement tags
+- **Specify which code component is meant** — in files with multiple similar functions, pointing to the exact function or responsibility ("In the function resolving glob patterns...") markedly improved precision
+- **Keep targets compact** — eliminating extraneous files from a target reduced false positives on broken code, matching TypeSafe's guidance on context sharpness
 
-```text
-Does the code satisfy REQ-PATH-01: a path is accepted only when its real path,
-with symbolic links resolved, lies inside the project root, and any other path
-is rejected with an error?
-```
+## Drift Discovered via Dogfooding
 
-With questions in that form, 14 of 20 probes were caught. Four answered "yes" to broken code, at 0.86 to 0.94, and two failed on intact code (0.64 and 0.75).
+Dogfooding jev-spec on its own specifications uncovered several genuine discrepancies.
 
-I measured again and again while changing how the questions were written, and learned four things.
+### Unhandled Error Exit Code
 
-### Ask Directly About the Mechanism Instead of Restating the Requirement
+The specification mandated that unhandled errors must exit with code 2 regardless of failure type. Inspecting the implementation revealed that non-usage errors were being re-thrown, causing Node.js to exit with its default code 1. Because code 1 signifies assertion failure in jev-spec, CI would have conflated internal exceptions with spec violations. Formalizing the requirement in a spec brought this defect to light.
 
-When a question repeats the requirement, the model reads it as a claim and leans toward yes. For REQ-PATH-01 the restated form gave 0.63 to 0.68 for intact code and 0.47 to 0.54 for broken code: hardly any difference. Asking literally about the mechanism in the code opened that up to 0.96 against 0.44 to 0.47.
+### Unused Dead Error Class
 
-```text
-Does the asynchronous function that resolves a path with realpath throw an error
-when the resolved path lies outside the project root?
-```
+During initial live testing, a rubric verifying that caught errors map to exit code 2 lingered at an unconvincing 0.78. Investigation uncovered a legacy error class left behind from an earlier refactor, capable of returning code 1. Deleting this dead code raised confidence to 0.97. The model's hesitation pointed straight to dead code.
 
-### Keep the Requirement ID Out of the Question and Put It in the Rubric's Name
+### Diff Execution Scoping
 
-Even with the same direct question, putting "Does the code satisfy REQ-PATH-01:" in front of it raised the answer for broken code to 0.71 to 0.80. Adding "(REQ-PATH-01)" at the end was enough for 0.53 to 0.64. The name of a rubric is never sent to the model, so that is where the ID goes.
+An early implementation of `--staged` forwarded only modified diff hunks to Jev. On a commit altering a single comment, exit-code rubrics failed with scores of 0.49 to 0.64. When evaluated against full files, those same rubrics passed at 0.92 to 0.97. The relevant code logic simply was not present in the isolated diff hunk.
 
-### Say Which Part of the Code Is Meant
+This led to a structural redesign: diffs are used solely to select which targets are affected, and the chosen targets are then forwarded in their entirety.
 
-In a file with two similar functions, a question that did not name one gave 0.85 against 0.78: no separation. Pointing at the place ("In the function that resolves glob patterns against the file system, …") gave 0.98 against 0.32 to 0.44.
+All three issues passed unit tests; they only surfaced when holding code against explicit specifications.
 
-### Keep Targets Small
+## Static Analysis vs. Decision Models, and Conclusion
 
-Dropping one unrelated file lowered the answer for broken code from between 0.68 and 0.80 to between 0.56 and 0.64. TypeSafe's documentation says the same: [accuracy drops as irrelevant content grows](https://docs.typesafe.ai/model-jaggedness/jev-1.13).
+Deploying jev-spec effectively requires recognizing its operational boundaries:
 
-And three requirements remained that no wording could check: one that needs a value to be followed through a function, one that depends on what a regular expression accepts, and one about whether a function is handed one list in place of another. I took them out of the questions for the model and pinned them with tests instead. In the specs they live in a separate file, and the test titles carry the requirement IDs.
+- **A check, not a mathematical proof** — passing indicates a probability surpassed an empirical threshold, not formal correctness. Internal terminology deliberately uses "check" rather than "verify"
+- **English delivers the highest accuracy** — while Jev handles multiple languages including CJK, its primary training data is English. Specs and rubrics written in English provide the highest fidelity
+- **Adversarial code comments can bias evaluations** — comments stating "this function satisfies requirement X" can skew decisions. TypeSafe lists this as a known model limitation
+- **Arithmetic, dates, and multi-step reasoning are poor fits** — counting items or comparing calendar dates should be verified via standard unit tests rather than model rubrics
+- **Spec-only edits do not trigger staged diff targets** — because targets are selected by code changes, running full checks across all targets in CI remains essential
 
-Drawing the line between what a model can be asked and what it cannot, requirement by requirement: it is unglamorous work, and it is what turning "it's probably fine" into a gate consisted of.
+The complementary roles of contextlint and jev-spec can be summarized as follows:
 
-## Drift That Checking Itself Found
-
-Writing specs for jev-spec and checking it against them did find drift.
-
-### The Exit Code of an Unexpected Error
-
-The spec says that when a run cannot be carried out, the command exits with code 2, whatever the error. The code, however, re-threw every error that was not a usage error, and the process ended with Node's default exit code, 1. For jev-spec, 1 means "a check failed", so CI would have mistaken an internal error for a violated requirement. Writing the requirement down as one sentence is what made me notice.
-
-### An Error Class That Nothing Used
-
-In the first run against the real API, the question about whether every caught error ends in exit code 2 stayed at an unconvincing 0.78. Looking for the reason, I found an error class that nothing threw any more and that could carry exit code 1. After deleting it the answer was 0.97. The model's lack of confidence had been pointing at dead code.
-
-### False Failures in Diff Runs
-
-`--staged` originally sent the model only the lines around a change. On a commit that changed a single comment line, four questions about exit codes all failed, at 0.49 to 0.64. With the whole files they pass at 0.92 to 0.97. The code the questions ask about simply was not in the fragment that was sent.
-
-The pre-commit hook that the README recommended was unusable in that form. So the design was adjusted: the diff is used only to choose which targets to check, and each chosen target is sent in full.
-
-All three passed the tests. They only showed up when a sentence in the spec was held against the code.
-
-## Limits
-
-A few things to know before you use it.
-
-- **A check, not a proof** — passing means a probability cleared a threshold, not that the code is correct. Inside the tool the word is "check", not "verify", for that reason
-- **English works best** — per TypeSafe's documentation, English is Jev's primary training language, and [other languages, CJK scripts included, are handled but not equally well](https://docs.typesafe.ai/models#language-support). I write my specs in English. With specs in another language, tune the thresholds on your own documents before you gate on them
-- **Claims inside the code can move the answer** — content that argues for its own classification, such as a comment saying "this function satisfies the requirement", can move the answer; TypeSafe lists this among the [known limitations](https://docs.typesafe.ai/model-jaggedness/jev-1.13#adversarial-content). In my experiments, a stale explanatory comment once kept a probe from being caught and once did not
-- **Counting, comparing dates and multi-step reasoning are weak spots** — write requirements and questions that avoid them
-- **A commit that changes only a spec selects nothing in a diff run** — only code changes choose targets, so keep running checks across all targets (a full repository check) in CI
-
-## Closing
-
-The division of labor between the two tools:
-
-| | contextlint | jev-spec |
+| Dimension | contextlint | jev-spec |
 | :--- | :--- | :--- |
-| What it checks | Documents agree with documents | Code agrees with its spec |
-| How | Rule-based static analysis | Questions to a model, and thresholds on the probabilities |
-| Result | Deterministic | Probabilistic (pin the model version, break the code to see the check fail) |
-| Dependency on AI | None | Yes (TypeSafe AI's Jev) |
+| Scope | Consistency across documents | Alignment between specs and code |
+| Method | Syntax trees and deterministic rules | Model evaluation and probability thresholds |
+| Determinism | Strictly deterministic | Probabilistic (pinned models and probe validation) |
+| AI Dependency | None | Yes (TypeSafe AI Jev) |
 
-What can be decided mechanically goes to static analysis. What needs meaning to be read goes to a model. And whatever is left to the model gets broken on purpose, to see that the check fails.
+```mermaid
+flowchart LR
+  specs["Specs"]
+  code["Code"]
+  cl["contextlint"]
+  js["jev-spec"]
+  gate["Build gate"]
 
-I am not taking back "LLMs are not suited for verification". What I found is that the sentence had a sequel: how do you make something unsuited usable anyway?
+  specs -->|"docs agree with docs"| cl
+  specs --> js
+  code --> js
+  cl --> gate
+  js -->|"spec and code drift"| gate
+```
 
-jev-spec is young, and it has no track record outside my own repository yet. If you keep your specs in Markdown and the drift between them and the code bothers you, give it a try. Once you have written a configuration following the README's Quickstart, `npx jev-spec check --dry-run` runs without an API key.
+Verify mechanically with static analysis, evaluate semantics with decision models, and test rubrics with probes.
+
+In an era where AI generates code at unprecedented speed, guarding against specification drift without slowing down development rhythm is essential.
+
+jev-spec is an early-stage open-source project, but if you maintain Markdown specifications and want to prevent them from diverging from code, consider giving it a try. Once configured, running `npx jev-spec check --dry-run` requires no API key.
 
 <RichLinkCard
   href="https://www.npmjs.com/package/jev-spec"

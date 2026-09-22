@@ -17,7 +17,7 @@ About six months ago, I wrote [an article](/tech/contextlint-introduction/) abou
 
 AI writes code at breathtaking speed. However, as the velocity of code generation increases, the frequency with which human developers reread original specifications drops proportionally. In day-to-day code reviews, attention naturally gravitates toward immediate diffs and runtime smoke tests. Reviewing whether every sentence in the specification still holds against the generated code is rarely feasible. As a result, discrepancies between specifications and code accumulate unnoticed beneath the surface.
 
-Static analysis can confirm that a specification contains an entry such as `REQ-AUTH-02` (an authentication requirement ID), follows the expected format, and is properly referenced across documents. But whether `src/auth/session.ts` still behaves according to `REQ-AUTH-02` cannot be verified by parsing document syntax alone.
+Static analysis (contextlint and similar tools) can confirm that a specification contains an entry such as `REQ-AUTH-02` (an authentication requirement ID), follows the expected format, and is properly referenced across documents. But whether `src/auth/session.ts` still behaves according to `REQ-AUTH-02` cannot be verified by parsing document syntax alone.
 
 To counter this drift, some teams create custom slash commands or Agent Skills in Cursor or Claude Code to periodically crawl the codebase and check alignment against specifications. In practice, this means asking an agent: "Check whether this code satisfies all requirements in the spec and flag any omissions."
 
@@ -45,17 +45,23 @@ A fresh architectural direction arrived with Jev, a model developed by TypeSafe 
   description="System One models make fast, structured decisions for software. Jev is TypeSafe's flagship model and the first System One model."
 />
 
-To describe it accurately: Jev does not perform free-form autoregressive text generation or sequential token decoding. Instead, it directly evaluates given context or state—text, data, application state, and similar inputs—in a single pass and outputs typed decision primitives: well-calibrated probabilities and scores. jev-spec uses this capability by passing specifications and code as context and reading probabilities for each requirement Rubric.
+To describe it accurately: Jev does not perform free-form autoregressive text generation or sequential token decoding. Instead, it directly evaluates given context or state (text, data, application state, and similar inputs) in a single pass and outputs typed decision primitives: well-calibrated probabilities and scores. jev-spec uses this capability by passing specifications and code as context and reading probabilities for each requirement Rubric.
 
 Because it does not generate text token by token, there is no waiting on output decoding, and output tokens are free. Input token costs are negligible ($0.042 per million input tokens), and response times clock in at just 70 to 400ms.
 
 Jev provides three core decision primitives:
 
-- **`noul` (Boolean proposition)** — evaluates a proposition answerable with yes or no, returning a probability between 0 and 1
-- **`choice` (Categorical distribution)** — evaluates a discrete probability distribution across declared, mutually exclusive options (such as `compliant`, `vulnerable`, or `inconclusive`)
-- **`score` (Ordinal rubric)** — evaluates an ordered rubric (such as a multi-tier maturity scale from stub to production-grade), returning an expected score and level probabilities
+- **`noul` (Boolean proposition)**
 
-The probabilities returned here are statistically calibrated—meaning that when Jev reports an 80% probability, roughly 80% of those predictions actually turn out to be true, much like a reliable weather forecast where an "80% chance of rain" produces rain on 80 out of 100 days.
+  evaluates a proposition answerable with yes or no, returning a probability between 0 and 1
+
+- **`choice` (Categorical distribution)**
+
+  evaluates a discrete probability distribution across declared, mutually exclusive options (such as `compliant`, `vulnerable`, or `inconclusive`)
+
+- **`score` (Ordinal rubric)**
+
+  evaluates an ordered rubric (such as a multi-tier maturity scale from stub to production-grade), returning an expected score and level probabilities
 
 Because Jev's output is numeric and grounded from the start, there is no need to parse natural language. Comparing the returned probability against a deterministic threshold (such as `minProbability: 0.85`) produces an immediate pass or fail verdict.
 
@@ -75,7 +81,7 @@ Unlike open-ended text generation models, executing fast, inexpensive, type-safe
 
 Seeing Jev's characteristics firsthand sparked an immediate question from my background building contextlint:
 
-"If we have a decision primitive this fast and lightweight, could we verify whether code satisfies its specification on every single git commit?"
+"If we have a decision primitive this fast and lightweight, could we verify whether code satisfies the spec and the requirements that belong to it on every single git commit?"
 
 Exploring whether this fast decision model could be applied to Specification-Driven Development is what motivated me to start building jev-spec.
 
@@ -83,10 +89,21 @@ Exploring whether this fast decision model could be applied to Specification-Dri
 
 The operational pipeline in jev-spec consists of four steps:
 
-1. **Read the spec** — extracts the relevant sections of a Markdown specification based on headings, tags, or requirement IDs
-2. **Read the code** — loads the source files implementing those requirements
-3. **Evaluate rubrics** — submits focused evaluation questions (Rubrics) to Jev, which evaluates the spec and code as context in a single pass and returns probabilities in parallel
-4. **Compare** — evaluates the probabilities against defined threshold assertions, stopping the build as a validation error (check failure) if any assertion fails
+1. **Read the spec**
+
+   extracts the relevant sections of a Markdown specification based on headings, tags, or requirement IDs
+
+2. **Read the code**
+
+   loads the source files implementing those requirements
+
+3. **Evaluate rubrics**
+
+   submits focused evaluation questions (Rubrics) to Jev, which evaluates the spec and code as context in a single pass and returns probabilities in parallel
+
+4. **Compare**
+
+   evaluates the probabilities against defined threshold assertions, stopping the build as a validation error (check failure) if any assertion fails
 
 Each evaluation question is called a **Rubric**, and the comparison with a threshold is an **Assertion**. While binary verification with `noul` is most common for specs, the DSL also supports `choice` and `score`.
 
@@ -96,7 +113,11 @@ For speed and rigorous type safety, jev-spec adopts **TypeScript 7**, powered by
 
 Getting started with jev-spec in your project is straightforward.
 
-Agent Skills clients (Claude Code, Cursor, Codex, Antigravity CLI, and GitHub Copilot) can install one with `gh skill install nozomi-koborinai/jev-spec <skill-name>`.
+Agent Skills clients (Claude Code, Cursor, Codex, Antigravity CLI, and GitHub Copilot) can install a skill with the following command:
+
+```zsh
+gh skill install nozomi-koborinai/jev-spec <skill-name>
+```
 
 | Skill | Role |
 | --- | --- |
@@ -143,10 +164,21 @@ export default defineConfig({
 
 Key options configured in `defineConfig` include:
 
-- **`specPath`** — path to the target Markdown specification file
-- **`codePaths`** — glob patterns for code files implementing those requirements (with negation support to exclude test files)
-- **`rubrics`** — requirement checks written as natural-language questions using `noul(...)` (keyed by requirement IDs)
-- **`assertions`** — minimum confidence threshold for passing (such as `minProbability: 0.85`)
+- **`specPath`**
+
+  path to the target Markdown specification file
+
+- **`codePaths`**
+
+  glob patterns for code files implementing those requirements (with negation support to exclude test files)
+
+- **`rubrics`**
+
+  requirement checks written as natural-language questions using `noul(...)` (keyed by requirement IDs)
+
+- **`assertions`**
+
+  minimum confidence threshold for passing (such as `minProbability: 0.85`)
 
 ### 3. Setting the API Key
 
@@ -201,8 +233,13 @@ Naming Rubrics after requirement IDs ensures that when a check fails, the report
 
 The true power of jev-spec comes from embedding it into your routine development workflow:
 
-- **Staged checks in pre-commit hooks** — using tools like husky or simple-git-hooks, run `npx jev-spec check --staged` on every commit. Because it evaluates only modified targets in milliseconds, it catches drift before code is committed without interrupting your flow
-- **Full checks in CI** — in your CI pipeline (such as GitHub Actions), run a full `npx jev-spec check` across all targets to guarantee spec compliance before merging pull requests
+- **Staged checks in pre-commit hooks**
+
+  using tools like husky or simple-git-hooks, run `npx jev-spec check --staged` on every commit. Because it evaluates only modified targets in milliseconds, it catches drift before code is committed without interrupting your flow
+
+- **Full checks in CI**
+
+  in your CI pipeline (such as GitHub Actions), run a full `npx jev-spec check` across all targets to guarantee spec compliance before merging pull requests
 
 ## What Real-World Measurements Revealed
 
@@ -224,10 +261,21 @@ Thresholds are not hardcoded values; they can be configured individually in the 
 
 Deploying jev-spec effectively requires recognizing its operational boundaries:
 
-- **A check, not a mathematical proof** — passing indicates a probability surpassed an empirical threshold, not formal correctness. Internal terminology deliberately uses "check" rather than "verify"
-- **English is officially recommended** — while official documentation recommends English and notes that [CJK languages may not reach the same accuracy](https://docs.typesafe.ai/models#language-support), in practice Jev also understands Japanese specifications and Rubrics quite well and can evaluate them effectively
-- **Adversarial code comments can bias evaluations** — comments stating "this function satisfies requirement X" can skew decisions. TypeSafe lists this as a known model limitation
-- **Arithmetic, dates, and multi-step reasoning are poor fits** — counting items or comparing calendar dates should be verified via standard unit tests rather than Rubrics
+- **A check, not a mathematical proof**
+
+  passing indicates a probability surpassed an empirical threshold, not formal correctness. Internal terminology deliberately uses "check" rather than "verify"
+
+- **English is officially recommended**
+
+  while official documentation recommends English and notes that [CJK languages may not reach the same accuracy](https://docs.typesafe.ai/models#language-support), in practice Jev also understands Japanese specifications and Rubrics quite well and can evaluate them effectively
+
+- **Adversarial code comments can bias evaluations**
+
+  comments stating "this function satisfies requirement X" can skew decisions. TypeSafe lists this as a known model limitation
+
+- **Arithmetic, dates, and multi-step reasoning are poor fits**
+
+  counting items or comparing calendar dates should be verified via standard unit tests rather than Rubrics
 
 The complementary roles of contextlint and jev-spec can be summarized as follows:
 

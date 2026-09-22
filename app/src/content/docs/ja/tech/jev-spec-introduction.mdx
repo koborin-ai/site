@@ -222,7 +222,7 @@ jev-spec の真価は、開発フローの日常的なゲートとして組み�
 
 ## 静的解析と決定モデルの役割分担・おわりに
 
-jev-spec を実戦で運用するにあたっては、その限界も把握しておく必要があります。
+jev-spec を実践で運用するにあたっては、その限界も把握しておく必要があります。
 
 - **証明ではなくチェックであること** — 合格は確率がしきい値を超えたことを意味し、数学的な正しさの証明ではありません。そのためツール内の用語も verify ではなく check に統一しています
 - **英語での記述が推奨されていること** — Jev の公式ドキュメントでは英語での記述が推奨されており、[日本語を含む CJK 言語は英語と同等の精度ではないとされています](https://docs.typesafe.ai/models#language-support)。ただし実用上は、日本語で書かれた仕様書や Rubric でも十分に意図を理解し、実用的な精度で判定を行えます
@@ -246,10 +246,4 @@ jev-spec は私の思いつきで始めたものですが、仕様書を Markdow
   href="https://www.npmjs.com/package/jev-spec"
   title="jev-spec - npm"
   description="Catch spec drift on every commit: check your code against your Markdown specs with TypeSafe AI's Jev model."
-/>
-
-<RichLinkCard
-  href="/ja/tech/contextlint-introduction/"
-  title="Markdown ドキュメント間の整合性を静的解析する contextlint というリンターを作っている話"
-  description="前の記事：SDD で直面した Markdown の整合性課題を解決するルールベースリンター contextlint の紹介"
 />

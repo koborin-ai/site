@@ -7,6 +7,11 @@ export const sidebar = [
     label: "Tech",
     items: [
       {
+        label: "Building jev-spec",
+        translations: { ja: "jev-spec を作っている話" },
+        slug: "tech/jev-spec-introduction",
+      },
+      {
         label: "Cursor Automations for Solo Maintainers",
         slug: "tech/solo-maintainer-cursor-automations",
       },

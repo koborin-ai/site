@@ -1,6 +1,6 @@
 ---
 title: "Stopping Spec Drift in the Era of Fast AI Coding: Building an OSS Called jev-spec"
-description: "As AI code generation accelerates, the gap between markdown specifications and code (spec drift) quietly widens. An introduction to the limits of traditional LLMs, the emerging potential of TypeSafe AI's Jev decision model, and how jev-spec catches drift on every commit."
+description: "As AI code generation accelerates, the gap between markdown specifications and code widens. An introduction to the limits of traditional LLMs, the emerging potential of TypeSafe AI's Jev decision model, and how jev-spec catches drift on every commit."
 ogImage: /og/jev-spec-introduction.png
 publishedAt: 2026-09-22
 draft: true
@@ -16,15 +16,15 @@ import jevSpecIntroductionOg from '../../../assets/og/jev-spec-introduction.png'
 
 About six months ago, I wrote [an article](/tech/contextlint-introduction/) about contextlint, a linter that statically analyzes the consistency of Markdown documents. In Specification-Driven Development (SDD), teams write detailed requirements, architectural decisions, and acceptance criteria in Markdown, feeding them into AI coding agents like Cursor or Claude Code.
 
-AI writes code at breathtaking speed. However, as the velocity of code generation increases, the frequency with which human developers reread original specifications drops proportionally. In day-to-day code reviews, attention naturally gravitates toward immediate diffs and runtime smoke tests. Reviewing whether every sentence in the specification still holds against the generated code is rarely feasible. As a result, a quiet "spec drift" accumulates beneath the surface.
+AI writes code at breathtaking speed. However, as the velocity of code generation increases, the frequency with which human developers reread original specifications drops proportionally. In day-to-day code reviews, attention naturally gravitates toward immediate diffs and runtime smoke tests. Reviewing whether every sentence in the specification still holds against the generated code is rarely feasible. As a result, discrepancies between specifications and code accumulate unnoticed beneath the surface.
 
 Static analysis can confirm that a requirement named `REQ-AUTH-02` exists, follows the expected format, and is properly referenced across documents. But whether `src/auth/session.ts` still behaves according to `REQ-AUTH-02` cannot be verified by parsing document syntax alone.
 
 To counter this drift, some teams create custom slash commands or Agent Skills in Cursor or Claude Code to periodically crawl the codebase and check alignment against specifications. In practice, this means asking an agent: "Check whether this code satisfies all requirements in the spec and flag any omissions."
 
-Yet running this approach on every commit is impractical. Stuffing substantial codebases and full specifications into prompts and running general-purpose LLM agents takes minutes per run and consumes significant token costs. It is far too slow and expensive to act as a pre-commit hook gating `git commit`. Consequently, drift detection remains an occasional, heavy audit run only when someone remembers, while spec drift continues to accumulate unnoticed during daily development.
+Yet running this approach on every commit is impractical. Stuffing substantial codebases and full specifications into prompts and running general-purpose LLM agents takes minutes per run and consumes significant token costs. It is far too slow and expensive to act as a pre-commit hook gating `git commit`. Consequently, drift detection remains an occasional, heavy audit run only when someone remembers, while discrepancies between specifications and code continue to accumulate unnoticed during daily development.
 
-"Could we catch the drift between specifications and code in tenths of a second on every single commit?" This question led me to develop an open-source tool called `jev-spec`.
+"Could we catch the drift between specifications and code in tenths of a second on every single commit?" This question led me to develop the OSS `jev-spec`.
 
 <RichLinkCard
   href="https://github.com/nozomi-koborinai/jev-spec"
@@ -85,7 +85,7 @@ The operational pipeline in jev-spec consists of four steps:
 1. **Read the spec** — extracts the relevant sections of a Markdown specification based on headings, tags, or requirement IDs
 2. **Read the code** — loads the source files implementing those requirements
 3. **Ask** — submits focused rubrics to Jev, which evaluates the spec and code directly in a single pass and returns probabilities in parallel
-4. **Compare** — evaluates the probabilities against defined threshold assertions, exiting with code 1 if any assertion fails
+4. **Compare** — evaluates the probabilities against defined threshold assertions, stopping the build as a validation error (check failure) if any assertion fails
 
 jev-spec is configured in TypeScript. For speed and rigorous type safety, it adopts **TypeScript 7**, powered by the new Go compiler. Furthermore, it provides official dual runtime support for both Node.js (22+) and Bun.
 
@@ -117,7 +117,7 @@ export default defineConfig({
 
 A question is called a **Rubric**, and the comparison with a threshold is an **Assertion**. While binary verification with `noul` is most common for specs, the DSL also supports `choice` and `score`.
 
-jev-spec is designed for pre-commit hooks and CI pipelines. Running `npx jev-spec check --staged` (or `bunx jev-spec check --staged`) in a pre-commit hook inspects only targets affected by staged Git diffs, completing in roughly 0.3 seconds. Unaffected targets are marked as `SKIPPED`.
+jev-spec is designed for pre-commit hooks and CI pipelines. Running `npx jev-spec check --staged` (or `bunx jev-spec check --staged`) in a pre-commit hook inspects only targets affected by staged Git diffs, completing at a brisk pace that never interrupts local commit flow. Unaffected targets are marked as `SKIPPED`.
 
 The CLI report output looks like this:
 
@@ -154,30 +154,30 @@ The estimated cost reported by the CLI was approximately $0.0006 per full run. R
 
 ### Reproducibility and Model Pinning
 
-Repeating identical rubrics over identical code five times yielded a confidence variance of 0.00 to 0.03 on clean code. A probability moving from 0.96 to 0.95 remains safely above the 0.85 threshold.
+Repeating identical rubrics over identical code five times yielded a confidence variance of 0.00 to 0.03 on clean code. A probability moving from 0.96 to 0.95 remains safely above the example threshold of 0.85 (configured as `minProbability` in the settings).
 
-In contrast, probabilities on broken or intermediate code fluctuated significantly, with spreads between 0.33 and 0.72. Rubrics hovering near the threshold (e.g. flipping between 0.82 and 0.86) risk erratic pass/fail outcomes.
+In contrast, probabilities on code that deviated from the spec or was incomplete fluctuated significantly, with spreads between 0.33 and 0.72. Rubrics hovering near the threshold (e.g. flipping between 0.82 and 0.86) risk erratic pass/fail outcomes.
 
-This observation led to two operational guidelines. First, set assertion thresholds close to the stable region of correct code: pass thresholds for affirmative rubrics sit at 0.85 or higher, while negative rubrics require 0.3 or lower. Second, rubrics that cannot cleanly distinguish intact code from broken code are excluded from the gate.
+This observation led to two operational guidelines. First, set assertion thresholds close to the stable region of correct code—for example, 0.85 or higher for affirmative rubrics and 0.3 or lower for negative rubrics (note that 0.85 is an example threshold configured per requirement, not a hardcoded fixed value). Second, rubrics that cannot cleanly distinguish compliant code from code with deliberate spec violations are excluded from the gate.
 
 To avoid unexpected shifts from upstream model changes, `client.model` supports pinning explicit versions (such as `jev-1.13.0`). The CLI report always prints the exact model version that produced the evaluation.
 
 ### Addressing Doubt with Probes
 
-The concern that "a model saying 'probably fine' leaves lingering doubt" was addressed through deliberately broken code patches called "probes."
+The concern that "a model saying 'probably fine' leaves lingering doubt" was addressed through "probes"—systematic tests applying deliberate spec-violating diffs.
 
-For every requirement, I authored a minimal code patch designed to violate that requirement alone. For instance, the probe testing the requirement "the command exits with code 1 upon assertion failure" is:
+For every requirement, I authored a minimal code patch designed to deviate from that requirement alone. For instance, the probe testing the requirement "the command exits with an error upon assertion failure" is:
 
 ```diff
 -    return result.passed ? 0 : 1;
 +    return 0;
 ```
 
-Running `npm run probes` checks both the clean codebase and the patched copy. A rubric must pass on intact code and fail on the probe; any rubric that passes unconditionally checks nothing.
+Running `npm run probes` checks both the clean codebase and the patched copy. A rubric must pass on compliant code and fail on the patch that deliberately violates the specification; any rubric that passes unconditionally checks nothing.
 
 In practice, all 22 probes were caught (22/22). Below is an excerpt:
 
-| Requirement | Intact code | Broken code | Result |
+| Requirement | Compliant code | Spec-violating code | Result |
 | :--- | :--- | :--- | :--- |
 | REQ-EXIT-02 | 0.92 | 0.17 | caught |
 | REQ-RUN-01 | 0.96 | 0.09 | caught |
@@ -188,36 +188,46 @@ In practice, all 22 probes were caught (22/22). Below is an excerpt:
 
 The last two rubrics ask whether forbidden behavior occurred, so correct code yields low probabilities. The full dataset is documented in [docs/probe-results.md](https://github.com/nozomi-koborinai/jev-spec/blob/main/docs/probe-results.md).
 
-This 22/22 rate is not a synthetic benchmark of the model's generalized capability. It reflects empirical validation within my repository, refining rubric phrasing until broken code was consistently flagged. What matters is having verified that each rubric catches regressions, and being able to re-run the same validation when bumping model versions.
+This 22/22 rate is not a synthetic benchmark of the model's generalized capability. It reflects empirical validation within my repository, refining rubric phrasing until code deviating from the spec was consistently flagged. What matters is having verified that each rubric catches deviations, and being able to re-run the same validation when bumping model versions.
 
 ### Lessons from Writing Rubrics
 
 Testing against the live API revealed that rubric phrasing substantially influences evaluation sharpness:
 
-- **Ask directly about mechanism rather than restating requirements** — repeating requirement prose causes the model to read it as a given assertion, biasing it toward yes. Phrasing questions around concrete code mechanics creates a clean separation between intact and broken code
-- **Keep requirement IDs in rubric names, not question text** — prepending "Does the code satisfy REQ-PATH-01:" inflated probabilities on broken code. Rubric names are not passed to the model prompt, making them the proper place for requirement tags
+- **Ask directly about mechanism rather than restating requirements** — repeating requirement prose causes the model to read it as a given assertion, biasing it toward yes. Phrasing questions around concrete code mechanics creates a clean separation between compliant code and code that violates specifications
+- **Keep requirement IDs in rubric names, not question text** — prepending "Does the code satisfy REQ-PATH-01:" inflated probabilities on non-compliant code. Rubric names are not passed to the model prompt, making them the proper place for requirement tags
 - **Specify which code component is meant** — in files with multiple similar functions, pointing to the exact function or responsibility ("In the function resolving glob patterns...") markedly improved precision
-- **Keep targets compact** — eliminating extraneous files from a target reduced false positives on broken code, matching TypeSafe's guidance on context sharpness
+- **Keep targets compact** — eliminating extraneous files from a target improved detection accuracy when code diverged from the spec, matching TypeSafe's guidance on context sharpness
 
 ## Drift Discovered via Dogfooding
 
-Dogfooding jev-spec on its own specifications uncovered several genuine discrepancies.
+Dogfooding jev-spec—writing its own specifications and verifying itself with Jev—uncovered fascinating discrepancies that unit tests alone had obscured.
 
-### Unhandled Error Exit Code
+### Developer Blind Spots Behind All-Green Test Suites
 
-The specification mandated that unhandled errors must exit with code 2 regardless of failure type. Inspecting the implementation revealed that non-usage errors were being re-thrown, causing Node.js to exit with its default code 1. Because code 1 signifies assertion failure in jev-spec, CI would have conflated internal exceptions with spec violations. Formalizing the requirement in a spec brought this defect to light.
+In everyday development, maintaining comprehensive unit test coverage and seeing all-green CI builds provides immense reassurance. Yet because test suites are authored based on the developer's existing understanding and assumptions, they can never fully protect against developer blind spots.
 
-### Unused Dead Error Class
+When checking jev-spec's codebase against its formal English specifications, several subtle mismatches surfaced where the implementation did not honor what the specification promised, even though every unit test passed cleanly.
 
-During initial live testing, a rubric verifying that caught errors map to exit code 2 lingered at an unconvincing 0.78. Investigation uncovered a legacy error class left behind from an earlier refactor, capable of returning code 1. Deleting this dead code raised confidence to 0.97. The model's hesitation pointed straight to dead code.
+For example, when handling error-handling contracts and exit procedures, the spec established uniform guarantees across failure scenarios. However, parts of the codebase relied on implicit exception propagation or retained dead code from previous refactoring that could circumvent the contract.
 
-### Diff Execution Scoping
+Relying solely on green tests had masked these gaps. Objectively evaluating the code against the explicit words of the written specification brought these developer blind spots immediately to light.
 
-An early implementation of `--staged` forwarded only modified diff hunks to Jev. On a commit altering a single comment, exit-code rubrics failed with scores of 0.49 to 0.64. When evaluated against full files, those same rubrics passed at 0.92 to 0.97. The relevant code logic simply was not present in the isolated diff hunk.
+### False Alarms in Diff Execution and the Value of Full Context
 
-This led to a structural redesign: diffs are used solely to select which targets are affected, and the chosen targets are then forwarded in their entirety.
+Another crucial lesson emerged from designing `--staged` diff checking for Git commits.
 
-All three issues passed unit tests; they only surfaced when holding code against explicit specifications.
+The initial implementation prioritized execution speed and minimal token consumption by forwarding only changed diff hunks to the model. However, on a commit that merely adjusted a comment line, the check failed with false alarms on unrelated requirements. When evaluated against full files, those exact same rubrics passed with high confidence.
+
+The root cause was clear: semantic verification requires not just the altered lines, but the surrounding dependencies, invoking functions, and overall file context. When stripped down to an isolated diff fragment, the model could not see the logic that satisfied the requirement.
+
+This led to a fundamental architectural shift: Git staged diffs are used strictly as a selector to identify which targets are affected, and the chosen targets are then forwarded in their entirety. For semantic evaluation, providing full target context rather than isolated diff hunks is paramount to precision—a foundational takeaway for practical Specification-Driven Development.
+
+### The Real Feel of Spec-Driven Development
+
+Treating specifications not as dormant documentation, but as living contracts continuously synchronized with code, transforms how development feels. Dogfooding revealed how a fast decision model mechanically supports developer diligence toward specifications.
+
+As AI accelerates code generation velocity, having an objective anchor in written specifications—and verifying alignment in fractions of a second—delivers genuine confidence to the development workflow.
 
 ## Static Analysis vs. Decision Models, and Conclusion
 

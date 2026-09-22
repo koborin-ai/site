@@ -46,17 +46,19 @@ A fresh architectural direction arrived with Jev, a model developed by TypeSafe 
   description="System One models make fast, structured decisions for software. Jev is TypeSafe's flagship model and the first System One model."
 />
 
-To describe it accurately: Jev does not perform free-form autoregressive text generation or sequential token decoding. Instead, given a shared context (spec and code), it directly evaluates the inputs in a single evaluation and outputs typed decision primitives: calibrated probabilities and scores.
+To describe it accurately: Jev does not perform free-form autoregressive text generation or sequential token decoding. Instead, given a shared context (spec and code), it directly evaluates the inputs in a single evaluation and outputs typed decision primitives: well-calibrated probabilities and scores.
 
 Because it does not generate text token by token, there is no waiting on output decoding, and output tokens are free. Input token costs are negligible ($0.042 per million input tokens), and response times clock in at just 70 to 400ms.
 
 Jev provides three core decision primitives:
 
-- **`noul` (Boolean proposition)** — evaluates a proposition answerable with yes or no, returning a calibrated probability between 0 and 1
+- **`noul` (Boolean proposition)** — evaluates a proposition answerable with yes or no, returning a probability between 0 and 1
 - **`choice` (Categorical distribution)** — evaluates a discrete probability distribution across declared, mutually exclusive options (such as `compliant`, `vulnerable`, or `inconclusive`)
 - **`score` (Ordinal rubric)** — evaluates an ordered rubric (such as a multi-tier maturity scale from stub to production-grade), returning an expected score and level probabilities
 
-Because Jev's output is numeric from the start, there is no need to parse natural language. Comparing the returned probability against a deterministic threshold (such as `minProbability: 0.85`) produces an immediate pass or fail verdict.
+The probabilities returned here are statistically calibrated—meaning that when Jev reports an 80% probability, roughly 80% of those predictions actually turn out to be true, much like a reliable weather forecast where an "80% chance of rain" produces rain on 80 out of 100 days.
+
+Because Jev's output is numeric and grounded from the start, there is no need to parse natural language. Comparing the returned probability against a deterministic threshold (such as `minProbability: 0.85`) produces an immediate pass or fail verdict.
 
 :::note
 jev-spec is an independent open-source project that I develop on my own. It is not affiliated with or endorsed by TypeSafe AI. Descriptions of Jev's properties and pricing reflect the official documentation as of September 2026.

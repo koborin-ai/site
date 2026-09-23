@@ -13,11 +13,13 @@ import jevSpecIntroductionOg from '../../../assets/og/jev-spec-introduction.png'
 
 ## The Reality of Fast AI Coding and Spec Drift
 
-About six months ago, I wrote [an article](/tech/contextlint-introduction/) about contextlint, a linter that statically analyzes the consistency of Markdown documents. In Specification-Driven Development (SDD), teams write detailed requirements, architectural decisions, and acceptance criteria in Markdown, feeding them into AI coding agents like Cursor or Claude Code.
+About six months ago, I wrote [an article](/tech/contextlint-introduction/) about contextlint, a linter that statically analyzes the consistency of Markdown documents.
 
-AI writes code at breathtaking speed. However, as the velocity of code generation increases, the frequency with which human developers reread original specifications drops proportionally. In day-to-day code reviews, attention naturally gravitates toward immediate diffs and runtime smoke tests. Reviewing whether every sentence in the specification still holds against the generated code is rarely feasible. As a result, discrepancies between specifications and code accumulate unnoticed beneath the surface.
+In Specification-Driven Development (SDD), teams translate business "requirements" into system behaviors as "specifications (acceptance criteria)", and further flesh them out into "designs" such as table schemas and screen layouts, capturing them in Markdown and feeding them into AI coding agents like Cursor or Claude Code.
 
-Static analysis (contextlint and similar tools) can confirm that a specification contains an entry such as `REQ-AUTH-02` (an authentication requirement ID), follows the expected format, and is properly referenced across documents. But whether `src/auth/session.ts` still behaves according to `REQ-AUTH-02` cannot be verified by parsing document syntax alone.
+AI writes code at breathtaking speed. However, as the velocity of code generation increases, the frequency with which human developers reread original specifications drops proportionally. In day-to-day code reviews, attention naturally gravitates toward immediate diffs and runtime smoke tests. Reviewing whether every sentence in the specification still holds against the generated code's behavior is rarely feasible. As a result, discrepancies between specifications and code accumulate unnoticed beneath the surface.
+
+Static analysis (contextlint and similar tools) can confirm that a specification contains an entry such as `REQ-AUTH-02` (used here as an example of a requirement or specification identifier), follows the expected format, and is properly referenced across documents. But whether `src/auth/session.ts` still behaves according to `REQ-AUTH-02` cannot be verified by parsing document syntax alone.
 
 To counter this drift, some teams create custom slash commands or Agent Skills in Cursor or Claude Code to periodically crawl the codebase and check alignment against specifications. In practice, this means asking an agent: "Check whether this code satisfies all requirements in the spec and flag any omissions."
 
@@ -45,7 +47,7 @@ A fresh architectural direction arrived with Jev, a model developed by TypeSafe 
   description="System One models make fast, structured decisions for software. Jev is TypeSafe's flagship model and the first System One model."
 />
 
-To describe it accurately: Jev does not perform free-form autoregressive text generation or sequential token decoding. Instead, it directly evaluates given context or state (text, data, application state, and similar inputs) in a single pass and outputs typed decision primitives: well-calibrated probabilities and scores. jev-spec uses this capability by passing specifications and code as context and reading probabilities for each requirement Rubric.
+To describe it accurately: Jev does not perform free-form autoregressive text generation or sequential token decoding. Instead, it directly evaluates given context or state (text, data, application state, and similar inputs) in a single pass and outputs typed decision primitives: well-calibrated probabilities and scores. jev-spec uses this capability by passing specifications and code as context and reading probabilities for each spec item's Rubric.
 
 Because it does not generate text token by token, there is no waiting on output decoding, and output tokens are free. Input token costs are negligible ($0.042 per million input tokens), and response times clock in at just 70 to 400ms.
 
@@ -81,7 +83,7 @@ Unlike open-ended text generation models, executing fast, inexpensive, type-safe
 
 Seeing Jev's characteristics firsthand sparked an immediate question from my background building contextlint:
 
-"If we have a decision primitive this fast and lightweight, could we verify whether code satisfies the spec and the requirements that belong to it on every single git commit?"
+"If we have a decision primitive this fast and lightweight, could we verify whether code satisfies the behavior and requirements written in specifications on every single git commit?"
 
 Exploring whether this fast decision model could be applied to Specification-Driven Development is what motivated me to start building jev-spec.
 
@@ -91,15 +93,15 @@ The operational pipeline in jev-spec consists of four steps:
 
 1. **Read the spec**
 
-   extracts the relevant sections of a Markdown specification based on headings, tags, or requirement IDs
+   extracts the statements to verify from a Markdown specification based on sections, headings, or specification/requirement IDs
 
 2. **Read the code**
 
-   loads the source files implementing those requirements
+   loads the source files implementing that specification
 
 3. **Evaluate rubrics**
 
-   submits focused evaluation questions (Rubrics) to Jev, which evaluates the spec and code as context in a single pass and returns probabilities in parallel
+   submits focused evaluation questions (Rubrics) per spec item to Jev, which evaluates the spec and code as context in a single pass and returns probabilities in parallel
 
 4. **Compare**
 
@@ -170,11 +172,13 @@ Key options configured in `defineConfig` include:
 
 - **`codePaths`**
 
-  glob patterns for code files implementing those requirements (with negation support to exclude test files)
+  glob patterns for code files implementing that specification (with negation support to exclude test files)
 
 - **`rubrics`**
 
-  requirement checks written as natural-language questions using `noul(...)` (keyed by requirement IDs)
+  spec and behavior checks written as natural-language questions using `noul(...)` (keyed by IDs such as `REQ-AUTH-01` or target spec item names)
+
+  *Note: Keying by IDs is merely one example. Even if your project does not strictly assign requirement IDs, you can organize rubrics with arbitrary key names.*
 
 - **`assertions`**
 
@@ -227,11 +231,11 @@ $ echo $?
 1
 ```
 
-Naming Rubrics after requirement IDs ensures that when a check fails, the report immediately identifies which requirement drifted.
+Displaying comparison results between probabilities and thresholds per spec item (ID) makes it straightforward to identify exactly which specification and code have drifted.
 
 ### 5. Workflow Integration
 
-The true power of jev-spec comes from embedding it into your routine development workflow:
+jev-spec shines most when embedded into your routine development workflow as an everyday gate:
 
 - **Staged checks in pre-commit hooks**
 
@@ -255,7 +259,7 @@ The estimated cost reported by the CLI was approximately $0.0006 per full run. R
 
 Repeating identical Rubrics over identical code five times yielded a confidence variance of 0.00 to 0.03 on clean code. A probability moving from 0.96 to 0.95 remains safely above the example threshold of 0.85 (configured as `minProbability` in the settings).
 
-Thresholds are not hardcoded values; they can be configured individually in the settings based on the requirements. In addition, because aliases such as `latest` can resolve to a newer model version and cause unintended shifts in evaluations, specifying an explicit versioned ID (such as `jev-1.13.0`) in `client.model` is recommended. Pinning the model ensures consistent evaluations over time and prevents unexpected behavioral changes, with the report explicitly displaying the model ID used.
+Thresholds are not hardcoded values; they can be configured individually in the settings based on the nature of the specifications and requirements. In addition, because aliases such as `latest` can resolve to a newer model version and cause unintended shifts in evaluations, specifying an explicit versioned ID (such as `jev-1.13.0`) in `client.model` is recommended. Pinning the model ensures consistent evaluations over time and prevents unexpected behavioral changes, with the report explicitly displaying the model ID used.
 
 ## Static Analysis vs. Decision Models, and Conclusion
 
@@ -271,7 +275,7 @@ Deploying jev-spec effectively requires recognizing its operational boundaries:
 
 - **Adversarial code comments can bias evaluations**
 
-  comments stating "this function satisfies requirement X" can skew decisions. TypeSafe lists this as a known model limitation
+  comments stating "this function satisfies the specification" can skew decisions. TypeSafe lists this as a known model limitation
 
 - **Arithmetic, dates, and multi-step reasoning are poor fits**
 

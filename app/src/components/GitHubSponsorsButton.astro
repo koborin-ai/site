@@ -1,0 +1,49 @@
+---
+/**
+ * GitHubSponsorsButton — Embeds a compact GitHub Sponsors button iframe.
+ *
+ * Constrains dimensions to 114x32px and opts out of Starlight content iframe
+ * rules to prevent unconstrained height expansion and empty container boxes.
+ */
+interface Props {
+  username?: string;
+  class?: string;
+  style?: string;
+}
+
+const { username = 'nozomi-koborinai', class: className, style } = Astro.props;
+---
+
+<div class:list={['sponsors-button-wrapper', 'not-content', className]} style={style}>
+  <iframe
+    src={`https://github.com/sponsors/${username}/button`}
+    title={`Sponsor ${username}`}
+    height="32"
+    width="114"
+    class="sponsors-button-iframe"
+  ></iframe>
+</div>
+
+<style>
+  .sponsors-button-wrapper {
+    display: inline-block;
+    width: 114px;
+    height: 32px;
+    max-width: 114px;
+    max-height: 32px;
+    overflow: hidden;
+    line-height: 0;
+    vertical-align: middle;
+  }
+
+  .sponsors-button-iframe {
+    width: 114px !important;
+    height: 32px !important;
+    max-width: 114px !important;
+    max-height: 32px !important;
+    border: 0 !important;
+    border-radius: 6px;
+    display: block;
+    overflow: hidden;
+  }
+</style>

@@ -837,4 +837,29 @@
   }
 }
 
+/* ==========================================================================
+   GitHub Sponsors Button - constrain iframe to compact button dimensions
+   ========================================================================== */
 
+.sponsors-button-wrapper {
+  display: inline-block;
+  width: 114px;
+  height: 32px;
+  max-width: 114px;
+  max-height: 32px;
+  overflow: hidden;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.sponsors-button-wrapper iframe,
+.sl-markdown-content iframe[src*="github.com/sponsors"]:not(:where(.not-content *)) {
+  width: 114px !important;
+  height: 32px !important;
+  max-width: 114px !important;
+  max-height: 32px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  display: block;
+}

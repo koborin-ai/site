@@ -10,8 +10,9 @@ import ThemedSiteImage from '../../components/ThemedSiteImage.astro';
 import heroLight from '../../assets/og/koborin-ai-hero-light.png';
 import heroDark from '../../assets/og/koborin-ai-hero-dark.png';
 import bookCover from '../../assets/life/reflections-on-2025/book-cover.png';
-import contextlintOg from '../../assets/_shared/building/contextlint-og.png';
 import terradartOg from '../../assets/_shared/building/terradart-og.png';
+import jevSpecOg from '../../assets/og/jev-spec-introduction.png';
+import contextlintOg from '../../assets/_shared/building/contextlint-og.png';
 import gcpCostMcpHero from '../../assets/_shared/building/gcp-cost-mcp-hero.jpeg';
 import abletonOscMcpKey from '../../assets/_shared/building/ableton-osc-mcp-key.png';
 
@@ -66,6 +67,36 @@ Unlock the full potential of Genkit and Go—explore the journey from fundamenta
 ### Building
 
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://terradart.dev/">
+<SiteImage src={terradartOg} alt="TerraDart OG image" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
+
+**TerraDart**
+
+As the Dart ecosystem grows — Flutter on the client, more server-side Dart (Firebase Functions, Cloud Run, Cloud Run functions) — teams often still use Terraform for delivery: HCL or `*.tf.json`, alongside the usual GCP console workflows.
+
+TerraDart is my ongoing work on type-safe IaC for that stack. Author typed resources in Dart (GCP first, expanding to Cloudflare and Appwrite), emit standard `*.tf.json`, and keep your existing `terraform apply` pipeline.
+
+[terradart.dev](https://terradart.dev/) / [GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
+</div>
+</div>
+
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
+<a href="https://github.com/nozomi-koborinai/jev-spec">
+<SiteImage src={jevSpecOg} alt="jev-spec OG image" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+</a>
+<div style="flex: 1; min-width: 200px;">
+
+**jev-spec**
+
+Checks your code against the requirements in your Markdown specification and fails the build when they drift apart. It asks TypeSafe AI's Jev model one focused question per requirement, gets a probability back, and compares it with a threshold you set — small enough for a pre-commit hook and strict enough for a CI gate. Tagline: *"Catch spec drift on every commit."*
+
+[GitHub](https://github.com/nozomi-koborinai/jev-spec) / [npm](https://www.npmjs.com/package/jev-spec) / [Article](/tech/jev-spec-introduction/)
+</div>
+</div>
+
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
 <a href="https://contextlint.dev/">
 <SiteImage src={contextlintOg} alt="contextlint OG image" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
 </a>
@@ -76,22 +107,6 @@ Unlock the full potential of Genkit and Go—explore the journey from fundamenta
 A semantic linter for AI-era Markdown. Verifies cross-references, required sections, and dependency graphs deterministically — across your editor, AI assistants, and CI. Tagline: *"markdownlint for syntax. contextlint for meaning."*
 
 [contextlint.dev](https://contextlint.dev/) / [GitHub](https://github.com/nozomi-koborinai/contextlint)
-</div>
-</div>
-
-<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
-<a href="https://terradart.dev/">
-<SiteImage src={terradartOg} alt="TerraDart OG image" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
-</a>
-<div style="flex: 1; min-width: 200px;">
-
-**TerraDart**
-
-As the Dart ecosystem grows — Flutter on the client, more server-side Dart (Firebase Functions, Cloud Run, Cloud Run functions) — teams often still use Terraform for delivery: HCL or `*.tf.json`, alongside the usual GCP console workflows.
-
-TerraDart is my pre-alpha take on type-safe IaC for that stack. Author typed GCP resources in Dart, emit standard `*.tf.json`, and keep your existing `terraform apply` pipeline.
-
-[terradart.dev](https://terradart.dev/) / [GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
 </div>
 </div>
 

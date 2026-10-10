@@ -127,6 +127,8 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   ├── content/
 │   │   │   └── docs/             # MDX pages: tech/, life/, ja/ (Starlight)
 │   │   ├── content.config.ts    # Content Collections schema (extends docsSchema)
+│   │   ├── plugins/
+│   │   │   └── rehype-preserve-mermaid-style.ts  # Keep Mermaid <style> CSS as text
 │   │   ├── utils/
 │   │   │   ├── llms.ts           # Shared logic for llms.txt generation
 │   │   │   └── llms.test.ts      # Vitest coverage for llms.txt rendering

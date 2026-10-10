@@ -29,6 +29,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/public/_headers` | Worker static-asset header rules (UTF-8 on `*.txt`). |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content.config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
+| `app/src/plugins/rehype-preserve-mermaid-style.ts` | Keeps Mermaid inline-SVG `<style>` CSS as element text so Astro's MDX optimizer does not drop it. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
 | `app/src/pages/rss.xml.ts` | RSS feed endpoint for English articles. |
@@ -348,6 +349,7 @@ Examples:
 
 5. **Mermaid in MDX Articles**:
    - Mermaid code blocks in MDX files are rendered via `rehype-mermaid` with `strategy: "inline-svg"`.
+   - `rehypePreserveMermaidStyle` (`app/src/plugins/rehype-preserve-mermaid-style.ts`) must stay immediately after `rehype-mermaid`. Starlight's MDX optimizer otherwise serializes SVG `<style>` CSS into a literal `set:html` attribute, and the diagram falls back to black fills.
    - Dark/light mode theming is handled by CSS in `app/src/styles/custom.css`.
    - **Do not override Mermaid theme in code blocks** - the global CSS handles theme switching.
    - Keep node labels short to avoid text overlap (especially in `flowchart LR` layouts).

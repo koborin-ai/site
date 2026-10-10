@@ -5,6 +5,7 @@ import rehypeMermaid from "rehype-mermaid";
 import remarkGfm from "remark-gfm";
 import starlightAutoDrafts from "starlight-auto-drafts";
 import { sidebar } from "./src/sidebar.ts";
+import { rehypePreserveMermaidStyle } from "./src/plugins/rehype-preserve-mermaid-style.ts";
 
 export default defineConfig({
   site: "https://koborin.ai",
@@ -22,6 +23,8 @@ export default defineConfig({
             mermaidConfig: { theme: "neutral" },
           },
         ],
+        // Starlight's MDX optimizer would otherwise stringify <style> CSS into a set:html attribute.
+        rehypePreserveMermaidStyle,
       ],
     }),
   },

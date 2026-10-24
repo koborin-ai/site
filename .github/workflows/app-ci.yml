@@ -30,6 +30,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .tool-versions
+          check-latest: true
           cache: npm
           cache-dependency-path: app/package-lock.json
 

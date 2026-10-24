@@ -29,6 +29,10 @@ jobs:
       - name: Setup toolchain
         uses: jdx/mise-action@v5
 
+      # mise-action caches the resolved patch for up to 30 days.
+      - name: Use the newest Node.js patch
+        run: mise upgrade node
+
       - name: Lint workflows and scripts
         run: mise run check:automation
 

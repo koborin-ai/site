@@ -1,4 +1,4 @@
-node 22
+node 24
 dart 3.13
 terraform 1.11.4
 actionlint 1.7.12

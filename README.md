@@ -83,7 +83,7 @@ Tool versions come from `.tool-versions`. `actions/setup-node` reads it through 
 
 ## Tech Stack
 
-- **Frontend**: Astro and TypeScript. Home, article lists, talk lists, and articles share one centred column. Pagefind site search is gone.
+- **Frontend**: Astro and TypeScript. Home, article lists, talk lists, and articles share one centred column. Article pages use a wider measure than the home and list pages. Pagefind site search is gone.
 - **Content Management**: MDX stored under `app/src/content/docs/` within git. Frontmatter is validated with Zod in `app/src/content.config.ts`. Drafts can be marked with `draft: true` in frontmatter.
 - **Analytics**: Google Analytics 4 for baseline PV/engagement.
 - **Infrastructure**: TerraDart (Dart) targeting Cloudflare via Terraform. State is in R2.

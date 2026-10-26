@@ -1,10 +1,6 @@
 ---
 /**
- * ThemedSiteImage — light/dark image pair for Starlight theme toggle.
- *
- * Renders two SiteImage instances but only the visible one should load:
- * both use loading="lazy" so display:none hides the inactive variant from
- * network fetch. The default-visible (light) image keeps fetchpriority="high".
+ * Both images use loading="lazy". A display:none image is not fetched.
  */
 import SiteImage from './SiteImage.astro';
 import type { ImageMetadata } from 'astro';

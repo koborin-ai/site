@@ -1,7 +1,8 @@
 ---
-// Custom ThemeSelect component that overrides Starlight's default theme selector
-// Matches the style of the landing page ThemeToggle component for consistency
-// Icons change based on selected option: Auto=laptop, Light=sun, Dark=moon
+const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
+const labels = isJapanese
+  ? { accessible: 'テーマを選択', dark: 'ダーク', light: 'ライト', auto: '自動' }
+  : { accessible: 'Select theme', dark: 'Dark', light: 'Light', auto: 'Auto' };
 ---
 
 <starlight-theme-select>
@@ -28,10 +29,10 @@
       <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
       <line x1="2" y1="20" x2="22" y2="20"></line>
     </svg>
-    <select class="theme-select" aria-label={Astro.locals.t('themeSelect.accessibleLabel')}>
-      <option value="dark">{Astro.locals.t('themeSelect.dark')}</option>
-      <option value="light">{Astro.locals.t('themeSelect.light')}</option>
-      <option value="auto" selected>{Astro.locals.t('themeSelect.auto')}</option>
+    <select class="theme-select" aria-label={labels.accessible}>
+      <option value="dark">{labels.dark}</option>
+      <option value="light">{labels.light}</option>
+      <option value="auto" selected>{labels.auto}</option>
     </select>
     <svg class="icon-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
       <polyline points="6 9 12 15 18 9"></polyline>
@@ -39,7 +40,6 @@
   </div>
 </starlight-theme-select>
 
-{/* Inlined to avoid FOUC. Uses global scope from Starlight's ThemeProvider.astro */}
 <script is:inline>
   StarlightThemeProvider.updatePickers();
 </script>
@@ -47,41 +47,34 @@
 <script>
   type Theme = 'auto' | 'dark' | 'light';
 
-  // Type declaration for Starlight's global theme provider
   declare const StarlightThemeProvider: {
     updatePickers(theme?: Theme): void;
   };
 
-  /** Key in `localStorage` to store color theme preference at. */
+  // Same key Starlight used, so a returning visitor keeps their choice.
   const storageKey = 'starlight-theme';
 
-  /** Get a typesafe theme string from any JS value (unknown values are coerced to `'auto'`). */
   const parseTheme = (theme: unknown): Theme =>
     theme === 'auto' || theme === 'dark' || theme === 'light' ? theme : 'auto';
 
-  /** Load the user's preference from `localStorage`. */
   const loadTheme = (): Theme =>
     parseTheme(typeof localStorage !== 'undefined' && localStorage.getItem(storageKey));
 
-  /** Store the user's preference in `localStorage`. */
   function storeTheme(theme: Theme): void {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(storageKey, theme === 'light' || theme === 'dark' ? theme : '');
     }
   }
 
-  /** Get the preferred system color scheme. */
   const getPreferredColorScheme = (): Theme =>
     matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 
-  /** Update the icon based on selected theme choice. */
   function updateIcon(theme: Theme): void {
     document.querySelectorAll('.theme-toggle-container').forEach((container) => {
       container.setAttribute('data-theme-choice', theme);
     });
   }
 
-  /** Update select menu UI, document theme, and local storage state. */
   function onThemeChange(theme: Theme): void {
     StarlightThemeProvider.updatePickers(theme);
     document.documentElement.dataset.theme = theme === 'auto' ? getPreferredColorScheme() : theme;
@@ -105,7 +98,9 @@
       });
     }
   }
-  customElements.define('starlight-theme-select', StarlightThemeSelect);
+  if (!customElements.get('starlight-theme-select')) {
+    customElements.define('starlight-theme-select', StarlightThemeSelect);
+  }
 </script>
 
 <style>

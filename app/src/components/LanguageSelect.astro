@@ -1,0 +1,57 @@
+---
+interface Props {
+  locale: 'en' | 'ja';
+  enHref: string;
+  jaHref: string;
+}
+
+const { locale, enHref, jaHref } = Astro.props;
+const label = locale === 'ja' ? '言語の選択' : 'Select language';
+---
+
+<starlight-lang-select>
+  <label class="lang-select">
+    <span class="sr-only">{label}</span>
+    <select aria-label={label}>
+      <option value={enHref} selected={locale === 'en'}>English</option>
+      <option value={jaHref} selected={locale === 'ja'}>日本語</option>
+    </select>
+  </label>
+</starlight-lang-select>
+
+<script>
+  document.querySelectorAll('starlight-lang-select select').forEach((select) => {
+    if (!(select instanceof HTMLSelectElement)) return;
+    if (select.dataset.bound === 'true') return;
+    select.dataset.bound = 'true';
+    select.addEventListener('change', () => {
+      const next = select.value;
+      if (next) window.location.assign(next);
+    });
+  });
+</script>
+
+<style>
+  .lang-select {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.5rem;
+    background: var(--sl-color-bg-nav, var(--color-bg-card, #16161f));
+    border: 1px solid var(--sl-color-hairline, var(--color-border, #27272a));
+    border-radius: 0.5rem;
+    color: var(--sl-color-gray-2, var(--color-text-secondary, #a1a1aa));
+  }
+
+  .lang-select select {
+    appearance: none;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .lang-select select:focus {
+    outline: none;
+  }
+</style>

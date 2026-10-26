@@ -1,44 +1,19 @@
 ---
-/**
- * Custom Footer component that extends Starlight's default Footer.
- * 
- * - For pages with `publishedAt` (articles): Shows EngagementFooter + default Footer
- * - For other pages: Shows only default Footer
- * - Always shows site footer with copyright and privacy policy link
- */
-import Default from '@astrojs/starlight/components/Footer.astro';
 import EngagementFooter from './EngagementFooter.astro';
 
-interface FrontmatterData {
-  publishedAt?: Date;
-  engagement?: boolean;
+interface Props {
+  title: string;
+  showEngagement: boolean;
 }
 
-const { entry } = Astro.locals.starlightRoute;
-const frontmatter = entry.data as FrontmatterData;
-
-// Show engagement UI if:
-// 1. Page has publishedAt (is an article), OR
-// 2. Page explicitly sets engagement: true
-// Hide if engagement: false is explicitly set
-const hasPublishedAt = !!frontmatter.publishedAt;
-const explicitEngagement = frontmatter.engagement;
-
-const showEngagement = explicitEngagement === true || (explicitEngagement !== false && hasPublishedAt);
-
-// Locale detection for privacy policy link
+const { title, showEngagement } = Astro.props;
 const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
 const privacyPolicyUrl = isJapanese ? '/ja/privacy-policy/' : '/privacy-policy/';
 const privacyPolicyLabel = isJapanese ? 'プライバシーポリシー' : 'Privacy Policy';
-
 const currentYear = new Date().getFullYear();
 ---
 
-{showEngagement && <EngagementFooter />}
-
-<Default {...Astro.props}>
-  <slot />
-</Default>
+{showEngagement && <EngagementFooter title={title} />}
 
 <footer class="site-footer">
   <div class="site-footer-content">

@@ -1,22 +1,20 @@
 ---
-/**
- * SiteHeader - Header component for Starlight docs pages
- * 
- * Configured as Starlight Header override, receives StarlightRouteData
- */
 import { Image } from 'astro:assets';
-import Search from '@astrojs/starlight/components/Search.astro';
-import MobileMenuToggle from '@astrojs/starlight/components/MobileMenuToggle.astro';
-import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
+import LanguageSelect from './LanguageSelect.astro';
 import ThemeSelect from './ThemeSelect.astro';
 import headerLogoDark from '../assets/_shared/koborin-ai-header-dark.svg';
 import headerLogoLight from '../assets/_shared/koborin-ai-header-light.svg';
+import type { Locale } from '../lib/docs';
 
-const props = Astro.props;
+interface Props {
+  locale: Locale;
+  enHref: string;
+  jaHref: string;
+}
 
-// Locale-aware home link
-const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
-const homeHref = isJapanese ? '/ja/' : '/';
+const { locale, enHref, jaHref } = Astro.props;
+const homeHref = locale === 'ja' ? '/ja/' : '/';
+const menuLabel = locale === 'ja' ? 'メニュー' : 'Menu';
 ---
 
 <header class="nav-header">
@@ -27,10 +25,6 @@ const homeHref = isJapanese ? '/ja/' : '/';
     </a>
 
     <div class="nav-actions">
-      <div class="nav-search">
-        <Search {...props} />
-      </div>
-
       <div class="nav-social-links">
         <a href="https://github.com/nozomi-koborinai" class="nav-social-link" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -56,19 +50,20 @@ const homeHref = isJapanese ? '/ja/' : '/';
 
       <div class="nav-header-controls">
         <span class="nav-divider" aria-hidden="true"></span>
-        <LanguageSelect {...props} />
+        <LanguageSelect locale={locale} enHref={enHref} jaHref={jaHref} />
         <ThemeSelect />
       </div>
-      
-      <div class="starlight-mobile-toggle">
-        <MobileMenuToggle {...props} />
-      </div>
+
+      <button class="nav-menu" type="button" popovertarget="site-sidebar" aria-label={menuLabel}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </svg>
+      </button>
     </div>
   </nav>
 </header>
 
 <style>
-  /* Header Layout */
   .nav-header { 
     position: fixed; 
     top: 0; 
@@ -90,7 +85,6 @@ const homeHref = isJapanese ? '/ja/' : '/';
     padding: 0 var(--container-padding);
   }
 
-  /* Logo */
   .nav-logo { display: flex; align-items: center; flex-shrink: 0; margin-left: -0.25rem; }
   .nav-logo img { height: 3rem; width: auto; }
   .logo-dark { display: none; }
@@ -101,16 +95,8 @@ const homeHref = isJapanese ? '/ja/' : '/';
     .nav-logo img { height: 2.5rem; }
   }
 
-  /* Actions Area */
   .nav-actions { display: flex; align-items: center; gap: var(--space-sm); flex: 1; justify-content: flex-end; }
   
-  /* Search (Starlight) */
-  .nav-search { display: none; }
-  @media (min-width: 768px) { 
-    .nav-search { display: block; flex: 1; max-width: 400px; }
-  }
-
-  /* Social Links - show on tablet and desktop */
   .nav-social-links { display: none; align-items: center; gap: 0.25rem; }
   @media (min-width: 768px) { .nav-social-links { display: flex; } }
   
@@ -126,22 +112,25 @@ const homeHref = isJapanese ? '/ja/' : '/';
   }
   .nav-social-link:hover { color: var(--color-text-primary); background: var(--color-bg-tertiary); }
 
-  /* Header controls (Language + Theme) - show on tablet and desktop */
   .nav-header-controls { display: none; align-items: center; gap: 0.25rem; }
   @media (min-width: 768px) { .nav-header-controls { display: flex; } }
 
-  /* Divider */
   .nav-divider { width: 1px; height: 1.5rem; background: var(--color-border); margin: 0 0.25rem; }
 
-  /* Mobile Toggle (Starlight) - show only on mobile (< 768px) */
-  .starlight-mobile-toggle {
-    display: block;
+  .nav-menu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-md);
+    cursor: pointer;
   }
-  .starlight-mobile-toggle :global(button) {
-    display: flex !important;
-  }
-  @media (min-width: 768px) {
-    .starlight-mobile-toggle { display: none; }
-    .starlight-mobile-toggle :global(button) { display: none !important; }
+
+  @media (min-width: 50rem) {
+    .nav-menu { display: none; }
   }
 </style>

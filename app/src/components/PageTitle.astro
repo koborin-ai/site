@@ -1,84 +1,53 @@
 ---
-/**
- * Custom PageTitle component that displays the article title
- * followed by published and updated dates.
- *
- * - publishedAt: Set manually in frontmatter (YYYY-MM-DD)
- * - updatedAt: Automatically provided by Starlight's lastUpdated feature from Git history
- */
-import Default from '@astrojs/starlight/components/PageTitle.astro';
+import { shouldShowUpdated } from '../lib/last-updated';
+import type { Locale } from '../lib/docs';
 
-interface FrontmatterData {
+interface Props {
+  title: string;
+  locale: Locale;
   publishedAt?: Date;
+  updatedAt?: Date;
+  draft?: boolean;
 }
 
-const { entry, locale, lastUpdated } = Astro.locals.starlightRoute;
-const frontmatter = entry.data as FrontmatterData;
-const publishedAt = frontmatter.publishedAt;
+const { title, locale, publishedAt, updatedAt, draft = false } = Astro.props;
+const showUpdated = shouldShowUpdated(publishedAt, updatedAt);
 
-// lastUpdated is provided by Starlight when lastUpdated: true is set in config
-const updatedAt = lastUpdated;
-
-// Check if dates are meaningfully different (more than 1 day apart)
-const shouldShowUpdated = (() => {
-  if (!publishedAt || !updatedAt) return !!updatedAt;
-  const diffMs = Math.abs(updatedAt.getTime() - publishedAt.getTime());
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-  return diffDays >= 1;
-})();
-
-// Format date based on locale
-function formatDate(date: Date, lang: string): string {
+function formatDate(date: Date, lang: Locale): string {
   if (lang === 'ja') {
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    return date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
   }
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-// Labels based on locale
 const labels = locale === 'ja'
-  ? { published: '公開', updated: '更新' }
-  : { published: 'Published', updated: 'Updated' };
-
-const lang = locale === 'ja' ? 'ja' : 'en';
+  ? { published: '公開', updated: '更新', draft: 'このコンテンツは下書きです。プロダクションビルドには含まれません。' }
+  : { published: 'Published', updated: 'Updated', draft: 'This content is a draft and will not be included in production builds.' };
 ---
 
-<Default {...Astro.props}><slot /></Default>
+<h1 class="page-title">{title}</h1>
 
-{(publishedAt || updatedAt) && (
+{(publishedAt || showUpdated) && (
   <div class="article-dates">
     {publishedAt && (
       <span class="date-item">
         <span class="date-label">{labels.published}:</span>
-        <time datetime={publishedAt.toISOString()}>
-          {formatDate(publishedAt, lang)}
-        </time>
+        <time datetime={publishedAt.toISOString()}>{formatDate(publishedAt, locale)}</time>
       </span>
     )}
-    {publishedAt && shouldShowUpdated && updatedAt && (
-      <span class="date-separator">·</span>
-    )}
-    {shouldShowUpdated && updatedAt && (
+    {publishedAt && showUpdated && updatedAt && <span class="date-separator">·</span>}
+    {showUpdated && updatedAt && (
       <span class="date-item">
         <span class="date-label">{labels.updated}:</span>
-        <time datetime={updatedAt.toISOString()}>
-          {formatDate(updatedAt, lang)}
-        </time>
+        <time datetime={updatedAt.toISOString()}>{formatDate(updatedAt, locale)}</time>
       </span>
     )}
   </div>
 )}
 
+{draft && <p class="draft-notice">{labels.draft}</p>}
+
 <style>
-  /* Layout styles only - colors are in custom.css for theme support */
   .article-dates {
     display: flex;
     flex-wrap: wrap;

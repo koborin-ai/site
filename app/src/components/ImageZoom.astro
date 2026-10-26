@@ -93,8 +93,7 @@
 </script>
 
 <style is:global>
-  /* medium-zoom does not set z-index; Starlight's site header has z-index 10,
-     so without this override the zoomed image is hidden behind the header. */
+  /* medium-zoom does not set z-index, so the zoomed image would sit under the fixed header. */
   .medium-zoom-overlay,
   .medium-zoom-image--opened {
     z-index: 1000;

@@ -1,0 +1,12 @@
+ts	phase	decision	why	evidence	result
+2026-10-26T11:16:13Z	frame	Keep every current public URL and the current look. Drop site search. Leave article files where they are.	This PR only removes Starlight. The redesign and the move to /blog/ are later PRs.	app/scripts/routes-baseline.txt	scope fixed
+2026-10-26T11:16:13Z	design	Copy Starlight 0.42.6 CSS into app/src/styles/vendor and keep its class names.	custom.css already targets those classes. Rewriting it would be the next design PR.	app/src/styles/vendor/NOTICE	kept
+2026-10-26T11:16:13Z	design	Skipped a design bakeoff.	The URL list, the file locations, and the look were already fixed by the request.	user constraints	skipped
+2026-10-26T11:16:13Z	content	Keep the docs collection id and the MDX files under app/src/content/docs.	llms.txt and the RSS feeds read those ids. Moving files would rewrite import paths inside articles.	app/src/utils/llms.ts	kept
+2026-10-26T11:16:13Z	gate	Recorded 113 public URLs from the Starlight build.	The later build has to match this list.	app/scripts/routes-baseline.txt	113 urls
+2026-10-26T11:16:14Z	gate	The plain Astro build drops only the 50 pagefind URLs.	Search left with Starlight. Every other URL has to stay.	npm run build output missing 0 added 0	missing 0 added 0
+2026-10-26T11:16:14Z	bug	Create a new heading slugger for each file.	One shared slugger turned the only まとめ heading into まとめ-2.	dist/ja/tech/koborin-ai-architecture/index.html id=まとめ	fixed
+2026-10-26T11:16:14Z	bug	Un-ignore app/src/lib in .gitignore.	The lib/ rule hid the URL and nav modules, so a commit would not have contained them.	.gitignore	files visible
+2026-10-26T11:16:14Z	subtract	Delete rehypePreserveMermaidStyle.	A build without it still emits Mermaid style text. mdx optimize is off, which is what used to corrupt those tags.	build mermaid style True and set:html False	deleted
+2026-10-26T11:20:25Z	gate	Allow generated /og/*.webp files in the route check.	CI converts OG images to webp before the build, so those files are new URLs the local baseline does not list. App CI failed with added 18.	https://github.com/koborin-ai/site/actions/runs/40313953323	supersedes the missing 0 added 0 row
+2026-10-26T11:26:28Z	bug	Emit hreflang en, ja, and x-default from the page head.	Starlight wrote those links. The glob loader ids the Japanese home as ja, so the language pair used ja/index and the links never rendered.	dist/ja/tech/koborin-ai-architecture/index.html and dist/ja/index.html	restored

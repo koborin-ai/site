@@ -1,90 +1,93 @@
 ---
-import Default from '@astrojs/starlight/components/Head.astro';
-import ImageZoom from './ImageZoom.astro';
-import CookieConsent from './CookieConsent.astro';
+interface Props {
+  title: string;
+  description: string;
+  lang: 'en' | 'ja';
+  ogImage?: string;
+  hreflang?: { hreflang: string; href: string }[];
+}
 
-const { entry } = Astro.locals.starlightRoute;
-const ogImage = (entry.data as { ogImage?: string })?.ogImage;
+const { title, description, lang, ogImage, hreflang = [] } = Astro.props;
 
-// Auto-convert .png/.jpg/.jpeg references to .webp (CI generates WebP versions)
 const normalizeToWebp = (path: string) => path.replace(/\.(png|jpe?g)$/i, '.webp');
 const ogImagePath = ogImage ? normalizeToWebp(ogImage) : '/og/index.webp';
 const ogImageUrl = new URL(ogImagePath, Astro.site).href;
-
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const pageTitle = `${title} | koborin.ai`;
 const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 ---
 
-<Default {...Astro.props}>
-  <slot />
-</Default>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{hreflang.map((link) => (
+  <link rel="alternate" hreflang={link.hreflang} href={link.href} />
+))}
+<link rel="shortcut icon" href="/favicon.png" type="image/png" />
 
+<meta property="og:title" content={title} />
+<meta property="og:type" content="article" />
+<meta property="og:url" content={canonical} />
+<meta property="og:locale" content={lang} />
+<meta property="og:description" content={description} />
+<meta property="og:site_name" content="koborin.ai" />
 <meta property="og:image" content={ogImageUrl} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content={ogImageUrl} />
 
-<!-- RSS feed auto-discovery -->
 <link rel="alternate" type="application/rss+xml" title="koborin.ai" href="/rss.xml" />
 <link rel="alternate" type="application/rss+xml" title="koborin.ai (日本語)" href="/ja/rss.xml" />
 
 {gaMeasurementId && (
-  <>
-    <!-- GA4 script loader - only loads if user has accepted cookies -->
-    <script is:inline define:vars={{ gaMeasurementId }}>
-      (function() {
-        const STORAGE_KEY = 'cookie_consent';
-        const CONSENT_ACCEPTED = 'accepted';
+  <script is:inline define:vars={{ gaMeasurementId }}>
+    (function() {
+      const STORAGE_KEY = 'cookie_consent';
+      const CONSENT_ACCEPTED = 'accepted';
 
-        function hasAcceptedCookies() {
-          try {
-            return localStorage.getItem(STORAGE_KEY) === CONSENT_ACCEPTED;
-          } catch {
-            return false;
-          }
+      function hasAcceptedCookies() {
+        try {
+          return localStorage.getItem(STORAGE_KEY) === CONSENT_ACCEPTED;
+        } catch {
+          return false;
         }
+      }
 
-        function loadGA4() {
-          // Prevent double loading
-          if (window.ga4Loaded) return;
-          window.ga4Loaded = true;
+      function loadGA4() {
+        if (window.ga4Loaded) return;
+        window.ga4Loaded = true;
 
-          // Load gtag.js script
-          const script = document.createElement('script');
-          script.async = true;
-          script.src = 'https://www.googletagmanager.com/gtag/js?id=' + gaMeasurementId;
-          document.head.appendChild(script);
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + gaMeasurementId;
+        document.head.appendChild(script);
 
-          // Initialize gtag
-          window.dataLayer = window.dataLayer || [];
-          // oxlint-disable-next-line unicorn/consistent-function-scoping -- keep Google's gtag snippet verbatim
-          function gtag(){dataLayer.push(arguments);}
-          window.gtag = gtag;
-          gtag('js', new Date());
-          gtag('config', gaMeasurementId);
-        }
+        window.dataLayer = window.dataLayer || [];
+        // oxlint-disable-next-line unicorn/consistent-function-scoping -- keep Google's gtag snippet verbatim
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', gaMeasurementId);
+      }
 
-        // Check consent on page load
-        if (hasAcceptedCookies()) {
+      if (hasAcceptedCookies()) {
+        loadGA4();
+      }
+
+      window.addEventListener('cookie-consent-changed', function(e) {
+        if (e.detail && e.detail.consent === CONSENT_ACCEPTED) {
           loadGA4();
         }
+      });
 
-        // Listen for consent changes (from CookieConsent component)
-        window.addEventListener('cookie-consent-changed', function(e) {
-          if (e.detail && e.detail.consent === CONSENT_ACCEPTED) {
-            loadGA4();
-          }
-        });
-
-        // Re-check on Astro page transitions
-        document.addEventListener('astro:page-load', function() {
-          if (hasAcceptedCookies() && !window.ga4Loaded) {
-            loadGA4();
-          }
-        });
-      })();
-    </script>
-  </>
+      document.addEventListener('astro:page-load', function() {
+        if (hasAcceptedCookies() && !window.ga4Loaded) {
+          loadGA4();
+        }
+      });
+    })();
+  </script>
 )}
-
-<ImageZoom />
-<CookieConsent />

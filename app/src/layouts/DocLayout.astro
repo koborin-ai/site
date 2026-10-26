@@ -75,7 +75,7 @@ if (entry) {
   hreflang={hreflang}
 >
   {kind === 'home' && <HomePage locale={locale} />}
-  {kind === 'doc' && (
+  {(kind === 'doc' || kind === 'about') && (
     <PageTitle
       title={title}
       locale={locale}

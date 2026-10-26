@@ -324,6 +324,10 @@ select:focus-visible {
   line-height: 1.3;
 }
 
+.column .page-title:has(+ .sl-markdown-content) {
+  margin-bottom: 28px;
+}
+
 .column .article-dates,
 .column .date-label,
 .column .date-item,
@@ -348,6 +352,10 @@ select:focus-visible {
   height: auto;
 }
 
+.column .sl-anchor-link {
+  text-decoration: none;
+}
+
 .column .sl-markdown-content h1 {
   margin: 0 0 28px;
   color: var(--site-fg);
@@ -358,9 +366,9 @@ select:focus-visible {
 }
 
 .site-header a:not(.icon-link),
-.column a:not(.badge):not(.row),
+.column a:not(.badge):not(.row):not(.sl-anchor-link),
 .quiet-list a.row .link-text,
-.column .sl-markdown-content a:not(:where(.not-content *)) {
+.column .sl-markdown-content a:not(:where(.not-content *, .sl-anchor-link)) {
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-decoration-offset: 0.18em;
@@ -368,14 +376,11 @@ select:focus-visible {
 }
 
 .site-header a:not(.icon-link):hover,
-.column a:not(.badge):not(.row):hover,
+.column a:not(.badge):not(.row):not(.sl-anchor-link):hover,
 .quiet-list a.row:hover .link-text,
-.column .sl-markdown-content a:hover:not(:where(.not-content *)) {
+.column .sl-markdown-content a:hover:not(:where(.not-content *, .sl-anchor-link)) {
   text-decoration-thickness: 2px;
   text-decoration-color: currentColor;
-}
-
-.column .sl-markdown-content a:hover:not(:where(.not-content *)) {
   color: var(--sl-color-text-accent);
 }
 

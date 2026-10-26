@@ -1,0 +1,39 @@
+---
+interface Item {
+  href?: string;
+  title: string;
+  meta?: string;
+  date: string;
+  external?: boolean;
+}
+
+interface Props {
+  items: readonly Item[];
+}
+
+const { items } = Astro.props;
+---
+
+<ul class="quiet-list">
+  {items.map((item) => (
+    <li>
+      {item.href ? (
+        <a
+          class="row"
+          href={item.href}
+          target={item.external ? '_blank' : undefined}
+          rel={item.external ? 'noopener noreferrer' : undefined}
+        >
+          <span class="link-text">{item.title}</span>
+          {item.meta && <span class="sub">{item.meta}</span>}
+        </a>
+      ) : (
+        <span class="t">
+          {item.title}
+          {item.meta && <span class="sub">{item.meta}</span>}
+        </span>
+      )}
+      <span class="meta">{item.date}</span>
+    </li>
+  ))}
+</ul>

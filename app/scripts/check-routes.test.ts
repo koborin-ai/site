@@ -20,4 +20,14 @@ describe('diffRoutes', () => {
     expect(result.missing).toEqual(['/tech/foo/']);
     expect(result.unexpected).toEqual(['/life/new/']);
   });
+
+  it('allows the list pages and the about pages', () => {
+    const result = diffRoutes(
+      ['/'],
+      ['/', '/blog/', '/ja/blog/', '/talks/', '/ja/talks/', '/about/', '/ja/about/', '/secret/'],
+    );
+
+    expect(result.unexpected).toEqual(['/secret/']);
+    expect(result.missing).toEqual([]);
+  });
 });

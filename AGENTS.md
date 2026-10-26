@@ -10,7 +10,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 ## Mission
 
 - Personal site + technical garden for `koborin.ai`.
-- Astro for MDX content under `app/src/content/docs/`. The docs layout keeps the previous Starlight look.
+- Astro for MDX content under `app/src/content/docs/`. Home, lists, and articles share one centred column.
 - Cloudflare Workers static assets on `koborin.ai` only. No `dev.koborin.ai`.
 - Infrastructure managed via TerraDart (Dart) with one Terraform root module: `site`.
 - CI/CD and `terraform plan`/`apply` executed only through GitHub Actions using a scoped Cloudflare API token.
@@ -30,7 +30,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content.config.ts` | Zod schema for the `docs` content collection. |
 | `app/src/pages/[...slug].astro` | Renders each docs entry at its current public URL. |
-| `app/src/lib/` | Public URL mapping, sidebar navigation, and the git updated date. |
+| `app/src/lib/` | Public URL mapping, the home and list catalog, and the git updated date. |
 | `app/src/styles/vendor/` | CSS copied from Starlight 0.42.6. The layout keeps the class names those files expect. |
 | `app/scripts/routes-baseline.txt` | Public URLs the production build must still emit. `/pagefind/` is the only allowed omission. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
@@ -90,20 +90,15 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 1. **MDX workflow**:
    - Author pages under `app/src/content/docs/`. Use YAML frontmatter with `title`, `description`.
-   - Mark drafts with `draft: true` in frontmatter to exclude from navigation.
-   - Navigation comes from `app/src/sidebar.ts`. `app/src/lib/navigation.ts` builds the sidebar for the current language.
+   - Mark drafts with `draft: true` in frontmatter to exclude them from production and from the article lists.
    - **Drafts are not covered by `npm run build`**: `getStaticPaths` omits `draft: true` outside `npm run dev`, so a broken draft passes CI and only fails once rendered. Open every draft you touched in `npm run dev` before considering it done, and re-run `npm run build` after removing `draft: true` so the page enters the build for the first time under your own eyes.
-   - A draft slug in `app/src/sidebar.ts` is hidden in production. In dev it stays in the sidebar with a DRAFT badge.
    - **Prose review while drafting**: `npx textlint <file>` in `app/` reads the article back for AI-writing tells (English-calque `〜：` lead-ins, absolute claims, mechanical emphasis). It only reacts to Japanese; all 18 English articles report zero. Treat every hit as a suggestion to read again, not a rule.
 2. **Adding new content**:
    - Create `.mdx` file under `app/src/content/docs/` (or subdirectory for categories like `blog/`, `guides/`).
    - Add frontmatter: `title` (required), `description` (required), `publishedAt` (required for articles, `YYYY-MM-DD`), `draft` (optional, boolean).
-   - Update `app/src/sidebar.ts` to add navigation entry:
-     - Single page: `{ label: "Page Title", slug: "page-name" }`
-     - Categorized: `{ label: "Category", items: [{ label: "Post", slug: "category/post" }] }`
-     - **Sidebar labels**: Use English labels only (no `translations`). This ensures consistent navigation across all language versions.
-   - Folder structure maps to URL structure: `docs/blog/post.mdx` → `/blog/post/`
-   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` is the only allowed omission.
+   - A published article (frontmatter `publishedAt`, not a draft) is listed on the home page and on `/blog/` or `/ja/blog/` from the content collection. No sidebar entry.
+   - Folder structure maps to URL structure: `docs/tech/post.mdx` → `/tech/post/`. Article URLs stay under `/tech/` and `/life/` until a later move to `/blog/`.
+   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` may disappear. The only other allowed additions are the pages in `allowedAdditions` inside `app/scripts/check-routes.mjs` (`/blog/`, `/ja/blog/`, `/talks/`, `/ja/talks/`, `/about/`, `/ja/about/`).
    - **Japanese link spacing**: In Japanese MDX prose, add a half-width space between Japanese text characters (hiragana, katakana, kanji) and Markdown links. Do NOT add a space between full-width punctuation (`、`, `。`, `（`, `）`) and links — full-width characters already have built-in visual whitespace.
      - Good: `どのバージョンの [仕様](https://...) に準拠する`
      - Good: `GA で、[Dart 版](https://...) は 2026 年` (no space after `、`)
@@ -111,9 +106,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Bad: `GA で、 [Dart 版](https://...) は` (unnecessary space after `、`)
 3. **Brand Assets Management**:
    - **Favicon**: Place in `app/public/favicon.png`. `app/src/components/Head.astro` links it.
-   - **Header Logo**: Place in `app/src/assets/_shared/`. `app/src/components/SiteHeader.astro` renders the light and dark SVGs.
+   - **Header mark**: The header is the text `koborin.ai` in Geist Mono, in `app/src/components/SiteHeader.astro`. It links home.
    - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`).
-   - **Logo Sizing**: Set on `.nav-logo img` in `app/src/components/SiteHeader.astro`. Default: `3rem` desktop, `2.5rem` below 768px.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
 4. **Image Conventions**:
    - **MANDATORY**: All on-page images must be rendered through the `SiteImage` component (`app/src/components/SiteImage.astro`). Raw `<img>` tags and direct use of Astro's `<Image />` / `<Picture />` are forbidden in MDX and `.astro` files.
@@ -164,9 +158,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **CI/CD**: Uses `fetch-depth: 0` to clone full Git history so the updated date can read commits.
    - **Local Development**: Updated date is shown for committed files. New uncommitted files show only the published date (if set).
 7. **Site chrome**:
-   - Dark mode, a responsive sidebar, and a table of contents. Pagefind site search is not included.
-   - Look comes from `app/src/styles/vendor/` plus `app/src/styles/custom.css`.
-   - Social links live in `app/src/components/SiteHeader.astro`. Sidebar entries live in `app/src/sidebar.ts`.
+   - One centred column on a dot grid. Home, `/about/`, `/blog/`, `/talks/`, and article pages share `app/src/components/SiteShell.astro`. There is no sidebar and no table of contents.
+   - Colours and type live in `app/src/styles/site.css` and `app/src/styles/fonts.css`. The accent is neutral (`#d5dae1` in dark, `#4a5260` in light). Text links are underlined. Article prose still uses `app/src/styles/vendor/`.
+   - The header has the mark, an About link, an EN/JA link, GitHub, X, RSS, and the theme control. Home keeps the name, bio, and three lists. The longer profile lives on `/about/` and `/ja/about/`. Home sections and the list pages read `app/src/lib/catalog.ts`. `app/src/sidebar.ts` is not rendered.
 8. **Testing**: run `mise run check` from the repository root before committing. It covers the app (`npm run check`: oxlint, `astro check`, Vitest, image usage), the infra (`dart analyze`, `dart test`), the automation (actionlint, shellcheck, PR label tests), and the docs (markdownlint). Run `npm run build` in `app/` as well whenever content or configuration changes.
 9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 10. **Workers deployment**:

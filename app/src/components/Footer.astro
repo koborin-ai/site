@@ -16,59 +16,33 @@ const currentYear = new Date().getFullYear();
 {showEngagement && <EngagementFooter title={title} />}
 
 <footer class="site-footer">
-  <div class="site-footer-content">
-    <span class="copyright">© {currentYear} koborin.ai</span>
-    <span class="separator">·</span>
-    <a href={privacyPolicyUrl} class="footer-link">{privacyPolicyLabel}</a>
-  </div>
+  <span class="copyright">© {currentYear} koborin.ai</span>
+  <a href={privacyPolicyUrl} class="footer-link">{privacyPolicyLabel}</a>
 </footer>
 
 <style>
   .site-footer {
-    border-top: 1px solid var(--sl-color-gray-6);
-    padding: 1.5rem 1rem;
-    margin-top: 1rem;
-  }
-
-  .site-footer-content {
-    max-width: 72rem;
-    margin: 0 auto;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--sl-color-gray-3);
-  }
-
-  .copyright {
-    color: var(--sl-color-gray-3);
-  }
-
-  .separator {
-    color: var(--sl-color-gray-4);
+    align-items: baseline;
+    gap: 18px;
+    margin-top: 72px;
+    padding: 0 0 56px;
+    border: 0;
+    font-size: 12px;
+    color: var(--site-muted, rgba(236, 234, 229, 0.42));
   }
 
   .footer-link {
-    color: var(--sl-color-gray-3);
-    text-decoration: none;
-    transition: color 0.15s ease;
+    color: inherit;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-offset: 0.18em;
+    text-decoration-color: color-mix(in srgb, currentColor 65%, transparent);
   }
 
   .footer-link:hover {
-    color: var(--sl-color-text-accent);
-    text-decoration: underline;
-    text-underline-offset: 0.15em;
-  }
-
-  @media (max-width: 600px) {
-    .site-footer-content {
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .separator {
-      display: none;
-    }
+    color: var(--site-accent, #d5dae1);
+    text-decoration-thickness: 2px;
+    text-decoration-color: currentColor;
   }
 </style>

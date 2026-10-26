@@ -1,0 +1,18 @@
+---
+import { getCollection } from 'astro:content';
+import DocLayout from '../layouts/DocLayout.astro';
+import { slugParam } from '../lib/docs';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('docs');
+  const visible = docs.filter((doc) => import.meta.env.DEV || !doc.data.draft);
+  return visible.map((doc) => ({
+    params: { slug: slugParam(doc.id) },
+    props: { id: doc.id },
+  }));
+}
+
+const { id } = Astro.props;
+---
+
+<DocLayout entryId={id} />

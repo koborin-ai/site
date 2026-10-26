@@ -1,6 +1,6 @@
 # /astro-content
 
-Create Astro/Starlight MDX content pages.
+Create Astro MDX content pages.
 
 ## Usage
 
@@ -79,7 +79,7 @@ Add the article to `app/src/sidebar.ts`:
 },
 ```
 
-Draft articles can stay in the sidebar. `starlight-auto-drafts` shows them with a DRAFT badge in dev and removes them from production builds.
+Draft articles can stay in the sidebar. Dev shows a DRAFT badge. The production build omits the page and the sidebar link.
 
 ### 5. Assets
 
@@ -129,7 +129,7 @@ Pick the variant by *rendered* size, not source dimensions:
 
 ## Formatting
 
-- Headings start at `##`. Starlight generates `#` from the frontmatter title.
+- Headings start at `##`. The page title comes from frontmatter.
 - Always specify a language on code blocks.
 - Emoji only when the user asks for them.
 
@@ -140,5 +140,7 @@ For Japanese prose style, see `.cursor/rules/mdx-writing.md`.
 ```bash
 mise run check && npm run build --prefix app
 ```
+
+Add the new public URL to `app/scripts/routes-baseline.txt` before the build. The build fails if that URL is missing, or if an unexpected URL appears. Generated `/og/*.webp` files are allowed.
 
 If the article still has `draft: true`, those commands skip it entirely. Also run `npm run dev` and open the page, because a missing image import or broken MDX in a draft passes the build and only fails when rendered.

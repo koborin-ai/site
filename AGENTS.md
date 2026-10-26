@@ -10,7 +10,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 ## Mission
 
 - Personal site + technical garden for `koborin.ai`.
-- Astro with Starlight (documentation-focused theme) for MDX content under `app/src/content/docs/`.
+- Astro for MDX content under `app/src/content/docs/`. The docs layout keeps the previous Starlight look.
 - Cloudflare Workers static assets on `koborin.ai` only. No `dev.koborin.ai`.
 - Infrastructure managed via TerraDart (Dart) with one Terraform root module: `site`.
 - CI/CD and `terraform plan`/`apply` executed only through GitHub Actions using a scoped Cloudflare API token.
@@ -21,15 +21,18 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | --- | --- |
 | `.tool-versions` | Node, Dart, Terraform, actionlint, and shellcheck versions. The only place they are declared. |
 | `mise.toml` | The `check` task tree that fans out to app, infra, and automation. |
-| `app/` | Astro + Starlight app (TypeScript, MDX, Vitest). |
+| `app/` | Astro app (TypeScript, MDX, Vitest). |
 | `app/.oxlintrc.json` | oxlint rules; covers `.ts` and the client `<script>` blocks in `.astro`. |
 | `app/.textlintrc.json` | textlint AI-writing preset for article prose; advisory, not a gate. |
 | `app/vitest.config.ts` | Vitest wired through Astro's `getViteConfig`. |
 | `app/wrangler.jsonc` | Worker name `koborin-ai-web`, `assets.directory` `./dist`, and `not_found_handling` `404-page`. |
 | `app/public/_headers` | Worker static-asset header rules (UTF-8 on `*.txt`). |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
-| `app/src/content.config.ts` | Content Collections schema (uses Starlight's `docsSchema`). |
-| `app/src/plugins/rehype-preserve-mermaid-style.ts` | Keeps Mermaid inline-SVG `<style>` CSS as element text so Astro's MDX optimizer does not drop it. |
+| `app/src/content.config.ts` | Zod schema for the `docs` content collection. |
+| `app/src/pages/[...slug].astro` | Renders each docs entry at its current public URL. |
+| `app/src/lib/` | Public URL mapping, sidebar navigation, and the git updated date. |
+| `app/src/styles/vendor/` | CSS copied from Starlight 0.42.6. The layout keeps the class names those files expect. |
+| `app/scripts/routes-baseline.txt` | Public URLs the production build must still emit. `/pagefind/` is the only allowed omission. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
 | `app/src/pages/rss.xml.ts` | RSS feed endpoint for English articles. |
@@ -88,9 +91,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
 1. **MDX workflow**:
    - Author pages under `app/src/content/docs/`. Use YAML frontmatter with `title`, `description`.
    - Mark drafts with `draft: true` in frontmatter to exclude from navigation.
-   - Starlight automatically generates navigation from the directory structure and sidebar config in `astro.config.mjs`.
-   - **Drafts are not covered by `npm run build`**: draft pages are excluded from production builds, so a broken draft (missing image import, bad MDX) passes CI and only fails once rendered. Open every draft you touched in `npm run dev` before considering it done, and re-run `npm run build` after removing `draft: true` so the page enters the build for the first time under your own eyes.
-   - `starlight-auto-drafts` keeps draft slugs in `app/src/sidebar.ts` from breaking production builds. Sidebar entries for drafts show a DRAFT badge in dev and disappear in production.
+   - Navigation comes from `app/src/sidebar.ts`. `app/src/lib/navigation.ts` builds the sidebar for the current language.
+   - **Drafts are not covered by `npm run build`**: `getStaticPaths` omits `draft: true` outside `npm run dev`, so a broken draft passes CI and only fails once rendered. Open every draft you touched in `npm run dev` before considering it done, and re-run `npm run build` after removing `draft: true` so the page enters the build for the first time under your own eyes.
+   - A draft slug in `app/src/sidebar.ts` is hidden in production. In dev it stays in the sidebar with a DRAFT badge.
    - **Prose review while drafting**: `npx textlint <file>` in `app/` reads the article back for AI-writing tells (English-calque `〜：` lead-ins, absolute claims, mechanical emphasis). It only reacts to Japanese; all 18 English articles report zero. Treat every hit as a suggestion to read again, not a rule.
 2. **Adding new content**:
    - Create `.mdx` file under `app/src/content/docs/` (or subdirectory for categories like `blog/`, `guides/`).
@@ -100,16 +103,17 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Categorized: `{ label: "Category", items: [{ label: "Post", slug: "category/post" }] }`
      - **Sidebar labels**: Use English labels only (no `translations`). This ensures consistent navigation across all language versions.
    - Folder structure maps to URL structure: `docs/blog/post.mdx` → `/blog/post/`
+   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` is the only allowed omission.
    - **Japanese link spacing**: In Japanese MDX prose, add a half-width space between Japanese text characters (hiragana, katakana, kanji) and Markdown links. Do NOT add a space between full-width punctuation (`、`, `。`, `（`, `）`) and links — full-width characters already have built-in visual whitespace.
      - Good: `どのバージョンの [仕様](https://...) に準拠する`
      - Good: `GA で、[Dart 版](https://...) は 2026 年` (no space after `、`)
      - Bad: `どのバージョンの[仕様](https://...)に準拠する` (missing spaces around link)
      - Bad: `GA で、 [Dart 版](https://...) は` (unnecessary space after `、`)
 3. **Brand Assets Management**:
-   - **Favicon**: Place in `app/public/favicon.png`. Configured in `astro.config.mjs` (`favicon` property).
-   - **Header Logo**: Place in `app/src/assets/_shared/`. Configured in `astro.config.mjs` (`logo.src` property). Set `replacesTitle: true` to hide text title.
+   - **Favicon**: Place in `app/public/favicon.png`. `app/src/components/Head.astro` links it.
+   - **Header Logo**: Place in `app/src/assets/_shared/`. `app/src/components/SiteHeader.astro` renders the light and dark SVGs.
    - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`).
-   - **Logo Sizing**: Customize via `app/src/styles/custom.css` (`.site-title img` selector). Default: `5rem` desktop, `4.5rem` mobile.
+   - **Logo Sizing**: Set on `.nav-logo img` in `app/src/components/SiteHeader.astro`. Default: `3rem` desktop, `2.5rem` below 768px.
    - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
 4. **Image Conventions**:
    - **MANDATORY**: All on-page images must be rendered through the `SiteImage` component (`app/src/components/SiteImage.astro`). Raw `<img>` tags and direct use of Astro's `<Image />` / `<Picture />` are forbidden in MDX and `.astro` files.
@@ -153,16 +157,16 @@ This document is a quick guide for any contributors or AI agents that touch the 
      Do **not** use `<SiteImage src="/og/<slug>.png" ... />` — `SiteImage` requires an imported asset so Astro can generate optimized variants at build time.
 6. **Article Dates**:
    - **Published Date**: Set `publishedAt: YYYY-MM-DD` in frontmatter when creating a new article.
-   - **Updated Date**: Automatically extracted from Git history at build time via Starlight's built-in `lastUpdated` feature.
+   - **Updated Date**: `app/src/lib/last-updated.ts` reads `git log -1` for the MDX file at build time. Set `lastUpdated: false` to hide it. The home pages do.
    - **Display**: Dates appear below the article title (e.g., `Published: Dec 1, 2024 · Updated: Jan 2, 2025`).
    - **Localization**: English uses `Dec 1, 2024` format; Japanese uses `2024年12月1日` format.
    - **Same-day Updates**: If `publishedAt` and `lastUpdated` are within 1 day, only the published date is shown.
-   - **CI/CD**: Uses `fetch-depth: 0` to clone full Git history so Starlight `lastUpdated` can read commits.
+   - **CI/CD**: Uses `fetch-depth: 0` to clone full Git history so the updated date can read commits.
    - **Local Development**: Updated date is shown for committed files. New uncommitted files show only the published date (if set).
-7. **Starlight Features**:
-   - Built-in search (Pagefind), dark mode, responsive navigation, and Table of Contents.
-   - Customize appearance via CSS variables or override components as needed.
-   - Social links and sidebar are configured in `astro.config.mjs`.
+7. **Site chrome**:
+   - Dark mode, a responsive sidebar, and a table of contents. Pagefind site search is not included.
+   - Look comes from `app/src/styles/vendor/` plus `app/src/styles/custom.css`.
+   - Social links live in `app/src/components/SiteHeader.astro`. Sidebar entries live in `app/src/sidebar.ts`.
 8. **Testing**: run `mise run check` from the repository root before committing. It covers the app (`npm run check`: oxlint, `astro check`, Vitest, image usage), the infra (`dart analyze`, `dart test`), the automation (actionlint, shellcheck, PR label tests), and the docs (markdownlint). Run `npm run build` in `app/` as well whenever content or configuration changes.
 9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 10. **Workers deployment**:
@@ -185,7 +189,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
       - Change output format: Edit `app/src/utils/llms.ts`.
       - Existing articles are auto-included; no endpoint changes needed for new content.
 12. **RichLinkCard Component**:
-     - Use `RichLinkCard` instead of Starlight's built-in `LinkCard` for external links in MDX.
+     - Use `RichLinkCard` for external links in MDX.
      - **Location**: `app/src/components/RichLinkCard.astro`
      - **Import**: `import RichLinkCard from '../../../../components/RichLinkCard.astro';`
      - **Recommended usage** (always specify `title` and `description` for performance):
@@ -223,7 +227,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 14. **Engagement Features (Giscus)**:
      - Articles (pages with `publishedAt`) display an engagement footer with share buttons and Giscus comments.
      - **Components**:
-       - `app/src/components/Footer.astro`: Starlight Footer override that conditionally renders engagement UI.
+       - `app/src/components/Footer.astro`: Renders the engagement UI, then the copyright and privacy link.
        - `app/src/components/EngagementFooter.astro`: Container for share buttons and Giscus.
        - `app/src/components/ShareButtons.astro`: Share links (X, Bluesky, Mastodon, Hatena Bookmark, copy link).
        - `app/src/components/Giscus.astro`: GitHub Discussions-based comments (only renders if configured).
@@ -235,7 +239,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
        - Get configuration values from [giscus.app](https://giscus.app/).
        - Add GitHub Secrets: `GISCUS_REPO_ID`, `GISCUS_CATEGORY_ID` (IDs only; repo/category are hardcoded in `Giscus.astro`).
        - CI injects these as `PUBLIC_GISCUS_*_ID` environment variables in `app/.env` at build time.
-     - **Theme sync**: Giscus theme automatically syncs with Starlight's light/dark mode toggle.
+     - **Theme sync**: Giscus theme syncs with the light and dark toggle. The stored key remains `starlight-theme`.
      - **Localization**: UI labels and Giscus `lang` switch based on `/ja/` path prefix.
 
 ## Astro Development Best Practices
@@ -261,7 +265,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Lazy Loading**: Ensure off-screen images and heavy components are lazy-loaded.
 
 5. **Routing (Custom Pages)**
-   - *Note: Documentation pages are managed by Starlight.*
+   - Documentation pages are the `docs` collection, rendered by `src/pages/[...slug].astro`. A file under `src/pages/` wins over that rest route.
    - **File-based Routing**: Use `src/pages/` for Astro endpoints (llms.txt, RSS feeds) or custom apps.
    - **Dynamic Routes**: Use `[...slug].astro` and `getStaticPaths()` for dynamic static pages.
    - **404**: Maintain a custom `404.astro` for proper error handling.
@@ -349,7 +353,7 @@ Examples:
 
 5. **Mermaid in MDX Articles**:
    - Mermaid code blocks in MDX files are rendered via `rehype-mermaid` with `strategy: "inline-svg"`.
-   - `rehypePreserveMermaidStyle` (`app/src/plugins/rehype-preserve-mermaid-style.ts`) must stay immediately after `rehype-mermaid`. Starlight's MDX optimizer otherwise serializes SVG `<style>` CSS into a literal `set:html` attribute, and the diagram falls back to black fills.
+   - Call `mdx()` without `optimize: true`. That option writes SVG `<style>` CSS into a `set:html` attribute, and the diagram fills go black.
    - Dark/light mode theming is handled by CSS in `app/src/styles/custom.css`.
    - **Do not override Mermaid theme in code blocks** - the global CSS handles theme switching.
    - Keep node labels short to avoid text overlap (especially in `flowchart LR` layouts).
@@ -477,7 +481,7 @@ Rules for AI agents during task execution:
 
 ### Primary product
 
-The main local runtime is the **Astro + Starlight app** under `app/`. There is no docker-compose, database, or local API backend. Production serves static files as Cloudflare Worker assets.
+The main local runtime is the **Astro app** under `app/`. There is no docker-compose, database, or local API backend. Production serves static files as Cloudflare Worker assets.
 
 ### Toolchain versions
 

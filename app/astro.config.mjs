@@ -1,20 +1,30 @@
 import { defineConfig } from "astro/config";
-import starlight from "@astrojs/starlight";
+import mdx from "@astrojs/mdx";
+import sitemap from "@astrojs/sitemap";
 import { unified } from "@astrojs/markdown-remark";
 import rehypeMermaid from "rehype-mermaid";
+import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
-import starlightAutoDrafts from "starlight-auto-drafts";
-import { sidebar } from "./src/sidebar.ts";
-import { rehypePreserveMermaidStyle } from "./src/plugins/rehype-preserve-mermaid-style.ts";
+import { rehypeHeadingAnchors } from "./src/plugins/rehype-heading-anchors.ts";
+import { remarkAsides, remarkRestoreDirectives } from "./src/plugins/remark-asides.ts";
 
 export default defineConfig({
   site: "https://koborin.ai",
   srcDir: "src",
-  // Static output mode (default) - all pages are pre-rendered at build time
-  // Keep unified() for rehype-mermaid; Sätteri (Astro 7 default) cannot run rehype plugins.
   markdown: {
+    syntaxHighlight: {
+      type: "shiki",
+      excludeLangs: ["math", "mermaid"],
+    },
+    shikiConfig: {
+      themes: {
+        light: "github-light",
+        dark: "github-dark",
+      },
+      defaultColor: false,
+    },
     processor: unified({
-      remarkPlugins: [remarkGfm],
+      remarkPlugins: [remarkGfm, remarkDirective, remarkAsides, remarkRestoreDirectives],
       rehypePlugins: [
         [
           rehypeMermaid,
@@ -23,75 +33,14 @@ export default defineConfig({
             mermaidConfig: { theme: "neutral" },
           },
         ],
-        // Starlight's MDX optimizer would otherwise stringify <style> CSS into a set:html attribute.
-        rehypePreserveMermaidStyle,
+        rehypeHeadingAnchors,
       ],
     }),
   },
   integrations: [
-    starlight({
-      plugins: [starlightAutoDrafts()],
-      title: "koborin.ai",
-      defaultLocale: "root",
-      locales: {
-        root: { label: "English", lang: "en" },
-        ja: { label: "日本語" },
-      },
-      description: "Personal site + technical proving ground",
-      lastUpdated: true,
-      favicon: "/favicon.png",
-      logo: {
-        dark: "./src/assets/_shared/koborin-ai-header-dark.svg",
-        light: "./src/assets/_shared/koborin-ai-header-light.svg",
-        replacesTitle: true,
-      },
-      social: [
-        {
-          label: "GitHub",
-          icon: "github",
-          href: "https://github.com/nozomi-koborinai",
-        },
-        {
-          label: "LinkedIn",
-          icon: "linkedin",
-          href: "https://linkedin.com/in/nozomi-koborinai",
-        },
-        {
-          label: "X",
-          icon: "x.com",
-          href: "https://x.com/fender_kn",
-        },
-        {
-          label: "Medium",
-          icon: "document",
-          href: "https://medium.com/@nozomi-koborinai",
-        },
-      ],
-      sidebar,
-      customCss: [
-        './src/styles/custom.css',
-      ],
-      components: {
-        Head: './src/components/Head.astro',
-        PageTitle: './src/components/PageTitle.astro',
-        ThemeSelect: './src/components/ThemeSelect.astro',
-        Header: './src/components/SiteHeader.astro',
-        Sidebar: './src/components/Sidebar.astro',
-        Pagination: './src/components/Pagination.astro',
-        Footer: './src/components/Footer.astro',
-      },
-      head: [
-        // OG image is handled dynamically in Head.astro component
-        {
-          tag: 'meta',
-          attrs: {
-            name: 'twitter:card',
-            content: 'summary_large_image',
-          },
-        },
-      ],
-      // Disable Starlight's default 404 page to allow custom pages
-      disable404Route: true,
+    mdx(),
+    sitemap({
+      filter: (page) => !page.includes("/404"),
     }),
   ],
 });

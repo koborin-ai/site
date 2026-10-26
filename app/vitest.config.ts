@@ -5,6 +5,6 @@ import { getViteConfig } from 'astro/config';
 // that import Astro virtual modules such as `astro:content` can be loaded.
 export default getViteConfig({
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
   },
 });

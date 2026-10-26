@@ -1,0 +1,229 @@
+html {
+  scroll-padding-top: calc(1.5rem + var(--sl-nav-height));
+}
+
+html:not([data-has-toc]) {
+  --sl-mobile-toc-height: 0rem;
+}
+
+@media (min-width: 50em) {
+  [data-has-sidebar] {
+    --sl-content-inline-start: var(--sl-sidebar-width);
+  }
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.sidebar-pane {
+  border: unset;
+  padding: unset;
+  height: unset;
+  color: unset;
+  position: fixed;
+  z-index: var(--sl-z-index-menu);
+  inset-block: var(--sl-nav-height) 0;
+  inset-inline-start: 0;
+  width: 100%;
+  background-color: var(--sl-color-black);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.sidebar-content {
+  height: 100%;
+  min-height: max-content;
+  padding: 1rem var(--sl-sidebar-pad-x) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.main-frame {
+  padding-top: calc(var(--sl-nav-height) + var(--sl-mobile-toc-height));
+  padding-inline-start: var(--sl-content-inline-start, 0);
+}
+
+@media (min-width: 50rem) {
+  .sidebar-pane {
+    display: block;
+    width: var(--sl-sidebar-width);
+    background-color: var(--sl-color-bg-sidebar);
+    border-inline-end: 1px solid var(--sl-color-hairline-shade);
+  }
+}
+
+.main-pane {
+  isolation: isolate;
+  width: 100%;
+}
+
+@media (min-width: 72rem) {
+  .doc-columns {
+    display: flex;
+  }
+
+  .right-sidebar-container {
+    order: 2;
+    position: relative;
+    width: max(
+      var(--sl-sidebar-width),
+      calc(var(--sl-sidebar-width) + (100% - var(--sl-content-width) - var(--sl-sidebar-width)) / 2)
+    );
+  }
+
+  .right-sidebar {
+    position: fixed;
+    top: 0;
+    border-inline-start: 1px solid var(--sl-color-hairline);
+    padding-top: var(--sl-nav-height);
+    width: 100%;
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  [data-has-sidebar][data-has-toc] .main-pane {
+    order: 1;
+    width: min(
+      calc(100% - var(--sl-sidebar-width)),
+      calc(var(--sl-content-width) + (100% - var(--sl-content-width) - var(--sl-sidebar-width)) / 2)
+    );
+  }
+}
+
+.right-sidebar-panel {
+  padding: 1rem var(--sl-sidebar-pad-x);
+}
+
+.right-sidebar-panel h2 {
+  color: var(--sl-color-white);
+  font-size: var(--sl-text-h5);
+  font-weight: 600;
+  line-height: var(--sl-line-height-headings);
+  margin-bottom: 0.5rem;
+}
+
+.right-sidebar-panel a {
+  display: block;
+  font-size: var(--sl-text-xs);
+  text-decoration: none;
+  color: var(--sl-color-gray-3);
+  overflow-wrap: anywhere;
+  padding-block: 0.25rem;
+}
+
+.right-sidebar-panel a:hover {
+  color: var(--sl-color-white);
+}
+
+.right-sidebar-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mobile-toc {
+  display: block;
+  margin: 0 1rem 0.5rem;
+}
+
+.mobile-toc summary {
+  cursor: pointer;
+  color: var(--sl-color-white);
+  font-weight: 600;
+}
+
+@media (min-width: 72rem) {
+  .mobile-toc {
+    display: none;
+  }
+
+  .right-sidebar-panel {
+    display: block;
+  }
+}
+
+@media (max-width: 71.99rem) {
+  .right-sidebar-container {
+    display: none;
+  }
+}
+
+.content-panel {
+  padding: 1rem;
+}
+
+.sl-container {
+  width: min(100%, var(--sl-content-width));
+  margin-inline: var(--sl-content-margin-inline, auto);
+  padding-inline: var(--sl-content-pad-x);
+}
+
+.page-title {
+  margin: 0;
+  color: var(--sl-color-white);
+  font-size: var(--sl-text-h1);
+  font-weight: 600;
+  line-height: var(--sl-line-height-headings);
+}
+
+.draft-notice {
+  margin-top: 0.75rem;
+  color: var(--sl-color-orange);
+  font-size: var(--sl-text-sm);
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination a {
+  color: var(--sl-color-text-accent);
+  text-decoration: none;
+}
+
+.pagination a:hover {
+  text-decoration: underline;
+}
+
+.pagination-next {
+  margin-inline-start: auto;
+  text-align: end;
+}
+
+.sl-markdown-content pre {
+  overflow-x: auto;
+}
+
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+[data-theme='dark'] .astro-code,
+[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+
+.not-found {
+  padding-block: 3rem 4rem;
+}
+
+.not-found h1 {
+  font-size: var(--sl-text-6xl);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.not-found a {
+  color: var(--sl-color-text-accent);
+}

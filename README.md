@@ -4,7 +4,7 @@
 
 Technical proving ground for exploring AI, cloud architecture, and continuous learning.
 
-Astro ( [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build) ) is served as Cloudflare Worker static assets. App deploys use wrangler. DNS and the custom domain are a TerraDart `site` stack applied from GitHub Actions.
+The Astro site is served as Cloudflare Worker static assets. App deploys use wrangler. DNS and the custom domain are a TerraDart `site` stack applied from GitHub Actions.
 
 ## Architecture
 
@@ -83,8 +83,8 @@ Tool versions come from `.tool-versions`. `actions/setup-node` reads it through 
 
 ## Tech Stack
 
-- **Frontend**: Astro with Starlight (documentation theme), TypeScript.
-- **Content Management**: MDX stored under `app/src/content/docs/` within git. Frontmatter is validated via Zod schemas (from Starlight) to keep metadata type-safe. Drafts can be marked with `draft: true` in frontmatter.
+- **Frontend**: Astro and TypeScript. The docs layout keeps the previous Starlight look. Pagefind site search is gone.
+- **Content Management**: MDX stored under `app/src/content/docs/` within git. Frontmatter is validated with Zod in `app/src/content.config.ts`. Drafts can be marked with `draft: true` in frontmatter.
 - **Analytics**: Google Analytics 4 for baseline PV/engagement.
 - **Infrastructure**: TerraDart (Dart) targeting Cloudflare via Terraform. State is in R2.
 - **CI/CD**: GitHub Actions with a Cloudflare API token. `plan-infra.yml` / `release-infra.yml` drive infra; `app-ci.yml` / `app-release.yml` handle the Astro app.
@@ -114,7 +114,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 .
 ├── .tool-versions                 # Node, Dart, Terraform, actionlint, shellcheck
 ├── mise.toml                      # Repo-wide check tasks
-├── app/                           # Astro + Starlight application (static)
+├── app/                           # Astro application (static)
 │   ├── wrangler.jsonc            # Worker name and dist/ assets
 │   ├── .oxlintrc.json            # oxlint rules for TS and .astro scripts
 │   ├── vitest.config.ts          # Vitest via Astro's getViteConfig
@@ -125,10 +125,9 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   │   ├── life/             # Life article images
 │   │   │   └── og/               # Open Graph images
 │   │   ├── content/
-│   │   │   └── docs/             # MDX pages: tech/, life/, ja/ (Starlight)
-│   │   ├── content.config.ts    # Content Collections schema (extends docsSchema)
-│   │   ├── plugins/
-│   │   │   └── rehype-preserve-mermaid-style.ts  # Keep Mermaid <style> CSS as text
+│   │   │   └── docs/             # MDX pages: tech/, life/, ja/
+│   │   ├── content.config.ts    # Zod schema for the docs collection
+│   │   ├── plugins/              # Asides and heading anchors
 │   │   ├── utils/
 │   │   │   ├── llms.ts           # Shared logic for llms.txt generation
 │   │   │   └── llms.test.ts      # Vitest coverage for llms.txt rendering
@@ -140,7 +139,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   ├── favicon.png           # Browser tab icon
 │   │   ├── og/                   # Open Graph source images
 │   │   └── robots.txt
-│   └── astro.config.mjs          # Starlight integration config
+│   └── astro.config.mjs          # Astro, MDX, sitemap, and Markdown plugins
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
 ├── infra/                         # TerraDart site stack
 │   ├── bin/synth.dart            # Synth entry point → tf-out/site/main.tf.json
@@ -164,7 +163,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 | Header Logo | `app/src/assets/_shared/koborin-ai-header-light.svg` / `-dark.svg` | Site header (replaces title text) | SVG, separate light/dark variants |
 | Hero Image | `app/public/og/koborin-ai-hero.png` | Landing page hero section | 16:9 aspect ratio recommended |
 
-Logo sizing is customized via `app/src/styles/custom.css` (`.site-title img` selector).
+Logo size is set on `.nav-logo img` in `app/src/components/SiteHeader.astro`.
 
 ### Image Optimization (Automatic)
 

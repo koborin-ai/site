@@ -1,14 +1,4 @@
 ---
-/**
- * Giscus - GitHub Discussions-based comments and reactions
- * 
- * Only renders if PUBLIC_GISCUS_*_ID environment variables are set.
- * Repo and category are hardcoded (public info).
- * Syncs theme with Starlight's theme toggle.
- * Switches lang based on locale (ja/en).
- */
-
-// Hardcoded values (public info)
 const repo = 'koborin-ai/site';
 const category = 'Comments';
 
@@ -69,7 +59,6 @@ const labels = isJapanese
 )}
 
 <script>
-  // Sync Giscus theme with Starlight theme
   function getGiscusTheme(): 'light' | 'dark' {
     const theme = document.documentElement.dataset.theme;
     return theme === 'light' ? 'light' : 'dark';

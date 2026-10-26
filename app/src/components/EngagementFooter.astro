@@ -1,19 +1,13 @@
 ---
-/**
- * EngagementFooter - Container for engagement UI (Share, Giscus)
- * 
- * Combines all engagement components into a cohesive footer section.
- * Displayed only on pages with publishedAt (articles).
- */
 import ShareButtons from './ShareButtons.astro';
 import Giscus from './Giscus.astro';
 
-// Get the current page URL
-const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
+interface Props {
+  title: string;
+}
 
-// Get page title from frontmatter
-const { entry } = Astro.locals.starlightRoute;
-const title = entry.data.title || 'Untitled';
+const { title } = Astro.props;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
 ---
 
 <aside class="engagement-footer" aria-label="Article engagement">

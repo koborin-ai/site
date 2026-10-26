@@ -1,19 +1,115 @@
 ---
-/**
- * Custom Sidebar component - matches genkit.dev design
- * Uses Starlight's default components for consistent behavior
- */
-import MobileMenuFooter from '@astrojs/starlight/components/MobileMenuFooter.astro';
-import SidebarPersister from '@astrojs/starlight/components/SidebarPersister.astro';
-import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
+import type { NavNode } from '../lib/navigation';
 
-const { sidebar } = Astro.locals.starlightRoute;
+interface Props {
+  nodes: NavNode[];
+}
+
+const { nodes } = Astro.props;
 ---
 
-<SidebarPersister>
-  <SidebarSublist sublist={sidebar} />
-</SidebarPersister>
+<ul class="top-level">
+  {nodes.map((node) => (
+    <li>
+      {node.type === 'link' ? (
+        <a href={node.href} aria-current={node.current ? 'page' : undefined} class="large">
+          <span>{node.label}</span>
+        </a>
+      ) : (
+        <details open>
+          <summary>
+            <span class="group-label">
+              <span class="large">{node.label}</span>
+            </span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"></path>
+            </svg>
+          </summary>
+          <ul>
+            {node.items.map((item) => (
+              <li>
+                <a href={item.href} aria-current={item.current ? 'page' : undefined}>
+                  <span>{item.label}</span>
+                  {item.draft && <span class="draft-badge">DRAFT</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </li>
+  ))}
+</ul>
 
-<div class="md:sl-hidden">
-  <MobileMenuFooter />
-</div>
+<style>
+  ul {
+    --sl-sidebar-item-padding-inline: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    overflow-wrap: anywhere;
+  }
+
+  ul ul li {
+    margin-inline-start: var(--sl-sidebar-item-padding-inline);
+    border-inline-start: 1px solid var(--sl-color-hairline-light);
+    padding-inline-start: var(--sl-sidebar-item-padding-inline);
+  }
+
+  .large {
+    font-size: var(--sl-text-lg);
+    font-weight: 600;
+    color: var(--sl-color-white);
+  }
+
+  .top-level > li + li {
+    margin-top: 0.75rem;
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.2em var(--sl-sidebar-item-padding-inline);
+    line-height: 1.4;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  summary::marker,
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .caret {
+    transition: transform 0.2s ease-in-out;
+    flex-shrink: 0;
+  }
+
+  [open] > summary .caret {
+    transform: rotateZ(90deg);
+  }
+
+  a {
+    display: block;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    color: var(--sl-color-gray-2);
+    padding: 0.3em var(--sl-sidebar-item-padding-inline);
+    line-height: 1.4;
+  }
+
+  a:hover {
+    color: var(--sl-color-white);
+  }
+
+  .draft-badge {
+    margin-inline-start: 0.4rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    color: var(--sl-color-orange);
+  }
+</style>

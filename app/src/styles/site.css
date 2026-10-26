@@ -80,10 +80,15 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 22px 32px;
-  background-color: var(--site-bg);
-  background-image: radial-gradient(var(--site-dot) 1px, transparent 1.2px);
-  background-size: 22px 22px;
-  background-attachment: fixed;
+  background-color: color-mix(in srgb, var(--site-bg) 75%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .site-header {
+    background-color: var(--site-bg);
+  }
 }
 
 .mark,

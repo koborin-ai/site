@@ -55,7 +55,6 @@ body {
   padding: 128px 24px 0;
 }
 
-/* 800px figures plus 24px of side padding on each side. Prose stays at 740px. */
 .column:has(.article-dates) {
   max-width: 848px;
 }

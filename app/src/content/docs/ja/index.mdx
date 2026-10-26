@@ -5,37 +5,7 @@ ogImage: /og/koborin-ai-hero.png
 lastUpdated: false
 ---
 
-import SiteImage from '../../../components/SiteImage.astro';
-import ThemedSiteImage from '../../../components/ThemedSiteImage.astro';
 import GitHubSponsorsButton from '../../../components/GitHubSponsorsButton.astro';
-import heroLight from '../../../assets/og/koborin-ai-hero-light.png';
-import heroDark from '../../../assets/og/koborin-ai-hero-dark.png';
-import bookCover from '../../../assets/life/reflections-on-2025/book-cover.png';
-import terradartOg from '../../../assets/_shared/building/terradart-og.png';
-import jevSpecOg from '../../../assets/og/jev-spec-introduction.png';
-import contextlintOg from '../../../assets/_shared/building/contextlint-og.png';
-import gcpCostMcpHero from '../../../assets/_shared/building/gcp-cost-mcp-hero.jpeg';
-import abletonOscMcpKey from '../../../assets/_shared/building/ableton-osc-mcp-key.png';
-
-<ThemedSiteImage lightSrc={heroLight} darkSrc={heroDark} alt="koborin.ai へようこそ" variant="hero" />
-
-## Technical Proving Ground について
-
-ここは、モダンなソフトウェア開発の旅を探求し、記録し、共有するための個人的な Technical Proving Ground です。
-
-*仮説 → 検証 → 振り返り* のサイクルを回しながら、ぼちぼち育てていきます。
-
----
-
-## Who runs this
-
-Built by [@nozomi-koborinai](https://github.com/nozomi-koborinai).
-
-- 🏢 日本の Google Cloud パートナー企業でサーバーレスアプリケーション開発を専門に活動
-- 🏆 Google Cloud Partner Top Engineer 2025 & 2026 (Application Modernization 領域で 2 年連続選出)
-- 📖 Genkit の書籍・OSS・登壇を通じて開発者コミュニティに貢献
-- 🎯 DDD・クリーンアーキテクチャを軸にした品質確保が得意
-- 🤖 AI 駆動開発を探求中 — [contextlint](https://github.com/nozomi-koborinai/contextlint) や [jev-spec](https://github.com/nozomi-koborinai/jev-spec) などのツールを開発
 
 Support this proving ground
 
@@ -48,102 +18,6 @@ Support this proving ground
 最初の 4 年間は、エンタープライズのレガシーシステム開発に携わりつつ、App 大学（日本のアプリケーション開発エンジニアコミュニティ）での講師活動と、Flutter デザインパターンに関する書籍の共同執筆を並行していました。
 
 現在は Google Cloud パートナー企業で、クラウドアーキテクチャ・プリセールス・テックリードなど幅広く携わりつつ、個人で AI 駆動開発を探求しています。
-
----
-
-### 書籍: Mastering Genkit
-
-<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1rem 0;">
-<a href="https://www.amazon.com/dp/B0G4HKJRPB">
-<SiteImage src={bookCover} alt="Mastering Genkit: Go Edition 表紙" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
-</a>
-<div style="flex: 1; min-width: 200px;">
-
-**Mastering Genkit: Go Edition**
-
-スペインの AI Google Developer Experts (GDE) Xavier Portilla 氏との共著。
-
-Genkit と Go の可能性を最大限に引き出し、初歩から高度な AI システムまで、その道のりを探求しましょう。
-
-[Amazon](https://www.amazon.com/dp/B0G4HKJRPB) / [GitHub](https://github.com/mastering-genkit)
-</div>
-</div>
-
----
-
-### Building
-
-<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
-<a href="https://terradart.dev/">
-<SiteImage src={terradartOg} alt="TerraDart OG image" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.22);" />
-</a>
-<div style="flex: 1; min-width: 200px;">
-
-**TerraDart**
-
-Dart はクライアントにもサーバーにも広がりましたが、インフラは依然として HCL や `*.tf.json` で、それに依存するアプリとは別の場所で書かれています。
-
-TerraDart は、その構成のための型安全な IaC を目指して継続的に作っているものです。クラウドのインフラを Dart で書き（Google Cloud、AWS、Cloudflare、Appwrite）、1 コマンドで適用し、出力はタイプセーフな Dart として Flutter アプリから読めます。
-
-[terradart.dev](https://terradart.dev/) / [GitHub](https://github.com/nozomi-koborinai/terradart) / [pub.dev](https://pub.dev/packages/terradart_codegen)
-</div>
-</div>
-
-<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
-<a href="https://github.com/nozomi-koborinai/jev-spec">
-<SiteImage src={jevSpecOg} alt="jev-spec OG 画像" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
-</a>
-<div style="flex: 1; min-width: 200px;">
-
-**jev-spec**
-
-Markdown の仕様書に書かれた要件とコードを照合し、両者がずれたらビルドを失敗させるツール。要件ごとに焦点を絞った質問を TypeSafe AI の Jev モデルに投げ、返ってきた確率をしきい値と比較することで、pre-commit フックに収まる軽さと CI ゲートに使える厳密さを両立します。タグライン: *「仕様書とコードのずれを、コミットのたびに検出する。」*
-
-[GitHub](https://github.com/nozomi-koborinai/jev-spec) / [npm](https://www.npmjs.com/package/jev-spec) / [解説記事](/ja/tech/jev-spec-introduction/)
-</div>
-</div>
-
-<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
-<a href="https://contextlint.dev/">
-<SiteImage src={contextlintOg} alt="contextlint OG 画像" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
-</a>
-<div style="flex: 1; min-width: 200px;">
-
-**contextlint**
-
-AI 時代の Markdown のためのセマンティックリンター。エディタ・AI アシスタント・CI を横断して、相互参照・必須セクション・依存グラフを決定論的に検証します。タグライン: *「markdownlint for syntax. contextlint for meaning.」*
-
-[contextlint.dev](https://contextlint.dev/) / [GitHub](https://github.com/nozomi-koborinai/contextlint)
-</div>
-</div>
-
-<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
-<a href="https://github.com/nozomi-koborinai/gcp-cost-mcp-server">
-<SiteImage src={gcpCostMcpHero} alt="GCP Cost MCP Server ヒーロー画像" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
-</a>
-<div style="flex: 1; min-width: 200px;">
-
-**GCP Cost MCP Server**
-
-Claude や Cursor などの AI アシスタントから、Google Cloud Pricing Calculator を手動で触る代わりに GCP のランニングコストを見積もれる MCP サーバー。Cloud Billing Catalog API ベース。Go + Genkit で実装。テキストの要件整理からアーキテクチャ図の解析まで、幅広い入力に対応。所属の GCP パートナー企業でも利用実績あり。
-
-[GitHub](https://github.com/nozomi-koborinai/gcp-cost-mcp-server)
-</div>
-</div>
-
-<div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: 1.5rem 0;">
-<a href="https://github.com/nozomi-koborinai/ableton-osc-mcp">
-<SiteImage src={abletonOscMcpKey} alt="Ableton OSC MCP Server キービジュアル" variant="card" style="width: 160px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
-</a>
-<div style="flex: 1; min-width: 200px;">
-
-**Ableton OSC MCP Server**
-
-Claude や Cursor などの AI アシスタントから、AbletonOSC 経由で Ableton Live 11+ を操作できる MCP (Model Context Protocol) サーバー。Go + Genkit で実装。トラック・MIDI クリップ・テンポ・クリップスロットを MCP のツール呼び出しとして公開し、AI との対話からビートメイキングや音楽制作を直接駆動できる。
-
-[GitHub](https://github.com/nozomi-koborinai/ableton-osc-mcp)
-</div>
-</div>
 
 ---
 
@@ -171,25 +45,6 @@ Genkit 本体リポジトリへの小さなコントリビューション。docs
 | Google Cloud Partner Top Engineer 2025 & 2026 | Application Modernization 領域で 2 年連続選出 | - |
 | Flutter 設計パターン入門（共著） | レイヤード／オニオンアーキテクチャについて言及 | [Zenn](https://zenn.dev/flutteruniv/books/flutter-architecture) |
 | App 大学（旧 Flutter 大学） | 元講師、現 1on1 メンター | [flutteruniv.com](https://flutteruniv.com) |
-
----
-
-### 登壇・イベント
-
-| 日付 | イベント | タイトル | 参加者 |
-|------|----------|----------|--------|
-| 2026/07 | 第10回 FlutterGakkai | [Dart で試す Type-safe IaC](https://speakerdeck.com/coborinai/type-safe-iac-for-dart) | 56 |
-| 2025/07 | Google I/O Extended Tokyo 2025 | [Dart client for Genkit: Flutter から Genkit を使うための公式クライアント開発](https://youtu.be/AakdczWQLzY?si=aiuon32lYmJ93TR6) | 434 |
-| 2025/02 | FlutterGakkai（第7回） | [Flutter × Firebase Genkit で加速する生成 AI アプリ開発](https://www.youtube.com/live/bLub7ytpKBA?si=rkyc3Ca76CVDn8Wa&t=518) | 191 |
-| 2024/12 | Genkit ハンズオン（運営） | テクニカルサポーターとして参加 | 45 |
-| 2024/11 | GDG DevFest Tokyo 2024 | Orchestrating Firebase and AI: Genkit architecture example | 369 |
-| 2024/06 | TECH+ セミナー | Google Maps Platform で物流業界を革新！効率化とコスト削減を実現 | 246 |
-| 2024/06 | Map The Way Tokyo | 競争力を高めるリテール DX 戦略 | 75 |
-| 2024/04 | リテールDX | 競争力を高めるリテール DX 戦略 | 138 |
-| 2024/04 | Google Cloud リテールテック振り返りセミナー | Google Maps・Firebase・PaLM の技術統合 | 51 |
-| 2024/03 | リテールテックJAPAN | Google Maps・Firebase・PaLM の技術統合による開発効率と柔軟性の向上 | 429 |
-| 2024/02 | GDG Tokyo Monthly Online Tech Talks | Firebase における IaC と CI/CD パイプライン構築のすゝめ | 200 |
-| 2023/12 | Cloud Ace ウェビナー | Firebase × Google Maps API で健全なクチコミアプリを爆速開発！ | 61 |
 
 ---
 

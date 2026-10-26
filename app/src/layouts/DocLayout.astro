@@ -1,33 +1,13 @@
 ---
 import { getCollection, render } from 'astro:content';
-import CookieConsent from '../components/CookieConsent.astro';
 import Footer from '../components/Footer.astro';
-import Head from '../components/Head.astro';
-import ImageZoom from '../components/ImageZoom.astro';
-import LanguageSelect from '../components/LanguageSelect.astro';
+import HomePage from '../components/HomePage.astro';
 import PageTitle from '../components/PageTitle.astro';
-import Pagination from '../components/Pagination.astro';
-import Sidebar from '../components/Sidebar.astro';
-import SiteHeader from '../components/SiteHeader.astro';
-import ThemeSelect from '../components/ThemeSelect.astro';
-import {
-  categoryOf,
-  localeOf,
-  publicPath,
-  type Locale,
-} from '../lib/docs';
+import SiteShell from '../components/SiteShell.astro';
+import { localeOf, type Locale } from '../lib/docs';
 import { gitLastUpdated } from '../lib/last-updated';
-import { alternateHref, buildNav, categoryNeighbors, hreflangLinks } from '../lib/navigation';
-import '../styles/vendor/layers.css';
-import '../styles/vendor/props.css';
-import '../styles/vendor/reset.css';
-import '../styles/vendor/util.css';
-import '../styles/vendor/asides.css';
-import '../styles/vendor/markdown.css';
-import '../styles/vendor/anchor-links.css';
-import '../styles/vendor/print.css';
-import '../styles/layout.css';
-import '../styles/custom.css';
+import { alternateHref, hreflangLinks } from '../lib/navigation';
+import { isHomeId, keptLabel } from '../lib/catalog';
 
 interface Props {
   entryId?: string;
@@ -44,15 +24,11 @@ if (entryId && !entry) {
   throw new Error(`Missing docs entry ${entryId}`);
 }
 
-const locale: Locale = entry ? localeOf(entry.id) : (Astro.url.pathname === '/ja' || Astro.url.pathname.startsWith('/ja/') ? 'ja' : 'en');
+const locale: Locale = entry
+  ? localeOf(entry.id)
+  : (Astro.url.pathname === '/ja' || Astro.url.pathname.startsWith('/ja/') ? 'ja' : 'en');
 const visible = docs.filter((doc) => includeDrafts || !doc.data.draft);
 const available = new Set(visible.map((doc) => doc.id));
-const currentPath = entry ? publicPath(entry.id) : Astro.url.pathname;
-const drafts = {
-  has: (id: string) => docs.some((doc) => doc.id === id && doc.data.draft),
-};
-const nav = buildNav(locale, currentPath, drafts, includeDrafts);
-
 const alternates = entry
   ? alternateHref(entry.id, available)
   : [
@@ -70,8 +46,8 @@ let publishedAt: Date | undefined;
 let updatedAt: Date | undefined;
 let draft = false;
 let showEngagement = false;
-let headings: { depth: number; slug: string; text: string }[] = [];
 let Content: Awaited<ReturnType<typeof render>>['Content'] | undefined;
+const home = entry ? isHomeId(entry.id) : false;
 
 if (entry) {
   title = entry.data.title;
@@ -80,170 +56,52 @@ if (entry) {
   publishedAt = entry.data.publishedAt;
   draft = entry.data.draft;
   const explicit = entry.data.engagement;
-  showEngagement = explicit === true || (explicit !== false && publishedAt !== undefined);
+  showEngagement = !home && (explicit === true || (explicit !== false && publishedAt !== undefined));
   if (entry.data.lastUpdated !== false && entry.filePath) {
     updatedAt = gitLastUpdated(entry.filePath);
   }
   const rendered = await render(entry);
   Content = rendered.Content;
-  headings = rendered.headings;
 }
-
-const toc = headings.reduce<{ slug: string; text: string; children: { slug: string; text: string }[] }[]>((items, heading) => {
-  if (heading.depth === 2) {
-    items.push({ slug: heading.slug, text: heading.text, children: [] });
-  } else if (heading.depth === 3 && items.length > 0) {
-    items[items.length - 1].children.push({ slug: heading.slug, text: heading.text });
-  }
-  return items;
-}, []);
-const hasToc = toc.length > 0;
-const neighbors = entry
-  ? categoryNeighbors(nav, currentPath, categoryOf(entry.id))
-  : {};
-const tocLabel = locale === 'ja' ? 'このページの内容' : 'On this page';
-const skipLabel = locale === 'ja' ? 'コンテンツにスキップ' : 'Skip to content';
-const menuLabel = locale === 'ja' ? 'メニュー' : 'Menu';
 ---
 
-<html lang={locale} data-theme="dark" data-has-sidebar {...hasToc ? { 'data-has-toc': '' } : {}}>
-  <head>
-    <Head title={title} description={description} lang={locale} ogImage={ogImage} hreflang={hreflang} />
-    <script is:inline>
-      window.StarlightThemeProvider = (() => {
-        const stored = localStorage.getItem('starlight-theme');
-        const choice = stored === 'light' || stored === 'dark' ? stored : 'auto';
-        const resolved = choice === 'auto'
-          ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
-          : choice;
-        document.documentElement.dataset.theme = resolved;
-        return {
-          updatePickers(next) {
-            const value = next === 'light' || next === 'dark' || next === 'auto'
-              ? next
-              : choice;
-            document.querySelectorAll('starlight-theme-select select').forEach((select) => {
-              select.value = value;
-            });
-          },
-        };
-      })();
-    </script>
-  </head>
-  <body>
-    <a class="sl-skip-link sr-only" href="#_top">{skipLabel}</a>
-    <div class="page">
-      <SiteHeader locale={locale} enHref={enHref} jaHref={jaHref} />
-      <nav class="sidebar" aria-label={menuLabel}>
-        <div id="site-sidebar" class="sidebar-pane" popover>
-          <div class="sidebar-content">
-            <Sidebar nodes={nav} />
-            <div class="mobile-preferences">
-              <LanguageSelect locale={locale} enHref={enHref} jaHref={jaHref} />
-              <ThemeSelect />
-            </div>
-          </div>
-        </div>
-      </nav>
-      <div class="main-frame">
-        {hasToc && (
-          <details class="mobile-toc">
-            <summary>{tocLabel}</summary>
-            <ul>
-              {toc.map((item) => (
-                <li>
-                  <a href={`#${item.slug}`}>{item.text}</a>
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-        <div class="doc-columns">
-          {hasToc && (
-            <aside class="right-sidebar-container">
-              <div class="right-sidebar">
-                <div class="right-sidebar-panel">
-                  <h2 id="on-this-page">{tocLabel}</h2>
-                  <ul>
-                    {toc.map((item) => (
-                      <li>
-                        <a href={`#${item.slug}`}>{item.text}</a>
-                        {item.children.length > 0 && (
-                          <ul>
-                            {item.children.map((child) => (
-                              <li>
-                                <a href={`#${child.slug}`}>{child.text}</a>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </aside>
-          )}
-          <div class="main-pane">
-            <main id="_top">
-              <div class="content-panel">
-                <div class="sl-container">
-                  {entry ? (
-                    <PageTitle
-                      title={title}
-                      locale={locale}
-                      publishedAt={publishedAt}
-                      updatedAt={updatedAt}
-                      draft={draft}
-                    />
-                  ) : (
-                    <h1 class="page-title">{title}</h1>
-                  )}
-                </div>
-              </div>
-              <div class="content-panel">
-                <div class="sl-container">
-                  {Content ? (
-                    <div class="sl-markdown-content">
-                      <Content />
-                    </div>
-                  ) : (
-                    <div class="sl-markdown-content">
-                      <slot />
-                    </div>
-                  )}
-                  <Pagination locale={locale} prev={neighbors.prev} next={neighbors.next} />
-                  <Footer title={title} showEngagement={showEngagement} />
-                </div>
-              </div>
-            </main>
-          </div>
-        </div>
+<SiteShell
+  locale={locale}
+  title={title}
+  description={description}
+  enHref={enHref}
+  jaHref={jaHref}
+  ogImage={ogImage}
+  hreflang={hreflang}
+>
+  {home && <HomePage locale={locale} />}
+  {!home && entry && (
+    <PageTitle
+      title={title}
+      locale={locale}
+      publishedAt={publishedAt}
+      updatedAt={updatedAt}
+      draft={draft}
+    />
+  )}
+  {!home && !entry && <h1 class="page-title">{title}</h1>}
+  {home && Content && (
+    <section class="kept-home">
+      <p class="kept-label">{keptLabel[locale]}</p>
+      <div class="sl-markdown-content">
+        <Content />
       </div>
+    </section>
+  )}
+  {!home && Content && (
+    <div class="sl-markdown-content">
+      <Content />
     </div>
-    <ImageZoom />
-    <CookieConsent />
-    <script is:inline>
-      const pane = document.getElementById('site-sidebar');
-      const desktop = matchMedia('(min-width: 50rem)');
-      const syncSidebar = () => {
-        if (!pane) return;
-        if (desktop.matches) pane.removeAttribute('popover');
-        else pane.setAttribute('popover', '');
-      };
-      syncSidebar();
-      desktop.addEventListener('change', syncSidebar);
-    </script>
-  </body>
-</html>
-
-<script>
-  document.querySelectorAll('#site-sidebar a').forEach((link) => {
-    link.addEventListener('click', () => {
-      const pane = document.getElementById('site-sidebar');
-      if (pane?.hasAttribute('popover') && pane.matches(':popover-open')) {
-        pane.hidePopover();
-      }
-    });
-  });
-</script>
+  )}
+  {!Content && (
+    <div class="sl-markdown-content">
+      <slot />
+    </div>
+  )}
+  <Footer title={title} showEngagement={showEngagement} />
+</SiteShell>

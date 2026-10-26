@@ -1,0 +1,54 @@
+---
+import { getCollection } from 'astro:content';
+import QuietList from './QuietList.astro';
+import SiteShell from './SiteShell.astro';
+import Footer from './Footer.astro';
+import { groupByYear, listHreflang, listHref, listMeta, talks, writingPosts, type ListKind } from '../lib/catalog';
+import type { Locale } from '../lib/docs';
+
+interface Props {
+  kind: ListKind;
+  locale: Locale;
+}
+
+const { kind, locale } = Astro.props;
+const meta = listMeta[kind][locale];
+const enHref = listHref(kind, 'en');
+const jaHref = listHref(kind, 'ja');
+const postGroups = kind === 'writing'
+  ? groupByYear(writingPosts(await getCollection('docs'), locale))
+  : [];
+const talkGroups = kind === 'talks' ? groupByYear(talks) : [];
+---
+
+<SiteShell
+  locale={locale}
+  title={meta.title}
+  description={meta.description}
+  enHref={enHref}
+  jaHref={jaHref}
+  hreflang={listHreflang(kind, Astro.site?.href ?? 'https://koborin.ai')}
+>
+  <h1 class="list-title">{meta.title}</h1>
+  {kind === 'writing' && postGroups.map((group) => (
+    <section>
+      <h2 class="year">{group.year}</h2>
+      <QuietList items={group.items.map((item) => ({ title: item.title, href: item.href, date: item.dateLabel }))} />
+    </section>
+  ))}
+  {kind === 'talks' && talkGroups.map((group) => (
+    <section>
+      <h2 class="year">{group.year}</h2>
+      <QuietList
+        items={group.items.map((item) => ({
+          title: item.title[locale],
+          meta: item.event[locale],
+          date: item.date,
+          href: item.href,
+          external: item.href !== undefined,
+        }))}
+      />
+    </section>
+  ))}
+  <Footer title={meta.title} showEngagement={false} />
+</SiteShell>

@@ -11,12 +11,14 @@ interface Props {
 
 const { locale, enHref, jaHref } = Astro.props;
 const homeHref = locale === 'ja' ? '/ja/' : '/';
+const aboutHref = locale === 'ja' ? '/ja/about/' : '/about/';
 const rssHref = locale === 'ja' ? '/ja/rss.xml' : '/rss.xml';
 ---
 
 <header class="site-header">
   <a class="mark" href={homeHref}>koborin.ai</a>
   <div class="header-tools">
+    <a class="nav-about" href={aboutHref}>About</a>
     <LanguageSelect locale={locale} enHref={enHref} jaHref={jaHref} />
     <a class="icon-link" href="https://github.com/nozomi-koborinai" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

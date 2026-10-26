@@ -231,8 +231,8 @@
   --header-bg-light: rgba(255, 255, 255, 0.65);
   
   /* Common colors. Dark-theme accent; light theme overrides below. */
-  --color-accent: #c4b28a;
-  --color-accent-hover: #d4c7a4;
+  --color-accent: #d5dae1;
+  --color-accent-hover: #e8ecf1;
   --color-success: #34a853;
   --color-warning: #fbbc04;
   --color-error: #ea4335;
@@ -294,8 +294,8 @@
 
 /* Light theme */
 [data-theme="light"] {
-  --color-accent: #9a6430;
-  --color-accent-hover: #7d5228;
+  --color-accent: #4a5260;
+  --color-accent-hover: #343b48;
 
   --color-bg-primary: #ffffff;
   --color-bg-secondary: #f8f9fa;
@@ -321,31 +321,22 @@
    ========================================================================== */
 
 /*
- * Replaces Starlight's default blue/purple accent with the header-logo palette.
- * These custom properties are unlayered, so they win over Starlight's layered
- * defaults without touching layout, type, or the Mermaid rules above.
- * Dark text and button fills use #c4b28a, the logo ".ai" sand (8.5:1 on
- * Starlight's dark page background, 9.3:1 on #0b0d12).
- * Light text and button fills use #9a6430 (4.95:1 on white, and the same ratio
- * for white text on that fill). The logo copper #a8703a is 4.16:1 on white, so
- * it is only the non-text outline step (--sl-color-accent-high). The default
- * Badge fill is pointed at #9a6430 so its white label stays AA.
- * Body and heading colors stay on Starlight's gray scale. The logo slate
- * #2a3a4a is not applied.
+ * Neutral accent. Dark #d5dae1 on #0b0d12 is 13.83:1, and 1.17:1 against body
+ * text #eceae5, so text links are underlined in site.css. Light #4a5260 on
+ * #faf9f6 is 7.48:1. White on that fill is 7.87:1, so badge labels stay AA.
  */
 
 :root {
-  --sl-color-accent-low: #4a3c2a;
-  --sl-color-accent: #c4b28a;
-  --sl-color-accent-high: #c4b28a;
+  --sl-color-accent-low: #242a33;
+  --sl-color-accent: #d5dae1;
+  --sl-color-accent-high: #d5dae1;
 }
 
 :root[data-theme="light"] {
-  --sl-color-accent-low: #f6efe4;
-  --sl-color-accent: #9a6430;
-  --sl-color-accent-high: #a8703a;
-  /* White badge text on #a8703a is 4.16:1. Use the AA button color instead. */
-  --sl-badge-default-bg: #9a6430;
+  --sl-color-accent-low: #e7eaee;
+  --sl-color-accent: #4a5260;
+  --sl-color-accent-high: #4a5260;
+  --sl-badge-default-bg: #4a5260;
 }
 
 .landing-container {

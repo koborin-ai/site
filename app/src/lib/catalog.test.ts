@@ -7,6 +7,7 @@ import {
   formatTalkDate,
   homeLimit,
   homeTalks,
+  isAboutId,
   isHomeId,
   linkLabel,
   listHref,
@@ -76,6 +77,9 @@ describe('home catalog', () => {
     expect(listHref('talks', 'en')).toBe('/talks/');
     expect(linkLabel.all.ja).toBe('すべて →');
     expect(isHomeId('ja')).toBe(true);
-    expect(isHomeId('ja/tech/older')).toBe(false);
+    expect(isHomeId('about')).toBe(false);
+    expect(isAboutId('about')).toBe(true);
+    expect(isAboutId('ja/about')).toBe(true);
+    expect(isAboutId('ja/tech/older')).toBe(false);
   });
 });

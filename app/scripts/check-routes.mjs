@@ -5,7 +5,7 @@ import { listRoutes } from './list-routes.mjs';
 
 const allowedDropPrefix = '/pagefind/';
 
-export const allowedAdditions = ['/blog/', '/ja/blog/', '/talks/', '/ja/talks/'];
+export const allowedAdditions = ['/blog/', '/ja/blog/', '/talks/', '/ja/talks/', '/about/', '/ja/about/'];
 
 export function diffRoutes(baseline, actual, allowed = allowedAdditions) {
   const actualSet = new Set(actual);

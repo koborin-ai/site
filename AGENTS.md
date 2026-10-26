@@ -98,7 +98,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Add frontmatter: `title` (required), `description` (required), `publishedAt` (required for articles, `YYYY-MM-DD`), `draft` (optional, boolean).
    - A published article (frontmatter `publishedAt`, not a draft) is listed on the home page and on `/blog/` or `/ja/blog/` from the content collection. No sidebar entry.
    - Folder structure maps to URL structure: `docs/tech/post.mdx` → `/tech/post/`. Article URLs stay under `/tech/` and `/life/` until a later move to `/blog/`.
-   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` may disappear. The only other allowed additions are the list pages in `allowedAdditions` inside `app/scripts/check-routes.mjs` (`/blog/`, `/ja/blog/`, `/talks/`, `/ja/talks/`).
+   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` may disappear. The only other allowed additions are the pages in `allowedAdditions` inside `app/scripts/check-routes.mjs` (`/blog/`, `/ja/blog/`, `/talks/`, `/ja/talks/`, `/about/`, `/ja/about/`).
    - **Japanese link spacing**: In Japanese MDX prose, add a half-width space between Japanese text characters (hiragana, katakana, kanji) and Markdown links. Do NOT add a space between full-width punctuation (`、`, `。`, `（`, `）`) and links — full-width characters already have built-in visual whitespace.
      - Good: `どのバージョンの [仕様](https://...) に準拠する`
      - Good: `GA で、[Dart 版](https://...) は 2026 年` (no space after `、`)
@@ -158,9 +158,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **CI/CD**: Uses `fetch-depth: 0` to clone full Git history so the updated date can read commits.
    - **Local Development**: Updated date is shown for committed files. New uncommitted files show only the published date (if set).
 7. **Site chrome**:
-   - One centred column on a dot grid. Home, `/blog/`, `/talks/`, and article pages share `app/src/components/SiteShell.astro`. There is no sidebar and no table of contents.
-   - Colours and type live in `app/src/styles/site.css` and `app/src/styles/fonts.css`. Article prose still uses `app/src/styles/vendor/`.
-   - The header has the mark, an EN/JA link, GitHub, X, RSS, and the theme control. Home sections and the list pages read `app/src/lib/catalog.ts`. `app/src/sidebar.ts` is not rendered.
+   - One centred column on a dot grid. Home, `/about/`, `/blog/`, `/talks/`, and article pages share `app/src/components/SiteShell.astro`. There is no sidebar and no table of contents.
+   - Colours and type live in `app/src/styles/site.css` and `app/src/styles/fonts.css`. The accent is neutral (`#d5dae1` in dark, `#4a5260` in light). Text links are underlined. Article prose still uses `app/src/styles/vendor/`.
+   - The header has the mark, an About link, an EN/JA link, GitHub, X, RSS, and the theme control. Home keeps the name, bio, and three lists. The longer profile lives on `/about/` and `/ja/about/`. Home sections and the list pages read `app/src/lib/catalog.ts`. `app/src/sidebar.ts` is not rendered.
 8. **Testing**: run `mise run check` from the repository root before committing. It covers the app (`npm run check`: oxlint, `astro check`, Vitest, image usage), the infra (`dart analyze`, `dart test`), the automation (actionlint, shellcheck, PR label tests), and the docs (markdownlint). Run `npm run build` in `app/` as well whenever content or configuration changes.
 9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 10. **Workers deployment**:

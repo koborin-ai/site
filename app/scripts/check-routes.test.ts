@@ -21,10 +21,10 @@ describe('diffRoutes', () => {
     expect(result.unexpected).toEqual(['/life/new/']);
   });
 
-  it('allows the article and talk list pages', () => {
+  it('allows the list pages and the about pages', () => {
     const result = diffRoutes(
       ['/'],
-      ['/', '/blog/', '/ja/blog/', '/talks/', '/ja/talks/', '/secret/'],
+      ['/', '/blog/', '/ja/blog/', '/talks/', '/ja/talks/', '/about/', '/ja/about/', '/secret/'],
     );
 
     expect(result.unexpected).toEqual(['/secret/']);

@@ -57,7 +57,7 @@ const latestTalks = homeTalks();
             {project.icon === 'terradart' && <TerraDartMark />}
             {project.icon === 'contextlint' && <ContextlintMark />}
             {project.icon !== 'terradart' && project.icon !== 'contextlint' && <span class="ph">{project.icon}</span>}
-            {project.name}
+            <span class="link-text">{project.name}</span>
           </span>
           <span class="sub">{project.description[locale]}</span>
         </a>

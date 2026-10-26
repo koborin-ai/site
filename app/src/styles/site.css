@@ -50,9 +50,25 @@ body {
 }
 
 .column {
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 128px 24px 0;
+}
+
+/* 800px figures plus 24px of side padding on each side. Prose stays at 740px. */
+.column:has(.article-dates) {
+  max-width: 848px;
+}
+
+.column:has(.article-dates) > :is(.page-title, .article-dates, .draft-notice, .engagement-footer, .site-footer),
+.column:has(.article-dates) .sl-markdown-content > :not(pre):not(svg):not(picture):not(figure) {
+  max-width: 740px;
+  margin-inline: auto;
+}
+
+.column:has(.article-dates) .sl-markdown-content > svg {
+  display: block;
+  margin-inline: auto;
 }
 
 .site-header {
@@ -65,6 +81,10 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 22px 32px;
+  background-color: var(--site-bg);
+  background-image: radial-gradient(var(--site-dot) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  background-attachment: fixed;
 }
 
 .mark,
@@ -99,7 +119,23 @@ body {
   display: flex;
   align-items: center;
   gap: 18px;
+  line-height: 1;
   color: var(--site-muted);
+}
+
+.mark,
+.nav-about,
+.lang-switch,
+.icon-link,
+starlight-theme-select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+starlight-theme-select {
+  height: 17px;
 }
 
 .nav-about {
@@ -112,9 +148,6 @@ body {
 
 .lang-switch,
 .icon-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   color: var(--site-muted);
 }
 

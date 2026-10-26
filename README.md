@@ -83,7 +83,7 @@ Tool versions come from `.tool-versions`. `actions/setup-node` reads it through 
 
 ## Tech Stack
 
-- **Frontend**: Astro and TypeScript. The docs layout keeps the previous Starlight look. Pagefind site search is gone.
+- **Frontend**: Astro and TypeScript. Home, article lists, talk lists, and articles share one centred column. Pagefind site search is gone.
 - **Content Management**: MDX stored under `app/src/content/docs/` within git. Frontmatter is validated with Zod in `app/src/content.config.ts`. Drafts can be marked with `draft: true` in frontmatter.
 - **Analytics**: Google Analytics 4 for baseline PV/engagement.
 - **Infrastructure**: TerraDart (Dart) targeting Cloudflare via Terraform. State is in R2.
@@ -198,8 +198,8 @@ To add a new article or page:
    # Single page
    app/src/content/docs/my-article.mdx
 
-   # Categorized page
-   app/src/content/docs/blog/my-post.mdx
+   # Article
+   app/src/content/docs/tech/my-post.mdx
    ```
 
 2. **Add frontmatter** with required fields:
@@ -215,19 +215,7 @@ To add a new article or page:
    - `publishedAt`: Set the publish date manually (YYYY-MM-DD format).
    - Updated date is automatically extracted from Git history at build time.
 
-3. **Update sidebar** in `app/src/sidebar.ts`:
-
-   ```typescript
-   export const sidebar = [
-     // ... existing items
-     {
-       label: "Blog",
-       items: [
-         { label: "My Post", slug: "blog/my-post" },
-       ],
-     },
-   ];
-   ```
+3. **Check the lists.** A page with `publishedAt` shows on the home page and on `/blog/` or `/ja/blog/`. Add its public URL to `app/scripts/routes-baseline.txt`.
 
 4. **Build and test** locally before pushing.
 

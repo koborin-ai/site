@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { alternateHref, buildNav, categoryNeighbors, navFromEntries, type SidebarEntry } from './navigation';
+import { alternateHref, buildNav, categoryNeighbors, hreflangLinks, navFromEntries, type SidebarEntry } from './navigation';
 
 const drafts = {
   has: (id: string) => id.endsWith('acknowledging-aging'),
@@ -80,10 +80,19 @@ describe('language switch', () => {
   });
 
   it('falls back to the other home when the pair is missing', () => {
-    const available = new Set(['tech/stars-digest', 'index', 'ja/index']);
+    const available = new Set(['tech/stars-digest', 'index', 'ja']);
     expect(alternateHref('tech/stars-digest', available)).toEqual([
       { locale: 'en', href: '/tech/stars-digest/' },
       { locale: 'ja', href: '/ja/' },
+    ]);
+  });
+
+  it('pairs the Japanese home id ja with the English home', () => {
+    const available = new Set(['index', 'ja']);
+    expect(hreflangLinks('ja', available, 'https://koborin.ai')).toEqual([
+      { hreflang: 'en', href: 'https://koborin.ai/' },
+      { hreflang: 'ja', href: 'https://koborin.ai/ja/' },
+      { hreflang: 'x-default', href: 'https://koborin.ai/' },
     ]);
   });
 });

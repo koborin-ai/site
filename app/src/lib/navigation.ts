@@ -149,11 +149,28 @@ export function alternateHref(
   available: ReadonlySet<string>,
 ): { locale: Locale; href: string }[] {
   const englishId = id.startsWith('ja/') || id === 'ja' ? id.slice(3) || 'index' : id;
-  const japaneseId = englishId === 'index' ? 'ja/index' : `ja/${englishId}`;
+  const japaneseHome = available.has('ja/index') ? 'ja/index' : 'ja';
+  const japaneseId = englishId === 'index' ? japaneseHome : `ja/${englishId}`;
   const hrefFor = (docId: string, locale: Locale) =>
     available.has(docId) ? publicPath(docId) : locale === 'ja' ? '/ja/' : '/';
   return [
     { locale: 'en', href: hrefFor(englishId, 'en') },
     { locale: 'ja', href: hrefFor(japaneseId, 'ja') },
+  ];
+}
+
+export function hreflangLinks(
+  id: string,
+  available: ReadonlySet<string>,
+  origin: string,
+): { hreflang: string; href: string }[] {
+  const [english, japanese] = alternateHref(id, available);
+  const absolute = (path: string) => new URL(path, origin).href;
+  const en = absolute(english.href);
+  const ja = absolute(japanese.href);
+  return [
+    { hreflang: 'en', href: en },
+    { hreflang: 'ja', href: ja },
+    { hreflang: 'x-default', href: en },
   ];
 }

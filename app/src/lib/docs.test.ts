@@ -30,7 +30,8 @@ describe('locale and category', () => {
   });
 
   it('pairs each page with the other language', () => {
-    expect(counterpartId('index')).toBe('ja/index');
+    expect(counterpartId('index')).toBe('ja');
+    expect(counterpartId('ja')).toBe('index');
     expect(counterpartId('ja/index')).toBe('index');
     expect(counterpartId('tech/stars-digest')).toBe('ja/tech/stars-digest');
     expect(counterpartId('ja/privacy-policy')).toBe('privacy-policy');

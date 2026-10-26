@@ -17,7 +17,7 @@ import {
   type Locale,
 } from '../lib/docs';
 import { gitLastUpdated } from '../lib/last-updated';
-import { alternateHref, buildNav, categoryNeighbors } from '../lib/navigation';
+import { alternateHref, buildNav, categoryNeighbors, hreflangLinks } from '../lib/navigation';
 import '../styles/vendor/layers.css';
 import '../styles/vendor/props.css';
 import '../styles/vendor/reset.css';
@@ -61,6 +61,7 @@ const alternates = entry
     ];
 const enHref = alternates.find((item) => item.locale === 'en')?.href ?? '/';
 const jaHref = alternates.find((item) => item.locale === 'ja')?.href ?? '/ja/';
+const hreflang = entry ? hreflangLinks(entry.id, available, Astro.site?.href ?? 'https://koborin.ai') : [];
 
 let title = fallbackTitle;
 let description = fallbackDescription;
@@ -107,7 +108,7 @@ const menuLabel = locale === 'ja' ? 'メニュー' : 'Menu';
 
 <html lang={locale} data-theme="dark" data-has-sidebar {...hasToc ? { 'data-has-toc': '' } : {}}>
   <head>
-    <Head title={title} description={description} lang={locale} ogImage={ogImage} />
+    <Head title={title} description={description} lang={locale} ogImage={ogImage} hreflang={hreflang} />
     <script is:inline>
       window.StarlightThemeProvider = (() => {
         const stored = localStorage.getItem('starlight-theme');

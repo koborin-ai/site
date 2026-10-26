@@ -38,7 +38,7 @@ export function counterpartId(id: string): string {
     const rest = id.slice(3);
     return rest === '' ? 'index' : rest;
   }
-  return id === 'index' ? 'ja/index' : `ja/${id}`;
+  return id === 'index' ? 'ja' : `ja/${id}`;
 }
 
 function withTrailingSlash(path: string): string {

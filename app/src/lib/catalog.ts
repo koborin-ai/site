@@ -8,8 +8,8 @@ export const bio = {
     after: '.',
   },
   ja: {
-    before: 'ソフトウェアエンジニア。開発者向けのツールを公開しながら作っていて、いまは ',
-    after: ' に取り組んでいます。',
+    before: 'ソフトウェアエンジニア。開発者向けのツールを公開しながら作っていて、いまは',
+    after: 'に取り組んでいます。',
   },
 } as const;
 
@@ -52,11 +52,13 @@ export const listMeta = {
 
 export type ListKind = 'writing' | 'talks';
 
+export type ProjectIcon = 'terradart' | 'contextlint' | 'g' | 'a' | 'j';
+
 export interface Project {
   name: string;
   href: string;
   kind: 'site' | 'github';
-  mark?: 'contextlint';
+  icon: ProjectIcon;
   description: Record<Locale, string>;
 }
 
@@ -65,6 +67,7 @@ export const projects: readonly Project[] = [
     name: 'TerraDart',
     href: 'https://terradart.dev/',
     kind: 'site',
+    icon: 'terradart',
     description: {
       en: 'Type-safe IaC for Dart.',
       ja: 'Dart のためのタイプセーフな IaC。',
@@ -74,7 +77,7 @@ export const projects: readonly Project[] = [
     name: 'contextlint',
     href: 'https://contextlint.dev/',
     kind: 'site',
-    mark: 'contextlint',
+    icon: 'contextlint',
     description: {
       en: 'A semantic linter for AI-era Markdown.',
       ja: 'AI 時代の Markdown のためのセマンティックリンター。',
@@ -84,24 +87,27 @@ export const projects: readonly Project[] = [
     name: 'gcp-cost-mcp-server',
     href: 'https://github.com/nozomi-koborinai/gcp-cost-mcp-server',
     kind: 'github',
+    icon: 'g',
     description: {
-      en: 'An MCP server that lets AI assistants like Claude or Cursor estimate GCP running costs — instead of manually using the Google Cloud Pricing Calculator.',
-      ja: 'Claude や Cursor などの AI アシスタントから、Google Cloud Pricing Calculator を手動で触る代わりに GCP のランニングコストを見積もれる MCP サーバー。',
+      en: 'An MCP server that lets AI assistants estimate GCP running costs.',
+      ja: 'AI アシスタントから GCP のランニングコストを見積もれる MCP サーバー。',
     },
   },
   {
     name: 'ableton-osc-mcp',
     href: 'https://github.com/nozomi-koborinai/ableton-osc-mcp',
     kind: 'github',
+    icon: 'a',
     description: {
-      en: 'An MCP (Model Context Protocol) server that lets AI assistants like Claude or Cursor drive Ableton Live 11+ via AbletonOSC.',
-      ja: 'Claude や Cursor などの AI アシスタントから、AbletonOSC 経由で Ableton Live 11+ を操作できる MCP (Model Context Protocol) サーバー。',
+      en: 'An MCP server that drives Ableton Live via AbletonOSC.',
+      ja: 'AbletonOSC 経由で Ableton Live を操作できる MCP サーバー。',
     },
   },
   {
     name: 'jev-spec',
     href: 'https://github.com/nozomi-koborinai/jev-spec',
     kind: 'github',
+    icon: 'j',
     description: {
       en: 'Catch spec drift on every commit.',
       ja: '仕様書とコードのずれを、コミットのたびに検出する。',
@@ -115,6 +121,7 @@ export interface Talk {
   event: Record<Locale, string>;
   title: Record<Locale, string>;
   href?: string;
+  onHome: boolean;
 }
 
 function talk(
@@ -122,12 +129,14 @@ function talk(
   event: Record<Locale, string>,
   title: Record<Locale, string>,
   href?: string,
+  onHome = true,
 ): Talk {
   return {
     date,
     year: Number(date.slice(0, 4)),
     event,
     title,
+    onHome,
     ...(href ? { href } : {}),
   };
 }
@@ -161,6 +170,8 @@ export const talks: readonly Talk[] = [
     '2024/12',
     { en: 'Genkit Hands-on (Organizer)', ja: 'Genkit ハンズオン（運営）' },
     { en: 'Technical supporter', ja: 'テクニカルサポーターとして参加' },
+    undefined,
+    false,
   ),
   talk(
     '2024/11',
@@ -243,6 +254,7 @@ export interface PostItem {
   publishedAt: Date;
   year: number;
   dateLabel: string;
+  monthDay: string;
 }
 
 export function writingPosts(docs: readonly PostSource[], locale: Locale): PostItem[] {
@@ -257,10 +269,24 @@ export function writingPosts(docs: readonly PostSource[], locale: Locale): PostI
         href: publicPath(doc.id),
         publishedAt,
         year: publishedAt.getUTCFullYear(),
-        dateLabel: publishedAt.toISOString().slice(0, 10),
+        dateLabel: formatPostDate(publishedAt, 'home'),
+        monthDay: formatPostDate(publishedAt, 'list'),
       };
     })
     .toSorted((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime() || a.href.localeCompare(b.href));
+}
+
+export function homeTalks(): readonly Talk[] {
+  return talks.filter((item) => item.onHome).slice(0, homeLimit);
+}
+
+export function formatPostDate(publishedAt: Date, where: 'home' | 'list'): string {
+  const [year, month, day] = publishedAt.toISOString().slice(0, 10).split('-');
+  return where === 'home' ? `${year}/${month}/${day}` : `${month}/${day}`;
+}
+
+export function formatTalkDate(date: string, where: 'home' | 'list'): string {
+  return where === 'home' ? date : `${date.slice(5)}月`;
 }
 
 export function groupByYear<T extends { year: number }>(items: readonly T[]): { year: number; items: T[] }[] {

@@ -65,12 +65,10 @@ const skipLabel = locale === 'ja' ? 'コンテンツにスキップ' : 'Skip to 
   </head>
   <body>
     <a class="sl-skip-link sr-only" href="#_top">{skipLabel}</a>
-    <div class="column">
-      <SiteHeader locale={locale} enHref={enHref} jaHref={jaHref} />
-      <main id="_top">
-        <slot />
-      </main>
-    </div>
+    <SiteHeader locale={locale} enHref={enHref} jaHref={jaHref} />
+    <main id="_top" class="column">
+      <slot />
+    </main>
     <ImageZoom />
     <CookieConsent />
   </body>

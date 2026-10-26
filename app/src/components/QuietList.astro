@@ -19,22 +19,21 @@ const { items } = Astro.props;
     <li>
       {item.href ? (
         <a
-          class="quiet-row"
+          class="row"
           href={item.href}
           target={item.external ? '_blank' : undefined}
           rel={item.external ? 'noopener noreferrer' : undefined}
         >
-          <span class="entry-title">{item.title}</span>
-          <time class="entry-date">{item.date}</time>
-          {item.meta && <span class="entry-meta">{item.meta}</span>}
+          {item.title}
+          {item.meta && <span class="sub">{item.meta}</span>}
         </a>
       ) : (
-        <div class="quiet-row">
-          <span class="entry-title">{item.title}</span>
-          <time class="entry-date">{item.date}</time>
-          {item.meta && <span class="entry-meta">{item.meta}</span>}
-        </div>
+        <span class="t">
+          {item.title}
+          {item.meta && <span class="sub">{item.meta}</span>}
+        </span>
       )}
+      <span class="meta">{item.date}</span>
     </li>
   ))}
 </ul>

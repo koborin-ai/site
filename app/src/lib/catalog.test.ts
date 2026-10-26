@@ -3,7 +3,10 @@ import {
   bio,
   book,
   groupByYear,
+  formatPostDate,
+  formatTalkDate,
   homeLimit,
+  homeTalks,
   isHomeId,
   linkLabel,
   listHref,
@@ -23,8 +26,13 @@ describe('home catalog', () => {
     ]);
     expect(projects[0]?.description.ja).toBe('Dart のためのタイプセーフな IaC。');
     expect(projects[0]?.description.en).toBe('Type-safe IaC for Dart.');
+    expect(projects[2]?.description.ja).toBe('AI アシスタントから GCP のランニングコストを見積もれる MCP サーバー。');
+    expect(projects[2]?.description.en).toBe('An MCP server that lets AI assistants estimate GCP running costs.');
+    expect(projects[3]?.description.ja).toBe('AbletonOSC 経由で Ableton Live を操作できる MCP サーバー。');
+    expect(projects[3]?.description.en).toBe('An MCP server that drives Ableton Live via AbletonOSC.');
+    expect(projects.map((project) => project.icon)).toEqual(['terradart', 'contextlint', 'g', 'a', 'j']);
     expect(bio.ja.before + 'TerraDart' + bio.ja.after).toBe(
-      'ソフトウェアエンジニア。開発者向けのツールを公開しながら作っていて、いまは TerraDart に取り組んでいます。',
+      'ソフトウェアエンジニア。開発者向けのツールを公開しながら作っていて、いまはTerraDartに取り組んでいます。',
     );
     expect(bio.en.before + 'TerraDart' + bio.en.after).toBe(
       "Software engineer. I build developer tools in the open, and right now that's TerraDart.",
@@ -44,6 +52,9 @@ describe('home catalog', () => {
       '2025/02',
       '2024/12',
     ]);
+    expect(homeTalks().map((item) => item.date)).toEqual(['2026/07', '2025/07', '2025/02', '2024/11']);
+    expect(formatTalkDate('2026/07', 'list')).toBe('07月');
+    expect(formatPostDate(new Date('2026-09-22T00:00:00.000Z'), 'list')).toBe('09/22');
   });
 
   it('lists published posts newest first and skips drafts', () => {

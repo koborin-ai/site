@@ -103,6 +103,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Categorized: `{ label: "Category", items: [{ label: "Post", slug: "category/post" }] }`
      - **Sidebar labels**: Use English labels only (no `translations`). This ensures consistent navigation across all language versions.
    - Folder structure maps to URL structure: `docs/blog/post.mdx` → `/blog/post/`
+   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` is the only allowed omission.
    - **Japanese link spacing**: In Japanese MDX prose, add a half-width space between Japanese text characters (hiragana, katakana, kanji) and Markdown links. Do NOT add a space between full-width punctuation (`、`, `。`, `（`, `）`) and links — full-width characters already have built-in visual whitespace.
      - Good: `どのバージョンの [仕様](https://...) に準拠する`
      - Good: `GA で、[Dart 版](https://...) は 2026 年` (no space after `、`)

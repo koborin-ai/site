@@ -141,4 +141,6 @@ For Japanese prose style, see `.cursor/rules/mdx-writing.md`.
 mise run check && npm run build --prefix app
 ```
 
+Add the new public URL to `app/scripts/routes-baseline.txt` before the build. The build fails if that URL is missing, or if an unexpected URL appears. Generated `/og/*.webp` files are allowed.
+
 If the article still has `draft: true`, those commands skip it entirely. Also run `npm run dev` and open the page, because a missing image import or broken MDX in a draft passes the build and only fails when rendered.

@@ -1,7 +1,7 @@
 /* Latin variable faces plus the Japanese cut. optional avoids a swap after first paint. */
 
 @font-face {
-  font-family: "Geist Variable";
+  font-family: "Geist";
   font-style: normal;
   font-display: optional;
   font-weight: 100 900;
@@ -10,7 +10,7 @@
 }
 
 @font-face {
-  font-family: "Geist Mono Variable";
+  font-family: "Geist Mono";
   font-style: normal;
   font-display: optional;
   font-weight: 100 900;

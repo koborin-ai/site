@@ -34,10 +34,15 @@ const currentYear = new Date().getFullYear();
 
   .footer-link {
     color: inherit;
-    text-decoration: none;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-offset: 0.18em;
+    text-decoration-color: color-mix(in srgb, currentColor 65%, transparent);
   }
 
   .footer-link:hover {
-    color: var(--site-accent, #c4b28a);
+    color: var(--site-accent, #d5dae1);
+    text-decoration-thickness: 2px;
+    text-decoration-color: currentColor;
   }
 </style>

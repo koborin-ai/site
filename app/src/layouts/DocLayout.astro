@@ -7,7 +7,7 @@ import SiteShell from '../components/SiteShell.astro';
 import { localeOf, type Locale } from '../lib/docs';
 import { gitLastUpdated } from '../lib/last-updated';
 import { alternateHref, hreflangLinks } from '../lib/navigation';
-import { isHomeId, keptLabel } from '../lib/catalog';
+import { isAboutId, isHomeId } from '../lib/catalog';
 
 interface Props {
   entryId?: string;
@@ -47,7 +47,7 @@ let updatedAt: Date | undefined;
 let draft = false;
 let showEngagement = false;
 let Content: Awaited<ReturnType<typeof render>>['Content'] | undefined;
-const home = entry ? isHomeId(entry.id) : false;
+const kind = !entry ? 'missing' : isHomeId(entry.id) ? 'home' : isAboutId(entry.id) ? 'about' : 'doc';
 
 if (entry) {
   title = entry.data.title;
@@ -56,7 +56,7 @@ if (entry) {
   publishedAt = entry.data.publishedAt;
   draft = entry.data.draft;
   const explicit = entry.data.engagement;
-  showEngagement = !home && (explicit === true || (explicit !== false && publishedAt !== undefined));
+  showEngagement = kind !== 'home' && (explicit === true || (explicit !== false && publishedAt !== undefined));
   if (entry.data.lastUpdated !== false && entry.filePath) {
     updatedAt = gitLastUpdated(entry.filePath);
   }
@@ -74,8 +74,8 @@ if (entry) {
   ogImage={ogImage}
   hreflang={hreflang}
 >
-  {home && <HomePage locale={locale} />}
-  {!home && entry && (
+  {kind === 'home' && <HomePage locale={locale} />}
+  {kind === 'doc' && (
     <PageTitle
       title={title}
       locale={locale}
@@ -84,16 +84,8 @@ if (entry) {
       draft={draft}
     />
   )}
-  {!home && !entry && <h1 class="page-title">{title}</h1>}
-  {home && Content && (
-    <section class="kept-home">
-      <p class="kept-label">{keptLabel[locale]}</p>
-      <div class="sl-markdown-content">
-        <Content />
-      </div>
-    </section>
-  )}
-  {!home && Content && (
+  {kind === 'missing' && <h1 class="page-title">{title}</h1>}
+  {(kind === 'doc' || kind === 'about') && Content && (
     <div class="sl-markdown-content">
       <Content />
     </div>

@@ -34,11 +34,6 @@ export const linkLabel = {
   all: { en: 'All →', ja: 'すべて →' },
 } as const;
 
-export const keptLabel = {
-  en: 'Kept from the previous home',
-  ja: '以前のホームから残している内容',
-} as const;
-
 export const listMeta = {
   writing: {
     en: { title: 'Writing', description: 'Published articles.' },
@@ -316,4 +311,8 @@ export function listHreflang(kind: ListKind, origin: string): { hreflang: string
 
 export function isHomeId(id: string): boolean {
   return id === 'index' || id === 'ja' || id === 'ja/index';
+}
+
+export function isAboutId(id: string): boolean {
+  return id === 'about' || id === 'ja/about';
 }

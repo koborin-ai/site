@@ -8,3 +8,4 @@ ts	phase	decision	why	evidence	result
 2026-10-26T11:56:00Z	verify	mermaid nodes render with a dark fill and white labels	the first screenshot had scrolled to a header icon	/opt/cursor/artifacts/after-ja-article-mermaid-dark.png	pass
 2026-10-26T11:56:00Z	gap	no pixel diff against the mock	top.html, the PNGs, and the SVG badges were not in the environment	written spec plus the current site copy	open
 2026-10-26T12:12:00Z	parity	restyled badges, rows, and column from common.css	the owner attached the mock after the first PR	pixel diff of the designed home vs rendered top.html is 0.47% outside the theme-toggle zone	open
+2026-10-26T12:30:00Z	place	home keeps name, bio, and three lists; profile moved to /about/ and /ja/about/	owner chose option 2 and a neutral accent	dark #d5dae1 is 13.83:1 on #0b0d12 and 1.17:1 against body #eceae5; light #4a5260 is 7.48:1 on #faf9f6; text links underlined; pills keep the border	pass

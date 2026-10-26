@@ -24,7 +24,7 @@ const { items } = Astro.props;
           target={item.external ? '_blank' : undefined}
           rel={item.external ? 'noopener noreferrer' : undefined}
         >
-          {item.title}
+          <span class="link-text">{item.title}</span>
           {item.meta && <span class="sub">{item.meta}</span>}
         </a>
       ) : (

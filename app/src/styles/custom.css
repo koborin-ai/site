@@ -225,11 +225,6 @@
   /* Starlight header height variable - tells Starlight to offset content */
   --sl-nav-height: 4.5rem;
   
-  /* Header tokens */
-  --header-blur: 16px;
-  --header-bg-dark: rgba(10, 10, 15, 0.6);
-  --header-bg-light: rgba(255, 255, 255, 0.65);
-  
   /* Common colors. Dark-theme accent; light theme overrides below. */
   --color-accent: #d5dae1;
   --color-accent-hover: #e8ecf1;

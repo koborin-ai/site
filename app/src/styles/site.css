@@ -80,9 +80,9 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 22px 32px;
-  background-color: color-mix(in srgb, var(--site-bg) 75%, transparent);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  background-color: color-mix(in srgb, var(--site-bg) 40%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 @supports not (backdrop-filter: blur(1px)) {

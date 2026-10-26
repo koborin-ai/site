@@ -5,14 +5,17 @@ import { listRoutes } from './list-routes.mjs';
 
 const allowedDropPrefix = '/pagefind/';
 
-export function diffRoutes(baseline, actual) {
+export const allowedAdditions = ['/blog/', '/ja/blog/', '/talks/', '/ja/talks/', '/about/', '/ja/about/'];
+
+export function diffRoutes(baseline, actual, allowed = allowedAdditions) {
   const actualSet = new Set(actual);
   const baselineSet = new Set(baseline);
+  const allowedSet = new Set(allowed);
   const droppedSearch = baseline.filter((url) => !actualSet.has(url) && url.startsWith(allowedDropPrefix));
   const missing = baseline.filter((url) => !actualSet.has(url) && !url.startsWith(allowedDropPrefix));
   const generated = actual.filter((url) => !baselineSet.has(url) && url.startsWith('/og/') && url.endsWith('.webp'));
   const generatedSet = new Set(generated);
-  const unexpected = actual.filter((url) => !baselineSet.has(url) && !generatedSet.has(url));
+  const unexpected = actual.filter((url) => !baselineSet.has(url) && !generatedSet.has(url) && !allowedSet.has(url));
   return { droppedSearch, missing, generated, unexpected };
 }
 

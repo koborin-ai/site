@@ -1,0 +1,75 @@
+---
+import CookieConsent from './CookieConsent.astro';
+import Head from './Head.astro';
+import ImageZoom from './ImageZoom.astro';
+import SiteHeader from './SiteHeader.astro';
+import type { Locale } from '../lib/docs';
+import '../styles/vendor/layers.css';
+import '../styles/vendor/props.css';
+import '../styles/vendor/reset.css';
+import '../styles/vendor/util.css';
+import '../styles/vendor/asides.css';
+import '../styles/vendor/markdown.css';
+import '../styles/vendor/anchor-links.css';
+import '../styles/vendor/print.css';
+import '../styles/layout.css';
+import '../styles/custom.css';
+import '../styles/fonts.css';
+import '../styles/site.css';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  enHref: string;
+  jaHref: string;
+  ogImage?: string;
+  hreflang?: { hreflang: string; href: string }[];
+}
+
+const {
+  locale,
+  title,
+  description,
+  enHref,
+  jaHref,
+  ogImage,
+  hreflang = [],
+} = Astro.props;
+const skipLabel = locale === 'ja' ? 'コンテンツにスキップ' : 'Skip to content';
+---
+
+<html lang={locale} data-theme="dark">
+  <head>
+    <Head title={title} description={description} lang={locale} ogImage={ogImage} hreflang={hreflang} />
+    <script is:inline>
+      window.StarlightThemeProvider = (() => {
+        const stored = localStorage.getItem('starlight-theme');
+        const choice = stored === 'light' || stored === 'dark' ? stored : 'auto';
+        const resolved = choice === 'auto'
+          ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+          : choice;
+        document.documentElement.dataset.theme = resolved;
+        return {
+          updatePickers(next) {
+            const value = next === 'light' || next === 'dark' || next === 'auto'
+              ? next
+              : choice;
+            document.querySelectorAll('starlight-theme-select select').forEach((select) => {
+              select.value = value;
+            });
+          },
+        };
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="sl-skip-link sr-only" href="#_top">{skipLabel}</a>
+    <SiteHeader locale={locale} enHref={enHref} jaHref={jaHref} />
+    <main id="_top" class="column">
+      <slot />
+    </main>
+    <ImageZoom />
+    <CookieConsent />
+  </body>
+</html>

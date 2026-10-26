@@ -1,0 +1,88 @@
+---
+import { getCollection } from 'astro:content';
+import SiteImage from './SiteImage.astro';
+import QuietList from './QuietList.astro';
+import TerraDartMark from './TerraDartMark.astro';
+import ContextlintMark from './ContextlintMark.astro';
+import bookCover from '../assets/life/reflections-on-2025/book-cover.png';
+import {
+  bio,
+  book,
+  homeLimit,
+  homeTalks,
+  linkLabel,
+  listHref,
+  projects,
+  sections,
+  writingPosts,
+} from '../lib/catalog';
+import type { Locale } from '../lib/docs';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const docs = await getCollection('docs');
+const posts = writingPosts(docs, locale).slice(0, homeLimit);
+const latestTalks = homeTalks();
+---
+
+<h1 class="name">Nozomi Koborinai</h1>
+<p class="bio">
+  {bio[locale].before}<a class="badge" href="https://terradart.dev/"><TerraDartMark />TerraDart</a>{bio[locale].after}
+</p>
+<p class="bio">
+  <a class="badge" href={book.href}>
+    <SiteImage
+      src={bookCover}
+      alt=""
+      variant="thumbnail"
+      widths={[32, 64]}
+      sizes="16px"
+      loading="eager"
+    />{book.title}
+  </a><span class="book-note">{book.note[locale]}</span>
+</p>
+
+<div class="rule"></div>
+
+<section class="block">
+  <h2 class="section-label">{sections.building[locale]}</h2>
+  <ul class="quiet-list">
+    {projects.map((project) => (
+      <li>
+        <a class="row" href={project.href} target="_blank" rel="noopener noreferrer">
+          <span class="pname">
+            {project.icon === 'terradart' && <TerraDartMark />}
+            {project.icon === 'contextlint' && <ContextlintMark />}
+            {project.icon !== 'terradart' && project.icon !== 'contextlint' && <span class="ph">{project.icon}</span>}
+            <span class="link-text">{project.name}</span>
+          </span>
+          <span class="sub">{project.description[locale]}</span>
+        </a>
+        <a class="meta" href={project.href} target="_blank" rel="noopener noreferrer">{linkLabel[project.kind][locale]}</a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<section class="block">
+  <h2 class="section-label">{sections.writing[locale]}</h2>
+  <QuietList items={posts.map((post) => ({ title: post.title, href: post.href, date: post.dateLabel }))} />
+  <a class="more" href={listHref('writing', locale)}>{linkLabel.all[locale]}</a>
+</section>
+
+<section class="block">
+  <h2 class="section-label">{sections.talks[locale]}</h2>
+  <QuietList
+    items={latestTalks.map((item) => ({
+      title: item.title[locale],
+      meta: item.event[locale],
+      date: item.date,
+      href: item.href,
+      external: item.href !== undefined,
+    }))}
+  />
+  <a class="more" href={listHref('talks', locale)}>{linkLabel.all[locale]}</a>
+</section>

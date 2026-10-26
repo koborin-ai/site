@@ -8,8 +8,7 @@ const labels = isJapanese
 <starlight-theme-select>
   <div class="theme-toggle-container" data-theme-choice="auto">
     <span class="theme-label" aria-hidden="true">Select theme</span>
-    {/* Sun icon for Light mode */}
-    <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <circle cx="12" cy="12" r="5"></circle>
       <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"></line>
       <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"></line>
@@ -20,12 +19,10 @@ const labels = isJapanese
       <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"></line>
       <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"></line>
     </svg>
-    {/* Moon icon for Dark mode */}
-    <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
     </svg>
-    {/* Laptop icon for Auto mode */}
-    <svg class="icon-laptop" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg class="icon-laptop" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
       <line x1="2" y1="20" x2="22" y2="20"></line>
     </svg>
@@ -108,22 +105,18 @@ const labels = isJapanese
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
-    padding: 0.375rem 0.5rem;
-    /* Use Starlight variables with fallback to custom variables */
-    background: var(--sl-color-bg-nav, var(--color-bg-card, #16161f));
-    border: 1px solid var(--sl-color-hairline, var(--color-border, #27272a));
-    border-radius: 0.5rem;
-    color: var(--sl-color-gray-2, var(--color-text-secondary, #a1a1aa));
-    font-size: 0.875rem;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    color: var(--site-muted, var(--sl-color-gray-3, #9a958c));
     cursor: pointer;
-    transition: all 150ms ease;
   }
-  
+
   .theme-toggle-container:hover {
-    background: var(--sl-color-gray-6, var(--color-bg-card-hover, #1e1e2a));
-    border-color: var(--sl-color-gray-5, var(--color-border-hover, #3f3f46));
-    color: var(--sl-color-white, var(--color-text-primary, #f5f5f7));
+    color: var(--site-fg, var(--sl-color-white, #e7e4dc));
   }
   
   .theme-label {
@@ -159,14 +152,10 @@ const labels = isJapanese
   }
   
   .theme-select {
-    appearance: none;
-    background: transparent;
-    border: none;
-    color: inherit;
-    font-size: inherit;
-    font-family: inherit;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
     cursor: pointer;
-    padding-right: 0.25rem;
   }
   
   .theme-select:focus {
@@ -179,7 +168,6 @@ const labels = isJapanese
   }
   
   .icon-chevron {
-    flex-shrink: 0;
-    pointer-events: none;
+    display: none;
   }
 </style>

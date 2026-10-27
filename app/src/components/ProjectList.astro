@@ -78,10 +78,17 @@ const brands = {
     border-radius: 0;
   }
 
-  :global(html[data-theme="dark"]) .slot.github {
+  :global(html[data-theme="dark"]) .slot {
     background: #e6e9ee;
     border-radius: 3px;
     padding: 1px;
+    overflow: hidden;
+  }
+
+  :global(html[data-theme="dark"]) .slot :global(svg) {
+    width: 14px;
+    height: 14px;
+    border-radius: 0;
   }
 
   .row {

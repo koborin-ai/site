@@ -52,11 +52,13 @@ Infrastructure and application deploys are each handled by dedicated GitHub Acti
 ```mermaid
 flowchart LR
     subgraph Actions["GitHub Actions"]
+        requiredChecks[required-checks.yml]
         planInfra[plan-infra.yml]
         releaseInfra[release-infra.yml]
         appCI[app-ci.yml]
         automationCI[automation-ci.yml]
         appRelease[app-release.yml]
+        smokeProd[smoke-prod.yml]
     end
 
     subgraph Cloudflare["Cloudflare"]
@@ -64,20 +66,25 @@ flowchart LR
         siteStack[site stack]
     end
 
+    requiredChecks -->|calls| appCI
+    requiredChecks -->|calls| planInfra
+    requiredChecks -->|calls| automationCI
     planInfra --> siteStack
     releaseInfra --> siteStack
-    appCI -->|PR validation| GitHub
-    automationCI -->|PR validation| GitHub
     appRelease --> worker
+    appRelease -->|calls| smokeProd
+    smokeProd -->|GET| worker
 ```
 
 | Workflow | Trigger | Purpose | Notes |
 | --- | --- | --- | --- |
-| `plan-infra.yml` | PRs touching infra | `mise run check:infra` + `terraform plan` for the `site` stack | No apply |
-| `release-infra.yml` | `infra-v*` tags, `main` infra push, or manual dispatch | Applies the `site` stack | State is in R2 |
-| `app-ci.yml` | PRs touching `app/` | Runs `npm run check` and the production build | Blocks merges that break the app |
-| `automation-ci.yml` | PRs touching workflows, shell scripts or Markdown | `mise run check:automation` + `check:docs` (actionlint, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
-| `app-release.yml` | Merge to `main` or `workflow_dispatch` | Builds the static site and runs `wrangler deploy` | Uses `CLOUDFLARE_API_TOKEN` |
+| `required-checks.yml` | Every PR | Maps changed paths to areas with `app/scripts/required-checks.ts`, calls the area workflows, and reports the `required-checks` job | The one check context to require |
+| `plan-infra.yml` | Called for the infra area, or manual dispatch | `mise run check:infra` + `terraform plan` for the `site` stack | No apply |
+| `release-infra.yml` | `main` infra push or manual dispatch | Applies the `site` stack | Runs only from `main`. State is in R2 |
+| `app-ci.yml` | Called for the app area | Runs `npm run check` and the production build | Blocks merges that break the app |
+| `automation-ci.yml` | Called for the automation area | `mise run check:automation` + `check:docs` (actionlint, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
+| `app-release.yml` | Merge to `main` or `workflow_dispatch` | Runs `npm run check`, builds the static site, runs `wrangler deploy`, then calls `smoke-prod.yml` | Runs only from `main`. Uses `CLOUDFLARE_API_TOKEN` |
+| `smoke-prod.yml` | After each app deploy, weekly, or manual dispatch | Probes every route in `app/scripts/routes-baseline.txt` on `https://koborin.ai` | GETs only. No rollback |
 
 Tool versions come from `.tool-versions`. `actions/setup-node` reads it through `node-version-file`, and the infra and automation workflows install from it with `jdx/mise-action`.
 
@@ -153,7 +160,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 ├── .github/
 │   ├── actionlint.yaml           # Self-hosted runner labels for actionlint
 │   ├── scripts/                  # Shell helpers + their test suite
-│   └── workflows/                # CI pipelines (infra plan/apply, app deploy)
+│   └── workflows/                # Required checks, infra plan and apply, app deploy, production smoke
 ├── README.md                      # This file
 └── AGENTS.md                      # English operations guide for collaborators
 ```
@@ -185,7 +192,7 @@ Article pages open with the title and the dates. The social card is generated at
 ## Workflow Overview
 
 1. **Infra changes**: edit TerraDart stacks → `mise run check:infra` → open PR → GitHub Actions runs `terraform plan` → reviewer approves → merge triggers apply of the `site` stack.
-2. **App changes**: edit Astro/MDX → `mise run check` and `npm run build --prefix app` → PR triggers `app-ci.yml` → merge to `main` (or tag `app-v*`) triggers `app-release.yml`, which builds the static site and runs `wrangler deploy`.
+2. **App changes**: edit Astro/MDX → `mise run check` and `npm run build --prefix app` → PR runs `required-checks.yml`, which calls `app-ci.yml` → merge to `main` triggers `app-release.yml`, which runs `npm run check`, builds the static site, runs `wrangler deploy`, and then probes production with `smoke-prod.yml`.
 3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `mise run check:app`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
 
 ### Adding New Content
@@ -221,8 +228,8 @@ To add a new article or page:
 
 ## Release Strategy
 
-- Infra applies use `infra-v*` tags (or a `main` push under `infra/`) to trigger `release-infra.yml` for the `site` stack.
-- App deploys use `app-v*` tags or a `main` merge under `app/` to drive `app-release.yml` (`wrangler deploy`).
+- Infra applies run `release-infra.yml` for the `site` stack on a `main` push under `infra/`, or on a dispatch from `main`. `infra-v*` tags do not apply.
+- App deploys run `app-release.yml` on a `main` merge under `app/`, or on a dispatch from `main`. The run checks, builds, deploys with `wrangler deploy`, and then probes production.
 - GitHub release notes are generated via `.github/release.yml`. Label each PR with `app`, `infra`, `feature`, `bug`, or `doc` so the notes stay segmented by domain; apply the `ignore` label to omit a PR entirely.
 
 ## Local Setup

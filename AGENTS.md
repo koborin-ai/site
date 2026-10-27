@@ -143,7 +143,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - `app/scripts/optimize-og-images.sh` converts root-level files in `app/public/og/` to WebP during CI (`app-ci.yml` / `app-release.yml`). It does not write the generated article cards.
 6. **Article Dates**:
    - **Published Date**: Set `publishedAt: YYYY-MM-DD` in frontmatter when creating a new article.
-   - **Updated Date**: `app/src/lib/last-updated.ts` reads `git log -1` for the MDX file at build time. Set `lastUpdated: false` to hide it. The home pages do.
+   - **Updated Date**: `app/src/lib/last-updated.ts` walks `git log` for the MDX file and skips a commit whose message contains `Updated-Date: ignore`. Put that trailer in the pull request body when an edit should not move the shown date. A squash merge keeps the trailer. Set `lastUpdated: false` to hide the line. The home pages do.
    - **Display**: Dates appear below the article title (e.g., `Published: Dec 1, 2024 · Updated: Jan 2, 2025`).
    - **Localization**: English uses `Dec 1, 2024` format; Japanese uses `2024年12月1日` format.
    - **Same-day Updates**: If `publishedAt` and `lastUpdated` are within 1 day, only the published date is shown.

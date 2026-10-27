@@ -42,11 +42,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/pages/og/[...slug].webp.ts` | Prerendered endpoint for each article card at `/og/<page path>.webp`. |
 | `infra/` | TerraDart infrastructure (`site` stack). |
 | `infra/lib/site_stack.dart` | Zone lookup and Workers custom domain for `koborin.ai`. |
-| `infra/lib/r2_backend.dart` | `StackBackend` pointing Terraform state at R2. |
-| `infra/bin/synth.dart` | Synth entry point; emits `tf-out/site/main.tf.json`. |
+| `infra/bin/synth.dart` | Synth entry point. Emits `tf-out/site/main.tf.json` and passes `S3Backend.r2` as the state backend. |
 | `infra/test/` | `dart test` coverage for the synthesized Terraform JSON. |
-| `docs/` | Specifications, e.g. contact flow, o11y notes. |
-| `docs/assets/{article}/` | Mermaid sources and generated images for each spec document. |
 | `.github/actionlint.yaml` | Declares the Blacksmith runner labels so actionlint stays clean. |
 | `.github/scripts/` | Shell helpers (`compute-pr-labels.sh`) plus their test suite. |
 | `.github/workflows/` | CI/CD definitions. |
@@ -75,18 +72,10 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Cloudflare credentials stay in GitHub Secrets (`CLOUDFLARE_API_TOKEN`, `R2_*`) and are never baked into synth output.
    - Site Terraform `variable` blocks stay empty; Terraform rejects `variable: {}`.
 
-7. **IaC Philosophy - Code as Documentation**:
+7. **File Organization**:
 
-   - IaC differs fundamentally from application code: **the code itself is the design document**.
-   - Prioritize readability and explicitness over abstraction.
-   - A reviewer should be able to understand the entire infrastructure by reading the stack files alone.
-   - Only extract to configuration when values genuinely vary across environments or need to be injected at runtime.
-
-8. **File Organization**:
-
-   - `infra/bin/synth.dart`: Entry point; builds the stack and calls `Stack.writeTo('tf-out/site')`.
+   - `infra/bin/synth.dart`: Entry point. Builds the stack, passes `S3Backend.r2` (`terradart_core`) as the state backend, and calls `Stack.writeTo('tf-out/site')`.
    - `infra/lib/site_stack.dart`: Zone lookup and Workers custom domain, both from the `terradart_cloudflare` catalog. Prefer catalog types over hand-written wrappers.
-   - `infra/lib/r2_backend.dart`: `StackBackend` for the R2 state. A stand-in until `terradart_core` ships `S3Backend`; delete it then.
    - `infra/pubspec.yaml`: TerraDart dependencies (`terradart_core`, `terradart_cloudflare`).
 
 ## Application Rules
@@ -95,9 +84,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Author pages under `app/src/content/docs/`. Use YAML frontmatter with `title`, `description`.
    - Mark drafts with `draft: true` in frontmatter to exclude them from production and from the article lists.
    - **Drafts are not covered by `npm run build`**: `getStaticPaths` omits `draft: true` outside `npm run dev`, so a broken draft passes CI and only fails once rendered. Open every draft you touched in `npm run dev` before considering it done, and re-run `npm run build` after removing `draft: true` so the page enters the build for the first time under your own eyes.
-   - **Prose review while drafting**: `npx textlint <file>` in `app/` reads the article back for AI-writing tells (English-calque `〜：` lead-ins, absolute claims, mechanical emphasis). It only reacts to Japanese; all 18 English articles report zero. Treat every hit as a suggestion to read again, not a rule.
+   - **Prose review while drafting**: `npx textlint <file>` in `app/` reads the article back for AI-writing tells (English-calque `〜：` lead-ins, absolute claims, mechanical emphasis). It only reacts to Japanese; all 17 English MDX files report zero. Treat every hit as a suggestion to read again, not a rule.
 2. **Adding new content**:
-   - Create `.mdx` file under `app/src/content/docs/` (or subdirectory for categories like `blog/`, `guides/`).
+   - Create `.mdx` file under `app/src/content/docs/` (or a subdirectory such as `tech/`, `life/`, or `ja/`).
    - Add frontmatter: `title` (required), `description` (required), `publishedAt` (required for articles, `YYYY-MM-DD`), `draft` (optional, boolean).
    - A published article (frontmatter `publishedAt`, not a draft) is listed on the home page and on `/blog/` or `/ja/blog/` from the content collection. No sidebar entry.
    - Folder structure maps to URL structure: `docs/tech/post.mdx` → `/tech/post/`. Article URLs stay under `/tech/` and `/life/` until a later move to `/blog/`.
@@ -111,16 +100,15 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Favicon**: Place in `app/public/favicon.png`. `app/src/components/Head.astro` links it.
    - **Header mark**: The header is the text `koborin.ai` in Geist Mono, in `app/src/components/SiteHeader.astro`. It links home.
    - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`).
-   - Always use English comments in CSS/JS files. Avoid Japanese characters in code.
+   - Comments in CSS and JS are English. Japanese text in components is user-facing copy.
 4. **Image Conventions**:
-   - **MANDATORY**: All on-page images must be rendered through the `SiteImage` component (`app/src/components/SiteImage.astro`). Raw `<img>` tags and direct use of Astro's `<Image />` / `<Picture />` are forbidden in MDX and `.astro` files.
+   - **MANDATORY**: Local images in MDX go through `SiteImage` (`app/src/components/SiteImage.astro`). Do not use a raw `<img>`, or Astro's `<Image />` / `<Picture />`, for those files. Remote thumbnails in `RichLinkCard.astro` use a plain `<img>` because `SiteImage` requires an `ImageMetadata` import.
    - **Why**: `SiteImage` centralizes responsive `srcset`/`sizes`, quality, format (AVIF/WebP), and loading strategy per variant. Bypassing it breaks LCP budgets and ships multi-MB originals.
-   - **Enforcement**: Going forward, prefer code review for `SiteImage` compliance until a dedicated CI check is added.
+   - **Enforcement**: `npm run check-images` (part of `npm run check`) scans MDX for raw `<img>` tags and Markdown images that point at `src/assets`. It does not scan `.astro` files.
    - **Variant table** — pick the variant that matches the rendered size, not the source dimensions:
 
      | Variant | Use case | Rendered width |
      |---------|----------|----------------|
-     | `hero` | LCP candidate, top-page hero | ~1376px |
      | `card` | Top-page / list thumbnails | 160–480px |
      | `thumbnail` | Small icon-like images | 80–240px |
      | `inline` | Regular images inside article body | 400–1200px |
@@ -153,10 +141,10 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - One centred column on a dot grid. Home, `/about/`, `/blog/`, `/talks/`, and article pages share `app/src/components/SiteShell.astro`. There is no sidebar and no table of contents. Home, About, and the list pages stay on a 720px column. Article pages widen to an 800px column, with body text held to 740px and figures, code, and diagrams using the full column.
    - Colours and type live in `app/src/styles/site.css` and `app/src/styles/fonts.css`. The accent is neutral (`#d5dae1` in dark, `#4a5260` in light). Text links are underlined. Article prose still uses `app/src/styles/vendor/`.
    - The header has the mark, an About link, an EN/JA link, GitHub, X, RSS, and the theme control. Home keeps the name, bio, and three lists. The longer profile lives on `/about/` and `/ja/about/`. Home sections and the list pages read `app/src/lib/catalog.ts`. `app/src/sidebar.ts` is not rendered.
-8. **Testing**: run `mise run check` from the repository root before committing. It covers the app (`npm run check`: oxlint, `astro check`, Vitest, image usage), the infra (`dart analyze`, `dart test`), the automation (actionlint, shellcheck, PR label tests), and the docs (markdownlint). Run `npm run build` in `app/` as well whenever content or configuration changes.
+8. **Testing**: run `mise run check` from the repository root before committing. The task list is under Code Quality Standards. Run `npm run build` in `app/` as well whenever content or configuration changes.
 9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 10. **Workers deployment**:
-    - The app builds as a static site (`output: "static"` in Astro config). Wrangler uploads `app/dist` as Worker static assets.
+    - The app builds as a static site. `astro.config.mjs` leaves `output` unset, and Astro's default is `static`. Wrangler uploads `app/dist` as Worker static assets.
     - Worker name and assets directory live in `app/wrangler.jsonc`. There is no `main` script and no `routes` block. Set `not_found_handling` to `404-page` so `404.html` is served.
     - `app/public/_headers` is copied into `dist/` and sets `Content-Type: text/plain; charset=utf-8` on `*.txt` (Astro response headers are not kept on uploaded files).
     - `app-release.yml` runs `npm run build` then `wrangler deploy`.
@@ -164,10 +152,10 @@ This document is a quick guide for any contributors or AI agents that touch the 
 11. **LLM Context Files (llms.txt)**:
     - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
     - **Index file** (`/llms.txt`): Lists all available llms.txt variants with links.
-    - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese) - all articles with full Markdown body.
+    - **Full content files**: `/llms-full.txt` (English), `/llms-ja-full.txt` (Japanese). Every non-draft doc, with its Markdown body (articles, home, about, and privacy).
     - **Category files**: `/llms-{category}.txt` (English), `/llms-ja-{category}.txt` (Japanese) for filtered subsets (tech, life).
     - English is the default language (no prefix), Japanese uses `ja` prefix.
-    - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
+    - **Auto-generated**: Non-draft docs are included when `draft: true` is not set. No manual updates needed.
     - **Static files**: Generated at build time via Astro endpoints. Zero runtime overhead.
     - **Implementation**: `app/src/utils/llms.ts` (shared logic), `app/src/pages/llms*.txt.ts` (endpoints).
     - **When to modify endpoints**:
@@ -177,7 +165,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 12. **RichLinkCard Component**:
      - Use `RichLinkCard` for external links in MDX.
      - **Location**: `app/src/components/RichLinkCard.astro`
-     - **Import**: `import RichLinkCard from '../../../../components/RichLinkCard.astro';`
+     - **Import**: from `tech/` or `life/`, `../../../components/RichLinkCard.astro`. From `ja/tech/` or `ja/life/`, `../../../../components/RichLinkCard.astro`.
      - **Recommended usage** (always specify `title` and `description` for performance):
 
        ```mdx
@@ -205,7 +193,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - The site provides RSS feeds for blog aggregation services.
      - **English feed**: `/rss.xml` - includes `tech/` and `life/` categories.
      - **Japanese feed**: `/ja/rss.xml` - includes `ja/tech/` and `ja/life/` categories.
-     - **Excluded**: `about-me/` pages are not included in RSS feeds (not blog articles).
+     - **Excluded**: Paths outside `tech/` and `life/`. The filter is `path.startsWith('tech/') || path.startsWith('life/')`, so home, about, and privacy stay out.
      - **Auto-generated**: Articles are automatically included when `draft: true` is not set. No manual updates needed.
      - **Static files**: Generated at build time via Astro endpoints using `@astrojs/rss`. Zero runtime overhead.
      - **Implementation**: `app/src/pages/rss.xml.ts` (English), `app/src/pages/ja/rss.xml.ts` (Japanese).
@@ -215,7 +203,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - **Components**:
        - `app/src/components/Footer.astro`: Renders the engagement UI, then the copyright and privacy link.
        - `app/src/components/EngagementFooter.astro`: Container for share buttons and Giscus.
-       - `app/src/components/ShareButtons.astro`: Share links (X, Bluesky, Mastodon, Hatena Bookmark, copy link).
+       - `app/src/components/ShareButtons.astro`: Share links (X, LinkedIn, Facebook, Bluesky, Mastodon, Hatena Bookmark, copy link).
        - `app/src/components/Giscus.astro`: GitHub Discussions-based comments (only renders if configured).
      - **Display logic**: Engagement UI appears on pages with `publishedAt` frontmatter. Override with `engagement: true/false` in frontmatter.
      - **Giscus setup** (requires GitHub Secrets):
@@ -230,47 +218,25 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 ## Astro Development Best Practices
 
-1. **Core Principles**
-   - **Minimal JavaScript**: Prioritize static generation. Use client-side JavaScript only when absolutely necessary.
-   - **Concise & Technical**: Write code that is easy to understand and maintain. Use descriptive variable names.
-
-2. **Component Development**
-   - **`.astro` First**: Use `.astro` components for UI structure and layout.
-   - **Props**: Use `Astro.props` (with TypeScript interfaces) to pass data to components.
-   - **Composition**: Break down complex UIs into smaller, reusable components.
-   - **Frameworks**: Use specific frameworks (React etc.) only when complex state management is required (`client:*` directives).
-
-3. **Styling**
-   - **Scoped CSS**: Use `<style>` tags within `.astro` components for scoped styling.
-   - **Variables**: Use CSS custom properties (defined in global styles) for consistent theming.
+1. **Styling**
    - **No Tailwind**: This project does not use Tailwind CSS. Stick to standard CSS.
 
-4. **Performance Optimization**
-   - **Partial Hydration**: Use `client:load`, `client:idle`, `client:visible` directives judiciously. Default to static.
-   - **Image Optimization**: Use the `SiteImage` component (`app/src/components/SiteImage.astro`) for all local images. Direct use of `<Image />` / `<Picture />` from `astro:assets` is forbidden.
-   - **Lazy Loading**: Ensure off-screen images and heavy components are lazy-loaded.
-
-5. **Routing (Custom Pages)**
+2. **Routing (Custom Pages)**
    - Documentation pages are the `docs` collection, rendered by `src/pages/[...slug].astro`. A file under `src/pages/` wins over that rest route.
    - **File-based Routing**: Use `src/pages/` for Astro endpoints (llms.txt, RSS feeds) or custom apps.
    - **Dynamic Routes**: Use `[...slug].astro` and `getStaticPaths()` for dynamic static pages.
    - **404**: Maintain a custom `404.astro` for proper error handling.
 
-6. **Accessibility**
-   - **Semantic HTML**: Use proper tags (`<main>`, `<nav>`, `<article>`, etc.).
-   - **ARIA**: Use ARIA attributes where semantic HTML is insufficient.
-   - **Keyboard Nav**: Ensure all interactive elements are keyboard accessible.
-
-7. **Type Safety**
-   - **TypeScript**: Always use TypeScript. Define interfaces for Props and data structures.
-   - **Strict Mode**: Adhere to strict type checking rules enabled in the project.
+3. **Type Safety**
+   - Component props use TypeScript interfaces.
+   - `app/tsconfig.json` extends `astro/tsconfigs/base`. That preset does not enable `strict`.
 
 ## Dependency Version Policy
 
-When adding or updating dependencies (GitHub Actions, Go modules, npm packages, etc.):
+When adding or updating dependencies (GitHub Actions, npm packages, pub packages):
 
 1. **Always check for the latest stable version** before adding a new dependency.
-2. **Use specific major versions** for GitHub Actions (e.g., `@v6` not `@main` or `@latest`).
+2. **Use specific major versions** for GitHub Actions (for example `@v7`, not `@main` or `@latest`).
 3. **Prefer version pins from project files** over hardcoded versions in workflows: `.tool-versions` for Node, Dart, Terraform, actionlint, and shellcheck; `package.json` for npm; `pubspec.yaml` for pub.
 4. **Verify compatibility** with existing dependencies before upgrading.
 5. **Document breaking changes** in PR descriptions when upgrading major versions.
@@ -279,9 +245,9 @@ Dependabot covers npm (`app/`), pub (`infra/`), and GitHub Actions. It does not 
 
 Examples:
 
-- GitHub Actions: Check the action's releases page (e.g., `actions/setup-go` → use `@v6` if latest).
-- Go modules: Use `go get <module>@latest` to fetch the latest version.
-- npm packages: Use `npm outdated` to check for updates.
+- GitHub Actions: Pin a major version (`actions/setup-node@v7` in the workflows here), not `@main` or `@latest`.
+- npm packages: Use `npm outdated` in `app/`.
+- pub packages: Use `dart pub outdated` in `infra/`.
 
 ## CI/CD Expectations
 
@@ -300,41 +266,26 @@ Examples:
 ## Release Process
 
 - Tag infra releases as `infra-v*` to force `release-infra.yml` to apply the `site` stack.
-- Tag app releases as `app-v*` once `main` includes the desired content; this runs `app-release.yml` and deploys Worker `koborin-ai-web`.
+- `app-release.yml` deploys Worker `koborin-ai-web` when a push to `main` touches its path filter (`app/**`, `content/**`, `.tool-versions`, `mise.toml`, and the two app workflow files), and on `workflow_dispatch`.
 - GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
 
-## Contact Flow & Analytics
+## Analytics
 
-- `/docs/contact-flow.md` captures the agreed design: Astro API route + Cloud Logging + SendGrid (notify). Use reCAPTCHA v3 + rate limiting.
-- Analytics baseline uses GA4; `/api/track` endpoint will later forward custom events to Logging/BigQuery.
+- The site uses GA4. `app/src/components/Head.astro` loads gtag when `PUBLIC_GA_MEASUREMENT_ID` is set.
 
 ## Diagram Guidelines
 
-1. **Directory Structure**:
-   - Mermaid source: `docs/assets/{article-name}/diagrams/{diagram-name}.md`
-   - Generated images: `docs/assets/{article-name}/images/{diagram-name}.png`
-   - Article filename maps to folder name (e.g., `contact-flow.md` → `assets/contact-flow/`)
-
-2. **Mermaid Code Standards**:
-   - Use `flowchart LR` (left-to-right) layout. Avoid `TB` (top-to-bottom).
-   - New diagram files contain Mermaid code only (no explanatory text).
-
-3. **PNG Generation**:
-   - Use `mmdc` (mermaid-cli) to generate high-quality PNG:
-
-   ```bash
-   mmdc -i docs/assets/{article}/diagrams/{name}.md \
-        -o docs/assets/{article}/images/{name}.png \
-        -b transparent -s 3
-   ```
-
-   - Options: `-b transparent` (transparent background), `-s 3` (3x scale for high quality)
-
+1. **Article diagrams**:
+   - Put each diagram in a fenced `mermaid` block in the MDX file.
+2. **Layout**:
+   - Published articles use both `flowchart LR` and `flowchart TB`.
+3. **Spec images**:
+   - `docs/` is gitignored. Article diagrams stay in the MDX file.
 4. **Referencing in Documents**:
-   - Use relative image references in article body:
+   - Do not replace a Mermaid block with a Markdown image. The old `docs/assets` sample is not a file in this repo.
 
    ```markdown
-   ![Description](./assets/{article-name}/images/{diagram-name}.png)
+   A fenced mermaid block stays in the MDX. It is not a PNG under docs/.
    ```
 
 5. **Mermaid in MDX Articles**:
@@ -364,19 +315,9 @@ Examples:
 
 ## Documentation Standards
 
-1. **Markdown Formatting**:
-   - Always add blank lines before and after headings.
-   - Always add blank lines before and after lists.
-   - Always add blank lines before and after tables.
-   - Always add blank lines before and after code blocks.
-   - Always specify language for code blocks (e.g., `bash`, `typescript`, `text`).
-   - Remove trailing spaces at the end of lines.
-   - End files with a single newline (no multiple blank lines at EOF).
-   - Do not use backticks in headings (e.g., use `### infra/lib/site_stack.dart` instead of ``### `infra/lib/site_stack.dart` ``).
-2. **Content Structure**:
-   - Use clear, descriptive headings that reflect the content hierarchy.
-   - Keep lists concise and actionable.
-   - Include code examples where helpful, with proper language tags.
+- `mise run check:docs` runs markdownlint on every tracked Markdown file. The config is `.markdownlint.yaml`.
+- Fenced blocks and lists need a blank line before and after (MD031, MD032). A fence does not need a language tag (MD040 is off).
+- Do not put backticks in headings.
 
 ## Code Quality Standards
 
@@ -388,7 +329,7 @@ Before committing any code changes, ensure all quality checks pass.
 mise run check
 ```
 
-This is the command to reach for. It runs the three task groups below in parallel and takes under ten seconds.
+This is the command to reach for. It runs the four `check:*` tasks in `mise.toml` (`check:app`, `check:infra`, `check:automation`, `check:docs`) in parallel.
 
 ### Infrastructure (`infra/`)
 
@@ -413,7 +354,7 @@ npm run lint:prose    # textlint over the articles; advisory, see below
 
 `npm run build` is not part of `check` because it takes 40 seconds and needs Chromium. Run it whenever content, assets, or configuration change.
 
-`npm run lint:prose` is not part of `check` either, for a different reason. Measured against the current 32 articles, the `@textlint-ja` AI-writing preset disagrees with the house style rather than finding defects:
+`npm run lint:prose` is not part of `check` either, for a different reason. Measured against the 32 non-draft MDX files, the `@textlint-ja` AI-writing preset disagrees with the house style rather than finding defects. The script itself globs every MDX file under `src/content/docs/` (34 files, drafts included):
 
 | Rule | Hits | Verdict |
 | --- | --- | --- |
@@ -433,7 +374,7 @@ mise run check:docs        # markdownlint over every tracked .md
 
 ## Pull Request Checklist
 
-1. Update relevant docs (`README.md`, `AGENTS.md`, or files under `docs/`) when changing behavior.
+1. Update relevant docs (`README.md`, `AGENTS.md`) when changing behavior.
    - **Directory structure changes** (e.g., `app/src/assets/`, `infra/lib/`): Update "Repository Layout" sections in both `README.md` and `AGENTS.md`.
    - **New conventions or rules**: Add to `AGENTS.md` under the appropriate section.
 2. `mise run check` from the repository root - must pass.
@@ -445,23 +386,10 @@ mise run check:docs        # markdownlint over every tracked .md
    - **Domain labels** (one or more):
      - `app` — Changes under `app/`.
      - `infra` — Changes under `infra/`.
-     - `doc` — Documentation updates (`README.md`, `AGENTS.md`, `docs/`).
+     - `doc` — `docs/*`, `README.md`, `AGENTS.md`, or `.cursor/*` (`compute-pr-labels.sh`).
      - `ci` — Workflow changes under `.github/workflows/`.
    - **Category labels** (optional, for release notes):
      - `feature`, `bug`, `ignore`.
-
-## Agent Execution Rules
-
-Rules for AI agents during task execution:
-
-1. **Process Lifecycle Management**:
-   - Any process started by the AI (dev server, background jobs, watchers, etc.) must be stopped by the AI when the task or verification ends.
-   - Before starting a new dev server, check if one is already running using the terminals folder.
-   - Use `pkill` or appropriate commands to terminate background processes after testing.
-
-2. **Resource Cleanup**:
-   - Close browser tabs opened for testing when verification is complete.
-   - Remove temporary files created during debugging.
 
 ## Cursor Cloud specific instructions
 

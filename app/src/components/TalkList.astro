@@ -1,0 +1,37 @@
+---
+import { formatTalkDate, type Talk } from '../lib/catalog';
+import type { Locale } from '../lib/docs';
+
+interface Props {
+  talks: readonly Talk[];
+  locale: Locale;
+}
+
+const { talks, locale } = Astro.props;
+
+function countLabel(count: number): string {
+  return locale === 'en' ? `${count} people` : `${count} 人`;
+}
+---
+
+<ul class="quiet-list">
+  {talks.map((talk) => (
+    <li>
+      {talk.href ? (
+        <a class="row" href={talk.href} target="_blank" rel="noopener noreferrer">
+          <span class="link-text">{talk.title[locale]}</span>
+          <span class="sub">{talk.event[locale]}</span>
+        </a>
+      ) : (
+        <span class="t">
+          {talk.title[locale]}
+          <span class="sub">{talk.event[locale]}</span>
+        </span>
+      )}
+      <span class="meta">
+        {formatTalkDate(talk.date, 'list')}
+        {talk.attendees !== undefined && <span class="talk-count">{countLabel(talk.attendees)}</span>}
+      </span>
+    </li>
+  ))}
+</ul>

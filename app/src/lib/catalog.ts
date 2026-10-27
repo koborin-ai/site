@@ -116,16 +116,22 @@ export interface Talk {
   event: Record<Locale, string>;
   title: Record<Locale, string>;
   href?: string;
+  attendees?: number;
   onHome: boolean;
 }
 
-function talk(
-  date: string,
-  event: Record<Locale, string>,
-  title: Record<Locale, string>,
-  href?: string,
-  onHome = true,
-): Talk {
+function talk(input: {
+  date: string;
+  event: Record<Locale, string>;
+  title: Record<Locale, string>;
+  href?: string;
+  onHome?: boolean;
+  attendees?: number;
+}): Talk {
+  const { date, event, title, href, onHome = true, attendees } = input;
+  if (attendees !== undefined && (!Number.isInteger(attendees) || attendees < 1)) {
+    throw new Error(`${date}: attendee count must be a positive integer`);
+  }
   return {
     date,
     year: Number(date.slice(0, 4)),
@@ -133,105 +139,117 @@ function talk(
     title,
     onHome,
     ...(href ? { href } : {}),
+    ...(attendees !== undefined ? { attendees } : {}),
   };
 }
 
 export const talks: readonly Talk[] = [
-  talk(
-    '2026/07',
-    { en: 'FlutterGakkai (10th)', ja: '第10回 FlutterGakkai' },
-    { en: 'Trying Type-safe IaC with Dart', ja: 'Dart で試す Type-safe IaC' },
-    'https://speakerdeck.com/coborinai/type-safe-iac-for-dart',
-  ),
-  talk(
-    '2025/07',
-    { en: 'Google I/O Extended Tokyo 2025', ja: 'Google I/O Extended Tokyo 2025' },
-    {
+  talk({
+    date: '2026/07',
+    event: { en: 'FlutterGakkai (10th)', ja: '第10回 FlutterGakkai' },
+    title: { en: 'Trying Type-safe IaC with Dart', ja: 'Dart で試す Type-safe IaC' },
+    href: 'https://speakerdeck.com/coborinai/type-safe-iac-for-dart',
+    attendees: 56,
+  }),
+  talk({
+    date: '2025/07',
+    event: { en: 'Google I/O Extended Tokyo 2025', ja: 'Google I/O Extended Tokyo 2025' },
+    title: {
       en: 'Dart client for Genkit: Official Client for Using Genkit from Flutter',
       ja: 'Dart client for Genkit: Flutter から Genkit を使うための公式クライアント開発',
     },
-    'https://youtu.be/AakdczWQLzY?si=aiuon32lYmJ93TR6',
-  ),
-  talk(
-    '2025/02',
-    { en: 'FlutterGakkai (7th)', ja: 'FlutterGakkai（第7回）' },
-    {
+    href: 'https://youtu.be/AakdczWQLzY?si=aiuon32lYmJ93TR6',
+    attendees: 434,
+  }),
+  talk({
+    date: '2025/02',
+    event: { en: 'FlutterGakkai (7th)', ja: 'FlutterGakkai（第7回）' },
+    title: {
       en: 'Accelerating Generative AI App Development with Flutter × Firebase Genkit',
       ja: 'Flutter × Firebase Genkit で加速する生成 AI アプリ開発',
     },
-    'https://www.youtube.com/live/bLub7ytpKBA?si=rkyc3Ca76CVDn8Wa&t=518',
-  ),
-  talk(
-    '2024/12',
-    { en: 'Genkit Hands-on (Organizer)', ja: 'Genkit ハンズオン（運営）' },
-    { en: 'Technical supporter', ja: 'テクニカルサポーターとして参加' },
-    undefined,
-    false,
-  ),
-  talk(
-    '2024/11',
-    { en: 'GDG DevFest Tokyo 2024', ja: 'GDG DevFest Tokyo 2024' },
-    {
+    href: 'https://www.youtube.com/live/bLub7ytpKBA?si=rkyc3Ca76CVDn8Wa&t=518',
+    attendees: 191,
+  }),
+  talk({
+    date: '2024/12',
+    event: { en: 'Genkit Hands-on (Organizer)', ja: 'Genkit ハンズオン（運営）' },
+    title: { en: 'Technical supporter', ja: 'テクニカルサポーターとして参加' },
+    onHome: false,
+    attendees: 45,
+  }),
+  talk({
+    date: '2024/11',
+    event: { en: 'GDG DevFest Tokyo 2024', ja: 'GDG DevFest Tokyo 2024' },
+    title: {
       en: 'Orchestrating Firebase and AI: Genkit Architecture Example',
       ja: 'Orchestrating Firebase and AI: Genkit architecture example',
     },
-  ),
-  talk(
-    '2024/06',
-    { en: 'TECH+ Seminar', ja: 'TECH+ セミナー' },
-    {
+    attendees: 369,
+  }),
+  talk({
+    date: '2024/06',
+    event: { en: 'TECH+ Seminar', ja: 'TECH+ セミナー' },
+    title: {
       en: 'Revolutionizing Logistics with Google Maps Platform',
       ja: 'Google Maps Platform で物流業界を革新！効率化とコスト削減を実現',
     },
-  ),
-  talk(
-    '2024/06',
-    { en: 'Map The Way Tokyo', ja: 'Map The Way Tokyo' },
-    {
+    attendees: 246,
+  }),
+  talk({
+    date: '2024/06',
+    event: { en: 'Map The Way Tokyo', ja: 'Map The Way Tokyo' },
+    title: {
       en: 'Retail DX Strategy for Competitive Advantage',
       ja: '競争力を高めるリテール DX 戦略',
     },
-  ),
-  talk(
-    '2024/04',
-    { en: 'Retail DX', ja: 'リテールDX' },
-    {
+    attendees: 75,
+  }),
+  talk({
+    date: '2024/04',
+    event: { en: 'Retail DX', ja: 'リテールDX' },
+    title: {
       en: 'Retail DX Strategy for Competitive Advantage',
       ja: '競争力を高めるリテール DX 戦略',
     },
-  ),
-  talk(
-    '2024/04',
-    { en: 'Google Cloud RetailTech Recap Seminar', ja: 'Google Cloud リテールテック振り返りセミナー' },
-    {
+    attendees: 138,
+  }),
+  talk({
+    date: '2024/04',
+    event: { en: 'Google Cloud RetailTech Recap Seminar', ja: 'Google Cloud リテールテック振り返りセミナー' },
+    title: {
       en: 'Integrating Google Maps, Firebase, and PaLM',
       ja: 'Google Maps・Firebase・PaLM の技術統合',
     },
-  ),
-  talk(
-    '2024/03',
-    { en: 'RetailTech JAPAN', ja: 'リテールテックJAPAN' },
-    {
+    attendees: 51,
+  }),
+  talk({
+    date: '2024/03',
+    event: { en: 'RetailTech JAPAN', ja: 'リテールテックJAPAN' },
+    title: {
       en: 'Enhancing Development Efficiency with Google Maps, Firebase, and PaLM Integration',
       ja: 'Google Maps・Firebase・PaLM の技術統合による開発効率と柔軟性の向上',
     },
-  ),
-  talk(
-    '2024/02',
-    { en: 'GDG Tokyo Monthly Online Tech Talks', ja: 'GDG Tokyo Monthly Online Tech Talks' },
-    {
+    attendees: 429,
+  }),
+  talk({
+    date: '2024/02',
+    event: { en: 'GDG Tokyo Monthly Online Tech Talks', ja: 'GDG Tokyo Monthly Online Tech Talks' },
+    title: {
       en: 'IaC and CI/CD Pipeline Construction in Firebase',
       ja: 'Firebase における IaC と CI/CD パイプライン構築のすゝめ',
     },
-  ),
-  talk(
-    '2023/12',
-    { en: 'Cloud Ace Webinar', ja: 'Cloud Ace ウェビナー' },
-    {
+    attendees: 200,
+  }),
+  talk({
+    date: '2023/12',
+    event: { en: 'Cloud Ace Webinar', ja: 'Cloud Ace ウェビナー' },
+    title: {
       en: 'Rapid Development of a Healthy Review App with Firebase × Google Maps API',
       ja: 'Firebase × Google Maps API で健全なクチコミアプリを爆速開発！',
     },
-  ),
+    attendees: 61,
+  }),
 ];
 
 export interface PostSource {

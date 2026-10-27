@@ -118,9 +118,8 @@ const privacyPolicyUrl = isJapanese ? '/ja/privacy-policy/' : '/privacy-policy/'
     left: 0;
     right: 0;
     z-index: 9999;
-    background: var(--sl-color-bg-nav);
-    border-top: 1px solid var(--sl-color-gray-5);
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+    background: var(--site-bg);
+    border-top: 1px solid var(--site-faint);
     padding: 1rem;
   }
 
@@ -139,18 +138,21 @@ const privacyPolicyUrl = isJapanese ? '/ja/privacy-policy/' : '/privacy-policy/'
     min-width: 280px;
     margin: 0;
     font-size: 0.875rem;
-    color: var(--sl-color-text);
+    color: var(--site-text);
     line-height: 1.5;
   }
 
   .cookie-link {
-    color: var(--sl-color-text-accent);
-    text-decoration: underline;
-    text-underline-offset: 0.15em;
+    color: inherit;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    text-decoration-color: color-mix(in srgb, currentColor 65%, transparent);
   }
 
   .cookie-link:hover {
-    color: var(--sl-color-white);
+    text-decoration-thickness: 2px;
+    text-decoration-color: currentColor;
   }
 
   .cookie-actions {
@@ -161,37 +163,41 @@ const privacyPolicyUrl = isJapanese ? '/ja/privacy-policy/' : '/privacy-policy/'
 
   .cookie-button {
     padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
+    border-radius: 6px;
+    border: 1px solid var(--site-faint);
+    background: transparent;
+    color: var(--site-text);
+    font: inherit;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
-    border: 1px solid transparent;
+    transition: border-color 0.15s ease, color 0.15s ease;
   }
 
   .cookie-button-primary {
-    background: var(--sl-color-text-accent);
-    color: var(--sl-color-black);
-    border-color: var(--sl-color-text-accent);
+    color: var(--site-fg);
+    border-color: color-mix(in srgb, var(--site-fg) 55%, transparent);
+    background: color-mix(in srgb, var(--site-fg) 6%, transparent);
   }
 
-  .cookie-button-primary:hover {
-    background: var(--sl-color-white);
-    border-color: var(--sl-color-white);
-  }
-
-  .cookie-button-secondary {
-    background: transparent;
-    color: var(--sl-color-text);
-    border-color: var(--sl-color-gray-5);
+  .cookie-button:hover {
+    color: var(--site-fg);
   }
 
   .cookie-button-secondary:hover {
-    background: var(--sl-color-gray-6);
-    border-color: var(--sl-color-gray-4);
+    border-color: var(--site-muted);
   }
 
-  /* Mobile responsive */
+  .cookie-button-primary:hover {
+    border-color: var(--site-fg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cookie-button {
+      transition: none;
+    }
+  }
+
   @media (max-width: 600px) {
     .cookie-content {
       flex-direction: column;

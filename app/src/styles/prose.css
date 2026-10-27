@@ -1,5 +1,5 @@
 :root {
-  --prose-mono: "Geist Mono", "Noto Sans JP", ui-monospace, monospace;
+  --prose-mono: "Geist Mono", "Noto Sans JP", "Noto Sans JP Fallback", ui-monospace, monospace;
   --prose-radius: 6px;
   /* 60% of fg clears 4.5:1 in both themes; --site-muted does not at 13px. */
   --prose-secondary: color-mix(in srgb, var(--site-fg) 60%, transparent);

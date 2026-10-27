@@ -14,6 +14,8 @@ describe('toUrl', () => {
     expect(toUrl('_headers')).toBe('/_headers');
     expect(toUrl('og/index.webp')).toBe('/og/index.webp');
     expect(toUrl('_astro/page.abc123.js')).toBeNull();
+    expect(toUrl('fonts/noto-sans-jp.css')).toBeNull();
+    expect(toUrl('fonts/noto-sans-jp-400-abcdef12.woff2')).toBeNull();
   });
 });
 
@@ -23,6 +25,7 @@ describe('listRoutes', () => {
     const outside = await mkdtemp(path.join(tmpdir(), 'list-routes-outside-'));
     await mkdir(path.join(root, 'a'), { recursive: true });
     await mkdir(path.join(root, '_astro'), { recursive: true });
+    await mkdir(path.join(root, 'fonts'), { recursive: true });
     await mkdir(path.join(root, 'og'), { recursive: true });
     await writeFile(path.join(root, 'index.html'), '');
     await writeFile(path.join(root, '_headers'), '');
@@ -31,6 +34,7 @@ describe('listRoutes', () => {
     await writeFile(path.join(root, 'a', 'index.html'), '');
     await writeFile(path.join(root, 'og', 'index.webp'), '');
     await writeFile(path.join(root, '_astro', 'page.js'), '');
+    await writeFile(path.join(root, 'fonts', 'noto-sans-jp.css'), '');
     await writeFile(path.join(outside, 'secret.html'), '');
     await symlink(outside, path.join(root, 'link'));
 

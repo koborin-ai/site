@@ -29,8 +29,6 @@ export const sections = {
 } as const;
 
 export const linkLabel = {
-  site: { en: 'Site ↗', ja: 'サイト ↗' },
-  github: { en: 'GitHub ↗', ja: 'GitHub ↗' },
   all: { en: 'All →', ja: 'すべて →' },
 } as const;
 
@@ -47,13 +45,12 @@ export const listMeta = {
 
 export type ListKind = 'writing' | 'talks';
 
-export type ProjectIcon = 'terradart' | 'contextlint' | 'g' | 'a' | 'j';
+export type BrandMark = 'terradart' | 'contextlint';
 
 export interface Project {
   name: string;
   href: string;
-  kind: 'site' | 'github';
-  icon: ProjectIcon;
+  mark?: BrandMark;
   description: Record<Locale, string>;
 }
 
@@ -61,8 +58,7 @@ export const projects: readonly Project[] = [
   {
     name: 'TerraDart',
     href: 'https://terradart.dev/',
-    kind: 'site',
-    icon: 'terradart',
+    mark: 'terradart',
     description: {
       en: 'Type-safe IaC for Dart.',
       ja: 'Dart のためのタイプセーフな IaC。',
@@ -71,8 +67,7 @@ export const projects: readonly Project[] = [
   {
     name: 'contextlint',
     href: 'https://contextlint.dev/',
-    kind: 'site',
-    icon: 'contextlint',
+    mark: 'contextlint',
     description: {
       en: 'A semantic linter for AI-era Markdown.',
       ja: 'AI 時代の Markdown のためのセマンティックリンター。',
@@ -81,8 +76,6 @@ export const projects: readonly Project[] = [
   {
     name: 'gcp-cost-mcp-server',
     href: 'https://github.com/nozomi-koborinai/gcp-cost-mcp-server',
-    kind: 'github',
-    icon: 'g',
     description: {
       en: 'An MCP server that lets AI assistants estimate GCP running costs.',
       ja: 'AI アシスタントから GCP のランニングコストを見積もれる MCP サーバー。',
@@ -91,8 +84,6 @@ export const projects: readonly Project[] = [
   {
     name: 'ableton-osc-mcp',
     href: 'https://github.com/nozomi-koborinai/ableton-osc-mcp',
-    kind: 'github',
-    icon: 'a',
     description: {
       en: 'An MCP server that drives Ableton Live via AbletonOSC.',
       ja: 'AbletonOSC 経由で Ableton Live を操作できる MCP サーバー。',
@@ -101,8 +92,6 @@ export const projects: readonly Project[] = [
   {
     name: 'jev-spec',
     href: 'https://github.com/nozomi-koborinai/jev-spec',
-    kind: 'github',
-    icon: 'j',
     description: {
       en: 'Catch spec drift on every commit.',
       ja: '仕様書とコードのずれを、コミットのたびに検出する。',

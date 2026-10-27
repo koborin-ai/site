@@ -1,0 +1,131 @@
+---
+import ContextlintMark from './ContextlintMark.astro';
+import TerraDartMark from './TerraDartMark.astro';
+import { projects, type BrandMark } from '../lib/catalog';
+import type { Locale } from '../lib/docs';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const brands = {
+  terradart: TerraDartMark,
+  contextlint: ContextlintMark,
+} satisfies Record<BrandMark, typeof TerraDartMark>;
+---
+
+<ul class="projects">
+  {projects.map((project) => {
+    const Brand = project.mark ? brands[project.mark] : undefined;
+    return (
+      <li>
+        <span class:list={['slot', { github: !project.mark }]}>
+          {Brand ? (
+            <Brand />
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#181717" aria-hidden="true">
+              <path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.77.11 3.06.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/>
+            </svg>
+          )}
+        </span>
+        <a class="row" href={project.href} target="_blank" rel="noopener noreferrer">
+          <span class="link-text">{project.name}</span>
+          <span class="out" aria-hidden="true">↗</span>
+        </a>
+        <span class="sub">{project.description[locale]}</span>
+      </li>
+    );
+  })}
+</ul>
+
+<style>
+  .projects {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .projects li {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    column-gap: 8px;
+    align-items: center;
+    padding: 5px 0;
+  }
+
+  .slot {
+    grid-column: 1;
+    grid-row: 1;
+    box-sizing: border-box;
+    width: 16px;
+    height: 16px;
+    display: grid;
+    place-items: center;
+  }
+
+  .slot :global(svg) {
+    display: block;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+  }
+
+  .slot.github :global(svg) {
+    width: 14px;
+    height: 14px;
+    border-radius: 0;
+  }
+
+  :global(html[data-theme="dark"]) .slot {
+    background: #e6e9ee;
+    border-radius: 3px;
+    padding: 1px;
+    overflow: hidden;
+  }
+
+  :global(html[data-theme="dark"]) .slot :global(svg) {
+    width: 14px;
+    height: 14px;
+    border-radius: 0;
+  }
+
+  .row {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: start;
+    color: var(--site-fg);
+    font-size: 14.5px;
+    line-height: 1.65;
+    text-decoration: none;
+    word-break: auto-phrase;
+  }
+
+  .link-text {
+    opacity: 0.86;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    text-decoration-color: color-mix(in srgb, currentColor 65%, transparent);
+  }
+
+  .row:hover .link-text {
+    text-decoration-thickness: 2px;
+    text-decoration-color: currentColor;
+    color: var(--sl-color-text-accent);
+  }
+
+  .out {
+    margin-inline-start: 0.35em;
+    color: var(--site-muted);
+    font-size: 12.5px;
+    text-decoration: none;
+  }
+
+  .sub {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    opacity: 0.86;
+  }
+</style>

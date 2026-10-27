@@ -105,7 +105,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Bad: `GA で、 [Dart 版](https://...) は` (unnecessary space after `、`)
 3. **Brand Assets Management**:
    - **Favicon**: `ICONS` in `app/src/lib/icons.ts` lists `favicon.ico`, `favicon.png`, `favicon.svg`, and `apple-touch-icon.png`. `app/scripts/render-mark.ts` writes those files into `app/public/`. `Head.astro` links them in that order. Every theme gets the dark tile. To add an icon, add a row, run the script, and add its URL to `app/scripts/routes-baseline.txt`.
-   - **Header mark**: The home link in `app/src/components/SiteHeader.astro` is the mark plus the word `koborin.ai`. The geometry lives only in `app/src/lib/mark.ts`. `mark.test.ts` fails if the arch path appears in any other file. The SVG is `aria-hidden` and paints with `--site-accent`. At 385px and below the word is visually hidden and stays the link's accessible name.
+   - **Header mark**: The home link in `app/src/components/SiteHeader.astro` is the mark plus the word `koborin.ai`. The geometry lives only in `app/src/lib/mark.ts`. `mark.test.ts` fails if the arch path appears in any other file, and it allows `public/favicon.svg` only when that file is the rendered tile. The SVG is `aria-hidden` and paints with `--site-accent`. At 385px and below the word is visually hidden and stays the link's accessible name.
    - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`).
    - Comments in CSS and JS are English. Japanese text in components is user-facing copy.
 4. **Image Conventions**:

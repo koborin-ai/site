@@ -34,6 +34,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/data/site-icons.json` | Hostname to data-URL favicons for rich link cards. |
 | `app/src/lib/og.ts` | Which pages get a generated social card, and the card URL. |
 | `app/src/lib/og-render.ts` | Renders an article card to WebP at build time. |
+| `app/src/lib/mark.ts` | The only copy of the mark geometry. |
+| `app/src/lib/icons.ts` | Favicon rows, `ICON_LINKS`, and `renderIcon`. |
+| `app/scripts/render-mark.ts` | Writes the four public icon files from the mark. |
 | `app/src/styles/vendor/` | Reset, props, util, and print CSS copied from Starlight 0.42.6. The layout keeps the class names those files expect. |
 | `app/src/styles/prose.css` | The only stylesheet inside `.sl-markdown-content`; tokens at the top. |
 | `app/src/plugins/rehype-diagrams.ts` | Renders Mermaid at natural size in `figure.diagram`, paints it with the `--diagram-*` tokens, and wraps each table in `div.table-frame`. |
@@ -101,8 +104,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Bad: `どのバージョンの[仕様](https://...)に準拠する` (missing spaces around link)
      - Bad: `GA で、 [Dart 版](https://...) は` (unnecessary space after `、`)
 3. **Brand Assets Management**:
-   - **Favicon**: Place in `app/public/favicon.png`. `app/src/components/Head.astro` links it.
-   - **Header mark**: The header is the text `koborin.ai` in Geist Mono, in `app/src/components/SiteHeader.astro`. It links home.
+   - **Favicon**: `ICONS` in `app/src/lib/icons.ts` lists `favicon.ico`, `favicon.png`, `favicon.svg`, and `apple-touch-icon.png`. `app/scripts/render-mark.ts` writes those files into `app/public/`. `Head.astro` links them in that order. Every theme gets the dark tile. To add an icon, add a row, run the script, and add its URL to `app/scripts/routes-baseline.txt`.
+   - **Header mark**: The home link in `app/src/components/SiteHeader.astro` is the mark plus the word `koborin.ai`. The geometry lives only in `app/src/lib/mark.ts`. `mark.test.ts` fails if the arch path appears in any other file. The SVG is `aria-hidden` and paints with `--site-accent`. At 385px and below the word is visually hidden and stays the link's accessible name.
    - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`).
    - Comments in CSS and JS are English. Japanese text in components is user-facing copy.
 4. **Image Conventions**:
@@ -128,7 +131,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 5. **OG Image Management**:
    - Article pages open with the title and the dates. Authors do not add a cover.
-   - The social card is generated at build time from the title, at `/og/<page path>.webp`. An English article at `/tech/mcp-deep-dive/` gets `/og/tech/mcp-deep-dive.webp`. The Japanese page gets `/og/ja/tech/mcp-deep-dive.webp`.
+   - The social card is generated at build time from the title, at `/og/<page path>.webp`. An English article at `/tech/mcp-deep-dive/` gets `/og/tech/mcp-deep-dive.webp`. The Japanese page gets `/og/ja/tech/mcp-deep-dive.webp`. The card footer shows the mark left of the word, from `ogMark` in `app/src/lib/mark.ts`.
    - Home and about still set `ogImage: /og/koborin-ai-hero.png`. `Head.astro` rewrites that `.png` reference to `.webp`.
    - Pages without a generated card and without `ogImage` fall back to `/og/index.webp`.
    - Inline images stay on `SiteImage` with `variant="inline"`.
@@ -145,7 +148,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - One centred column on a dot grid. Home, `/about/`, `/blog/`, `/talks/`, and article pages share `app/src/components/SiteShell.astro`. There is no sidebar and no table of contents. Home, About, and the list pages stay on a 720px column. Article pages widen to an 800px column, with body text held to 740px and figures, code, and diagrams using the full column.
    - Colours and type live in `app/src/styles/site.css` and `app/src/styles/fonts.css`. The accent is neutral (`#d5dae1` in dark, `#4a5260` in light). Text links are underlined. Article prose is `app/src/styles/prose.css`. `npm run test` fails if another stylesheet selects into the body.
    - Noto Sans JP is not on the critical path. `npm run build` runs `app/scripts/subset-noto-sans-jp.ts`, which subsets weights 400 and 500 to the characters in the built HTML and the content files, plus ASCII, kana, and Japanese punctuation. Japanese pages fetch `/fonts/noto-sans-jp.css` after the load event and register the faces with the Font Loading API (`font-display: swap`). A stylesheet link makes the browser apply the Latin faces it had already skipped, which shifts a line. `fonts.css` keeps a local fallback whose vertical metrics match the source face, so the swap does not move the line box. `diagram-fonts.css` is only for Mermaid measurement and is not shipped as a page stylesheet. `npm run dev` writes the same files under `app/public/fonts/` (gitignored).
-   - The header has the mark, an About link, an EN/JA link, GitHub, X, RSS, and the theme control. Home keeps the name, bio, and three lists. The longer profile lives on `/about/` and `/ja/about/`. Home sections and the list pages read `app/src/lib/catalog.ts`. `app/src/sidebar.ts` is not rendered.
+   - The header has the mark and the word `koborin.ai` in one home link, an About link, an EN/JA link, GitHub, X, RSS, and the theme control. Home keeps the name, bio, and three lists. The longer profile lives on `/about/` and `/ja/about/`. Home sections and the list pages read `app/src/lib/catalog.ts`. `app/src/sidebar.ts` is not rendered.
 8. **Testing**: run `mise run check` from the repository root before committing. The task list is under Code Quality Standards. Run `npm run build` in `app/` as well whenever content or configuration changes.
 9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 10. **Workers deployment**:

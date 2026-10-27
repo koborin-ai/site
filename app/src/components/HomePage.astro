@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import SiteImage from './SiteImage.astro';
 import QuietList from './QuietList.astro';
 import TerraDartMark from './TerraDartMark.astro';
-import ContextlintMark from './ContextlintMark.astro';
+import ProjectList from './ProjectList.astro';
 import bookCover from '../assets/life/reflections-on-2025/book-cover.png';
 import {
   bio,
@@ -12,7 +12,6 @@ import {
   homeTalks,
   linkLabel,
   listHref,
-  projects,
   sections,
   writingPosts,
 } from '../lib/catalog';
@@ -49,22 +48,7 @@ const latestTalks = homeTalks();
 
 <section class="block">
   <h2 class="section-label">{sections.building[locale]}</h2>
-  <ul class="quiet-list">
-    {projects.map((project) => (
-      <li>
-        <a class="row" href={project.href} target="_blank" rel="noopener noreferrer">
-          <span class="pname">
-            {project.icon === 'terradart' && <TerraDartMark />}
-            {project.icon === 'contextlint' && <ContextlintMark />}
-            {project.icon !== 'terradart' && project.icon !== 'contextlint' && <span class="ph">{project.icon}</span>}
-            <span class="link-text">{project.name}</span>
-          </span>
-          <span class="sub">{project.description[locale]}</span>
-        </a>
-        <a class="meta" href={project.href} target="_blank" rel="noopener noreferrer">{linkLabel[project.kind][locale]}</a>
-      </li>
-    ))}
-  </ul>
+  <ProjectList locale={locale} />
 </section>
 
 <section class="block">

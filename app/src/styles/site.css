@@ -93,7 +93,6 @@ body {
 .meta,
 .more,
 .back,
-.ph,
 .entry-date {
   font-family: "Geist Mono", "Noto Sans JP", ui-monospace, monospace;
   letter-spacing: 0;
@@ -109,8 +108,7 @@ body {
 .lang-switch:hover,
 .icon-link:hover,
 .back:hover,
-.more:hover,
-.quiet-list a.meta:hover {
+.more:hover {
   color: var(--site-accent);
 }
 
@@ -288,12 +286,6 @@ select:focus-visible {
   line-height: 1.5;
 }
 
-.quiet-list a.meta {
-  color: var(--site-muted);
-  font-size: 12.5px;
-  opacity: 1;
-}
-
 .sub {
   display: block;
   margin-top: 1px;
@@ -301,31 +293,6 @@ select:focus-visible {
   font-size: 12.5px;
   line-height: 1.5;
   word-break: auto-phrase;
-}
-
-.pname {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pname svg,
-.pname img,
-.ph {
-  width: 15px;
-  height: 15px;
-  border-radius: 4px;
-  flex: none;
-}
-
-.ph {
-  display: inline-grid;
-  place-items: center;
-  color: var(--site-muted);
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1;
-  box-shadow: inset 0 0 0 1px var(--site-faint);
 }
 
 .more,
@@ -418,8 +385,7 @@ select:focus-visible {
     gap: 0;
   }
 
-  .meta,
-  .quiet-list a.meta {
+  .meta {
     text-align: left;
   }
 }

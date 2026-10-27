@@ -127,13 +127,14 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   ├── content/
 │   │   │   └── docs/             # MDX pages: tech/, life/, ja/
 │   │   ├── content.config.ts    # Zod schema for the docs collection
-│   │   ├── plugins/              # Asides and heading anchors
+│   │   ├── plugins/              # Asides, heading anchors, diagrams, and table frames
 │   │   ├── utils/
 │   │   │   ├── llms.ts           # Shared logic for llms.txt generation
 │   │   │   └── llms.test.ts      # Vitest coverage for llms.txt rendering
 │   │   ├── pages/                # Astro endpoints (llms.txt, RSS, article cards)
 │   │   └── styles/
-│   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
+│   │       ├── prose.css         # Article body: the only stylesheet inside .sl-markdown-content
+│   │       └── custom.css        # Leftover overrides outside the article body
 │   ├── public/
 │   │   ├── _headers               # Worker static-asset header rules
 │   │   ├── favicon.png           # Browser tab icon
@@ -240,7 +241,7 @@ npm run dev --prefix app
 mise run check
 ```
 
-`mise run check` does not build the site. Run `npm run build --prefix app` for that; it needs Playwright Chromium (`npx playwright install chromium` in `app/`) to render Mermaid diagrams.
+`mise run check` does not build the site. Run `npm run build --prefix app` for that. Both need Playwright Chromium (`npx playwright install chromium` in `app/`) to render Mermaid diagrams.
 
 ## Infrastructure Dev Notes
 

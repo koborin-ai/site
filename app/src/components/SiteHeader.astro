@@ -2,6 +2,7 @@
 import LanguageSelect from './LanguageSelect.astro';
 import ThemeSelect from './ThemeSelect.astro';
 import type { Locale } from '../lib/docs';
+import { headerMark } from '../lib/mark';
 
 interface Props {
   locale: Locale;
@@ -16,7 +17,7 @@ const rssHref = locale === 'ja' ? '/ja/rss.xml' : '/rss.xml';
 ---
 
 <header class="site-header">
-  <a class="mark" href={homeHref}>koborin.ai</a>
+  <a class="mark" href={homeHref}><Fragment set:html={headerMark().markup} /><span class="mark-word">koborin.ai</span></a>
   <div class="header-tools">
     <a class="nav-about" href={aboutHref}>About</a>
     <LanguageSelect locale={locale} enHref={enHref} jaHref={jaHref} />

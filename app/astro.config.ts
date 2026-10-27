@@ -12,7 +12,6 @@ export default defineConfig({
   site: "https://koborin.ai",
   srcDir: "src",
   build: {
-    // One stylesheet request was the render-blocking hop in front of the fonts.
     inlineStylesheets: "always",
   },
   markdown: {

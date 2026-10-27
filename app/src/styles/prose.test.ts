@@ -2,7 +2,7 @@ import { globSync, readFileSync } from 'node:fs';
 import { unified } from 'unified';
 import { VFile } from 'vfile';
 import { beforeAll, describe, expect, it } from 'vitest';
-import config from '../../astro.config.mjs';
+import config from '../../astro.config.ts';
 import { rehypeDiagrams } from '../plugins/rehype-diagrams';
 
 const fence = (lang: string, body: string) => ['```' + lang, body, '```'].join('\n');
@@ -39,7 +39,7 @@ let html = '';
 beforeAll(async () => {
   const { processor, syntaxHighlight, shikiConfig } = config.markdown ?? {};
   if (!processor || typeof syntaxHighlight !== 'object' || !syntaxHighlight.type) {
-    throw new Error('astro.config.mjs must set markdown.processor and markdown.syntaxHighlight.type');
+    throw new Error('astro.config.ts must set markdown.processor and markdown.syntaxHighlight.type');
   }
   const renderer = await processor.createRenderer({
     syntaxHighlight: { ...syntaxHighlight, type: syntaxHighlight.type },

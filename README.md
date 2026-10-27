@@ -142,7 +142,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   ├── favicon.png           # Browser tab icon
 │   │   ├── og/                   # Open Graph source images
 │   │   └── robots.txt
-│   └── astro.config.mjs          # Astro, MDX, sitemap, and Markdown plugins
+│   └── astro.config.ts           # Astro, MDX, sitemap, and Markdown plugins
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
 ├── infra/                         # TerraDart site stack
 │   ├── bin/synth.dart            # Synth entry point → tf-out/site/main.tf.json

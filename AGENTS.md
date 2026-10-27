@@ -93,7 +93,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Add frontmatter: `title` (required), `description` (required), `publishedAt` (required for articles, `YYYY-MM-DD`), `draft` (optional, boolean).
    - A published article (frontmatter `publishedAt`, not a draft) is listed on the home page and on `/blog/` or `/ja/blog/` from the content collection. No sidebar entry.
    - Folder structure maps to URL structure: `docs/tech/post.mdx` → `/tech/post/`. Article URLs stay under `/tech/` and `/life/` until a later move to `/blog/`.
-   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` may disappear. The only other allowed additions are the pages in `allowedAdditions` inside `app/scripts/check-routes.mjs` (`/blog/`, `/ja/blog/`, `/talks/`, `/ja/talks/`, `/about/`, `/ja/about/`).
+   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` may disappear. The only other allowed additions are the pages in `allowedAdditions` inside `app/scripts/check-routes.ts` (`/blog/`, `/ja/blog/`, `/talks/`, `/ja/talks/`, `/about/`, `/ja/about/`).
    - **Japanese link spacing**: In Japanese MDX prose, add a half-width space between Japanese text characters (hiragana, katakana, kanji) and Markdown links. Do NOT add a space between full-width punctuation (`、`, `。`, `（`, `）`) and links — full-width characters already have built-in visual whitespace.
      - Good: `どのバージョンの [仕様](https://...) に準拠する`
      - Good: `GA で、[Dart 版](https://...) は 2026 年` (no space after `、`)
@@ -147,7 +147,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 8. **Testing**: run `mise run check` from the repository root before committing. The task list is under Code Quality Standards. Run `npm run build` in `app/` as well whenever content or configuration changes.
 9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 10. **Workers deployment**:
-    - The app builds as a static site. `astro.config.mjs` leaves `output` unset, and Astro's default is `static`. Wrangler uploads `app/dist` as Worker static assets.
+    - The app builds as a static site. `astro.config.ts` leaves `output` unset, and Astro's default is `static`. Wrangler uploads `app/dist` as Worker static assets.
     - Worker name and assets directory live in `app/wrangler.jsonc`. There is no `main` script and no `routes` block. Set `not_found_handling` to `404-page` so `404.html` is served.
     - `app/public/_headers` is copied into `dist/` and sets `Content-Type: text/plain; charset=utf-8` on `*.txt` (Astro response headers are not kept on uploaded files).
     - `app-release.yml` runs `npm run build` then `wrangler deploy`.

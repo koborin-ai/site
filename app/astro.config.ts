@@ -11,6 +11,9 @@ import { remarkAsides, remarkRestoreDirectives } from "./src/plugins/remark-asid
 export default defineConfig({
   site: "https://koborin.ai",
   srcDir: "src",
+  build: {
+    inlineStylesheets: "always",
+  },
   markdown: {
     syntaxHighlight: {
       type: "shiki",

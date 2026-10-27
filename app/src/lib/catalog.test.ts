@@ -45,7 +45,10 @@ describe('home catalog', () => {
       'none',
       'none',
     ]);
-    expect(linkLabel).toEqual({ all: { en: 'All →', ja: 'すべて →' } });
+    expect(linkLabel).toEqual({
+      writing: { en: 'All writing →', ja: '記事をすべて →' },
+      talks: { en: 'All talks →', ja: '登壇をすべて →' },
+    });
     expect(bio.ja.before + 'TerraDart' + bio.ja.after).toBe(
       'ソフトウェアエンジニア。開発者向けのツールを公開しながら作っていて、いまはTerraDartに取り組んでいます。',
     );
@@ -102,7 +105,8 @@ describe('home catalog', () => {
     expect(groupByYear(posts).map((group) => group.year)).toEqual([2026]);
     expect(listHref('writing', 'ja')).toBe('/ja/blog/');
     expect(listHref('talks', 'en')).toBe('/talks/');
-    expect(linkLabel.all.ja).toBe('すべて →');
+    expect(linkLabel.writing.ja).toBe('記事をすべて →');
+    expect(linkLabel.talks.en).toBe('All talks →');
     expect(isHomeId('ja')).toBe(true);
     expect(isHomeId('about')).toBe(false);
     expect(isAboutId('about')).toBe(true);

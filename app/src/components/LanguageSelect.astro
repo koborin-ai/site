@@ -8,7 +8,7 @@ interface Props {
 const { locale, enHref, jaHref } = Astro.props;
 const href = locale === 'ja' ? enHref : jaHref;
 const label = locale === 'ja' ? 'EN' : 'JA';
-const accessible = locale === 'ja' ? 'English' : '日本語';
+const accessible = locale === 'ja' ? 'EN English' : 'JA 日本語';
 ---
 
 <a class="lang-switch" href={href} hreflang={locale === 'ja' ? 'en' : 'ja'} aria-label={accessible}>{label}</a>

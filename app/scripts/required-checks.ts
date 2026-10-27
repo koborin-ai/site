@@ -1,4 +1,3 @@
-// required-checks.yml runs this before any npm install, so it imports node: built-ins only.
 import { text } from 'node:stream/consumers';
 
 type AreaPaths = {

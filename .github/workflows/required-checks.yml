@@ -1,7 +1,5 @@
 name: Required Checks
 
-# No paths or paths-ignore: required-checks must report on every pull request.
-# app/scripts/required-checks.ts decides which areas run.
 on:
   pull_request:
     types:

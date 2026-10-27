@@ -1,4 +1,5 @@
 import rehypeMermaid, { type RehypeMermaidOptions } from 'rehype-mermaid';
+import { unified } from 'unified';
 import { SKIP, visit } from 'unist-util-visit';
 import type { VFile } from 'vfile';
 
@@ -74,7 +75,10 @@ function wrap(node: HastNode, tagName: string, className: string): HastNode {
 }
 
 export function rehypeDiagrams() {
-  const render = rehypeMermaid(OPTIONS) as (tree: HastNode, file: VFile) => Promise<void>;
+  const render = rehypeMermaid.call(unified(), OPTIONS) as (
+    tree: HastNode,
+    file: VFile,
+  ) => Promise<void>;
   return async (tree: HastNode, file: VFile) => {
     await render(tree, file);
     visit(tree, (node: HastNode, index, parent: HastNode | undefined) => {

@@ -41,11 +41,10 @@ const PAINT: Record<string, string> = {
 
 const OPTIONS: RehypeMermaidOptions = {
   strategy: 'inline-svg',
-  // Text is measured in the headless page, so it must load the same faces the site renders with.
-  css: new URL('../styles/fonts.css', import.meta.url),
+  css: new URL('../styles/diagram-fonts.css', import.meta.url),
   mermaidConfig: {
     theme: 'neutral',
-    fontFamily: '"Geist", "Noto Sans JP", sans-serif',
+    fontFamily: '"Geist", "Noto Sans JP", "Noto Sans JP Fallback", sans-serif',
     themeCSS: SHARED + Object.values(PAINT).join(''),
   },
 };

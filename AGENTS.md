@@ -40,6 +40,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/scripts/routes-baseline.txt` | Public URLs the production build must still emit. `/pagefind/` is the only allowed omission. |
 | `app/scripts/required-checks.ts` | The only list of pull request path areas (`areaPaths`), and the `required-checks` verdict. Imports `node:` built-ins only, because it runs before `npm ci`. |
 | `app/scripts/smoke-prod.ts` | Probes `koborin.ai` from the route baseline after each app deploy and weekly. Sends GETs only. |
+| `app/scripts/subset-noto-sans-jp.ts` | Subsets Noto Sans JP on every build and writes the late-loaded stylesheet. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
 | `app/src/pages/rss.xml.ts` | RSS feed endpoint for English articles. |
@@ -145,13 +146,14 @@ This document is a quick guide for any contributors or AI agents that touch the 
 7. **Site chrome**:
    - One centred column on a dot grid. Home, `/about/`, `/blog/`, `/talks/`, and article pages share `app/src/components/SiteShell.astro`. There is no sidebar and no table of contents. Home, About, and the list pages stay on a 720px column. Article pages widen to an 800px column, with body text held to 740px and figures, code, and diagrams using the full column.
    - Colours and type live in `app/src/styles/site.css` and `app/src/styles/fonts.css`. The accent is neutral (`#d5dae1` in dark, `#4a5260` in light). Text links are underlined. Article prose is `app/src/styles/prose.css`. `npm run test` fails if another stylesheet selects into the body.
+   - Noto Sans JP is not on the critical path. `npm run build` runs `app/scripts/subset-noto-sans-jp.ts`, which subsets weights 400 and 500 to the characters in the built HTML and the content files, plus ASCII, kana, and Japanese punctuation. Japanese pages fetch `/fonts/noto-sans-jp.css` after the load event and register the faces with the Font Loading API (`font-display: swap`). A stylesheet link makes the browser apply the Latin faces it had already skipped, which shifts a line. `fonts.css` keeps a local fallback whose vertical metrics match the source face, so the swap does not move the line box. `diagram-fonts.css` is only for Mermaid measurement and is not shipped as a page stylesheet. `npm run dev` writes the same files under `app/public/fonts/` (gitignored).
    - The header has the mark, an About link, an EN/JA link, GitHub, X, RSS, and the theme control. Home keeps the name, bio, and three lists. The longer profile lives on `/about/` and `/ja/about/`. Home sections and the list pages read `app/src/lib/catalog.ts`. `app/src/sidebar.ts` is not rendered.
 8. **Testing**: run `mise run check` from the repository root before committing. The task list is under Code Quality Standards. Run `npm run build` in `app/` as well whenever content or configuration changes.
 9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
 10. **Workers deployment**:
     - The app builds as a static site. `astro.config.ts` leaves `output` unset, and Astro's default is `static`. Wrangler uploads `app/dist` as Worker static assets.
     - Worker name and assets directory live in `app/wrangler.jsonc`. There is no `main` script and no `routes` block. Set `not_found_handling` to `404-page` so `404.html` is served.
-    - `app/public/_headers` is copied into `dist/` (Astro response headers are not kept on uploaded files). It sets `Content-Type: text/plain; charset=utf-8` on `*.txt`, `Cache-Control: public, max-age=31536000, immutable` on `/_astro/*`, and the security headers (HSTS without preload, nosniff, Referrer-Policy, Permissions-Policy, COOP, `X-Frame-Options`, CSP) on every asset. `script-src` allows hashed inline scripts plus `googletagmanager.com` and `giscus.app`. `style-src` keeps `'unsafe-inline'` because Mermaid SVG and Shiki emit inline styles, and also allows `giscus.app` because the comments client injects its stylesheet. `npm run build` runs `scripts/check-csp.ts`, which fails when an inline script hash drifts. Do not add HSTS `preload` unless every `koborin.ai` hostname is HTTPS.
+    - `app/public/_headers` is copied into `dist/` (Astro response headers are not kept on uploaded files). It sets `Content-Type: text/plain; charset=utf-8` on `*.txt`, `Cache-Control: public, max-age=31536000, immutable` on `/_astro/*` and `/fonts/*.woff2`, `Cache-Control: public, max-age=0, must-revalidate` on `/fonts/noto-sans-jp.css`, and the security headers (HSTS without preload, nosniff, Referrer-Policy, Permissions-Policy, COOP, `X-Frame-Options`, CSP) on every asset. `script-src` allows hashed inline scripts plus `googletagmanager.com` and `giscus.app`. `style-src` keeps `'unsafe-inline'` because Mermaid SVG and Shiki emit inline styles, and also allows `giscus.app` because the comments client injects its stylesheet. `npm run build` runs `scripts/check-csp.ts`, which fails when an inline script hash drifts. Do not add HSTS `preload` unless every `koborin.ai` hostname is HTTPS.
     - `app-release.yml` runs `npm run check`, `npm run build`, then `wrangler deploy`, and only when `github.ref` is `refs/heads/main`. A separate `smoke` job then calls `smoke-prod.yml`, so a failed probe shows as a red job next to a green deploy.
     - All pages are pre-rendered at build time; no Node.js runtime is required in production.
 11. **LLM Context Files (llms.txt)**:
@@ -245,7 +247,7 @@ When adding or updating dependencies (GitHub Actions, npm packages, pub packages
 2. **Use specific major versions** for GitHub Actions (for example `@v7`, not `@main` or `@latest`).
 3. **Prefer version pins from project files** over hardcoded versions in workflows: `.tool-versions` for Node, Dart, Terraform, actionlint, and shellcheck; `package.json` for npm; `pubspec.yaml` for pub.
 4. **Verify compatibility** with existing dependencies before upgrading.
-5. **Document breaking changes** in PR descriptions when upgrading major versions.
+5. **Document breaking changes** under Risk and manual steps in the PR description when upgrading major versions.
 
 Dependabot covers npm (`app/`), pub (`infra/`), and GitHub Actions. It does not understand `.tool-versions`, so Node, Dart, Terraform, actionlint, and shellcheck are bumped by hand there.
 
@@ -390,7 +392,7 @@ mise run check:docs        # markdownlint over every tracked .md
 3. For app changes, also run `npm run build` in `app/` - must pass.
    - If the change touches a page with `draft: true`, these commands skip it. Also open the page in `npm run dev` and confirm it renders.
 4. Markdown lint is part of `mise run check` (`check:docs`); no separate step.
-5. Mention any manual Cloudflare or DNS steps (e.g., unmanaged MX/TXT) in the PR description.
+5. Fill in every section of `.github/pull_request_template.md`. Put manual Cloudflare, DNS, or repository settings steps, such as edits to the unmanaged MX and TXT records, under Risk and manual steps.
 6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
    - **Domain labels** (one or more):
      - `app` — Changes under `app/`.

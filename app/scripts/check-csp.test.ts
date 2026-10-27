@@ -37,6 +37,7 @@ describe('inline script hashes', () => {
     expect(headers).toContain('X-Frame-Options: DENY');
     expect(headers).toContain("frame-ancestors 'none'");
     expect(headers).toContain('Cache-Control: public, max-age=31536000, immutable');
+    expect(headers).toContain('Cache-Control: public, max-age=0, must-revalidate');
     expect(headers).toContain("style-src 'self' 'unsafe-inline' https://giscus.app");
   });
 });

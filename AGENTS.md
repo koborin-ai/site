@@ -243,7 +243,7 @@ When adding or updating dependencies (GitHub Actions, npm packages, pub packages
 2. **Use specific major versions** for GitHub Actions (for example `@v7`, not `@main` or `@latest`).
 3. **Prefer version pins from project files** over hardcoded versions in workflows: `.tool-versions` for Node, Dart, Terraform, actionlint, and shellcheck; `package.json` for npm; `pubspec.yaml` for pub.
 4. **Verify compatibility** with existing dependencies before upgrading.
-5. **Document breaking changes** in PR descriptions when upgrading major versions.
+5. **Document breaking changes** under Risk and manual steps in the PR description when upgrading major versions.
 
 Dependabot covers npm (`app/`), pub (`infra/`), and GitHub Actions. It does not understand `.tool-versions`, so Node, Dart, Terraform, actionlint, and shellcheck are bumped by hand there.
 
@@ -384,7 +384,7 @@ mise run check:docs        # markdownlint over every tracked .md
 3. For app changes, also run `npm run build` in `app/` - must pass.
    - If the change touches a page with `draft: true`, these commands skip it. Also open the page in `npm run dev` and confirm it renders.
 4. Markdown lint is part of `mise run check` (`check:docs`); no separate step.
-5. Mention any manual Cloudflare or DNS steps (e.g., unmanaged MX/TXT) in the PR description.
+5. Fill in every section of `.github/pull_request_template.md`. Put manual Cloudflare, DNS, or repository settings steps, such as edits to the unmanaged MX and TXT records, under Risk and manual steps.
 6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
    - **Domain labels** (one or more):
      - `app` — Changes under `app/`.

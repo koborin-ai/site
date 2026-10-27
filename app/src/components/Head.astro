@@ -1,4 +1,6 @@
 ---
+import { ICON_LINKS } from '../lib/icons';
+
 interface Props {
   title: string;
   description: string;
@@ -25,7 +27,7 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 {hreflang.map((link) => (
   <link rel="alternate" hreflang={link.hreflang} href={link.href} />
 ))}
-<link rel="shortcut icon" href="/favicon.png" type="image/png" />
+{ICON_LINKS.map((link) => <link {...link} />)}
 
 <meta property="og:title" content={title} />
 <meta property="og:type" content="article" />

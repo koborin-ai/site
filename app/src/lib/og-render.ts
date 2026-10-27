@@ -16,6 +16,8 @@ export class MissingGlyphError extends Error {
 const WIDTH = 1200;
 const HEIGHT = 630;
 
+export const OG_WEBP_QUALITY = 90 as const;
+
 /** Satori reads woff, not woff2. Paths are the packages' public files exports. */
 const FONT_FILES = [
   { name: 'Geist', weight: 600, file: '@fontsource/geist/files/geist-latin-600-normal.woff' },
@@ -32,7 +34,7 @@ export async function renderOgCard(card: OgCard): Promise<Uint8Array<ArrayBuffer
     fonts: await cardFonts(),
     loadAdditionalAsset: refuseMissingGlyph,
   });
-  const encoded = await sharp(Buffer.from(svg)).webp({ quality: 90 }).toBuffer();
+  const encoded = await sharp(Buffer.from(svg)).webp({ quality: OG_WEBP_QUALITY }).toBuffer();
   const bytes = new Uint8Array(encoded.byteLength);
   bytes.set(encoded);
   return bytes;

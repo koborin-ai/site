@@ -3,7 +3,7 @@ import path from 'node:path';
 
 export function toUrl(relativePath: string): string | null {
   const normalized = relativePath.split(path.sep).join('/');
-  if (normalized.startsWith('_astro/')) return null;
+  if (normalized.startsWith('_astro/') || normalized.startsWith('fonts/')) return null;
   if (normalized === 'index.html') return '/';
   if (normalized.endsWith('/index.html')) {
     return `/${normalized.slice(0, -'index.html'.length)}`;

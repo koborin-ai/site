@@ -6,6 +6,12 @@
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
+/fonts/noto-sans-jp.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/fonts/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff
@@ -13,4 +19,4 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
   X-Frame-Options: DENY
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://www.googletagmanager.com https://giscus.app 'sha256-wUtrOrb4GEUW6LchIrpcTL7yCMCMFxeXXQvHmSRTFrY=' 'sha256-qTndJOjGpxOoDMLEt12aiyqVHgUbtuoXqzNnqHx0cXk=' 'sha256-jW8WckjjPKhafG7XrfbCsS+fWzLDBV3Lva82V15NF6Y=' 'sha256-1d/Wvi048duDnKm5/J7mPZlkUqqcLNvK9A2d9r1gl0s=' 'sha256-Yh1n1zyShfjavW3L3U4XCyIFkqoNaRQvtTLuDuIHQEo=' 'sha256-dbEZ3XkibHysl5kZXAw4CLlvhu0abcm/LdwVWFvGwKc=' 'sha256-hl/7+bnZQ6aC5DuiD4fIPCan/2ni+JQPO5wauffwc/8='; style-src 'self' 'unsafe-inline' https://giscus.app; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; font-src 'self'; connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com https://giscus.app; frame-src https://github.com https://giscus.app; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://www.googletagmanager.com https://giscus.app 'sha256-wUtrOrb4GEUW6LchIrpcTL7yCMCMFxeXXQvHmSRTFrY=' 'sha256-qTndJOjGpxOoDMLEt12aiyqVHgUbtuoXqzNnqHx0cXk=' 'sha256-jW8WckjjPKhafG7XrfbCsS+fWzLDBV3Lva82V15NF6Y=' 'sha256-1d/Wvi048duDnKm5/J7mPZlkUqqcLNvK9A2d9r1gl0s=' 'sha256-Yh1n1zyShfjavW3L3U4XCyIFkqoNaRQvtTLuDuIHQEo=' 'sha256-dbEZ3XkibHysl5kZXAw4CLlvhu0abcm/LdwVWFvGwKc=' 'sha256-hl/7+bnZQ6aC5DuiD4fIPCan/2ni+JQPO5wauffwc/8=' 'sha256-r7PVDNL7crFWo5wA41bTr8gx1rSqfY7F6JkFmBrTNsw='; style-src 'self' 'unsafe-inline' https://giscus.app; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; font-src 'self'; connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com https://giscus.app; frame-src https://github.com https://giscus.app; upgrade-insecure-requests

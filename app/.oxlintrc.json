@@ -4,5 +4,5 @@
     "correctness": "error",
     "suspicious": "error"
   },
-  "ignorePatterns": ["dist", ".astro", "_templates"]
+  "ignorePatterns": ["dist", ".astro"]
 }

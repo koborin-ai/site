@@ -29,7 +29,8 @@ export const sections = {
 } as const;
 
 export const linkLabel = {
-  all: { en: 'All →', ja: 'すべて →' },
+  writing: { en: 'All writing →', ja: '記事をすべて →' },
+  talks: { en: 'All talks →', ja: '登壇をすべて →' },
 } as const;
 
 export const listMeta = {

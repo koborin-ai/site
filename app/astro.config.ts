@@ -11,6 +11,10 @@ import { remarkAsides, remarkRestoreDirectives } from "./src/plugins/remark-asid
 export default defineConfig({
   site: "https://koborin.ai",
   srcDir: "src",
+  build: {
+    // One stylesheet request was the render-blocking hop in front of the fonts.
+    inlineStylesheets: "always",
+  },
   markdown: {
     syntaxHighlight: {
       type: "shiki",

@@ -88,23 +88,6 @@
 		background-color: transparent;
 	}
 
-	/* components/MarkdownContent.astro */
-	.sl-markdown-content :is(h1, h2, h3, h4, h5, h6) {
-		break-after: avoid;
-	}
-	.sl-markdown-content :is(p, li) {
-		orphans: 2;
-		widows: 2;
-	}
-	.sl-markdown-content pre {
-		overflow-x: hidden;
-		white-space: pre-wrap;
-	}
-	.sl-markdown-content .expressive-code,
-	.sl-markdown-content figure,
-	.sl-markdown-content pre {
-		break-inside: avoid;
-	}
 	.expressive-code .frame.is-terminal .header::before {
 		/* Ensure terminal frame dots are visible even if backgrounds are disabled. */
 		box-shadow: inset 99rem 99rem var(--sl-color-gray-5);
@@ -126,14 +109,6 @@
 		/* Ensure Expressive Code copy button is hidden when printing from touch devices. */
 		display: none;
 	}
-	/* Inline code */
-	.sl-markdown-content code:not(:where(.not-content *)) {
-		background-color: transparent;
-		padding: 0;
-		margin-block: unset;
-		font-size: 0.9375em;
-	}
-
 	/* user-components/Badge.astro */
 	.sl-badge {
 		background: transparent;
@@ -148,11 +123,6 @@
 		outline: 3px solid var(--sl-color-accent-low);
 		color: var(--sl-color-text);
 		background-color: transparent;
-	}
-
-	/* user-components/Aside.astro */
-	.starlight-aside {
-		break-inside: avoid;
 	}
 
 	/* user-components/LinkButton.astro */

@@ -1,5 +1,4 @@
 import rehypeMermaid, { type RehypeMermaidOptions } from 'rehype-mermaid';
-import type { Processor } from 'unified';
 import { SKIP, visit } from 'unist-util-visit';
 import type { VFile } from 'vfile';
 
@@ -74,9 +73,8 @@ function wrap(node: HastNode, tagName: string, className: string): HastNode {
   return { type: 'element', tagName, properties: { className: [className] }, children: [node] };
 }
 
-export function rehypeDiagrams(this: Processor) {
-  // oxlint-disable-next-line oxc/no-this-in-exported-function -- unified calls attachers with the processor as this
-  const render = rehypeMermaid.call(this, OPTIONS) as (tree: HastNode, file: VFile) => Promise<void>;
+export function rehypeDiagrams() {
+  const render = rehypeMermaid(OPTIONS) as (tree: HastNode, file: VFile) => Promise<void>;
   return async (tree: HastNode, file: VFile) => {
     await render(tree, file);
     visit(tree, (node: HastNode, index, parent: HastNode | undefined) => {

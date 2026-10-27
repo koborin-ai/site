@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listRoutes } from './list-routes.ts';
 
-const allowedDropPrefix = '/pagefind/';
+export const allowedDropPrefix = '/pagefind/';
 
 export const allowedAdditions = [
   '/blog/',
@@ -39,11 +39,15 @@ export function diffRoutes(
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 
-if (import.meta.main) {
-  const baseline = (await readFile(path.join(scriptDir, 'routes-baseline.txt'), 'utf8'))
+export async function readBaseline(): Promise<string[]> {
+  return (await readFile(path.join(scriptDir, 'routes-baseline.txt'), 'utf8'))
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+if (import.meta.main) {
+  const baseline = await readBaseline();
   const actual = await listRoutes(path.join(scriptDir, '..', 'dist'));
   const result = diffRoutes(baseline, actual);
 

@@ -1,6 +1,6 @@
 <script is:inline>
   window.addEventListener('load', () => {
-    fetch('/fonts/noto-sans-jp.css')
+    setTimeout(() => fetch('/fonts/noto-sans-jp.css')
       .then((response) => response.text())
       .then((css) => {
         const pattern = /font-weight:\s*(\d+);[\s\S]*?url\("([^"]+)"\)[\s\S]*?unicode-range:\s*([^;]+);/g;
@@ -15,6 +15,6 @@
           face.load();
         }
       })
-      .catch(() => undefined);
+      .catch(() => undefined), 0);
   });
 </script>

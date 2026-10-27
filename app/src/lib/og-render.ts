@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import satori, { type Font } from 'satori';
 import sharp from 'sharp';
 import { formatPostDate } from './catalog';
+import { ogMark } from './mark';
 import type { OgCard } from './og';
 
 export class MissingGlyphError extends Error {
@@ -56,6 +57,7 @@ async function refuseMissingGlyph(_languageCode: string, segment: string): Promi
 }
 
 function cardTree(card: OgCard): Parameters<typeof satori>[0] {
+  const mark = ogMark();
   const tree = {
     type: 'div',
     props: {
@@ -101,8 +103,18 @@ function cardTree(card: OgCard): Parameters<typeof satori>[0] {
               {
                 type: 'div',
                 props: {
-                  style: { color: '#d5dae1' },
-                  children: 'koborin.ai',
+                  style: { display: 'flex', alignItems: 'center', gap: 16, color: '#d5dae1' },
+                  children: [
+                    {
+                      type: 'img',
+                      props: {
+                        src: `data:image/svg+xml,${encodeURIComponent(mark.markup)}`,
+                        width: mark.width,
+                        height: mark.height,
+                      },
+                    },
+                    { type: 'div', props: { style: { color: '#d5dae1' }, children: 'koborin.ai' } },
+                  ],
                 },
               },
               {

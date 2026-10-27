@@ -1,4 +1,7 @@
 ---
+import icons from '../data/site-icons.json';
+import { siteHostname } from '../lib/site-icon';
+
 interface Props {
   href: string;
   title?: string;
@@ -7,7 +10,8 @@ interface Props {
 
 const { href, title, description } = Astro.props;
 const isExternal = /^https?:\/\//i.test(href);
-const domain = new URL(href, Astro.site).hostname.replace(/^www\./, '');
+const domain = siteHostname(href, Astro.site);
+const icon = (icons as Record<string, string>)[domain];
 
 async function fetchOgText(target: string): Promise<{ title?: string; description?: string } | null> {
   try {
@@ -45,7 +49,10 @@ const displayDescription = description || og?.description;
 >
   <span class="title">{displayTitle}</span>
   {displayDescription && <span class="description">{displayDescription}</span>}
-  <span class="source">{domain}</span>
+  <span class="source">
+    {icon && <img src={icon} alt="" width="14" height="14" aria-hidden="true" />}
+    {domain}
+  </span>
 </a>
 
 <style>
@@ -60,7 +67,8 @@ const displayDescription = description || og?.description;
     transition: border-color 0.15s ease;
   }
 
-  .rich-link-card:hover {
+  .rich-link-card:hover,
+  .rich-link-card:focus-visible {
     border-color: var(--site-muted);
   }
 
@@ -89,11 +97,35 @@ const displayDescription = description || og?.description;
   }
 
   .source {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin-top: 6px;
     color: var(--site-muted);
     font-family: var(--prose-mono);
     font-size: 12px;
     line-height: 1.4;
+  }
+
+  .source img {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    filter: grayscale(1);
+    opacity: 0.55;
+    transition: filter 0.15s ease, opacity 0.15s ease;
+  }
+
+  .rich-link-card:hover .source img,
+  .rich-link-card:focus-visible .source img {
+    filter: none;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rich-link-card,
+    .source img {
+      transition: none;
+    }
   }
 </style>

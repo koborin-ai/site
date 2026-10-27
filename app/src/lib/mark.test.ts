@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
+import { ICONS, renderIcon } from './icons';
 import { headerMark, ogMark, tileSvg } from './mark';
 
 const INK = { x: 6, y: 8, width: 20.5, height: 20 } as const;
@@ -56,6 +57,14 @@ function filesUnder(root: string): string[] {
   return files;
 }
 
+async function isRenderedIcon(rel: string, bytes: Buffer): Promise<boolean> {
+  const file = rel.startsWith('public/') ? rel.slice('public/'.length) : '';
+  const icon = ICONS.find((row) => row.file === file);
+  if (!icon) return false;
+  const rendered = await renderIcon(icon);
+  return Buffer.from(rendered.bytes).equals(bytes);
+}
+
 describe('mark', () => {
   it('draws one arch and two rects', () => {
     for (const frame of [headerMark(), ogMark()]) {
@@ -98,7 +107,7 @@ describe('mark', () => {
     expect(maxChannelDelta(tileCrop, onBackground(mark.data))).toBeLessThanOrEqual(1);
   });
 
-  it('keeps the arch geometry in mark.ts', () => {
+  it('keeps the arch geometry in mark.ts', async () => {
     const needle = ['A5', '5', '0', '0', '1', '18', '15'].join(' ');
     const srcDir = fileURLToPath(new URL('..', import.meta.url));
     const publicDir = fileURLToPath(new URL('../../public', import.meta.url));
@@ -106,15 +115,14 @@ describe('mark', () => {
       ...filesUnder(srcDir).map((abs) => ({ rel: `src/${abs.slice(srcDir.length + 1)}`, abs })),
       ...filesUnder(publicDir).map((abs) => ({ rel: `public/${abs.slice(publicDir.length + 1)}`, abs })),
     ];
-    const renderedTile = tileSvg(32, 'rounded');
-    const hits = files.flatMap(({ rel, abs }) => {
-      if (rel === 'src/lib/mark.ts') return [];
+    const hits: string[] = [];
+    for (const { rel, abs } of files) {
+      if (rel === 'src/lib/mark.ts') continue;
       const bytes = readFileSync(abs);
-      if (!bytes.includes(Buffer.from(needle))) return [];
-      // The public SVG is the rendered tile, so it repeats the path. A different file still fails.
-      if (rel === 'public/favicon.svg' && bytes.toString('utf8') === renderedTile) return [];
-      return [rel];
-    });
+      if (!bytes.includes(Buffer.from(needle))) continue;
+      if (await isRenderedIcon(rel, bytes)) continue;
+      hits.push(rel);
+    }
     expect(hits).toEqual([]);
   });
 

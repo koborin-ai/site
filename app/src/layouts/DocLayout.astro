@@ -6,6 +6,7 @@ import PageTitle from '../components/PageTitle.astro';
 import SiteShell from '../components/SiteShell.astro';
 import { localeOf, type Locale } from '../lib/docs';
 import { gitLastUpdated } from '../lib/last-updated';
+import { ogImageFor } from '../lib/og';
 import { alternateHref, hreflangLinks } from '../lib/navigation';
 import { isAboutId, isHomeId } from '../lib/catalog';
 
@@ -52,7 +53,7 @@ const kind = !entry ? 'missing' : isHomeId(entry.id) ? 'home' : isAboutId(entry.
 if (entry) {
   title = entry.data.title;
   description = entry.data.description;
-  ogImage = entry.data.ogImage;
+  ogImage = ogImageFor(entry);
   publishedAt = entry.data.publishedAt;
   draft = entry.data.draft;
   const explicit = entry.data.engagement;

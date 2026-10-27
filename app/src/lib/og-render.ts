@@ -1,6 +1,5 @@
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { createElement as h, type ReactNode } from 'react';
 import satori, { type Font } from 'satori';
 import sharp from 'sharp';
 import { formatPostDate } from './catalog';
@@ -56,10 +55,10 @@ async function refuseMissingGlyph(_languageCode: string, segment: string): Promi
   throw new MissingGlyphError(segment);
 }
 
-function cardTree(card: OgCard): ReactNode {
-  return h(
-    'div',
-    {
+function cardTree(card: OgCard): Parameters<typeof satori>[0] {
+  const tree = {
+    type: 'div',
+    props: {
       lang: card.locale,
       style: {
         width: WIDTH,
@@ -70,37 +69,54 @@ function cardTree(card: OgCard): ReactNode {
         padding: 80,
         backgroundColor: '#0b0d12',
       },
+      children: [
+        {
+          type: 'div',
+          props: {
+            style: {
+              // Satori 0.33.5 applies lineClamp only when display is block.
+              display: 'block',
+              fontFamily: 'Geist, "Noto Sans JP"',
+              fontWeight: 600,
+              fontSize: 64,
+              lineHeight: 1.25,
+              color: '#eceae5',
+              lineClamp: 4,
+            },
+            children: card.title,
+          },
+        },
+        {
+          type: 'div',
+          props: {
+            style: {
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontFamily: 'Geist Mono',
+              fontWeight: 400,
+              fontSize: 26,
+              flexShrink: 0,
+            },
+            children: [
+              {
+                type: 'div',
+                props: {
+                  style: { color: '#d5dae1' },
+                  children: 'koborin.ai',
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: { color: 'rgba(236,234,229,0.42)' },
+                  children: formatPostDate(card.publishedAt, 'home'),
+                },
+              },
+            ],
+          },
+        },
+      ],
     },
-    h(
-      'div',
-      {
-        style: {
-          // Satori 0.33.5 applies lineClamp only when display is block.
-          display: 'block',
-          fontFamily: 'Geist, "Noto Sans JP"',
-          fontWeight: 600,
-          fontSize: 64,
-          lineHeight: 1.25,
-          color: '#eceae5',
-          lineClamp: 4,
-        },
-      },
-      card.title,
-    ),
-    h(
-      'div',
-      {
-        style: {
-          display: 'flex',
-          justifyContent: 'space-between',
-          fontFamily: 'Geist Mono',
-          fontWeight: 400,
-          fontSize: 26,
-          flexShrink: 0,
-        },
-      },
-      h('div', { style: { color: '#d5dae1' } }, 'koborin.ai'),
-      h('div', { style: { color: 'rgba(236,234,229,0.42)' } }, formatPostDate(card.publishedAt, 'home')),
-    ),
-  );
+  };
+  return tree as Parameters<typeof satori>[0];
 }

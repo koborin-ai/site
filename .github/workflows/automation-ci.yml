@@ -1,20 +1,7 @@
 name: Automation CI
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-    paths:
-      - ".github/workflows/**"
-      - ".github/scripts/**"
-      - ".github/actionlint.yaml"
-      - "app/scripts/**"
-      - "**/*.md"
-      - ".markdownlint.yaml"
-      - ".tool-versions"
-      - "mise.toml"
+  workflow_call:
 
 jobs:
   automation:

@@ -41,7 +41,7 @@ body {
   background-size: 22px 22px;
   background-attachment: fixed;
   color: var(--site-text);
-  font-family: "Geist", "Noto Sans JP", sans-serif;
+  font-family: "Geist", "Noto Sans JP", "Noto Sans JP Fallback", sans-serif;
   font-size: 15.5px;
   font-weight: 400;
   line-height: 1.9;
@@ -94,7 +94,7 @@ body {
 .more,
 .back,
 .entry-date {
-  font-family: "Geist Mono", "Noto Sans JP", ui-monospace, monospace;
+  font-family: "Geist Mono", "Noto Sans JP", "Noto Sans JP Fallback", ui-monospace, monospace;
   letter-spacing: 0;
 }
 
@@ -137,7 +137,7 @@ starlight-theme-select {
 
 .nav-about {
   color: var(--site-accent);
-  font-family: "Geist Mono", "Noto Sans JP", ui-monospace, monospace;
+  font-family: "Geist Mono", "Noto Sans JP", "Noto Sans JP Fallback", ui-monospace, monospace;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0;

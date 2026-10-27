@@ -1,6 +1,7 @@
 ---
 import CookieConsent from './CookieConsent.astro';
 import Head from './Head.astro';
+import JaFont from './JaFont.astro';
 import ImageZoom from './ImageZoom.astro';
 import SiteHeader from './SiteHeader.astro';
 import type { Locale } from '../lib/docs';
@@ -60,6 +61,7 @@ const skipLabel = locale === 'ja' ? 'コンテンツにスキップ' : 'Skip to 
         };
       })();
     </script>
+    {locale === 'ja' && <JaFont />}
   </head>
   <body>
     <a class="sl-skip-link sr-only" href="#_top">{skipLabel}</a>

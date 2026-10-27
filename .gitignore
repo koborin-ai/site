@@ -13,6 +13,8 @@ dist/
 # Astro content cache
 app/.astro/
 
+app/public/fonts/
+
 # CI-generated OG images (WebP versions are auto-generated during build)
 app/public/og/*.webp
 

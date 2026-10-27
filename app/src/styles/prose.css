@@ -309,8 +309,7 @@
 }
 
 .sl-markdown-content table {
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
   border-collapse: collapse;
   font-size: 14px;
   line-height: 1.7;
@@ -321,6 +320,7 @@
   padding: 8px 20px 8px 0;
   border-bottom: 1px solid var(--site-faint);
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .sl-markdown-content :is(th, td):not([align]) {

@@ -37,8 +37,8 @@ const latestTalks = homeTalks();
       src={bookCover}
       alt=""
       variant="thumbnail"
-      widths={[32, 64]}
-      sizes="16px"
+      widths={[64, 128]}
+      sizes="28px"
       loading="eager"
     />{book.title}
   </a><span class="book-note">{book.note[locale]}</span>
@@ -54,7 +54,7 @@ const latestTalks = homeTalks();
 <section class="block">
   <h2 class="section-label">{sections.writing[locale]}</h2>
   <QuietList items={posts.map((post) => ({ title: post.title, href: post.href, date: post.dateLabel }))} />
-  <a class="more" href={listHref('writing', locale)}>{linkLabel.all[locale]}</a>
+  <a class="more" href={listHref('writing', locale)}>{linkLabel.writing[locale]}</a>
 </section>
 
 <section class="block">
@@ -68,5 +68,5 @@ const latestTalks = homeTalks();
       external: item.href !== undefined,
     }))}
   />
-  <a class="more" href={listHref('talks', locale)}>{linkLabel.all[locale]}</a>
+  <a class="more" href={listHref('talks', locale)}>{linkLabel.talks[locale]}</a>
 </section>

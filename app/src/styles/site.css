@@ -206,11 +206,19 @@ select:focus-visible {
 
 .badge img,
 .badge svg {
-  width: 1.05em;
-  height: 1.05em;
   margin-right: 0.32em;
   border-radius: 3px;
   vertical-align: -0.17em;
+}
+
+.badge svg {
+  width: 1.05em;
+  height: 1.05em;
+}
+
+.badge img {
+  width: auto;
+  height: 1.05em;
 }
 
 .book-note {
@@ -387,5 +395,22 @@ select:focus-visible {
 
   .meta {
     text-align: left;
+  }
+
+  .nav-about,
+  .lang-switch,
+  .icon-link,
+  starlight-theme-select {
+    min-width: 24px;
+    min-height: 24px;
+  }
+
+  starlight-theme-select {
+    width: 24px;
+    height: 24px;
+  }
+
+  .header-tools {
+    gap: 28px;
   }
 }

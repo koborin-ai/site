@@ -26,7 +26,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/.textlintrc.json` | textlint AI-writing preset for article prose; advisory, not a gate. |
 | `app/vitest.config.ts` | Vitest wired through Astro's `getViteConfig`. |
 | `app/wrangler.jsonc` | Worker name `koborin-ai-web`, `assets.directory` `./dist`, and `not_found_handling` `404-page`. |
-| `app/public/_headers` | Worker static-asset header rules (UTF-8 on `*.txt`). |
+| `app/public/_headers` | Worker static-asset header rules. UTF-8 on `*.txt`, immutable cache on `/_astro/*`, and the security headers for every response. |
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content.config.ts` | Zod schema for the `docs` content collection. |
 | `app/src/pages/[...slug].astro` | Renders each docs entry at its current public URL. |
@@ -149,7 +149,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 10. **Workers deployment**:
     - The app builds as a static site. `astro.config.ts` leaves `output` unset, and Astro's default is `static`. Wrangler uploads `app/dist` as Worker static assets.
     - Worker name and assets directory live in `app/wrangler.jsonc`. There is no `main` script and no `routes` block. Set `not_found_handling` to `404-page` so `404.html` is served.
-    - `app/public/_headers` is copied into `dist/` and sets `Content-Type: text/plain; charset=utf-8` on `*.txt` (Astro response headers are not kept on uploaded files).
+    - `app/public/_headers` is copied into `dist/` (Astro response headers are not kept on uploaded files). It sets `Content-Type: text/plain; charset=utf-8` on `*.txt`, `Cache-Control: public, max-age=31536000, immutable` on `/_astro/*`, and the security headers (HSTS without preload, nosniff, Referrer-Policy, Permissions-Policy, COOP, `X-Frame-Options`, CSP) on every asset. `script-src` allows hashed inline scripts plus `googletagmanager.com` and `giscus.app`. `style-src` keeps `'unsafe-inline'` because Mermaid SVG and Shiki emit inline styles, and also allows `giscus.app` because the comments client injects its stylesheet. `npm run build` runs `scripts/check-csp.ts`, which fails when an inline script hash drifts. Do not add HSTS `preload` unless every `koborin.ai` hostname is HTTPS.
     - `app-release.yml` runs `npm run build` then `wrangler deploy`.
     - All pages are pre-rendered at build time; no Node.js runtime is required in production.
 11. **LLM Context Files (llms.txt)**:

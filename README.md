@@ -138,7 +138,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │       ├── prose.css         # Article body: the only stylesheet inside .sl-markdown-content
 │   │       └── custom.css        # Leftover overrides outside the article body
 │   ├── public/
-│   │   ├── _headers               # Worker static-asset header rules
+│   │   ├── _headers               # txt charset, immutable /_astro cache, security headers
 │   │   ├── favicon.png           # Browser tab icon
 │   │   ├── og/                   # Open Graph source images
 │   │   └── robots.txt

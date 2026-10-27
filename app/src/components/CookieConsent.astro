@@ -13,13 +13,13 @@ const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname =
 const labels = isJapanese
   ? {
       message: 'このサイトでは、サイトの利用状況を分析するために Cookie を使用しています。',
-      learnMore: '詳しく見る',
+      learnMore: 'プライバシーポリシー',
       accept: '同意する',
       reject: '拒否する',
     }
   : {
       message: 'We use cookies to analyze site usage and improve your experience.',
-      learnMore: 'Learn more',
+      learnMore: 'Privacy Policy',
       accept: 'Accept',
       reject: 'Decline',
     };

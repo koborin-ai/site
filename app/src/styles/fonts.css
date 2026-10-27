@@ -24,6 +24,7 @@
   font-display: optional;
   font-weight: 400;
   src: url("../../node_modules/@fontsource/noto-sans-jp/files/noto-sans-jp-japanese-400-normal.woff2") format("woff2");
+  unicode-range: U+3000-303F, U+3040-309F, U+30A0-30FF, U+31F0-31FF, U+4E00-9FFF, U+FF00-FFEF, U+1F200-1F2FF;
 }
 
 @font-face {
@@ -32,4 +33,5 @@
   font-display: optional;
   font-weight: 500;
   src: url("../../node_modules/@fontsource/noto-sans-jp/files/noto-sans-jp-japanese-500-normal.woff2") format("woff2");
+  unicode-range: U+3000-303F, U+3040-309F, U+30A0-30FF, U+31F0-31FF, U+4E00-9FFF, U+FF00-FFEF, U+1F200-1F2FF;
 }

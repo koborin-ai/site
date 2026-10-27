@@ -42,52 +42,55 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 <link rel="alternate" type="application/rss+xml" title="koborin.ai" href="/rss.xml" />
 <link rel="alternate" type="application/rss+xml" title="koborin.ai (日本語)" href="/ja/rss.xml" />
 
-{gaMeasurementId && (
-  <script is:inline define:vars={{ gaMeasurementId }}>
-    (function() {
-      const STORAGE_KEY = 'cookie_consent';
-      const CONSENT_ACCEPTED = 'accepted';
+{gaMeasurementId && <meta name="ga-measurement-id" content={gaMeasurementId} />}
+<script>
+    const measurementId = document.querySelector('meta[name="ga-measurement-id"]')?.getAttribute('content');
+    const storageKey = 'cookie_consent';
+    const consentAccepted = 'accepted';
 
-      function hasAcceptedCookies() {
-        try {
-          return localStorage.getItem(STORAGE_KEY) === CONSENT_ACCEPTED;
-        } catch {
-          return false;
-        }
+    type AnalyticsWindow = Window & {
+      ga4Loaded?: boolean;
+      dataLayer?: unknown[];
+      gtag?: (...args: unknown[]) => void;
+    };
+
+    const analytics = window as AnalyticsWindow;
+
+    function hasAcceptedCookies(): boolean {
+      try {
+        return localStorage.getItem(storageKey) === consentAccepted;
+      } catch {
+        return false;
       }
+    }
 
-      function loadGA4() {
-        if (window.ga4Loaded) return;
-        window.ga4Loaded = true;
+    function gtag(..._args: unknown[]): void {
+      analytics.dataLayer?.push(arguments);
+    }
 
-        const script = document.createElement('script');
-        script.async = true;
-        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + gaMeasurementId;
-        document.head.appendChild(script);
+    function loadGA4(): void {
+      if (!measurementId || analytics.ga4Loaded) return;
+      analytics.ga4Loaded = true;
 
-        window.dataLayer = window.dataLayer || [];
-        // oxlint-disable-next-line unicorn/consistent-function-scoping -- keep Google's gtag snippet verbatim
-        function gtag(){dataLayer.push(arguments);}
-        window.gtag = gtag;
-        gtag('js', new Date());
-        gtag('config', gaMeasurementId);
-      }
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
+      document.head.appendChild(script);
 
-      if (hasAcceptedCookies()) {
-        loadGA4();
-      }
+      analytics.dataLayer = analytics.dataLayer || [];
+      analytics.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', measurementId);
+    }
 
-      window.addEventListener('cookie-consent-changed', function(e) {
-        if (e.detail && e.detail.consent === CONSENT_ACCEPTED) {
-          loadGA4();
-        }
-      });
+    if (hasAcceptedCookies()) loadGA4();
 
-      document.addEventListener('astro:page-load', function() {
-        if (hasAcceptedCookies() && !window.ga4Loaded) {
-          loadGA4();
-        }
-      });
-    })();
-  </script>
-)}
+    window.addEventListener('cookie-consent-changed', (event) => {
+      const detail = (event as CustomEvent<{ consent?: string }>).detail;
+      if (detail?.consent === consentAccepted) loadGA4();
+    });
+
+    document.addEventListener('astro:page-load', () => {
+      if (hasAcceptedCookies() && !analytics.ga4Loaded) loadGA4();
+    });
+</script>

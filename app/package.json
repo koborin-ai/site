@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/check-routes.ts",
+    "build": "astro build && node scripts/check-routes.ts && node scripts/check-csp.ts",
     "preview": "astro preview",
     "lint": "oxlint",
     "typecheck": "astro check",

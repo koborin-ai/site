@@ -4,25 +4,26 @@ import { textResponse } from '../utils/llms';
 const SITE_URL = 'https://koborin.ai';
 
 export const GET: APIRoute = () => {
-  const today = new Date().toISOString().slice(0, 10);
-
   const body = `# koborin.ai
-> Personal site + technical garden.
-> Last updated: ${today}
 
-## Full (with article content)
-- ${SITE_URL}/llms-full.txt
-- ${SITE_URL}/llms-ja-full.txt
+> Personal site and technical garden.
 
-## By Category
+Long-form files include the Markdown of every published page. This index only lists those files.
 
-### Tech
-- ${SITE_URL}/llms-tech.txt
-- ${SITE_URL}/llms-ja-tech.txt
+## Full content
 
-### Life
-- ${SITE_URL}/llms-life.txt
-- ${SITE_URL}/llms-ja-life.txt
+- [English, with article bodies](${SITE_URL}/llms-full.txt): Every published English page.
+- [Japanese, with article bodies](${SITE_URL}/llms-ja-full.txt): Every published Japanese page.
+
+## Tech
+
+- [English tech](${SITE_URL}/llms-tech.txt): Published English tech articles.
+- [Japanese tech](${SITE_URL}/llms-ja-tech.txt): Published Japanese tech articles.
+
+## Life
+
+- [English life](${SITE_URL}/llms-life.txt): Published English life articles.
+- [Japanese life](${SITE_URL}/llms-ja-life.txt): Published Japanese life articles.
 `;
 
   return textResponse(body);

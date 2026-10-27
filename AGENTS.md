@@ -30,10 +30,13 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content.config.ts` | Zod schema for the `docs` content collection. |
 | `app/src/pages/[...slug].astro` | Renders each docs entry at its current public URL. |
-| `app/src/lib/` | Public URL mapping, the home and list catalog, and the git updated date. |
+| `app/src/lib/` | Public URL mapping, the home and list catalog, the git updated date, and link-card icon lookup. |
+| `app/src/data/site-icons.json` | Hostname to data-URL favicons for rich link cards. |
 | `app/src/lib/og.ts` | Which pages get a generated social card, and the card URL. |
 | `app/src/lib/og-render.ts` | Renders an article card to WebP at build time. |
-| `app/src/styles/vendor/` | CSS copied from Starlight 0.42.6. The layout keeps the class names those files expect. |
+| `app/src/styles/vendor/` | Reset, props, util, and print CSS copied from Starlight 0.42.6. The layout keeps the class names those files expect. |
+| `app/src/styles/prose.css` | The only stylesheet inside `.sl-markdown-content`; tokens at the top. |
+| `app/src/plugins/rehype-diagrams.ts` | Renders Mermaid at natural size in `figure.diagram`, paints it with the `--diagram-*` tokens, and wraps each table in `div.table-frame`. |
 | `app/scripts/routes-baseline.txt` | Public URLs the production build must still emit. `/pagefind/` is the only allowed omission. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
@@ -139,7 +142,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - **Local Development**: Updated date is shown for committed files. New uncommitted files show only the published date (if set).
 7. **Site chrome**:
    - One centred column on a dot grid. Home, `/about/`, `/blog/`, `/talks/`, and article pages share `app/src/components/SiteShell.astro`. There is no sidebar and no table of contents. Home, About, and the list pages stay on a 720px column. Article pages widen to an 800px column, with body text held to 740px and figures, code, and diagrams using the full column.
-   - Colours and type live in `app/src/styles/site.css` and `app/src/styles/fonts.css`. The accent is neutral (`#d5dae1` in dark, `#4a5260` in light). Text links are underlined. Article prose still uses `app/src/styles/vendor/`.
+   - Colours and type live in `app/src/styles/site.css` and `app/src/styles/fonts.css`. The accent is neutral (`#d5dae1` in dark, `#4a5260` in light). Text links are underlined. Article prose is `app/src/styles/prose.css`. `npm run test` fails if another stylesheet selects into the body.
    - The header has the mark, an About link, an EN/JA link, GitHub, X, RSS, and the theme control. Home keeps the name, bio, and three lists. The longer profile lives on `/about/` and `/ja/about/`. Home sections and the list pages read `app/src/lib/catalog.ts`. `app/src/sidebar.ts` is not rendered.
 8. **Testing**: run `mise run check` from the repository root before committing. The task list is under Code Quality Standards. Run `npm run build` in `app/` as well whenever content or configuration changes.
 9. **Observability**: structured logging via `console.log(JSON.stringify(...))` for now; a telemetry stack is not defined yet.
@@ -188,7 +191,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
        - Only use this for quick prototyping or when you don't know the page title/description.
        - Always replace with manual specification before committing.
-     - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description), thumbnail (og:image → favicon).
+     - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description).
+     - **Site icon**: a 14px icon sits left of the domain. `app/scripts/fetch-site-icons.ts` reads each card host's own favicon at build time and writes `app/src/data/site-icons.json`. The card never requests a favicon service. A missing host renders the domain alone. Re-run `node --experimental-strip-types scripts/fetch-site-icons.ts` from `app/` after adding a host.
 13. **RSS Feeds**:
      - The site provides RSS feeds for blog aggregation services.
      - **English feed**: `/rss.xml` - includes `tech/` and `life/` categories.
@@ -289,13 +293,12 @@ Examples:
    ```
 
 5. **Mermaid in MDX Articles**:
-   - Mermaid code blocks in MDX files are rendered via `rehype-mermaid` with `strategy: "inline-svg"`.
+   - Mermaid code blocks in MDX files are rendered via `rehype-mermaid` with `strategy: "inline-svg"`, called from `app/src/plugins/rehype-diagrams.ts`.
    - Call `mdx()` without `optimize: true`. That option writes SVG `<style>` CSS into a `set:html` attribute, and the diagram fills go black.
-   - Dark/light mode theming is handled by CSS in `app/src/styles/custom.css`.
-   - **Do not override Mermaid theme in code blocks** - the global CSS handles theme switching.
+   - `rehype-diagrams.ts` paints diagrams with the `--diagram-*` tokens in `prose.css`. A diagram type without a `PAINT` entry fails the build.
+   - **Do not override Mermaid theme in code blocks** - the `--diagram-*` tokens handle theme switching.
    - Keep node labels short to avoid text overlap (especially in `flowchart LR` layouts).
    - Use simple subgraph labels (avoid long strings like `"Terraform Backend State - R2"`).
-   - If diagrams look broken in dark mode, check that CSS selectors in `custom.css` cover the generated SVG structure.
 
 6. **Terminology Tables for Abbreviations**:
    - When using abbreviations in Mermaid diagrams (e.g., Worker, R2), always add a terminology table immediately below the diagram.
@@ -345,14 +348,14 @@ CI also runs `terraform plan` via `plan-infra.yml`.
 cd app
 npm run lint          # oxlint over .ts and .astro <script> blocks
 npm run typecheck     # astro check (types + Astro diagnostics)
-npm run test          # Vitest unit tests
+npm run test          # Vitest unit tests; needs Playwright Chromium
 npm run check-images  # Image usage validation
 npm run check         # All four of the above
 npm run build         # Astro build; needs Playwright Chromium
 npm run lint:prose    # textlint over the articles; advisory, see below
 ```
 
-`npm run build` is not part of `check` because it takes 40 seconds and needs Chromium. Run it whenever content, assets, or configuration change.
+`npm run build` is not part of `check` because it takes 40 seconds. Run it whenever content, assets, or configuration change.
 
 `npm run lint:prose` is not part of `check` either, for a different reason. Measured against the 32 non-draft MDX files, the `@textlint-ja` AI-writing preset disagrees with the house style rather than finding defects. The script itself globs every MDX file under `src/content/docs/` (34 files, drafts included):
 
@@ -414,7 +417,7 @@ Prefix commands with `mise exec --` (or activate mise in the shell) so they use 
 ```bash
 cd app
 npm run dev                 # http://localhost:4321
-npm run check               # oxlint, astro check, Vitest, image usage
+npm run check               # oxlint, astro check, Vitest, image usage; requires Playwright Chromium
 npm run build               # requires Playwright Chromium (see below)
 npm run preview             # serve dist/ after build
 ```
@@ -423,9 +426,9 @@ From the repository root, `mise run check` additionally covers `infra/` and `.gi
 
 Use **tmux** for long-running processes such as `npm run dev`.
 
-### Playwright (required for full `npm run build`)
+### Playwright (required for `npm run check` and `npm run build`)
 
-CI installs Chromium for Mermaid diagram rendering during production builds. After the VM update script runs `npm ci`, run once per fresh environment:
+CI installs Chromium for Mermaid diagram rendering during production builds. The Vitest contract test in `app/src/styles/prose.test.ts` renders Mermaid too. After the VM update script runs `npm ci`, run once per fresh environment:
 
 ```bash
 cd app && npx playwright install chromium

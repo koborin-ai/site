@@ -198,22 +198,6 @@ html:not([data-has-toc]) {
   text-align: end;
 }
 
-.sl-markdown-content pre {
-  overflow-x: auto;
-}
-
-.astro-code,
-.astro-code span {
-  color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
-}
-
-[data-theme='dark'] .astro-code,
-[data-theme='dark'] .astro-code span {
-  color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
-}
-
 .not-found {
   padding-block: 3rem 4rem;
 }

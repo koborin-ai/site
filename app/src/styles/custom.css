@@ -1,169 +1,3 @@
-/* ==========================================================================
-   Mermaid Diagram - Theme-aware styling
-   ========================================================================== */
-
-/* Dark mode: base text styles */
-[data-theme="dark"] .sl-markdown-content svg text,
-[data-theme="dark"] .sl-markdown-content svg .nodeLabel,
-[data-theme="dark"] .sl-markdown-content svg .label,
-[data-theme="dark"] .sl-markdown-content svg .labelText,
-[data-theme="dark"] .sl-markdown-content svg tspan {
-  fill: #ffffff !important;
-}
-
-/* Dark mode: sequence diagram message text with background */
-[data-theme="dark"] .sl-markdown-content svg .messageText {
-  fill: #ffffff !important;
-}
-
-/* Dark mode: sequence diagram - add background to message labels */
-[data-theme="dark"] .sl-markdown-content svg .labelBox {
-  fill: #2a2a35 !important;
-  stroke: #4a4a55 !important;
-}
-
-/* Dark mode: loop/alt boxes */
-[data-theme="dark"] .sl-markdown-content svg .loopText,
-[data-theme="dark"] .sl-markdown-content svg .loopText > tspan {
-  fill: #ffffff !important;
-}
-
-[data-theme="dark"] .sl-markdown-content svg .loopLine {
-  stroke: #6a6a75 !important;
-}
-
-/* Dark mode: activation boxes */
-[data-theme="dark"] .sl-markdown-content svg .activation0,
-[data-theme="dark"] .sl-markdown-content svg .activation1,
-[data-theme="dark"] .sl-markdown-content svg .activation2 {
-  fill: #3a3a45 !important;
-}
-
-/* Dark mode: actor boxes */
-[data-theme="dark"] .sl-markdown-content svg .actor {
-  fill: #2a2a35 !important;
-  stroke: #5a5a65 !important;
-}
-
-[data-theme="dark"] .sl-markdown-content svg .actor-line {
-  stroke: #5a5a65 !important;
-}
-
-[data-theme="dark"] .sl-markdown-content svg text.actor {
-  fill: #ffffff !important;
-}
-
-/* Dark mode: note boxes */
-[data-theme="dark"] .sl-markdown-content svg .note {
-  fill: #3a3a45 !important;
-  stroke: #5a5a65 !important;
-}
-
-[data-theme="dark"] .sl-markdown-content svg .noteText {
-  fill: #ffffff !important;
-}
-
-/* Dark mode: flowchart nodes */
-[data-theme="dark"] .sl-markdown-content svg .node rect,
-[data-theme="dark"] .sl-markdown-content svg .node polygon,
-[data-theme="dark"] .sl-markdown-content svg .node circle {
-  fill: #2a2a35 !important;
-  stroke: #5a5a65 !important;
-}
-
-/* Dark mode: subgraph clusters */
-[data-theme="dark"] .sl-markdown-content svg .cluster rect {
-  fill: #1a1a25 !important;
-  stroke: #7a7a85 !important;
-}
-
-/* Dark mode: subgraph labels - multiple selectors for compatibility */
-[data-theme="dark"] .sl-markdown-content svg .cluster-label .nodeLabel,
-[data-theme="dark"] .sl-markdown-content svg .cluster-label text,
-[data-theme="dark"] .sl-markdown-content svg .cluster-label tspan,
-[data-theme="dark"] .sl-markdown-content svg .cluster-label span,
-[data-theme="dark"] .sl-markdown-content svg .cluster text,
-[data-theme="dark"] .sl-markdown-content svg .cluster tspan,
-[data-theme="dark"] .sl-markdown-content svg g.cluster text,
-[data-theme="dark"] .sl-markdown-content svg [class*="cluster"] text,
-[data-theme="dark"] .sl-markdown-content svg [class*="cluster"] tspan {
-  fill: #ffffff !important;
-  color: #ffffff !important;
-}
-
-/* Dark mode: foreignObject HTML text (used by some Mermaid versions) */
-[data-theme="dark"] .sl-markdown-content svg foreignObject div,
-[data-theme="dark"] .sl-markdown-content svg foreignObject span,
-[data-theme="dark"] .sl-markdown-content svg foreignObject p {
-  color: #ffffff !important;
-}
-
-/* Dark mode: diagram title */
-[data-theme="dark"] .sl-markdown-content svg .titleText,
-[data-theme="dark"] .sl-markdown-content svg .title-text,
-[data-theme="dark"] .sl-markdown-content svg text.title {
-  fill: #ffffff !important;
-}
-
-/* Dark mode: edges/arrows */
-[data-theme="dark"] .sl-markdown-content svg .edgePath path,
-[data-theme="dark"] .sl-markdown-content svg .messageLine0,
-[data-theme="dark"] .sl-markdown-content svg .messageLine1 {
-  stroke: #8a8a95 !important;
-  stroke-width: 2px !important;
-}
-
-[data-theme="dark"] .sl-markdown-content svg .edgePath marker path,
-[data-theme="dark"] .sl-markdown-content svg marker path {
-  fill: #8a8a95 !important;
-  stroke: #8a8a95 !important;
-}
-
-/* Edges/arrows stroke width - both themes */
-.sl-markdown-content svg .edgePath path,
-.sl-markdown-content svg .messageLine0,
-.sl-markdown-content svg .messageLine1,
-.sl-markdown-content svg .flowchart-link {
-  stroke-width: 2px !important;
-}
-
-/* Dark mode: edge labels */
-[data-theme="dark"] .sl-markdown-content svg .edgeLabel {
-  background-color: #2a2a35 !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .sl-markdown-content svg .edgeLabel rect {
-  fill: #2a2a35 !important;
-}
-
-[data-theme="dark"] .sl-markdown-content svg .edgeLabel span,
-[data-theme="dark"] .sl-markdown-content svg .edgeLabel p,
-[data-theme="dark"] .sl-markdown-content svg .edgeLabel div {
-  color: #ffffff !important;
-  background-color: #2a2a35 !important;
-}
-
-/* Dark mode: rect sections (alt/loop backgrounds) */
-[data-theme="dark"] .sl-markdown-content svg rect.rect {
-  fill: rgba(60, 60, 80, 0.3) !important;
-  stroke: #5a5a65 !important;
-}
-
-/* Light mode: subtle background for Mermaid diagrams only */
-[data-theme="light"] .sl-markdown-content svg[id^="mermaid"] {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-}
-
-/* Reset anchor icon SVG to prevent Mermaid styles from applying */
-[data-theme="light"] .sl-anchor-icon svg {
-  background: transparent !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
 /* Adjust logo size */
 .site-title img {
   height: 3rem;
@@ -404,16 +238,6 @@
   border-top: 1px solid var(--sl-color-hairline);
 }
 
-/* ==========================================================================
-   Content images - cap max-width to prevent oversized images
-   ========================================================================== */
-
-.sl-markdown-content img:not(:where(.not-content *)) {
-  max-width: min(100%, 800px);
-  margin-inline: auto;
-  border-radius: var(--radius-lg, 0.75rem);
-}
-
 /* Right sidebar (On this page) */
 .right-sidebar {
   border-inline-start: 0;
@@ -651,31 +475,6 @@
   display: none;
 }
 
-/* Article figure — light/dark variant toggle (e.g. stars-digest List screenshot) */
-.theme-figure {
-  margin: 1.5rem 0;
-}
-.theme-figure picture {
-  display: block;
-}
-.theme-figure img {
-  width: 100%;
-  height: auto;
-  border-radius: 0.5rem;
-}
-.theme-figure picture:has(.theme-dark) {
-  display: none;
-}
-.theme-figure picture:has(.theme-light) {
-  display: block;
-}
-[data-theme="dark"] .theme-figure picture:has(.theme-dark) {
-  display: block;
-}
-[data-theme="dark"] .theme-figure picture:has(.theme-light) {
-  display: none;
-}
-
 /* ==========================================================================
    Article Dates - Published/Updated timestamps below title
    ========================================================================== */
@@ -722,30 +521,6 @@
 }
 
 /* ==========================================================================
-   Starlight Aside - Light mode icon visibility fix
-   ========================================================================== */
-
-/* Light mode: Ensure aside/note icon SVG inherits proper color */
-[data-theme="light"] svg.starlight-aside__icon {
-  fill: var(--sl-color-blue) !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-/* ==========================================================================
-   Heading Anchor Link - Light mode visibility fix
-   ========================================================================== */
-
-/* Light mode: Ensure anchor link icon is visible with proper contrast */
-[data-theme="light"] .sl-anchor-link .sl-anchor-icon,
-[data-theme="light"] .sl-anchor-link .sl-anchor-icon svg,
-[data-theme="light"] .sl-anchor-link .sl-anchor-icon svg path {
-  color: var(--sl-color-accent) !important;
-  fill: currentcolor !important;
-}
-
-/* ==========================================================================
    Engagement Footer - Share, Giscus
    ========================================================================== */
 
@@ -782,83 +557,6 @@
 }
 
 /* ==========================================================================
-   Image Zoom - Click to expand images and Mermaid diagrams
-   ========================================================================== */
-
-/* Zoomable images - cursor hint */
-.sl-markdown-content img:not(.medium-zoom-image) {
-  cursor: zoom-in;
-}
-
-/* Mermaid SVG - zoomable cursor hint */
-.sl-markdown-content svg[data-zoomable] {
-  cursor: zoom-in;
-  transition: transform var(--transition-fast);
-}
-
-.sl-markdown-content svg[data-zoomable]:hover {
-  transform: scale(1.01);
-}
-
-/* SVG zoom modal overlay */
-.svg-zoom-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-xl);
-  background: rgba(0, 0, 0, 0);
-  cursor: zoom-out;
-  opacity: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  transition: background 200ms ease, opacity 200ms ease;
-}
-
-.svg-zoom-overlay.active {
-  background: rgba(0, 0, 0, 0.9);
-  opacity: 1;
-}
-
-/* SVG content in modal */
-.svg-zoom-content {
-  max-width: 95vw;
-  max-height: 90vh;
-  width: auto;
-  height: auto;
-  transform: scale(0.9);
-  transition: transform 200ms ease;
-  background: var(--color-bg-primary, #ffffff);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  touch-action: pan-x pan-y pinch-zoom;
-}
-
-[data-theme="dark"] .svg-zoom-content {
-  background: var(--color-bg-secondary, #12121a);
-}
-
-.svg-zoom-overlay.active .svg-zoom-content {
-  transform: scale(1);
-}
-
-/* Mobile adjustments for SVG zoom */
-@media (max-width: 768px) {
-  .svg-zoom-overlay {
-    padding: var(--space-md);
-  }
-  
-  .svg-zoom-content {
-    max-width: 100vw;
-    max-height: 85vh;
-    padding: var(--space-md);
-    border-radius: var(--radius-md);
-  }
-}
-
-/* ==========================================================================
    GitHub Sponsors Button - constrain iframe to compact button dimensions
    ========================================================================== */
 
@@ -873,8 +571,7 @@
   vertical-align: middle;
 }
 
-.sponsors-button-wrapper iframe,
-.sl-markdown-content iframe[src*="github.com/sponsors"]:not(:where(.not-content *)) {
+.sponsors-button-wrapper iframe {
   width: 114px !important;
   height: 32px !important;
   max-width: 114px !important;

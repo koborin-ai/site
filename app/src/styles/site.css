@@ -365,6 +365,11 @@ select:focus-visible {
   margin-bottom: 28px;
 }
 
+.column .article-dates + .sl-markdown-content,
+.column .draft-notice + .sl-markdown-content {
+  margin-top: 28px;
+}
+
 .column .article-dates,
 .column .date-label,
 .column .date-item,

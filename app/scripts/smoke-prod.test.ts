@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { readBaseline } from './check-routes.ts';
 import { probesFor, productionOrigin, smoke } from './smoke-prod.ts';
@@ -140,6 +141,32 @@ describe('smoke judging', () => {
     expect(await problemsFor(redirect('/404.html', '/404'), () => new Response(null, { status: 307 }))).toEqual([
       'expected Location /404, got none',
     ]);
+  });
+});
+
+describe('smoke module graph', () => {
+  it('imports only Node built-ins, because smoke-prod.yml runs it without npm ci', async () => {
+    const pending = [new URL('./smoke-prod.ts', import.meta.url)];
+    const seen = new Set<string>();
+    const bare: string[] = [];
+    while (pending.length > 0) {
+      const file = pending.pop();
+      if (!file || seen.has(file.pathname)) continue;
+      seen.add(file.pathname);
+      const source = await readFile(file, 'utf8');
+      for (const match of source.matchAll(/\bfrom\s+['"]([^'"]+)['"]/g)) {
+        const specifier = match[1];
+        if (!specifier) continue;
+        if (specifier.startsWith('node:')) continue;
+        if (specifier.startsWith('.')) {
+          pending.push(new URL(specifier, file));
+          continue;
+        }
+        bare.push(specifier);
+      }
+    }
+    expect(bare).toEqual([]);
+    expect(seen.size).toBeGreaterThan(1);
   });
 });
 

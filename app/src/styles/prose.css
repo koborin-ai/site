@@ -1,0 +1,425 @@
+/*
+ * Article body. The only stylesheet that reaches inside .sl-markdown-content.
+ * Class contract: .sl-heading-wrapper / .sl-anchor-link (rehype-heading-anchors.ts),
+ * .starlight-aside* (remark-asides.ts), figure.diagram and div.table-frame (rehype-diagrams.ts),
+ * .astro-code (Astro shiki).
+ * Colours come from the --site-* tokens in site.css, so only the shiki switch needs a theme branch.
+ */
+
+:root {
+  --prose-mono: "Geist Mono", "Noto Sans JP", ui-monospace, monospace;
+  --prose-radius: 6px;
+  /* 60% of fg clears 4.5:1 in both themes; --site-muted does not at 13px. */
+  --prose-secondary: color-mix(in srgb, var(--site-fg) 60%, transparent);
+  --prose-chip: color-mix(in srgb, var(--site-fg) 7%, transparent);
+  /* Read by the mermaid themeCSS in rehype-diagrams.ts. On :root because the zoom clone leaves the body. */
+  --diagram-text: var(--site-text);
+  /* Arrows carry meaning, so lines clear 3:1 (WCAG 1.4.11); --site-muted is 2.92:1 in light. */
+  --diagram-line: color-mix(in srgb, var(--site-fg) 50%, transparent);
+  --diagram-border: color-mix(in srgb, var(--site-fg) 28%, transparent);
+  --diagram-surface: var(--site-bg);
+  --diagram-tint: color-mix(in srgb, var(--site-fg) 5%, var(--site-bg));
+}
+
+/* Flow */
+
+.sl-markdown-content > * {
+  max-width: var(--measure, none);
+  margin-inline: auto;
+}
+
+.sl-markdown-content > :is(pre, figure, picture) {
+  max-width: none;
+}
+
+.sl-markdown-content > * + * {
+  margin-top: 1em;
+}
+
+.sl-markdown-content > :is(figure, picture) {
+  margin-block: 28px;
+}
+
+/* Headings. Size sits on the wrapper too, because the anchor icon is sized in wrapper ems. */
+
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--site-fg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sl-markdown-content :is(h1, h2, .level-h2) {
+  --heading-leading: 1.4;
+  font-size: 22px;
+}
+
+.sl-markdown-content :is(h3, .level-h3) {
+  --heading-leading: 1.45;
+  font-size: 18px;
+}
+
+.sl-markdown-content :is(h4, h5, h6, .level-h4, .level-h5, .level-h6) {
+  --heading-leading: 1.5;
+  font-size: 16px;
+}
+
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) {
+  line-height: var(--heading-leading);
+}
+
+.sl-markdown-content > .sl-heading-wrapper + * {
+  margin-top: 12px;
+}
+
+.sl-markdown-content > * + .level-h2 {
+  margin-top: 56px;
+}
+
+.sl-markdown-content > * + .level-h3 {
+  margin-top: 36px;
+}
+
+.sl-markdown-content > * + :is(.level-h4, .level-h5, .level-h6) {
+  margin-top: 28px;
+}
+
+.sl-markdown-content > .sl-heading-wrapper + :is(.level-h3, .level-h4, .level-h5, .level-h6) {
+  margin-top: 20px;
+}
+
+/* Heading anchors: pad the end of the heading line, then pull the icon into the padding so it wraps with the last word. */
+
+.sl-markdown-content .sl-heading-wrapper {
+  --anchor-size: 0.75em;
+  --anchor-gap: 0.3em;
+}
+
+.sl-markdown-content .sl-heading-wrapper:has(> :first-child:is(.sr-only, [hidden])) {
+  display: contents;
+}
+
+.sl-markdown-content .sl-heading-wrapper > :first-child {
+  display: inline;
+  padding-inline-end: calc(var(--anchor-size) + var(--anchor-gap));
+}
+
+.sl-markdown-content .sl-anchor-link {
+  position: relative;
+  display: inline-flex;
+  margin-inline-start: calc(-1 * var(--anchor-size));
+  color: var(--site-muted);
+  text-decoration: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.sl-markdown-content .sl-anchor-link:hover {
+  color: var(--site-fg);
+}
+
+.sl-markdown-content .sl-anchor-link::after {
+  content: "";
+  position: absolute;
+  inset: -4px -8px;
+}
+
+.sl-markdown-content .sl-heading-wrapper:has(> :first-child:is(.sr-only, [hidden])) > .sl-anchor-link {
+  display: none;
+}
+
+.sl-markdown-content .sl-anchor-icon > svg {
+  display: inline;
+  width: var(--anchor-size);
+  height: var(--anchor-size);
+  overflow: visible;
+  vertical-align: top;
+  transform: translateY(calc((var(--heading-leading) * 1em - var(--anchor-size)) / 2));
+}
+
+@media (hover: hover) {
+  .sl-markdown-content .sl-anchor-link {
+    opacity: 0;
+  }
+
+  .sl-markdown-content .sl-anchor-link:focus-visible,
+  .sl-markdown-content .sl-heading-wrapper:hover .sl-anchor-link {
+    opacity: 1;
+  }
+}
+
+/* Inline text */
+
+.sl-markdown-content strong {
+  color: var(--site-fg);
+  font-weight: 600;
+}
+
+.sl-markdown-content em:lang(ja) {
+  font-style: normal;
+  color: var(--site-fg);
+}
+
+.sl-markdown-content del {
+  color: var(--site-muted);
+}
+
+/* Prose links are the classless anchors Markdown emits. Components carry a class and own their decoration. */
+.sl-markdown-content a:not([class]) {
+  color: var(--site-accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.sl-markdown-content a:not([class]):hover {
+  color: var(--site-fg);
+  text-decoration-color: currentColor;
+}
+
+/* Code */
+
+.sl-markdown-content :is(pre, code) {
+  font-family: var(--prose-mono);
+  font-feature-settings: normal;
+}
+
+.sl-markdown-content :not(pre) > code {
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+  background: var(--prose-chip);
+  font-size: 0.86em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.sl-markdown-content pre {
+  overflow-x: auto;
+  padding: 14px 18px;
+  border: 1px solid var(--site-faint);
+  border-radius: var(--prose-radius);
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.65;
+  tab-size: 2;
+}
+
+.sl-markdown-content .astro-code,
+.sl-markdown-content .astro-code span {
+  color: var(--shiki-light);
+}
+
+[data-theme="dark"] .sl-markdown-content .astro-code,
+[data-theme="dark"] .sl-markdown-content .astro-code span {
+  color: var(--shiki-dark);
+}
+
+/* Asides */
+
+.sl-markdown-content .starlight-aside {
+  padding: 12px 18px 14px;
+  border: 1px solid var(--site-faint);
+  border-radius: var(--prose-radius);
+  background: transparent;
+}
+
+.sl-markdown-content .starlight-aside__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--site-muted);
+  font-family: var(--prose-mono);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.sl-markdown-content :is(.starlight-aside--caution, .starlight-aside--danger) .starlight-aside__title {
+  color: var(--site-fg);
+}
+
+.sl-markdown-content .starlight-aside__icon {
+  flex: none;
+  width: 12px;
+  height: 12px;
+}
+
+.sl-markdown-content .starlight-aside__content {
+  margin-top: 4px;
+}
+
+.sl-markdown-content .starlight-aside__content:empty {
+  display: none;
+}
+
+/* Nested flow */
+
+.sl-markdown-content :is(.starlight-aside__content, blockquote, details) > * + * {
+  margin-top: 0.75em;
+}
+
+/* Tight list items hold bare inline content, so only block children get flow spacing. */
+.sl-markdown-content li > :is(p, pre, blockquote, .table-frame, figure, picture, .starlight-aside):not(:first-child) {
+  margin-top: 0.75em;
+}
+
+.sl-markdown-content li > :is(ul, ol) {
+  margin-top: 4px;
+}
+
+.sl-markdown-content li:has(> p) + li {
+  margin-top: 0.75em;
+}
+
+.sl-markdown-content blockquote {
+  padding-inline-start: 16px;
+  border-inline-start: 2px solid var(--site-faint);
+}
+
+.sl-markdown-content :is(ul, ol) {
+  padding-inline-start: 1.5em;
+}
+
+.sl-markdown-content li {
+  overflow-wrap: anywhere;
+}
+
+.sl-markdown-content li + li {
+  margin-top: 4px;
+}
+
+.sl-markdown-content li::marker {
+  color: var(--site-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sl-markdown-content hr {
+  border: 0;
+  border-top: 1px solid var(--site-faint);
+}
+
+.sl-markdown-content > hr {
+  margin-block: 40px;
+}
+
+/* Tables keep table layout and scroll inside their frame on narrow screens. */
+
+.sl-markdown-content .table-frame {
+  overflow-x: auto;
+}
+
+.sl-markdown-content table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.sl-markdown-content :is(th, td) {
+  padding: 8px 20px 8px 0;
+  border-bottom: 1px solid var(--site-faint);
+  vertical-align: top;
+}
+
+.sl-markdown-content :is(th, td):not([align]) {
+  text-align: start;
+}
+
+.sl-markdown-content :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.sl-markdown-content th {
+  color: var(--site-fg);
+  font-weight: 500;
+}
+
+/* Media */
+
+.sl-markdown-content picture {
+  display: block;
+}
+
+.sl-markdown-content picture > img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  border-radius: var(--prose-radius);
+}
+
+.sl-markdown-content figcaption {
+  margin-top: 8px;
+  color: var(--prose-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.sl-markdown-content .theme-figure img {
+  width: 100%;
+}
+
+.sl-markdown-content .theme-figure picture:has(.theme-dark),
+[data-theme="dark"] .sl-markdown-content .theme-figure picture:has(.theme-light) {
+  display: none;
+}
+
+[data-theme="dark"] .sl-markdown-content .theme-figure picture:has(.theme-dark) {
+  display: block;
+}
+
+/* Diagrams render at natural size and scroll instead of shrinking their text. */
+
+.sl-markdown-content .diagram {
+  overflow-x: auto;
+}
+
+.sl-markdown-content .diagram > svg {
+  display: block;
+  max-width: none;
+  height: auto;
+  margin-inline: auto;
+}
+
+.sl-markdown-content :is(pre, .table-frame, .diagram) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--site-muted) transparent;
+}
+
+/* Details */
+
+.sl-markdown-content summary {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.sl-markdown-content summary::marker {
+  color: var(--site-muted);
+}
+
+.sl-markdown-content summary > p:only-child {
+  display: inline;
+}
+
+@media print {
+  .sl-markdown-content :is(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) {
+    break-after: avoid;
+  }
+
+  .sl-markdown-content :is(p, li) {
+    orphans: 2;
+    widows: 2;
+  }
+
+  .sl-markdown-content pre {
+    overflow-x: hidden;
+    white-space: pre-wrap;
+  }
+
+  .sl-markdown-content :is(pre, figure, .starlight-aside) {
+    break-inside: avoid;
+  }
+}

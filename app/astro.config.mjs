@@ -2,9 +2,9 @@ import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import { unified } from "@astrojs/markdown-remark";
-import rehypeMermaid from "rehype-mermaid";
 import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
+import { rehypeDiagrams } from "./src/plugins/rehype-diagrams.ts";
 import { rehypeHeadingAnchors } from "./src/plugins/rehype-heading-anchors.ts";
 import { remarkAsides, remarkRestoreDirectives } from "./src/plugins/remark-asides.ts";
 
@@ -18,23 +18,14 @@ export default defineConfig({
     },
     shikiConfig: {
       themes: {
-        light: "github-light",
-        dark: "github-dark",
+        light: "vitesse-light",
+        dark: "vitesse-dark",
       },
       defaultColor: false,
     },
     processor: unified({
       remarkPlugins: [remarkGfm, remarkDirective, remarkAsides, remarkRestoreDirectives],
-      rehypePlugins: [
-        [
-          rehypeMermaid,
-          {
-            strategy: "inline-svg",
-            mermaidConfig: { theme: "neutral" },
-          },
-        ],
-        rehypeHeadingAnchors,
-      ],
+      rehypePlugins: [rehypeDiagrams, rehypeHeadingAnchors],
     }),
   },
   integrations: [

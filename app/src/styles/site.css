@@ -56,17 +56,12 @@ body {
 }
 
 .column:has(.article-dates) {
+  --measure: 740px;
   max-width: 848px;
 }
 
-.column:has(.article-dates) > :is(.page-title, .article-dates, .draft-notice, .engagement-footer, .site-footer),
-.column:has(.article-dates) .sl-markdown-content > :not(pre):not(svg):not(picture):not(figure) {
-  max-width: 740px;
-  margin-inline: auto;
-}
-
-.column:has(.article-dates) .sl-markdown-content > svg {
-  display: block;
+.column:has(.article-dates) > :is(.page-title, .article-dates, .draft-notice, .engagement-footer, .site-footer) {
+  max-width: var(--measure);
   margin-inline: auto;
 }
 
@@ -378,49 +373,18 @@ select:focus-visible {
   color: var(--site-muted);
 }
 
-.column .sl-markdown-content pre,
-.column .sl-markdown-content code {
-  font-family: "Geist Mono", ui-monospace, monospace;
-}
-
-.column .sl-markdown-content table {
-  display: block;
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-.column .sl-markdown-content svg {
-  max-width: 100%;
-  height: auto;
-}
-
-.column .sl-anchor-link {
-  text-decoration: none;
-}
-
-.column .sl-markdown-content h1 {
-  margin: 0 0 28px;
-  color: var(--site-fg);
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.3;
-}
-
 .site-header a:not(.icon-link),
-.column a:not(.badge):not(.row):not(.sl-anchor-link),
-.quiet-list a.row .link-text,
-.column .sl-markdown-content a:not(:where(.not-content *, .sl-anchor-link)) {
+.column a:not(.badge):not(.row):not(.sl-markdown-content *),
+.quiet-list a.row .link-text {
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
-  text-decoration-offset: 0.18em;
+  text-underline-offset: 0.18em;
   text-decoration-color: color-mix(in srgb, currentColor 65%, transparent);
 }
 
 .site-header a:not(.icon-link):hover,
-.column a:not(.badge):not(.row):not(.sl-anchor-link):hover,
-.quiet-list a.row:hover .link-text,
-.column .sl-markdown-content a:hover:not(:where(.not-content *, .sl-anchor-link)) {
+.column a:not(.badge):not(.row):not(.sl-markdown-content *):hover,
+.quiet-list a.row:hover .link-text {
   text-decoration-thickness: 2px;
   text-decoration-color: currentColor;
   color: var(--sl-color-text-accent);

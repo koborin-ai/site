@@ -75,6 +75,7 @@
 		--sl-text-body-sm: var(--sl-text-xs);
 		--sl-text-code: var(--sl-text-sm);
 		--sl-text-code-sm: var(--sl-text-xs);
+		/* The article body does not read --sl-text-h* (here or in the 50em block); prose.css sizes its headings. */
 		--sl-text-h1: var(--sl-text-4xl);
 		--sl-text-h2: var(--sl-text-3xl);
 		--sl-text-h3: var(--sl-text-2xl);

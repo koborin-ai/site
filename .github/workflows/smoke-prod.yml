@@ -26,7 +26,7 @@ jobs:
           node-version-file: .tool-versions
           check-latest: true
 
-      # The smoke imports node: built-ins only, so it runs without npm ci.
+      # smoke-prod.ts and the scripts it imports use Node built-ins only, so this job does not npm ci.
       - name: Probe every baseline route
         working-directory: app
         run: node scripts/smoke-prod.ts

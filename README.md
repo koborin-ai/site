@@ -84,7 +84,7 @@ flowchart LR
 | `app-ci.yml` | Called for the app area | Runs `npm run check` and the production build | Blocks merges that break the app |
 | `automation-ci.yml` | Called for the automation area | `mise run check:automation` + `check:docs` (actionlint, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
 | `app-release.yml` | Merge to `main` or `workflow_dispatch` | Runs `npm run check`, builds the static site, runs `wrangler deploy`, then calls `smoke-prod.yml` | Runs only from `main`. Uses `CLOUDFLARE_API_TOKEN` |
-| `smoke-prod.yml` | After each app deploy, weekly, or manual dispatch | Probes every route in `app/scripts/routes-baseline.txt` on `https://koborin.ai` | GETs only. No rollback |
+| `smoke-prod.yml` | After each app deploy, weekly, or manual dispatch | Probes the public routes in `app/scripts/routes-baseline.txt` on `https://koborin.ai` | GETs only. Skips `/pagefind/` and `/_headers`. No rollback |
 
 Tool versions come from `.tool-versions`. `actions/setup-node` reads it through `node-version-file`, and the infra and automation workflows install from it with `jdx/mise-action`.
 

@@ -282,6 +282,12 @@ select:focus-visible {
   text-align: right;
 }
 
+.quiet-list .talk-count {
+  display: block;
+  margin-top: 1px;
+  line-height: 1.5;
+}
+
 .quiet-list a.meta {
   color: var(--site-muted);
   font-size: 12.5px;

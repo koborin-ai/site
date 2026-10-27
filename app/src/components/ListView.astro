@@ -1,9 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
 import QuietList from './QuietList.astro';
+import TalkList from './TalkList.astro';
 import SiteShell from './SiteShell.astro';
 import Footer from './Footer.astro';
-import { formatTalkDate, groupByYear, listHreflang, listHref, listMeta, talks, writingPosts, type ListKind } from '../lib/catalog';
+import { groupByYear, listHreflang, listHref, listMeta, talks, writingPosts, type ListKind } from '../lib/catalog';
 import type { Locale } from '../lib/docs';
 
 interface Props {
@@ -40,15 +41,7 @@ const talkGroups = kind === 'talks' ? groupByYear(talks) : [];
   {kind === 'talks' && talkGroups.map((group) => (
     <section class="year">
       <h2>{group.year}</h2>
-      <QuietList
-        items={group.items.map((item) => ({
-          title: item.title[locale],
-          meta: item.event[locale],
-          date: formatTalkDate(item.date, 'list'),
-          href: item.href,
-          external: item.href !== undefined,
-        }))}
-      />
+      <TalkList talks={group.items} locale={locale} />
     </section>
   ))}
   <Footer title={meta.title} showEngagement={false} />

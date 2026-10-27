@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { diffRoutes } from './check-routes.mjs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { diffRoutes } from './check-routes.ts';
 
 describe('diffRoutes', () => {
   it('allows pagefind to disappear and generated og webp to appear', () => {
@@ -29,5 +31,14 @@ describe('diffRoutes', () => {
 
     expect(result.unexpected).toEqual(['/secret/']);
     expect(result.missing).toEqual([]);
+  });
+});
+
+describe('check-routes cli', () => {
+  it('does not exit 0 without printing the report', () => {
+    const result = spawnSync(process.execPath, [fileURLToPath(new URL('./check-routes.ts', import.meta.url))], {
+      encoding: 'utf8',
+    });
+    expect(result.status === 0 && result.stdout === '').toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { diffRoutes } from '../../scripts/check-routes.mjs';
+import { diffRoutes } from '../../scripts/check-routes.ts';
 import { articleCard, ogImageFor, type OgSource } from './og';
 
 function source(id: string, data: OgSource['data']): OgSource {

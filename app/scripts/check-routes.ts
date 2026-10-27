@@ -1,13 +1,31 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { listRoutes } from './list-routes.mjs';
+import { fileURLToPath } from 'node:url';
+import { listRoutes } from './list-routes.ts';
 
 const allowedDropPrefix = '/pagefind/';
 
-export const allowedAdditions = ['/blog/', '/ja/blog/', '/talks/', '/ja/talks/', '/about/', '/ja/about/'];
+export const allowedAdditions = [
+  '/blog/',
+  '/ja/blog/',
+  '/talks/',
+  '/ja/talks/',
+  '/about/',
+  '/ja/about/',
+] as const;
 
-export function diffRoutes(baseline, actual, allowed = allowedAdditions) {
+export type RouteDiff = {
+  droppedSearch: string[];
+  missing: string[];
+  generated: string[];
+  unexpected: string[];
+};
+
+export function diffRoutes(
+  baseline: readonly string[],
+  actual: readonly string[],
+  allowed: readonly string[] = allowedAdditions,
+): RouteDiff {
   const actualSet = new Set(actual);
   const baselineSet = new Set(baseline);
   const allowedSet = new Set(allowed);
@@ -20,9 +38,8 @@ export function diffRoutes(baseline, actual, allowed = allowedAdditions) {
 }
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const invoked = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-if (invoked) {
+if (import.meta.main) {
   const baseline = (await readFile(path.join(scriptDir, 'routes-baseline.txt'), 'utf8'))
     .split('\n')
     .map((line) => line.trim())

@@ -1,8 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
-export function toUrl(relativePath) {
+export function toUrl(relativePath: string): string | null {
   const normalized = relativePath.split(path.sep).join('/');
   if (normalized.startsWith('_astro/')) return null;
   if (normalized === 'index.html') return '/';
@@ -12,7 +11,7 @@ export function toUrl(relativePath) {
   return `/${normalized}`;
 }
 
-async function walk(directory, dist, urls) {
+async function walk(directory: string, dist: string, urls: string[]): Promise<void> {
   const entries = await readdir(directory, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = path.join(directory, entry.name);
@@ -25,15 +24,14 @@ async function walk(directory, dist, urls) {
   }
 }
 
-export async function listRoutes(distDir) {
+export async function listRoutes(distDir: string): Promise<string[]> {
   const dist = path.resolve(distDir);
-  const urls = [];
+  const urls: string[] = [];
   await walk(dist, dist, urls);
   return [...new Set(urls)].toSorted();
 }
 
-const invoked = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
-if (invoked) {
+if (import.meta.main) {
   const urls = await listRoutes(process.argv[2] ?? 'dist');
   process.stdout.write(`${urls.join('\n')}\n`);
 }

@@ -31,12 +31,15 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/content.config.ts` | Zod schema for the `docs` content collection. |
 | `app/src/pages/[...slug].astro` | Renders each docs entry at its current public URL. |
 | `app/src/lib/` | Public URL mapping, the home and list catalog, and the git updated date. |
+| `app/src/lib/og.ts` | Which pages get a generated social card, and the card URL. |
+| `app/src/lib/og-render.ts` | Renders an article card to WebP at build time. |
 | `app/src/styles/vendor/` | CSS copied from Starlight 0.42.6. The layout keeps the class names those files expect. |
 | `app/scripts/routes-baseline.txt` | Public URLs the production build must still emit. `/pagefind/` is the only allowed omission. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
 | `app/src/pages/rss.xml.ts` | RSS feed endpoint for English articles. |
 | `app/src/pages/ja/rss.xml.ts` | RSS feed endpoint for Japanese articles. |
+| `app/src/pages/og/[...slug].webp.ts` | Prerendered endpoint for each article card at `/og/<page path>.webp`. |
 | `infra/` | TerraDart infrastructure (`site` stack). |
 | `infra/lib/site_stack.dart` | Zone lookup and Workers custom domain for `koborin.ai`. |
 | `infra/lib/r2_backend.dart` | `StackBackend` pointing Terraform state at R2. |
@@ -118,7 +121,6 @@ This document is a quick guide for any contributors or AI agents that touch the 
      | Variant | Use case | Rendered width |
      |---------|----------|----------------|
      | `hero` | LCP candidate, top-page hero | ~1376px |
-     | `articleHeader` | LCP candidate, article opener (OG image displayed in body) | ~750px |
      | `card` | Top-page / list thumbnails | 160–480px |
      | `thumbnail` | Small icon-like images | 80–240px |
      | `inline` | Regular images inside article body | 400–1200px |
@@ -133,22 +135,12 @@ This document is a quick guide for any contributors or AI agents that touch the 
      ```
 
 5. **OG Image Management**:
-   - **Image Location**: Place OG images in `app/public/og/<slug>.png` as PNG or JPEG.
-   - **Auto-optimization**: CI automatically converts images to WebP format during build. No manual optimization required.
-   - **Frontmatter**: Set `ogImage: /og/<slug>.png` in frontmatter (`.png` reference is auto-converted to `.webp` by `Head.astro`).
-   - **Japanese Articles**: Use the same `ogImage` path as the corresponding English article.
-   - **Default**: Pages without `ogImage` fall back to `/og/index.webp`.
-   - **Optimization Script**: `app/scripts/optimize-og-images.sh` handles WebP conversion (runs in `app-ci.yml` / `app-release.yml`).
-   - **Dual-placement rule for body display**: The `/og/<slug>.png` under `app/public/og/` is consumed by OG meta tags (`Head.astro` rewrites the reference to `.webp`), so it must stay there. If you also want to render the same image at the top of the article body via `SiteImage`, copy the source PNG to `app/src/assets/og/<slug>.png` and `import` it from there:
-
-     ```mdx
-     import SiteImage from '../../../components/SiteImage.astro';
-     import headerImage from '../../../assets/og/<slug>.png';
-
-     <SiteImage src={headerImage} alt="..." variant="articleHeader" style="width: 100%; height: auto;" />
-     ```
-
-     Do **not** use `<SiteImage src="/og/<slug>.png" ... />` — `SiteImage` requires an imported asset so Astro can generate optimized variants at build time.
+   - Article pages open with the title and the dates. Authors do not add a cover.
+   - The social card is generated at build time from the title, at `/og/<page path>.webp`. An English article at `/tech/mcp-deep-dive/` gets `/og/tech/mcp-deep-dive.webp`. The Japanese page gets `/og/ja/tech/mcp-deep-dive.webp`.
+   - Home and about still set `ogImage: /og/koborin-ai-hero.png`. `Head.astro` rewrites that `.png` reference to `.webp`.
+   - Pages without a generated card and without `ogImage` fall back to `/og/index.webp`.
+   - Inline images stay on `SiteImage` with `variant="inline"`.
+   - `app/scripts/optimize-og-images.sh` converts root-level files in `app/public/og/` to WebP during CI (`app-ci.yml` / `app-release.yml`). It does not write the generated article cards.
 6. **Article Dates**:
    - **Published Date**: Set `publishedAt: YYYY-MM-DD` in frontmatter when creating a new article.
    - **Updated Date**: `app/src/lib/last-updated.ts` reads `git log -1` for the MDX file at build time. Set `lastUpdated: false` to hide it. The home pages do.

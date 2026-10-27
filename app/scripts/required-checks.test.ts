@@ -2,10 +2,14 @@ import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { changedAreas, judgeGate } from './required-checks.ts';
+import { areas, changedAreas, judgeGate } from './required-checks.ts';
 import type { Area, JobResult } from './required-checks.ts';
 
 const script = fileURLToPath(new URL('./required-checks.ts', import.meta.url));
+
+function workflow(name: string): Promise<string> {
+  return readFile(new URL(`../../.github/workflows/${name}`, import.meta.url), 'utf8');
+}
 
 function runCli(args: readonly string[], options: { input?: string; env?: Record<string, string> } = {}) {
   const env = { ...process.env, ...options.env };
@@ -13,8 +17,8 @@ function runCli(args: readonly string[], options: { input?: string; env?: Record
   return spawnSync(process.execPath, [script, ...args], { encoding: 'utf8', input: options.input ?? '', env });
 }
 
-function changes(areas: readonly string[] | string, result = 'success') {
-  return { result, outputs: { areas: typeof areas === 'string' ? areas : JSON.stringify(areas) } };
+function changes(touched: readonly Area[]) {
+  return { result: 'success', outputs: { areas: JSON.stringify(touched) } };
 }
 
 const skipped = { result: 'skipped', outputs: {} };
@@ -120,9 +124,9 @@ describe('judgeGate on needs payloads', () => {
     ['not an array', '{"app":true}'],
     ['an unknown area', '["app","docs"]'],
     ['missing', undefined],
-  ])('fails and requires every area when the areas output is %s', (_label, areas) => {
+  ])('fails and requires every area when the areas output is %s', (_label, output) => {
     const report = judgeGate({
-      changes: { result: 'success', outputs: areas === undefined ? {} : { areas } },
+      changes: { result: 'success', outputs: output === undefined ? {} : { areas: output } },
       app: { result: 'success', outputs: {} },
       infra: skipped,
       automation: skipped,
@@ -203,6 +207,33 @@ describe('required-checks cli', () => {
 
   it('exits 2 on an unknown command', () => {
     expect(runCli(['nope']).status).toBe(2);
+  });
+});
+
+describe('workflow wiring', () => {
+  it.each(['required-checks.yml', 'app-ci.yml', 'automation-ci.yml', 'plan-infra.yml'])(
+    '%s has no paths filter, so required-checks reports on every pull request',
+    async (name) => {
+      expect(await workflow(name)).not.toMatch(/^\s*paths(-ignore)?:/m);
+    },
+  );
+
+  it('runs one job per area on the changes output, and the gate needs every one', async () => {
+    const source = await workflow('required-checks.yml');
+    for (const area of areas) {
+      expect(source).toContain(
+        `  ${area}:\n    needs: changes\n    if: contains(fromJSON(needs.changes.outputs.areas), '${area}')\n`,
+      );
+    }
+    expect(source).toContain(`needs: [changes, ${areas.join(', ')}]`);
+  });
+
+  it.each(['release-infra.yml', 'app-release.yml'])('%s deploys only from main', async (name) => {
+    expect(await workflow(name)).toMatch(/^ {4}if: github\.ref == 'refs\/heads\/main'$/m);
+  });
+
+  it('release-infra.yml has no infra-v tag trigger', async () => {
+    expect(await workflow('release-infra.yml')).not.toContain('infra-v');
   });
 });
 

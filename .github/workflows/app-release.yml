@@ -20,6 +20,7 @@ concurrency:
 jobs:
   release:
     name: Build and Deploy
+    if: github.ref == 'refs/heads/main'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
@@ -74,6 +75,10 @@ jobs:
         working-directory: app
         run: ./scripts/optimize-og-images.sh
 
+      - name: Quality checks (oxlint, astro check, Vitest, images)
+        working-directory: app
+        run: npm run check
+
       - name: Build
         working-directory: app
         run: npm run build
@@ -83,3 +88,9 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npm run deploy
+
+  smoke:
+    needs: release
+    permissions:
+      contents: read
+    uses: ./.github/workflows/smoke-prod.yml

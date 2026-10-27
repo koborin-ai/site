@@ -131,7 +131,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   ├── utils/
 │   │   │   ├── llms.ts           # Shared logic for llms.txt generation
 │   │   │   └── llms.test.ts      # Vitest coverage for llms.txt rendering
-│   │   ├── pages/                # Astro endpoints (llms.txt, RSS)
+│   │   ├── pages/                # Astro endpoints (llms.txt, RSS, article cards)
 │   │   └── styles/
 │   │       └── custom.css        # Custom CSS overrides (logo sizing, etc.)
 │   ├── public/
@@ -161,7 +161,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 | --- | --- | --- | --- |
 | Favicon | `app/public/favicon.png` | Browser tab icon | PNG format, transparent background recommended |
 | Header Logo | `app/src/assets/_shared/koborin-ai-header-light.svg` / `-dark.svg` | Site header (replaces title text) | SVG, separate light/dark variants |
-| Hero Image | `app/public/og/koborin-ai-hero.png` | Landing page hero section | 16:9 aspect ratio recommended |
+| Hero Image | `app/public/og/koborin-ai-hero.png` | Open Graph image for home and about | Not shown in the page. `Head.astro` rewrites the `.png` reference to `.webp` |
 
 Logo size is set on `.nav-logo img` in `app/src/components/SiteHeader.astro`.
 
@@ -171,16 +171,13 @@ For performance, images are automatically converted to WebP format. **Authors ca
 
 | Image Type | Location | What You Do | What Happens Automatically |
 | --- | --- | --- | --- |
-| OG images | `app/public/og/` | Place PNG/JPEG, reference as `.png` | CI converts to WebP; `Head.astro` references `.webp` |
+| Article cards | `/og/<page path>.webp` | Do not add a cover. The build draws the card from the title | WebP, 1200 by 630 |
+| Home and about | `app/public/og/koborin-ai-hero.png` | Set `ogImage: /og/koborin-ai-hero.png` | CI converts to WebP; `Head.astro` rewrites `.png` to `.webp` |
 | Blog images | `app/src/assets/{category}/{article}/` | Place PNG/JPEG in article folder | Astro optimizes to WebP |
 
-**Example workflow for OG images**:
+Article pages open with the title and the dates. The social card is generated at build time from the title, at `/og/<page path>.webp`. Authors do not add a cover. Home and about still set `ogImage`. Inline images stay on `SiteImage` with `variant="inline"`.
 
-1. Place image: `app/public/og/my-article.png`
-2. Frontmatter: `ogImage: /og/my-article.png`
-3. Article display: import the copy under `app/src/assets/og/` and render it with `SiteImage`
-
-That's it! The CI pipeline (`app/scripts/optimize-og-images.sh`) generates WebP versions.
+`app/scripts/optimize-og-images.sh` still converts the root-level files in `app/public/og/` during CI. It does not write the generated article cards.
 
 ## Workflow Overview
 

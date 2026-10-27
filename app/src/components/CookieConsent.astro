@@ -30,8 +30,7 @@ const privacyPolicyUrl = isJapanese ? '/ja/privacy-policy/' : '/privacy-policy/'
 <div id="cookie-consent-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-consent-title" hidden>
   <div class="cookie-content">
     <p id="cookie-consent-title" class="cookie-message">
-      {labels.message}
-      <a href={privacyPolicyUrl} class="cookie-link">{labels.learnMore}</a>
+      {labels.message}{isJapanese ? '' : ' '}<a href={privacyPolicyUrl} class="cookie-link">{labels.learnMore}</a>
     </p>
     <div class="cookie-actions">
       <button id="cookie-reject" class="cookie-button cookie-button-secondary" type="button">

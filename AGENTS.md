@@ -30,7 +30,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/content/docs/` | MDX documentation pages. Mark drafts with `draft: true` in frontmatter. |
 | `app/src/content.config.ts` | Zod schema for the `docs` content collection. |
 | `app/src/pages/[...slug].astro` | Renders each docs entry at its current public URL. |
-| `app/src/lib/` | Public URL mapping, the home and list catalog, and the git updated date. |
+| `app/src/lib/` | Public URL mapping, the home and list catalog, the git updated date, and link-card icon lookup. |
+| `app/src/data/site-icons.json` | Hostname to data-URL favicons for rich link cards. |
 | `app/src/lib/og.ts` | Which pages get a generated social card, and the card URL. |
 | `app/src/lib/og-render.ts` | Renders an article card to WebP at build time. |
 | `app/src/styles/vendor/` | Reset, props, util, and print CSS copied from Starlight 0.42.6. The layout keeps the class names those files expect. |
@@ -202,7 +203,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
        - Only use this for quick prototyping or when you don't know the page title/description.
        - Always replace with manual specification before committing.
-     - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description). The card is text only.
+     - **Auto-fetch priority** (when title/description not provided): title (og:title → `<title>` → domain), description (og:description → meta description).
+     - **Site icon**: a 14px icon sits left of the domain. `app/scripts/fetch-site-icons.ts` reads each card host's own favicon at build time and writes `app/src/data/site-icons.json`. The card never requests a favicon service. A missing host renders the domain alone. Re-run `node --experimental-strip-types scripts/fetch-site-icons.ts` from `app/` after adding a host.
 13. **RSS Feeds**:
      - The site provides RSS feeds for blog aggregation services.
      - **English feed**: `/rss.xml` - includes `tech/` and `life/` categories.

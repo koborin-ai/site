@@ -127,6 +127,8 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │   ├── content/
 │   │   │   └── docs/             # MDX pages: tech/, life/, ja/
 │   │   ├── content.config.ts    # Zod schema for the docs collection
+│   │   ├── data/
+│   │   │   └── site-icons.json   # Hostname to data-URL favicons for link cards
 │   │   ├── plugins/              # Asides, heading anchors, diagrams, and table frames
 │   │   ├── utils/
 │   │   │   ├── llms.ts           # Shared logic for llms.txt generation

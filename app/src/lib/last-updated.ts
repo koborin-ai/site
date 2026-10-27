@@ -4,8 +4,6 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const oneDayMs = 24 * 60 * 60 * 1000;
 
-// The pushed hero-removal commit is recognized by its subject. A squash merge
-// replaces that subject, so the pull request body also carries this trailer.
 const ignoredUpdatedDateMarkers = [
   'Updated-Date: ignore',
   'drop article heroes and serve generated cards',

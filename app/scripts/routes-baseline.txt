@@ -1,7 +1,10 @@
 /
 /404.html
 /_headers
+/apple-touch-icon.png
+/favicon.ico
 /favicon.png
+/favicon.svg
 /ja/
 /ja/life/anxiety-as-distraction-ai-as-consumption/
 /ja/life/everything-has-meaning/

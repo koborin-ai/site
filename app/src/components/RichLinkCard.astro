@@ -122,6 +122,16 @@ const displayDescription = description || og?.description;
     opacity: 1;
   }
 
+  /* 16px square backing */
+  :global([data-theme="dark"] .rich-link-card .source img) {
+    box-sizing: content-box;
+    width: 14px;
+    height: 14px;
+    padding: 1px;
+    background: #e6e9ee;
+    border-radius: 3px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .rich-link-card,
     .source img {

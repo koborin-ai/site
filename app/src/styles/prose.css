@@ -18,7 +18,7 @@
   margin-inline: auto;
 }
 
-.sl-markdown-content > :is(pre, figure, picture) {
+.sl-markdown-content > :is(figure, picture) {
   max-width: none;
 }
 

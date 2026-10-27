@@ -1,23 +1,32 @@
 name: Infrastructure Plan
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-    paths:
-      - "infra/**"
-      - ".tool-versions"
-      - "mise.toml"
-      - ".github/workflows/plan-infra.yml"
+  workflow_call:
   workflow_dispatch:
 
-concurrency:
-  group: terraform-state
-  cancel-in-progress: false
-
 jobs:
-  terraform-plan:
+  check:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup toolchain
+        uses: jdx/mise-action@v5
+
+      # mise-action caches the resolved patch for up to 30 days.
+      - name: Use the newest Node.js patch
+        run: mise upgrade node
+
+      - name: Analyze and test
+        run: mise run check:infra
+
+  plan:
+    needs: check
     if: >
       github.actor != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
@@ -25,7 +34,9 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
-      pull-requests: write
+    concurrency:
+      group: terraform-state
+      cancel-in-progress: false
     timeout-minutes: 30
 
     env:
@@ -42,8 +53,9 @@ jobs:
       - name: Use the newest Node.js patch
         run: mise upgrade node
 
-      - name: Analyze and test
-        run: mise run check:infra
+      - name: Fetch Dart packages
+        working-directory: infra
+        run: dart pub get
 
       - name: Synth
         working-directory: infra

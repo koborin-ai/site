@@ -8,8 +8,6 @@ on:
       # Toolchain files are deliberately absent: a shellcheck bump should not
       # apply production infrastructure. plan-infra covers them on the PR.
       - "infra/**"
-    tags:
-      - "infra-v*"
   workflow_dispatch:
 
 concurrency:
@@ -18,6 +16,7 @@ concurrency:
 
 jobs:
   terraform-apply:
+    if: github.ref == 'refs/heads/main'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read

@@ -1,18 +1,7 @@
 name: App CI
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-    paths:
-      - "app/**"
-      - "content/**"
-      - ".tool-versions"
-      - "mise.toml"
-      - ".github/workflows/app-ci.yml"
-      - ".github/workflows/app-release.yml"
+  workflow_call:
 
 jobs:
   quality:

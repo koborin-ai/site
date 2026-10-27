@@ -42,11 +42,24 @@ describe('home catalog', () => {
     expect(book.note.en).toBe('Co-authored with Xavier Portilla.');
   });
 
-  it('keeps every talk, including the hands-on, without an attendee count', () => {
+  it('keeps every talk, including the hands-on', () => {
     expect(talks).toHaveLength(12);
     expect(talks[0]?.event.ja).toBe('第10回 FlutterGakkai');
     expect(talks.map((item) => item.event.ja)).toContain('Genkit ハンズオン（運営）');
-    expect(talks.every((item) => !('attendees' in item))).toBe(true);
+    expect(talks.map((item) => ({ date: item.date, event: item.event.en, attendees: item.attendees }))).toEqual([
+      { date: '2026/07', event: 'FlutterGakkai (10th)', attendees: 56 },
+      { date: '2025/07', event: 'Google I/O Extended Tokyo 2025', attendees: 434 },
+      { date: '2025/02', event: 'FlutterGakkai (7th)', attendees: 191 },
+      { date: '2024/12', event: 'Genkit Hands-on (Organizer)', attendees: 45 },
+      { date: '2024/11', event: 'GDG DevFest Tokyo 2024', attendees: 369 },
+      { date: '2024/06', event: 'TECH+ Seminar', attendees: 246 },
+      { date: '2024/06', event: 'Map The Way Tokyo', attendees: 75 },
+      { date: '2024/04', event: 'Retail DX', attendees: 138 },
+      { date: '2024/04', event: 'Google Cloud RetailTech Recap Seminar', attendees: 51 },
+      { date: '2024/03', event: 'RetailTech JAPAN', attendees: 429 },
+      { date: '2024/02', event: 'GDG Tokyo Monthly Online Tech Talks', attendees: 200 },
+      { date: '2023/12', event: 'Cloud Ace Webinar', attendees: 61 },
+    ]);
     expect(talks.slice(0, homeLimit).map((item) => item.date)).toEqual([
       '2026/07',
       '2025/07',

@@ -38,6 +38,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/styles/prose.css` | The only stylesheet inside `.sl-markdown-content`; tokens at the top. |
 | `app/src/plugins/rehype-diagrams.ts` | Renders Mermaid at natural size in `figure.diagram`, paints it with the `--diagram-*` tokens, and wraps each table in `div.table-frame`. |
 | `app/scripts/routes-baseline.txt` | Public URLs the production build must still emit. `/pagefind/` is the only allowed omission. |
+| `app/scripts/required-checks.ts` | The only list of pull request path areas (`areaPaths`), and the `required-checks` verdict. Imports `node:` built-ins only, because it runs before `npm ci`. |
+| `app/scripts/smoke-prod.ts` | Probes `koborin.ai` from the route baseline after each app deploy and weekly. Sends GETs only. |
 | `app/scripts/subset-noto-sans-jp.ts` | Subsets Noto Sans JP on every build and writes the late-loaded stylesheet. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
@@ -50,7 +52,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `infra/test/` | `dart test` coverage for the synthesized Terraform JSON. |
 | `.github/actionlint.yaml` | Declares the Blacksmith runner labels so actionlint stays clean. |
 | `.github/scripts/` | Shell helpers (`compute-pr-labels.sh`) plus their test suite. |
-| `.github/workflows/` | CI/CD definitions. |
+| `.github/workflows/` | CI/CD definitions. `required-checks.yml` is the only `pull_request` entry for app, infra, and automation checks. |
 
 ## Infrastructure Rules
 
@@ -94,7 +96,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Add frontmatter: `title` (required), `description` (required), `publishedAt` (required for articles, `YYYY-MM-DD`), `draft` (optional, boolean).
    - A published article (frontmatter `publishedAt`, not a draft) is listed on the home page and on `/blog/` or `/ja/blog/` from the content collection. No sidebar entry.
    - Folder structure maps to URL structure: `docs/tech/post.mdx` → `/tech/post/`. Article URLs stay under `/tech/` and `/life/` until a later move to `/blog/`.
-   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` may disappear. The only other allowed additions are the pages in `allowedAdditions` inside `app/scripts/check-routes.ts` (`/blog/`, `/ja/blog/`, `/talks/`, `/ja/talks/`, `/about/`, `/ja/about/`).
+   - Add the new public URL to `app/scripts/routes-baseline.txt`. `npm run build` fails when a baseline URL is missing, or when an unexpected URL appears. Generated `/og/*.webp` files are allowed. `/pagefind/` may disappear. The only other allowed additions are the pages in `allowedAdditions` inside `app/scripts/check-routes.ts` (`/blog/`, `/ja/blog/`, `/talks/`, `/ja/talks/`, `/about/`, `/ja/about/`). After the next deploy, `app/scripts/smoke-prod.ts` probes those URLs on `https://koborin.ai`. It skips `/pagefind/` and worker control files such as `/_headers`.
    - **Japanese link spacing**: In Japanese MDX prose, add a half-width space between Japanese text characters (hiragana, katakana, kanji) and Markdown links. Do NOT add a space between full-width punctuation (`、`, `。`, `（`, `）`) and links — full-width characters already have built-in visual whitespace.
      - Good: `どのバージョンの [仕様](https://...) に準拠する`
      - Good: `GA で、[Dart 版](https://...) は 2026 年` (no space after `、`)
@@ -152,7 +154,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
     - The app builds as a static site. `astro.config.ts` leaves `output` unset, and Astro's default is `static`. Wrangler uploads `app/dist` as Worker static assets.
     - Worker name and assets directory live in `app/wrangler.jsonc`. There is no `main` script and no `routes` block. Set `not_found_handling` to `404-page` so `404.html` is served.
     - `app/public/_headers` is copied into `dist/` (Astro response headers are not kept on uploaded files). It sets `Content-Type: text/plain; charset=utf-8` on `*.txt`, `Cache-Control: public, max-age=31536000, immutable` on `/_astro/*` and `/fonts/*.woff2`, `Cache-Control: public, max-age=0, must-revalidate` on `/fonts/noto-sans-jp.css`, and the security headers (HSTS without preload, nosniff, Referrer-Policy, Permissions-Policy, COOP, `X-Frame-Options`, CSP) on every asset. `script-src` allows hashed inline scripts plus `googletagmanager.com` and `giscus.app`. `style-src` keeps `'unsafe-inline'` because Mermaid SVG and Shiki emit inline styles, and also allows `giscus.app` because the comments client injects its stylesheet. `npm run build` runs `scripts/check-csp.ts`, which fails when an inline script hash drifts. Do not add HSTS `preload` unless every `koborin.ai` hostname is HTTPS.
-    - `app-release.yml` runs `npm run build` then `wrangler deploy`.
+    - `app-release.yml` runs `npm run check`, `npm run build`, then `wrangler deploy`, and only when `github.ref` is `refs/heads/main`. A separate `smoke` job then calls `smoke-prod.yml`, so a failed probe shows as a red job next to a green deploy.
     - All pages are pre-rendered at build time; no Node.js runtime is required in production.
 11. **LLM Context Files (llms.txt)**:
     - The site provides machine-readable context files for LLMs at `https://koborin.ai/llms.txt`.
@@ -258,11 +260,14 @@ Examples:
 ## CI/CD Expectations
 
 - Workflows:
-  - `plan-infra.yml`: `mise run check:infra` + `terraform plan` for the `site` stack (no apply).
-  - `release-infra.yml`: `mise run check:infra` then authenticated `terraform apply` for the `site` stack (manual dispatch, `main` infra push, or `infra-v*` tag).
-  - `app-ci.yml`: `npm run check` plus `npm audit` and the production build, on PRs touching `app/`.
-  - `automation-ci.yml`: `mise run check:automation` and `mise run check:docs` on PRs touching `.github/workflows/`, `.github/scripts/`, `app/scripts/`, any `.md`, `.markdownlint.yaml`, `.tool-versions`, or `mise.toml`.
-  - `app-release.yml`: builds the static site and runs `wrangler deploy` for Worker `koborin-ai-web`.
+  - `required-checks.yml`: runs on every pull request. Its `changes` job maps the merge diff to the app, infra, and automation areas through `areaPaths` in `app/scripts/required-checks.ts`, and the workflow calls the area workflows below for the areas that changed. Its `required-checks` job is the one check context a ruleset needs. It fails when `changes` did not succeed, when any area job failed or was cancelled, and when a changed area's job was skipped or is missing. A pull request that touches no area passes.
+  - `app-ci.yml`: called for the app area. `npm run check` plus `npm audit` and the production build.
+  - `plan-infra.yml`: called for the infra area, or dispatched. The `check` job runs `mise run check:infra` with no secrets, so Dependabot and fork pull requests run it too. The `plan` job runs `terraform plan` for the `site` stack, skips Dependabot and forks, and alone holds the `terraform-state` concurrency group. A failed `check` or `plan` fails `required-checks`.
+  - `automation-ci.yml`: called for the automation area. `mise run check:automation` and `mise run check:docs`.
+  - `release-infra.yml`: `mise run check:infra` then authenticated `terraform apply` for the `site` stack, on a `main` push under `infra/` or a dispatch. The job runs only when `github.ref` is `refs/heads/main`.
+  - `app-release.yml`: `npm run check`, the production build, and `wrangler deploy` for Worker `koborin-ai-web`, then the `smoke` job. The deploy job runs only when `github.ref` is `refs/heads/main`.
+  - `smoke-prod.yml`: runs `node scripts/smoke-prod.ts` against `https://koborin.ai` after each app deploy, every Monday at 04:23 UTC, and on dispatch from `main`. It needs no token and no `npm ci`. A failure turns the run red and rolls nothing back.
+- Path filters: pull request path filters do not select checks. Do not add `paths` or `paths-ignore` to a `pull_request` trigger. To change which checks a path runs, edit `areaPaths`. A new area also needs a job with the same id in `required-checks.yml` and an entry in the `required-checks` job's `needs`. `app/scripts/required-checks.test.ts` fails if a filter returns or the job wiring drifts.
 - Toolchain: every workflow takes its versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump versions in `.tool-versions`, never in a workflow.
 - Cloudflare auth:
   - Secret: `CLOUDFLARE_API_TOKEN` (scoped to this account and zone).
@@ -271,8 +276,9 @@ Examples:
 
 ## Release Process
 
-- Tag infra releases as `infra-v*` to force `release-infra.yml` to apply the `site` stack.
-- `app-release.yml` deploys Worker `koborin-ai-web` when a push to `main` touches its path filter (`app/**`, `content/**`, `.tool-versions`, `mise.toml`, and the two app workflow files), and on `workflow_dispatch`.
+- App deploy and infra apply run only from `main`. A `workflow_dispatch` from any other ref skips the deploy or apply job.
+- `release-infra.yml` applies the `site` stack when a push to `main` touches `infra/**`. To re-apply, dispatch it from `main`. `infra-v*` tags do not apply. The workflow has no tag trigger.
+- `app-release.yml` deploys Worker `koborin-ai-web` when a push to `main` touches its path filter (`app/**`, `content/**`, `.tool-versions`, `mise.toml`, and the two app workflow files), and on `workflow_dispatch` from `main`.
 - GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
 
 ## Analytics
@@ -342,7 +348,7 @@ This is the command to reach for. It runs the four `check:*` tasks in `mise.toml
 mise run check:infra  # dart pub get, dart analyze, dart test
 ```
 
-CI also runs `terraform plan` via `plan-infra.yml`.
+On a pull request, `required-checks.yml` calls `plan-infra.yml`, which also runs `terraform plan`.
 
 ### Application (`app/`)
 

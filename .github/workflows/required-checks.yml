@@ -1,0 +1,80 @@
+name: Required Checks
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    outputs:
+      areas: ${{ steps.areas.outputs.areas }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .tool-versions
+          check-latest: true
+
+      # HEAD is the pull request merge commit, so HEAD^1 is the base branch tip.
+      - name: Map changed files to areas
+        id: areas
+        run: |
+          set -euo pipefail
+          git diff --name-only --no-renames -z HEAD^1 HEAD |
+            node app/scripts/required-checks.ts areas >> "$GITHUB_OUTPUT"
+
+  app:
+    needs: changes
+    if: contains(fromJSON(needs.changes.outputs.areas), 'app')
+    uses: ./.github/workflows/app-ci.yml
+
+  infra:
+    needs: changes
+    if: contains(fromJSON(needs.changes.outputs.areas), 'infra')
+    permissions:
+      contents: read
+    uses: ./.github/workflows/plan-infra.yml
+    secrets: inherit
+
+  automation:
+    needs: changes
+    if: contains(fromJSON(needs.changes.outputs.areas), 'automation')
+    uses: ./.github/workflows/automation-ci.yml
+
+  required-checks:
+    name: required-checks
+    needs: [changes, app, infra, automation]
+    if: always()
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .tool-versions
+          check-latest: true
+
+      - name: Judge area results
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          node app/scripts/required-checks.ts verdict | tee -a "$GITHUB_STEP_SUMMARY"

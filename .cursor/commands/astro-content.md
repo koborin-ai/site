@@ -90,7 +90,6 @@ Pick the variant by *rendered* size, not source dimensions:
 
 | Variant | Use case | Rendered width |
 |---------|----------|----------------|
-| `hero` | LCP candidate, top-page hero | ~1376px |
 | `card` | Top-page / list thumbnails | 160–480px |
 | `thumbnail` | Small icon-like images | 80–240px |
 | `inline` | Regular images inside article body | 400–1200px |

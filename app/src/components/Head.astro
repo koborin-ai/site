@@ -1,19 +1,18 @@
 ---
 import { ICON_LINKS } from '../lib/icons';
+import { OG_SIZE, ogImageFor, type OgSource } from '../lib/og';
 
 interface Props {
   title: string;
   description: string;
   lang: 'en' | 'ja';
-  ogImage?: string;
+  entry?: OgSource;
   hreflang?: { hreflang: string; href: string }[];
 }
 
-const { title, description, lang, ogImage, hreflang = [] } = Astro.props;
+const { title, description, lang, entry, hreflang = [] } = Astro.props;
 
-const normalizeToWebp = (path: string) => path.replace(/\.(png|jpe?g)$/i, '.webp');
-const ogImagePath = ogImage ? normalizeToWebp(ogImage) : '/og/index.webp';
-const ogImageUrl = new URL(ogImagePath, Astro.site).href;
+const ogImageUrl = new URL(ogImageFor(entry), Astro.site).href;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 const pageTitle = `${title} | koborin.ai`;
 const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
@@ -36,8 +35,8 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 <meta property="og:description" content={description} />
 <meta property="og:site_name" content="koborin.ai" />
 <meta property="og:image" content={ogImageUrl} />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
+<meta property="og:image:width" content={String(OG_SIZE.width)} />
+<meta property="og:image:height" content={String(OG_SIZE.height)} />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content={ogImageUrl} />
 

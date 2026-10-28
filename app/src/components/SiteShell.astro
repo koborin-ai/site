@@ -5,6 +5,7 @@ import JaFont from './JaFont.astro';
 import ImageZoom from './ImageZoom.astro';
 import SiteHeader from './SiteHeader.astro';
 import type { Locale } from '../lib/docs';
+import type { OgSource } from '../lib/og';
 import '../styles/vendor/layers.css';
 import '../styles/vendor/props.css';
 import '../styles/vendor/reset.css';
@@ -22,7 +23,7 @@ interface Props {
   description: string;
   enHref: string;
   jaHref: string;
-  ogImage?: string;
+  entry?: OgSource;
   hreflang?: { hreflang: string; href: string }[];
 }
 
@@ -32,7 +33,7 @@ const {
   description,
   enHref,
   jaHref,
-  ogImage,
+  entry,
   hreflang = [],
 } = Astro.props;
 const skipLabel = locale === 'ja' ? 'コンテンツにスキップ' : 'Skip to content';
@@ -40,7 +41,7 @@ const skipLabel = locale === 'ja' ? 'コンテンツにスキップ' : 'Skip to 
 
 <html lang={locale} data-theme="dark">
   <head>
-    <Head title={title} description={description} lang={locale} ogImage={ogImage} hreflang={hreflang} />
+    <Head title={title} description={description} lang={locale} entry={entry} hreflang={hreflang} />
     <script is:inline>
       window.StarlightThemeProvider = (() => {
         const stored = localStorage.getItem('starlight-theme');

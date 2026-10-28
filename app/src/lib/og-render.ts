@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import satori, { type Font } from 'satori';
 import sharp from 'sharp';
 import { formatPostDate } from './catalog';
+import { ogMark } from './mark';
 import type { OgCard } from './og';
 
 export class MissingGlyphError extends Error {
@@ -14,6 +15,8 @@ export class MissingGlyphError extends Error {
 
 const WIDTH = 1200;
 const HEIGHT = 630;
+
+export const OG_WEBP_QUALITY = 90 as const;
 
 /** Satori reads woff, not woff2. Paths are the packages' public files exports. */
 const FONT_FILES = [
@@ -31,7 +34,7 @@ export async function renderOgCard(card: OgCard): Promise<Uint8Array<ArrayBuffer
     fonts: await cardFonts(),
     loadAdditionalAsset: refuseMissingGlyph,
   });
-  const encoded = await sharp(Buffer.from(svg)).webp({ quality: 90 }).toBuffer();
+  const encoded = await sharp(Buffer.from(svg)).webp({ quality: OG_WEBP_QUALITY }).toBuffer();
   const bytes = new Uint8Array(encoded.byteLength);
   bytes.set(encoded);
   return bytes;
@@ -56,6 +59,7 @@ async function refuseMissingGlyph(_languageCode: string, segment: string): Promi
 }
 
 function cardTree(card: OgCard): Parameters<typeof satori>[0] {
+  const mark = ogMark();
   const tree = {
     type: 'div',
     props: {
@@ -101,8 +105,18 @@ function cardTree(card: OgCard): Parameters<typeof satori>[0] {
               {
                 type: 'div',
                 props: {
-                  style: { color: '#d5dae1' },
-                  children: 'koborin.ai',
+                  style: { display: 'flex', alignItems: 'center', gap: 16, color: '#d5dae1' },
+                  children: [
+                    {
+                      type: 'img',
+                      props: {
+                        src: `data:image/svg+xml,${encodeURIComponent(mark.markup)}`,
+                        width: mark.width,
+                        height: mark.height,
+                      },
+                    },
+                    { type: 'div', props: { style: { color: '#d5dae1' }, children: 'koborin.ai' } },
+                  ],
                 },
               },
               {

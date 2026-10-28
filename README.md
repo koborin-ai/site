@@ -127,7 +127,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   ├── vitest.config.ts          # Vitest via Astro's getViteConfig
 │   ├── src/
 │   │   ├── assets/               # Images organized by category
-│   │   │   ├── _shared/          # Common assets (header logo)
+│   │   │   ├── _shared/          # README banner
 │   │   │   ├── tech/             # Tech article images
 │   │   │   ├── life/             # Life article images
 │   │   │   └── og/               # Open Graph images
@@ -146,7 +146,10 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   │       └── custom.css        # Leftover overrides outside the article body
 │   ├── public/
 │   │   ├── _headers               # txt charset, immutable build assets, revalidated font css, security headers
-│   │   ├── favicon.png           # Browser tab icon
+│   │   ├── apple-touch-icon.png  # Dark mark tiles, written by scripts/render-mark.ts
+│   │   ├── favicon.ico
+│   │   ├── favicon.png
+│   │   ├── favicon.svg
 │   │   ├── og/                   # Open Graph source images
 │   │   └── robots.txt
 │   └── astro.config.ts           # Astro, MDX, sitemap, and Markdown plugins
@@ -169,11 +172,11 @@ These files are **auto-generated** at build time from Content Collections. Artic
 
 | Asset | Location | Usage | Notes |
 | --- | --- | --- | --- |
-| Favicon | `app/public/favicon.png` | Browser tab icon | PNG format, transparent background recommended |
-| Header Logo | `app/src/assets/_shared/koborin-ai-header-light.svg` / `-dark.svg` | Site header (replaces title text) | SVG, separate light/dark variants |
+| B2 mark | `app/src/lib/mark.ts` | Header, favicon tiles, OG footer | The only copy of the geometry |
+| Favicons | `app/src/lib/icons.ts` | `/favicon.ico`, `/favicon.png`, `/favicon.svg`, `/apple-touch-icon.png` | Dark tile for every theme, written by `app/scripts/render-mark.ts` |
 | Hero Image | `app/public/og/koborin-ai-hero.png` | Open Graph image for home and about | Not shown in the page. `Head.astro` rewrites the `.png` reference to `.webp` |
 
-Logo size is set on `.nav-logo img` in `app/src/components/SiteHeader.astro`.
+The header mark's size is the `headerMark()` call in `SiteHeader.astro`. Its spacing is the `.mark` rule in `site.css`.
 
 ### Image Optimization (Automatic)
 

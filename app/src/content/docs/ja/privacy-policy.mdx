@@ -1,9 +1,10 @@
 ---
 title: プライバシーポリシー
 description: koborin.ai のプライバシーポリシー - データ収集、Cookie、サードパーティサービスについて
+lastUpdated: false
 ---
 
-最終更新日: 2025年1月6日
+最終更新日: 2026年10月28日
 
 ## 概要
 
@@ -20,7 +21,7 @@ description: koborin.ai のプライバシーポリシー - データ収集、Co
 - デバイスとブラウザの情報
 - 参照元（当サイトへのアクセス経路）
 
-これらのデータは匿名化され、コンテンツとユーザー体験の改善のみに使用されます。Google Analytics はこの情報を収集するために Cookie を使用します。Cookie の使用に同意しない場合、アナリティクスのトラッキングをオプトアウトできます。
+これらのデータは個人を直接特定しない形（仮名化された識別子）で集計され、コンテンツとユーザー体験の改善のためにのみ使用されます。Google Analytics はこの情報を収集するために Cookie を使用します。Cookie の使用に同意しない場合、アナリティクスのトラッキングをオプトアウトできます。
 
 詳細については [Google のプライバシーポリシー](https://policies.google.com/privacy?hl=ja)をご覧ください。
 
@@ -32,6 +33,8 @@ description: koborin.ai のプライバシーポリシー - データ収集、Co
 - GitHub のユーザー名とアバターがコメントと共に表示されます
 - コメントは当サイトの GitHub リポジトリの Discussions に保存されます
 
+記事ページのコメント欄を表示すると、Giscus（giscus.app）と GitHub からコンテンツが読み込まれ、IP アドレスや閲覧ページの URL などがこれらのサービスに送信されます。GitHub でサインインした場合、ログイン状態を保つためのトークンがブラウザの localStorage（`giscus-session`）に保存されます。
+
 当サイトが GitHub のパスワードにアクセスすることはありません。詳細については [GitHub のプライバシーステートメント](https://docs.github.com/ja/site-policy/privacy-policies/github-privacy-statement)をご覧ください。
 
 ## Cookie
@@ -40,10 +43,11 @@ description: koborin.ai のプライバシーポリシー - データ収集、Co
 
 | Cookie | 目的 | 有効期間 |
 |--------|------|----------|
-| `cookie_consent` | Cookie の設定を記憶 | 1年 |
+| `cookie_consent`（localStorage） | アナリティクスへの同意・拒否の選択を記憶 | 削除するまで保持 |
+| `starlight-theme`（localStorage） | ライト／ダークの表示設定 | 削除するまで保持 |
 | `_ga`, `_ga_*` | Google Analytics トラッキング（同意時のみ） | 2年 |
 
-Cookie の設定は、ブラウザの Cookie をクリアするか、ブラウザのプライバシー設定を使用することでいつでも管理できます。
+同意を変更・撤回するには、ページ下部の「Cookie 設定」から選び直してください。拒否を選ぶと、保存済みの Google アナリティクスの Cookie（`_ga` など）も削除されます。
 
 ## あなたの権利 (GDPR)
 
@@ -63,12 +67,14 @@ Cookie の設定は、ブラウザの Cookie をクリアするか、ブラウ�
 
 - **Google Analytics** - ウェブアナリティクス
 - **Giscus** - コメントシステム（GitHub 経由）
+- **GitHub Sponsors** - About ページのスポンサーボタン（github.com から読み込まれ、GitHub が Cookie を設定する場合があります）
+- **Cloudflare** - ホスティングおよび配信。セキュリティと配信のため、IP アドレスやリクエスト情報が Cloudflare により処理されます。
 
 各サービスには、それぞれのデータ取り扱いを規定する独自のプライバシーポリシーがあります。
 
 ## データ保持
 
-- アナリティクスデータは Google Analytics のデフォルト設定に従って保持されます
+- Google アナリティクスのデータは、イベント単位で 2 か月、ユーザー単位で 14 か月保持されます（再訪問があるとユーザー単位の期間は延長されます）。
 - コメントは著者またはリポジトリオーナーが削除するまで残ります
 - Cookie 同意設定はブラウザにローカルに保存されます
 

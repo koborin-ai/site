@@ -10,6 +10,9 @@ on:
       - "infra/**"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: terraform-state
   cancel-in-progress: false
@@ -28,10 +31,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup toolchain
-        uses: jdx/mise-action@v5
+        uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
 
       # mise-action caches the resolved patch for up to 30 days.
       - name: Use the newest Node.js patch

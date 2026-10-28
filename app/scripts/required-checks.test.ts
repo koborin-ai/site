@@ -28,7 +28,7 @@ describe('changedAreas', () => {
     ['app/src/pages/index.astro', ['app']],
     ['app/.oxlintrc.json', ['app']],
     ['app/src/content/docs/tech/foo.mdx', ['app']],
-    ['content/future.md', ['app', 'automation']],
+    ['content/future.md', ['automation']],
     ['app/scripts/smoke-prod.ts', ['app', 'automation']],
     ['infra/lib/site_stack.dart', ['infra']],
     ['infra/app/x.dart', ['infra']],

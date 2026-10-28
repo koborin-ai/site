@@ -6,7 +6,6 @@ import PageTitle from '../components/PageTitle.astro';
 import SiteShell from '../components/SiteShell.astro';
 import { localeOf, type Locale } from '../lib/docs';
 import { gitLastUpdated } from '../lib/last-updated';
-import { ogImageFor } from '../lib/og';
 import { alternateHref, hreflangLinks } from '../lib/navigation';
 import { isAboutId, isHomeId } from '../lib/catalog';
 
@@ -42,7 +41,6 @@ const hreflang = entry ? hreflangLinks(entry.id, available, Astro.site?.href ?? 
 
 let title = fallbackTitle;
 let description = fallbackDescription;
-let ogImage: string | undefined;
 let publishedAt: Date | undefined;
 let updatedAt: Date | undefined;
 let draft = false;
@@ -53,7 +51,6 @@ const kind = !entry ? 'missing' : isHomeId(entry.id) ? 'home' : isAboutId(entry.
 if (entry) {
   title = entry.data.title;
   description = entry.data.description;
-  ogImage = ogImageFor(entry);
   publishedAt = entry.data.publishedAt;
   draft = entry.data.draft;
   const explicit = entry.data.engagement;
@@ -72,7 +69,7 @@ if (entry) {
   description={description}
   enHref={enHref}
   jaHref={jaHref}
-  ogImage={ogImage}
+  entry={entry}
   hreflang={hreflang}
 >
   {kind === 'home' && <HomePage locale={locale} />}

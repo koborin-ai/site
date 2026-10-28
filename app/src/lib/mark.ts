@@ -27,8 +27,8 @@ export function headerMark(): MarkFrame {
   return lockup(18, 'currentColor');
 }
 
-export function ogMark(): MarkFrame {
-  return lockup(26, TILE_INK);
+export function ogMark(height: number): MarkFrame {
+  return lockup(height, TILE_INK);
 }
 
 export function tileSvg(px: number, corners: 'rounded' | 'square'): string {

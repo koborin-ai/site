@@ -6,7 +6,6 @@ type State = { readonly decision: Decision; readonly reviewing: boolean };
 type ConsentEvent = { readonly type: 'chose'; readonly choice: Choice } | { readonly type: 'reopened' };
 
 const STORAGE_KEY = 'cookie_consent';
-// Returning visitors already hold these strings, so the wire values cannot change.
 const WIRE: Record<Choice, string> = { granted: 'accepted', denied: 'rejected' };
 const GTAG_URL = 'https://www.googletagmanager.com/gtag/js?id=';
 
@@ -34,7 +33,7 @@ function writeChoice(choice: Choice): void {
   try {
     localStorage.setItem(STORAGE_KEY, WIRE[choice]);
   } catch {
-    // Storage blocked: the choice holds for this document only.
+    return;
   }
 }
 
@@ -64,8 +63,6 @@ function disableKey(id: MeasurementId): string {
   return `ga-disable-${id}`;
 }
 
-// Halting needs both the disable flag and consent denied: the flag alone leaves _ga
-// unrestored on a later accept, and consent alone still sends a cookieless hit.
 function syncAnalytics(id: MeasurementId, allowed: boolean): void {
   const loaded = document.querySelector(`script[src="${GTAG_URL}${id}"]`) !== null;
   const halted = ga[disableKey(id)] === true;

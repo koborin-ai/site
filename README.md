@@ -9,7 +9,7 @@
 
 <!-- markdownlint-enable MD033 -->
 
-Personal site and technical proving ground.
+Software engineer. Building tools, thinking about life.
 
 The site is an Astro app. Cloudflare Worker `koborin-ai-web` serves the built files as static assets. The only public host is `koborin.ai`.
 

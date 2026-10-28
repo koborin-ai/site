@@ -1,13 +1,4 @@
 ---
-/**
- * Cookie Consent Banner - GDPR compliant cookie consent for Google Analytics
- * 
- * - Shows banner on first visit (no consent stored)
- * - Stores consent choice in localStorage
- * - Dispatches 'cookie-consent-changed' event when consent changes
- * - Bilingual support (English/Japanese based on URL path)
- */
-
 const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
 
 const labels = isJapanese
@@ -27,7 +18,7 @@ const labels = isJapanese
 const privacyPolicyUrl = isJapanese ? '/ja/privacy-policy/' : '/privacy-policy/';
 ---
 
-<div id="cookie-consent-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-consent-title" hidden>
+<div id="cookie-consent-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-consent-title" tabindex="-1" hidden>
   <div class="cookie-content">
     <p id="cookie-consent-title" class="cookie-message">
       {labels.message}{isJapanese ? '' : ' '}<a href={privacyPolicyUrl} class="cookie-link">{labels.learnMore}</a>
@@ -44,70 +35,25 @@ const privacyPolicyUrl = isJapanese ? '/ja/privacy-policy/' : '/privacy-policy/'
 </div>
 
 <script>
-  const STORAGE_KEY = 'cookie_consent';
-  const CONSENT_ACCEPTED = 'accepted';
-  const CONSENT_REJECTED = 'rejected';
+  import { choose, watchBanner } from '../lib/consent';
 
-  function getConsent(): string | null {
-    try {
-      return localStorage.getItem(STORAGE_KEY);
-    } catch {
-      return null;
+  const banner = document.getElementById('cookie-consent-banner');
+  let returnFocus: HTMLElement | null = null;
+
+  watchBanner((state) => {
+    if (!banner) return;
+    banner.hidden = state === 'hidden';
+    if (state === 'reviewing') {
+      returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      banner.focus();
+    } else if (state === 'hidden' && returnFocus?.isConnected) {
+      returnFocus.focus();
+      returnFocus = null;
     }
-  }
+  });
 
-  function setConsent(value: string): void {
-    try {
-      localStorage.setItem(STORAGE_KEY, value);
-      // Dispatch event for other components (e.g., Head.astro) to react
-      window.dispatchEvent(new CustomEvent('cookie-consent-changed', { detail: { consent: value } }));
-    } catch {
-      // localStorage not available
-    }
-  }
-
-  function showBanner(): void {
-    const banner = document.getElementById('cookie-consent-banner');
-    if (banner) {
-      banner.hidden = false;
-    }
-  }
-
-  function hideBanner(): void {
-    const banner = document.getElementById('cookie-consent-banner');
-    if (banner) {
-      banner.hidden = true;
-    }
-  }
-
-  function initCookieConsent(): void {
-    const consent = getConsent();
-
-    // If no consent stored, show banner
-    if (!consent) {
-      showBanner();
-    }
-
-    // Setup button handlers
-    const acceptBtn = document.getElementById('cookie-accept');
-    const rejectBtn = document.getElementById('cookie-reject');
-
-    acceptBtn?.addEventListener('click', () => {
-      setConsent(CONSENT_ACCEPTED);
-      hideBanner();
-    });
-
-    rejectBtn?.addEventListener('click', () => {
-      setConsent(CONSENT_REJECTED);
-      hideBanner();
-    });
-  }
-
-  // Initialize on page load
-  document.addEventListener('DOMContentLoaded', initCookieConsent);
-
-  // Re-initialize on Astro page transitions (View Transitions API)
-  document.addEventListener('astro:page-load', initCookieConsent);
+  document.getElementById('cookie-accept')?.addEventListener('click', () => choose('granted'));
+  document.getElementById('cookie-reject')?.addEventListener('click', () => choose('denied'));
 </script>
 
 <style>

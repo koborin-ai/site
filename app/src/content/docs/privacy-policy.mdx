@@ -1,9 +1,10 @@
 ---
 title: Privacy Policy
 description: Privacy policy for koborin.ai - information about data collection, cookies, and third-party services.
+lastUpdated: false
 ---
 
-Last updated: January 6, 2025
+Last updated: October 28, 2026
 
 ## Overview
 
@@ -20,7 +21,7 @@ We use Google Analytics 4 to understand how visitors interact with our website. 
 - Device and browser information
 - Referral source (how you found our site)
 
-This data is anonymized and used solely to improve our content and user experience. Google Analytics uses cookies to collect this information. You can opt out of analytics tracking by declining cookies when prompted.
+This data is collected using pseudonymous identifiers, not your name or contact details, and is used only to improve our content and user experience. Google Analytics uses cookies to collect this information. You can opt out of analytics tracking by declining cookies when prompted.
 
 For more information, see [Google's Privacy Policy](https://policies.google.com/privacy).
 
@@ -32,6 +33,8 @@ Our comment system is powered by [Giscus](https://giscus.app/), which uses GitHu
 - Your GitHub username and avatar are displayed with your comment
 - Comments are stored in our GitHub repository's Discussions
 
+When the comment section on an article loads, content is fetched from Giscus (giscus.app) and GitHub, which receive data such as your IP address and the page URL. If you sign in with GitHub, a session token is stored in your browser's local storage (`giscus-session`).
+
 We do not have access to your GitHub password. For more information, see [GitHub's Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement).
 
 ## Cookies
@@ -40,10 +43,11 @@ We use cookies for the following purposes:
 
 | Cookie | Purpose | Duration |
 |--------|---------|----------|
-| `cookie_consent` | Remembers your cookie preference | 1 year |
+| `cookie_consent` (local storage) | Remembers whether you accepted or declined analytics | Kept until you clear it |
+| `starlight-theme` (local storage) | Light/dark theme preference | Kept until you clear it |
 | `_ga`, `_ga_*` | Google Analytics tracking (only with consent) | 2 years |
 
-You can manage your cookie preferences at any time by clearing your browser's cookies or using your browser's privacy settings.
+To change or withdraw consent, use "Cookie settings" at the bottom of any page. If you decline, existing Google Analytics cookies (such as `_ga`) are deleted.
 
 ## Your Rights (GDPR)
 
@@ -63,12 +67,14 @@ We use the following third-party services:
 
 - **Google Analytics** - Web analytics
 - **Giscus** - Comment system (via GitHub)
+- **GitHub Sponsors** - Sponsor button on the About page (loaded from github.com; GitHub may set its own cookies)
+- **Cloudflare** - Hosting and content delivery. Cloudflare processes request data such as IP addresses to deliver and secure the site.
 
 Each service has its own privacy policy governing their data practices.
 
 ## Data Retention
 
-- Analytics data is retained according to Google Analytics' default settings
+- Google Analytics keeps event-level data for 2 months and user-level data for 14 months (the user-level period restarts when you visit again).
 - Comments remain until deleted by the author or repository owner
 - Cookie consent preferences are stored locally in your browser
 

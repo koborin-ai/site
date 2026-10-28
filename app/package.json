@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node scripts/subset-noto-sans-jp.ts --out public/fonts && astro dev",
-    "build": "node scripts/optimize-og-images.ts && astro build && node scripts/subset-noto-sans-jp.ts && node scripts/check-routes.ts && node scripts/check-csp.ts",
+    "build": "node scripts/optimize-og-images.ts && astro build && node scripts/subset-noto-sans-jp.ts && node scripts/check-routes.ts && node scripts/check-csp.ts && node scripts/check-consent.ts",
     "preview": "astro preview",
     "lint": "oxlint",
     "typecheck": "astro check",

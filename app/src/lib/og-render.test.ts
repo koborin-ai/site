@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { MissingGlyphError, renderOgCard } from './og-render';
+import { MissingGlyphError, OG_WEBP_QUALITY, renderOgCard } from './og-render';
 
 const publishedAt = new Date('2026-02-14T00:00:00.000Z');
 
@@ -13,7 +13,25 @@ async function bottomRows(bytes: Uint8Array, rows: number): Promise<Buffer> {
   return data.subarray((info.height - rows) * rowBytes);
 }
 
+function channelDelta(pixel: number[], expected: number[]): number {
+  return Math.max(...pixel.map((channel, index) => Math.abs(channel - expected[index])));
+}
+
+const channelToleranceByWebpQuality = { 90: 8 } as const;
+
 describe('renderOgCard', () => {
+  it('paints the footer mark and leaves the arch open', async () => {
+    const bytes = await renderOgCard({ title: 'A', locale: 'en', publishedAt });
+    const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const pixel = (x: number, y: number) => {
+      const index = (y * info.width + x) * info.channels;
+      return [data[index], data[index + 1], data[index + 2]];
+    };
+    const channelTolerance = channelToleranceByWebpQuality[OG_WEBP_QUALITY];
+    expect(channelDelta(pixel(82, 538), [0xd5, 0xda, 0xe1])).toBeLessThanOrEqual(channelTolerance);
+    expect(channelDelta(pixel(88, 528), [0x0b, 0x0d, 0x12])).toBeLessThanOrEqual(channelTolerance);
+  });
+
   it('renders the longest Japanese title and a short English title as 1200x630 webp', async () => {
     const longBytes = await renderOgCard({
       title: longestJapaneseTitle,

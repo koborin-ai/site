@@ -102,6 +102,12 @@ body {
   color: var(--site-muted);
   font-size: 13px;
   font-weight: 500;
+  gap: 8px;
+}
+
+.mark svg {
+  flex: none;
+  color: var(--site-accent);
 }
 
 .mark:hover,
@@ -397,6 +403,7 @@ select:focus-visible {
     text-align: left;
   }
 
+  .mark,
   .nav-about,
   .lang-switch,
   .icon-link,
@@ -411,6 +418,18 @@ select:focus-visible {
   }
 
   .header-tools {
-    gap: 28px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 385px) {
+  .mark-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
   }
 }

@@ -31,10 +31,7 @@ interface InkBand {
   bottom: number;
   left: number;
   right: number;
-  brightest: number[];
 }
-
-const brightness = (pixel: number[]) => pixel[0] + pixel[1] + pixel[2];
 
 async function raster(bytes: Uint8Array): Promise<{ pixel: (x: number, y: number) => number[]; bands: InkBand[] }> {
   const { data, info } = await sharp(bytes).raw().toBuffer({ resolveWithObject: true });
@@ -49,13 +46,12 @@ async function raster(bytes: Uint8Array): Promise<{ pixel: (x: number, y: number
       if (channelDelta(ink, background) <= 24) continue;
       let band = bands.at(-1);
       if (!band || band.bottom < y - 1) {
-        band = { top: y, bottom: y, left: x, right: x, brightest: ink };
+        band = { top: y, bottom: y, left: x, right: x };
         bands.push(band);
       }
       band.bottom = y;
       band.left = Math.min(band.left, x);
       band.right = Math.max(band.right, x);
-      if (brightness(ink) > brightness(band.brightest)) band.brightest = ink;
     }
   }
   return { pixel, bands };
@@ -179,7 +175,12 @@ describe('renderOgCard for site cards', () => {
     const leftBar = pixel(lockup.left + 8, lockup.bottom - 10);
     expect(channelDelta(leftBar, accent)).toBeLessThanOrEqual(tolerance);
     expect(tagline.top).toBeGreaterThan(lockup.bottom + 36);
-    // A 26px stroke has no flat interior, and lossy WebP rings past its colour at the edges.
-    expect(channelDelta(tagline.brightest, mutedOnBackground)).toBeLessThanOrEqual(2 * tolerance);
+    let nearest = Number.POSITIVE_INFINITY;
+    for (let y = tagline.top; y <= tagline.bottom; y += 1) {
+      for (let x = tagline.left; x <= tagline.right; x += 1) {
+        nearest = Math.min(nearest, channelDelta(pixel(x, y), mutedOnBackground));
+      }
+    }
+    expect(nearest).toBeLessThanOrEqual(tolerance);
   });
 });

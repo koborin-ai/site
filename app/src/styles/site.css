@@ -234,7 +234,7 @@ select:focus-visible {
 .rule {
   width: 44px;
   height: 1px;
-  margin: 56px 0 44px;
+  margin: var(--space-2xl, 3rem) 0;
   background: var(--site-faint);
 }
 
@@ -388,6 +388,10 @@ select:focus-visible {
 
   .column {
     padding: 96px 22px 0;
+  }
+
+  .rule {
+    margin: calc(var(--space-2xl, 3rem) * 0.75) 0;
   }
 
   .name {

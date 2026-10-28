@@ -68,7 +68,6 @@ function summaryLine(result: ScoreRow | MissingReport): string {
   return `| ${result.path} | ${result.formFactor} | ${result.category} | ${minimum} | ${score} | ${verdict} |`;
 }
 
-/** No score has been recorded on the CI runner yet, so only a missing report may fail required-checks. */
 export function judgeLighthouse(attempts: readonly LighthouseAttempt[]): LighthouseJudgement {
   const byCell = new Map<string, LighthouseAttempt>();
   for (const attempt of attempts) {

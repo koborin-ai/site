@@ -57,15 +57,11 @@ export type PolicyViolation = {
 
 type YamlNode = { readonly key: string; readonly value: string; readonly children: YamlNode[] };
 
-/**
- * Reads the block-style subset these workflows use: `key: value`, nested mappings,
- * `- ` sequence items, and `|` or `>` block scalars. actionlint has already parsed the files.
- */
 function leadingSpaces(line: string): number {
   return line.length - line.trimStart().length;
 }
 
-function parseYaml(source: string): YamlNode {
+function parseBlockYaml(source: string): YamlNode {
   const root: YamlNode = { key: '', value: '', children: [] };
   const open: { indent: number; node: YamlNode }[] = [{ indent: -1, node: root }];
   const add = (indent: number, node: YamlNode) => {
@@ -160,7 +156,7 @@ function concurrencyProblem(where: string, node: YamlNode | undefined, expected:
 
 function auditFile(file: WorkflowName, source: string): PolicyViolation[] {
   const rule = rules[file];
-  const tree = parseYaml(source);
+  const tree = parseBlockYaml(source);
   const jobs = child(tree, 'jobs')?.children ?? [];
   const violations: PolicyViolation[] = [];
   const report = (kind: PolicyViolation['rule'], message: string) => violations.push({ file, rule: kind, message });

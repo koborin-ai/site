@@ -10,6 +10,7 @@ const { title, showEngagement } = Astro.props;
 const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
 const privacyPolicyUrl = isJapanese ? '/ja/privacy-policy/' : '/privacy-policy/';
 const privacyPolicyLabel = isJapanese ? 'プライバシーポリシー' : 'Privacy Policy';
+const cookieSettingsLabel = isJapanese ? 'Cookie 設定' : 'Cookie settings';
 const currentYear = new Date().getFullYear();
 ---
 
@@ -18,7 +19,16 @@ const currentYear = new Date().getFullYear();
 <footer class="site-footer">
   <span class="copyright">© {currentYear} koborin.ai</span>
   <a href={privacyPolicyUrl} class="footer-link">{privacyPolicyLabel}</a>
+  <button type="button" class="footer-link cookie-settings" data-cookie-settings>{cookieSettingsLabel}</button>
 </footer>
+
+<script>
+  import { reopen } from '../lib/consent';
+
+  for (const button of document.querySelectorAll('[data-cookie-settings]')) {
+    button.addEventListener('click', () => reopen());
+  }
+</script>
 
 <style>
   .site-footer {
@@ -38,6 +48,17 @@ const currentYear = new Date().getFullYear();
     text-decoration-thickness: 1px;
     text-decoration-offset: 0.18em;
     text-decoration-color: color-mix(in srgb, currentColor 65%, transparent);
+  }
+
+  .cookie-settings {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-family: "Geist Mono", "Noto Sans JP", "Noto Sans JP Fallback", ui-monospace, monospace;
+    text-underline-offset: 0.18em;
+    cursor: pointer;
   }
 
   .footer-link:hover {

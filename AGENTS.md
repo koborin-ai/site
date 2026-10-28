@@ -36,6 +36,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/lib/og-render.ts` | Renders an article card to WebP at build time. |
 | `app/src/lib/mark.ts` | The only copy of the mark geometry. |
 | `app/src/lib/icons.ts` | Favicon rows, `ICON_LINKS`, and `renderIcon`. |
+| `app/src/lib/consent.ts` | The only owner of analytics consent. Stores the choice, loads or halts gtag.js, deletes `_ga` cookies, and tells the banner when to show. |
 | `app/scripts/render-mark.ts` | Writes the four public icon files from the mark. |
 | `app/src/styles/vendor/` | Reset, props, util, and print CSS copied from Starlight 0.42.6. The layout keeps the class names those files expect. |
 | `app/src/styles/prose.css` | The only stylesheet inside `.sl-markdown-content`; tokens at the top. |
@@ -290,7 +291,8 @@ Examples:
 
 ## Analytics
 
-- The site uses GA4. `app/src/components/Head.astro` loads gtag when `PUBLIC_GA_MEASUREMENT_ID` is set.
+- The site uses GA4. `app/src/components/Head.astro` writes the `ga-measurement-id` meta when `PUBLIC_GA_MEASUREMENT_ID` is set, and `app/src/lib/consent.ts` loads gtag only after the visitor accepts. The footer's Cookie settings button reopens the banner. Decline halts a loaded tag and deletes `_ga` and `_ga_*` on the host and its parent domains.
+- `consent.test.ts` fails if another file under `app/src/` names `cookie_consent`, the gtag.js URL, or `ga-disable-`. `npm run build` ends with `scripts/check-consent.ts`, which drives `dist/` in Chromium under the CSP from `public/_headers`.
 
 ## Diagram Guidelines
 

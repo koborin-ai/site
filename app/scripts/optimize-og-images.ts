@@ -70,7 +70,6 @@ async function encode(ogDir: string, job: StaticOgJob, source: Buffer): Promise<
   return { file: job.output, width: OUTPUT_WIDTH, bytes: size };
 }
 
-/** Every source is read and checked before the first write, so a bad input leaves no new webp. */
 export async function renderStaticOg(ogDir: string): Promise<readonly WrittenOg[]> {
   await Promise.all(staticOgJobs.map((job) => rm(path.join(ogDir, `${job.output}.partial`), { force: true })));
   const sources = await Promise.all(

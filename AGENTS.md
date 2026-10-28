@@ -43,6 +43,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/scripts/routes-baseline.txt` | Public URLs the production build must still emit. `/pagefind/` is the only allowed omission. |
 | `app/scripts/required-checks.ts` | The only list of pull request path areas (`areaPaths`), and the `required-checks` verdict. Imports `node:` built-ins only, because it runs before `npm ci`. |
 | `app/scripts/smoke-prod.ts` | Probes `koborin.ai` from the route baseline after each app deploy and weekly. Sends GETs only. |
+| `app/scripts/workflow-policy.ts` | One rule per file in `.github/workflows/`: SHA pins, `contents: read` permissions, the fork skip on the label job, and the concurrency groups. Imports `node:` built-ins only. |
 | `app/scripts/subset-noto-sans-jp.ts` | Subsets Noto Sans JP on every build and writes the late-loaded stylesheet. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
@@ -272,6 +273,7 @@ Examples:
   - `app-release.yml`: `npm run check`, the production build, and `wrangler deploy` for Worker `koborin-ai-web`, then the `smoke` job. The deploy job runs only when `github.ref` is `refs/heads/main`.
   - `smoke-prod.yml`: runs `node scripts/smoke-prod.ts` against `https://koborin.ai` after each app deploy, every Monday at 04:23 UTC, and on dispatch from `main`. It needs no token and no `npm ci`. A failure turns the run red and rolls nothing back.
 - Path filters: pull request path filters do not select checks. Do not add `paths` or `paths-ignore` to a `pull_request` trigger. To change which checks a path runs, edit `areaPaths`. A new area also needs a job with the same id in `required-checks.yml` and an entry in the `required-checks` job's `needs`. `app/scripts/required-checks.test.ts` fails if a filter returns or the job wiring drifts.
+- Concurrency: `required-checks.yml` and `label-pr.yml` cancel the superseded run of the same pull request. `app-release` and `terraform-state` (apply and the `plan` job) never cancel a run in progress. Called workflows have no group of their own. `mise run check:automation` runs `app/scripts/workflow-policy.ts`, which fails when a pin, a permission block, or a group drifts, and when a workflow file has no rule.
 - Toolchain: every workflow takes its Node, Dart, actionlint, and shellcheck versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump those versions in `.tool-versions`, never in a workflow. Infra plan and apply do not install Terraform. With no `tofu` on `PATH`, `terradart plan` downloads OpenTofu.
 - Cloudflare auth:
   - Secret: `CLOUDFLARE_API_TOKEN` (scoped to this account and zone).
@@ -383,7 +385,7 @@ Gating on 49 stylistic disagreements would force a rewrite of the author's Japan
 ### Automation (`.github/`)
 
 ```bash
-mise run check:automation  # actionlint, shellcheck, PR label tests
+mise run check:automation  # actionlint, workflow policy, shellcheck, PR label tests
 mise run check:docs        # markdownlint over every tracked .md
 ```
 

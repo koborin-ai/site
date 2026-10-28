@@ -82,7 +82,7 @@ flowchart LR
 | `plan-infra.yml` | Called for the infra area, or manual dispatch | `mise run check:infra` + `terradart plan` for the `site` stack | No apply |
 | `release-infra.yml` | `main` infra push or manual dispatch | Applies the `site` stack | Runs only from `main`. State is in R2 |
 | `app-ci.yml` | Called for the app area | Runs `npm run check` and the production build | Blocks merges that break the app |
-| `automation-ci.yml` | Called for the automation area | `mise run check:automation` + `check:docs` (actionlint, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
+| `automation-ci.yml` | Called for the automation area | `mise run check:automation` + `check:docs` (actionlint, workflow policy, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
 | `app-release.yml` | Merge to `main` or `workflow_dispatch` | Runs `npm run check`, builds the static site, runs `wrangler deploy`, then calls `smoke-prod.yml` | Runs only from `main`. Uses `CLOUDFLARE_API_TOKEN` |
 | `smoke-prod.yml` | After each app deploy, weekly, or manual dispatch | Probes the public routes in `app/scripts/routes-baseline.txt` on `https://koborin.ai` | GETs only. Skips `/pagefind/` and `/_headers`. No rollback |
 

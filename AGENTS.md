@@ -282,7 +282,7 @@ Examples:
 
 - App deploy and infra apply run only from `main`. A `workflow_dispatch` from any other ref skips the deploy or apply job.
 - `release-infra.yml` applies the `site` stack when a push to `main` touches `infra/**`. To re-apply, dispatch it from `main`. `infra-v*` tags do not apply. The workflow has no tag trigger.
-- `app-release.yml` deploys Worker `koborin-ai-web` when a push to `main` touches its path filter (`app/**`, `content/**`, `.tool-versions`, `mise.toml`, and the two app workflow files), and on `workflow_dispatch` from `main`.
+- `app-release.yml` deploys Worker `koborin-ai-web` when a push to `main` touches its path filter (`app/**`, `.tool-versions`, `mise.toml`, and the two app workflow files), and on `workflow_dispatch` from `main`.
 - GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
 
 ## Analytics

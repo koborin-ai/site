@@ -8,7 +8,7 @@ type AreaPaths = {
 
 export const areaPaths = {
   app: {
-    dirs: ['app/', 'content/'],
+    dirs: ['app/'],
     files: [
       '.tool-versions',
       'mise.toml',

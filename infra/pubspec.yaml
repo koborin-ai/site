@@ -3,7 +3,7 @@ description: TerraDart infrastructure for koborin.ai (Dart → Terraform).
 publish_to: none
 
 environment:
-  sdk: ^3.6.0
+  sdk: ^3.10.0
 
 dependencies:
   terradart_cloudflare: ^0.35.0
@@ -11,4 +11,11 @@ dependencies:
 
 dev_dependencies:
   lints: ^6.0.0
+  terradart_cli: 0.35.0
   test: ^1.31.2
+
+# `engine: tofu` makes `terradart` download its pinned OpenTofu when `tofu`
+# is not on PATH, including on a runner that still has `terraform` installed.
+# A state Terraform wrote is planned read-only. The first `apply` rewrites it.
+terradart:
+  engine: tofu

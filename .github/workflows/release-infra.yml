@@ -40,38 +40,30 @@ jobs:
       - name: Analyze and test
         run: mise run check:infra
 
-      - name: Synth Terraform config
+      - name: Plan
         working-directory: infra
-        run: dart run bin/synth.dart
-
-      - name: Terraform Init
-        working-directory: infra/tf-out/site
-        env: &terraform_cloudflare
+        env: &cloudflare_state
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: terraform init -input=false
+          TF_CLI_ARGS: -no-color
+        run: dart run terradart_cli:terradart plan
 
-      - name: Terraform Plan (pre-apply)
-        working-directory: infra/tf-out/site
-        env: *terraform_cloudflare
-        run: terraform plan -no-color -input=false
+      - name: Apply
+        working-directory: infra
+        env: *cloudflare_state
+        run: dart run terradart_cli:terradart apply --auto-approve
 
-      - name: Terraform Apply
-        working-directory: infra/tf-out/site
-        env: *terraform_cloudflare
-        run: terraform apply -auto-approve -input=false
-
-      - name: Terraform Plan (verify no drift)
-        working-directory: infra/tf-out/site
-        env: *terraform_cloudflare
+      - name: Plan (verify no drift)
+        working-directory: infra
+        env: *cloudflare_state
         run: |
           set +e
-          terraform plan -detailed-exitcode -input=false
+          dart run terradart_cli:terradart plan --detailed-exitcode
           EXIT_CODE=$?
           set -e
           if [ "$EXIT_CODE" -eq 2 ]; then
-            echo "Terraform state drift detected after apply"
+            echo "Infrastructure drift detected after apply"
             exit 1
           fi
           if [ "$EXIT_CODE" -ne 0 ]; then

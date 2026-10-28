@@ -12,7 +12,7 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -47,3 +47,17 @@ jobs:
       - name: Build
         working-directory: app
         run: npm run build
+
+      - name: Lighthouse
+        id: lighthouse
+        working-directory: app
+        run: node scripts/lighthouse-pr.ts "$RUNNER_TEMP/lighthouse"
+
+      - name: Upload Lighthouse report
+        if: ${{ !cancelled() && steps.lighthouse.outcome != 'skipped' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse
+          path: ${{ runner.temp }}/lighthouse/
+          if-no-files-found: error
+          retention-days: 14

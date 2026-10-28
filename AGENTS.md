@@ -43,6 +43,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/scripts/routes-baseline.txt` | Public URLs the production build must still emit. `/pagefind/` is the only allowed omission. |
 | `app/scripts/required-checks.ts` | The only list of pull request path areas (`areaPaths`), and the `required-checks` verdict. Imports `node:` built-ins only, because it runs before `npm ci`. |
 | `app/scripts/smoke-prod.ts` | Probes `koborin.ai` from the route baseline after each app deploy and weekly. Sends GETs only. |
+| `app/scripts/lighthouse-pr.ts` | Serves `app/dist` on `127.0.0.1` with Brotli and runs Lighthouse on four baseline pages. `judgeLighthouse` owns the minimums and the exit code. |
 | `app/scripts/workflow-policy.ts` | One rule per file in `.github/workflows/`: SHA pins, `contents: read` permissions, the fork skip on the label job, and the concurrency groups. Imports `node:` built-ins only. |
 | `app/scripts/subset-noto-sans-jp.ts` | Subsets Noto Sans JP on every build and writes the late-loaded stylesheet. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
@@ -266,7 +267,7 @@ Examples:
 
 - Workflows:
   - `required-checks.yml`: runs on every pull request. Its `changes` job maps the merge diff to the app, infra, and automation areas through `areaPaths` in `app/scripts/required-checks.ts`, and the workflow calls the area workflows below for the areas that changed. Its `required-checks` job is the one check context a ruleset needs. It fails when `changes` did not succeed, when any area job failed or was cancelled, and when a changed area's job was skipped or is missing. A pull request that touches no area passes.
-  - `app-ci.yml`: called for the app area. `npm run check` plus `npm audit` and the production build.
+  - `app-ci.yml`: called for the app area. `npm run check` plus `npm audit` and the production build, then `app/scripts/lighthouse-pr.ts` over `/`, `/ja/`, and the English and Japanese architecture articles, once per page on desktop and on mobile. It uploads the reports as the `lighthouse` artifact. A score under its minimum is report-only. A missing report (no Chrome, a non-200 page, a null score) fails the app job and so `required-checks`.
   - `plan-infra.yml`: called for the infra area, or dispatched. The `check` job runs `mise run check:infra` with no secrets, so Dependabot and fork pull requests run it too. The `plan` job runs `dart run terradart_cli:terradart plan` for the `site` stack, skips Dependabot and forks, and alone holds the `terraform-state` concurrency group. A failed `check` or `plan` fails `required-checks`.
   - `automation-ci.yml`: called for the automation area. `mise run check:automation` and `mise run check:docs`.
   - `release-infra.yml`: `mise run check:infra`, then `dart run terradart_cli:terradart plan` and `dart run terradart_cli:terradart apply --auto-approve` for the `site` stack, on a `main` push under `infra/` or a dispatch. The job runs only when `github.ref` is `refs/heads/main`, in the `production (infra)` environment.
@@ -367,6 +368,7 @@ npm run check-images  # Image usage validation
 npm run check         # All four of the above
 npm run build         # Astro build; needs Playwright Chromium
 npm run lint:prose    # textlint over the articles; advisory, see below
+node scripts/lighthouse-pr.ts /tmp/lighthouse  # after npm run build; reports into the given directory
 ```
 
 `npm run build` is not part of `check` because it takes 40 seconds. Run it whenever content, assets, or configuration change.
@@ -442,7 +444,7 @@ Use **tmux** for long-running processes such as `npm run dev`.
 
 ### Playwright (required for `npm run check` and `npm run build`)
 
-CI installs Chromium for Mermaid diagram rendering during production builds. The Vitest contract test in `app/src/styles/prose.test.ts` renders Mermaid too. After the VM update script runs `npm ci`, run once per fresh environment:
+CI installs Chromium for Mermaid diagram rendering during production builds, and `app/scripts/lighthouse-pr.ts` launches the same binary. The Vitest contract test in `app/src/styles/prose.test.ts` renders Mermaid too. After the VM update script runs `npm ci`, run once per fresh environment:
 
 ```bash
 cd app && npx playwright install chromium

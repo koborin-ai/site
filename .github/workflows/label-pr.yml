@@ -52,8 +52,6 @@ jobs:
         with:
           script: |
             const managed = new Set([
-              'change:behavior',
-              'change:structure',
               'app',
               'infra',
               'doc',

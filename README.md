@@ -79,23 +79,23 @@ flowchart LR
 | Workflow | Trigger | Purpose | Notes |
 | --- | --- | --- | --- |
 | `required-checks.yml` | Every PR | Maps changed paths to areas with `app/scripts/required-checks.ts`, calls the area workflows, and reports the `required-checks` job | The one check context to require |
-| `plan-infra.yml` | Called for the infra area, or manual dispatch | `mise run check:infra` + `terraform plan` for the `site` stack | No apply |
+| `plan-infra.yml` | Called for the infra area, or manual dispatch | `mise run check:infra` + `terradart plan` for the `site` stack | No apply |
 | `release-infra.yml` | `main` infra push or manual dispatch | Applies the `site` stack | Runs only from `main`. State is in R2 |
 | `app-ci.yml` | Called for the app area | Runs `npm run check` and the production build | Blocks merges that break the app |
 | `automation-ci.yml` | Called for the automation area | `mise run check:automation` + `check:docs` (actionlint, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
 | `app-release.yml` | Merge to `main` or `workflow_dispatch` | Runs `npm run check`, builds the static site, runs `wrangler deploy`, then calls `smoke-prod.yml` | Runs only from `main`. Uses `CLOUDFLARE_API_TOKEN` |
 | `smoke-prod.yml` | After each app deploy, weekly, or manual dispatch | Probes the public routes in `app/scripts/routes-baseline.txt` on `https://koborin.ai` | GETs only. Skips `/pagefind/` and `/_headers`. No rollback |
 
-Tool versions come from `.tool-versions`. `actions/setup-node` reads it through `node-version-file`, and the infra and automation workflows install from it with `jdx/mise-action`.
+Tool versions for Node, Dart, actionlint, and shellcheck come from `.tool-versions`. `actions/setup-node` reads it through `node-version-file`, and the infra and automation workflows install from it with `jdx/mise-action`. Infra plan and apply do not install Terraform. `terradart plan` downloads OpenTofu.
 
 ## Tech Stack
 
 - **Frontend**: Astro and TypeScript. Home, article lists, talk lists, and articles share one centred column. Article pages use a wider measure than the home and list pages. Pagefind site search is gone.
 - **Content Management**: MDX stored under `app/src/content/docs/` within git. Frontmatter is validated with Zod in `app/src/content.config.ts`. Drafts can be marked with `draft: true` in frontmatter.
 - **Analytics**: Google Analytics 4 for baseline PV/engagement.
-- **Infrastructure**: TerraDart (Dart) targeting Cloudflare via Terraform. State is in R2.
+- **Infrastructure**: TerraDart (Dart) targeting Cloudflare. `terradart plan` and `terradart apply` run OpenTofu on the synthesized JSON. State is in R2.
 - **CI/CD**: GitHub Actions with a Cloudflare API token. `plan-infra.yml` / `release-infra.yml` drive infra; `app-ci.yml` / `app-release.yml` handle the Astro app.
-- **Toolchain**: [mise](https://mise.jdx.dev/) pins Node, Dart, Terraform, actionlint, and shellcheck for both laptops and CI.
+- **Toolchain**: [mise](https://mise.jdx.dev/) pins Node, Dart, actionlint, and shellcheck for both laptops and CI. OpenTofu comes from `terradart_cli`, not from mise.
 - **Quality gates**: oxlint and `astro check` for the app, Vitest for app unit tests, `dart analyze` + `dart test` for infra, actionlint and shellcheck for the automation, markdownlint for the docs. `mise run check` runs all of it.
 - **LLM Context**: Machine-readable `llms.txt` files for AI assistants. Auto-generated at build time.
 
@@ -119,7 +119,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 
 ```text
 .
-├── .tool-versions                 # Node, Dart, Terraform, actionlint, shellcheck
+├── .tool-versions                 # Node, Dart, actionlint, shellcheck
 ├── mise.toml                      # Repo-wide check tasks
 ├── app/                           # Astro application (static)
 │   ├── wrangler.jsonc            # Worker name and dist/ assets
@@ -155,7 +155,7 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   └── astro.config.ts           # Astro, MDX, sitemap, and Markdown plugins
 ├── docs/                          # Architecture notes, contact-flow specs, etc.
 ├── infra/                         # TerraDart site stack
-│   ├── bin/synth.dart            # Synth entry point → tf-out/site/main.tf.json
+│   ├── bin/infra.dart            # Entry point → tf-out/site/main.tf.json
 │   ├── lib/                      # Stack definitions
 │   │   └── site_stack.dart       # Zone lookup + Workers custom domain
 │   ├── test/                     # dart test coverage for the synth output
@@ -194,7 +194,7 @@ Article pages open with the title and the dates. The social card is generated at
 
 ## Workflow Overview
 
-1. **Infra changes**: edit TerraDart stacks → `mise run check:infra` → open PR → GitHub Actions runs `terraform plan` → reviewer approves → merge triggers apply of the `site` stack.
+1. **Infra changes**: edit TerraDart stacks → `mise run check:infra` → open PR → GitHub Actions runs `terradart plan` → reviewer approves → merge to `main` runs `terradart apply` for the `site` stack.
 2. **App changes**: edit Astro/MDX → `mise run check` and `npm run build --prefix app` → PR runs `required-checks.yml`, which calls `app-ci.yml` → merge to `main` triggers `app-release.yml`, which runs `npm run check`, builds the static site, runs `wrangler deploy`, and then probes production with `smoke-prod.yml`.
 3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `mise run check:app`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
 
@@ -240,7 +240,7 @@ To add a new article or page:
 Tool versions live in `.tool-versions`, so [mise](https://mise.jdx.dev/) is the only prerequisite.
 
 ```bash
-# Install mise once, then provision Node, Dart, Terraform, actionlint, shellcheck
+# Install mise once, then provision Node, Dart, actionlint, shellcheck
 curl https://mise.run | sh
 mise install
 
@@ -258,9 +258,9 @@ mise run check
 ## Infrastructure Dev Notes
 
 - TerraDart stacks are located in `infra/lib/`.
-- Synth emits Terraform JSON via `dart run bin/synth.dart`.
+- From `infra/`, `dart run terradart_cli:terradart plan` synthesizes `tf-out/site/main.tf.json` and plans it with OpenTofu.
 - State is in R2: `koborin-ai-tfstate` / `terraform/site/terraform.tfstate`.
-- Never run `terraform apply` locally. Apply goes through GitHub Actions.
+- Never run `terradart apply` locally. Apply goes through GitHub Actions on `main`.
 
 ### Site Stack
 
@@ -283,9 +283,9 @@ mise run check
 | `GA_MEASUREMENT_ID` | GA4 Measurement ID (e.g., `G-XXXXXXXXXX`) | GitHub Secrets |
 | `GISCUS_REPO_ID` | Giscus repository ID for the comments widget | GitHub Secrets |
 | `GISCUS_CATEGORY_ID` | Giscus discussion category ID | GitHub Secrets |
-| `CLOUDFLARE_API_TOKEN` | Scoped token for wrangler and Terraform | GitHub Secrets |
+| `CLOUDFLARE_API_TOKEN` | Scoped token for wrangler and the Cloudflare provider | GitHub Secrets |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | GitHub Variables |
-| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | Terraform state in R2 | GitHub Secrets |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | State in R2, passed as AWS credentials | GitHub Secrets |
 
 `app-release.yml` writes GA and Giscus values into `app/.env` at build time as `PUBLIC_*`.
 

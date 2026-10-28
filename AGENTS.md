@@ -32,8 +32,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/pages/[...slug].astro` | Renders each docs entry at its current public URL. |
 | `app/src/lib/` | Public URL mapping, the home and list catalog, the git updated date, and link-card icon lookup. |
 | `app/src/data/site-icons.json` | Hostname to data-URL favicons for rich link cards. |
-| `app/src/lib/og.ts` | Which pages get a generated social card, and the card URL. |
-| `app/src/lib/og-render.ts` | Renders an article card to WebP at build time. |
+| `app/src/lib/og.ts` | Which card each page gets (`ogImageFor`), every `/og/` file the build emits (`ogCards`), and the card size. |
+| `app/src/lib/og-render.ts` | Renders article and shared cards to WebP at build time. |
 | `app/src/lib/mark.ts` | The only copy of the mark geometry. |
 | `app/src/lib/icons.ts` | Favicon rows, `ICON_LINKS`, and `renderIcon`. |
 | `app/src/lib/consent.ts` | The only owner of analytics consent. Stores the choice, loads or halts gtag.js, deletes `_ga` cookies, and tells the banner when to show. |
@@ -51,7 +51,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
 | `app/src/pages/rss.xml.ts` | RSS feed endpoint for English articles. |
 | `app/src/pages/ja/rss.xml.ts` | RSS feed endpoint for Japanese articles. |
-| `app/src/pages/og/[...slug].webp.ts` | Prerendered endpoint for each article card at `/og/<page path>.webp`. |
+| `app/src/pages/og/[...slug].webp.ts` | Prerendered endpoint for every card in `ogCards`. |
 | `infra/` | TerraDart infrastructure (`site` stack). |
 | `infra/lib/site_stack.dart` | Zone lookup and Workers custom domain for `koborin.ai`. |
 | `infra/bin/infra.dart` | Entry point. `runStack` writes `tf-out/site/main.tf.json` with `S3Backend.r2`. `terradart plan` and `terradart apply` run it. |
@@ -111,7 +111,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      - Bad: `GA で、 [Dart 版](https://...) は` (unnecessary space after `、`)
 3. **Brand Assets Management**:
    - **Favicon**: `ICONS` in `app/src/lib/icons.ts` lists `favicon.ico`, `favicon.png`, `favicon.svg`, and `apple-touch-icon.png`. `app/scripts/render-mark.ts` writes those files into `app/public/`. `Head.astro` links them in that order. Every theme gets the dark tile. To add an icon, add a row, run the script, and add its URL to `app/scripts/routes-baseline.txt`.
-   - **Header mark**: The home link in `app/src/components/SiteHeader.astro` is the mark plus the word `koborin.ai`. The geometry lives only in `app/src/lib/mark.ts`. `mark.test.ts` fails if the arch path appears in any other file, and it allows a public `ICONS` file only when the bytes match `renderIcon`. The SVG is `aria-hidden` and paints with `--site-accent`. At 385px and below the word is visually hidden and stays the link's accessible name.
+   - **Header mark**: The home link in `app/src/components/SiteHeader.astro` is the mark plus the word `koborin.ai`. The geometry lives only in `app/src/lib/mark.ts`. `mark.test.ts` fails if the arch path appears in any other file, and it allows a public `ICONS` file only when the bytes match `renderIcon`. It also fails on any other image file under `app/public/`. The SVG is `aria-hidden` and paints with `--site-accent`. At 385px and below the word is visually hidden and stays the link's accessible name.
    - **Article Images**: Place in `app/src/assets/{category}/{article}/` (e.g., `tech/koborin-ai-architecture/`).
    - Comments in CSS and JS are English. Japanese text in components is user-facing copy.
 4. **Image Conventions**:
@@ -137,11 +137,12 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 5. **OG Image Management**:
    - Article pages open with the title and the dates. Authors do not add a cover.
-   - The social card is generated at build time from the title, at `/og/<page path>.webp`. An English article at `/tech/mcp-deep-dive/` gets `/og/tech/mcp-deep-dive.webp`. The Japanese page gets `/og/ja/tech/mcp-deep-dive.webp`. The card footer shows the mark left of the word, from `ogMark` in `app/src/lib/mark.ts`.
-   - Home and about still set `ogImage: /og/koborin-ai-hero.png`. `Head.astro` rewrites that `.png` reference to `.webp`.
-   - Pages without a generated card and without `ogImage` fall back to `/og/index.webp`.
+   - Every page's `og:image` comes from `ogImageFor(entry)` in `app/src/lib/og.ts`. `Head.astro` takes the page's `entry`, not an image URL, and the docs schema is strict, so frontmatter cannot name an image.
+   - An article gets its card at `/og/<page path>.webp`, drawn from the title. An English article at `/tech/mcp-deep-dive/` gets `/og/tech/mcp-deep-dive.webp`. The Japanese page gets `/og/ja/tech/mcp-deep-dive.webp`. The card footer shows the mark left of the word.
+   - Home and About get `/og/koborin-ai-hero.webp?v=2`. Every other page, including 404 and the list pages, gets `/og/index.webp?v=2`. Both shared cards are the mark and the word centred, from `SITE_CARDS` in `og.ts`. The hero adds the tagline.
+   - `renderOgCard` in `app/src/lib/og-render.ts` draws every card at build time, locally and in CI alike. The mark reaches a card only through `ogMark(height)` in `app/src/lib/mark.ts`. No card is a file under `app/public/`.
+   - X and Slack cache a card by its URL. To change a shared card, edit `SITE_CARDS` or the site card tree in `og-render.ts`, and bump that card's `version` in `SITE_CARDS`.
    - Inline images stay on `SiteImage` with `variant="inline"`.
-   - `npm run build` runs `app/scripts/optimize-og-images.ts` before `astro build`. It converts `index.png` and `koborin-ai-hero.png` in `app/public/og/` to WebP with sharp, and a missing file fails the build. It does not write the generated article cards.
 6. **Article Dates**:
    - **Published Date**: Set `publishedAt: YYYY-MM-DD` in frontmatter when creating a new article.
    - **Updated Date**: `app/src/lib/last-updated.ts` walks `git log` for the MDX file and skips a commit whose message contains `Updated-Date: ignore`. Put that trailer in the commit message. Squash merges on this repo keep the commit list, so a trailer that exists only in the pull request description does not count. Set `lastUpdated: false` to hide the line. The home pages do.
@@ -464,6 +465,5 @@ Never run `terradart apply` locally. Infra changes go through GitHub Actions onl
 
 ### Optional tooling
 
-- **OG images**: `npm run build` converts the two static OG files with sharp, which `npm ci` installs. The apt `webp` and `imagemagick` packages are no longer used.
 - **Giscus / GA4**: Set `PUBLIC_GISCUS_*` and `PUBLIC_GA_MEASUREMENT_ID` in `app/.env` to mirror production engagement features. The site works without them.
 

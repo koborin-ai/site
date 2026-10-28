@@ -67,7 +67,7 @@ async function isRenderedIcon(rel: string, bytes: Buffer): Promise<boolean> {
 
 describe('mark', () => {
   it('draws one arch and two rects', () => {
-    for (const frame of [headerMark(), ogMark()]) {
+    for (const frame of [headerMark(), ogMark(26), ogMark(80)]) {
       expect(countTags(frame.markup, 'path')).toBe(1);
       expect(countTags(frame.markup, 'rect')).toBe(2);
       expect(frame.markup).toContain(`viewBox="${INK.x} ${INK.y} ${INK.width} ${INK.height}"`);
@@ -77,8 +77,9 @@ describe('mark', () => {
     }
     expect(headerMark()).toMatchObject({ width: 18.45, height: 18 });
     expect(headerMark().markup).toContain('stroke="currentColor"');
-    expect(ogMark()).toMatchObject({ width: 26.65, height: 26 });
-    expect(ogMark().markup).toContain('stroke="#d5dae1"');
+    expect(ogMark(26)).toMatchObject({ width: 26.65, height: 26 });
+    expect(ogMark(80)).toMatchObject({ width: 82, height: 80 });
+    expect(ogMark(26).markup).toContain('stroke="#d5dae1"');
   });
 
   it('matches the header mark to the cropped tile', async () => {
@@ -124,6 +125,19 @@ describe('mark', () => {
       hits.push(rel);
     }
     expect(hits).toEqual([]);
+  });
+
+  it('ships no image in public/ except the rendered icons', async () => {
+    const publicDir = fileURLToPath(new URL('../../public', import.meta.url));
+    const images = filesUnder(publicDir)
+      .map((abs) => ({ rel: `public/${abs.slice(publicDir.length + 1)}`, abs }))
+      .filter(({ rel }) => /\.(png|jpe?g|webp|gif|svg|ico|avif)$/i.test(rel));
+    const strays: string[] = [];
+    for (const { rel, abs } of images) {
+      if (!(await isRenderedIcon(rel, readFileSync(abs)))) strays.push(rel);
+    }
+    expect(strays).toEqual([]);
+    expect(images.map(({ rel }) => rel).toSorted()).toEqual(ICONS.map((icon) => `public/${icon.file}`).toSorted());
   });
 
   it('uses the dark accent for the tile ink', () => {

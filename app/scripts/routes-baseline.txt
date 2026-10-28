@@ -32,8 +32,8 @@
 /llms-life.txt
 /llms-tech.txt
 /llms.txt
-/og/index.png
-/og/koborin-ai-hero.png
+/og/index.webp
+/og/koborin-ai-hero.webp
 /pagefind/fragment/en_20809d7.pf_fragment
 /pagefind/fragment/en_233483f.pf_fragment
 /pagefind/fragment/en_4667aa4.pf_fragment

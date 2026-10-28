@@ -96,7 +96,7 @@ Pick the variant by *rendered* size, not source dimensions:
 
 #### Rules for a new article
 
-Article pages open with the title and the dates. Authors do not add a cover. The social card is generated at build time from the title, at `/og/<page path>.webp`. Home and about still set `ogImage`. Inline images stay on `SiteImage`.
+Article pages open with the title and the dates. Authors do not add a cover. The social card is generated at build time from the title, at `/og/<page path>.webp`. `ogImageFor` in `app/src/lib/og.ts` picks every page's card, and frontmatter has no image field. Inline images stay on `SiteImage`.
 
 1. **In-body images** (screenshots, diagrams, etc.) go under `app/src/assets/{category}/{article}/` and are rendered with `variant="inline"`:
 

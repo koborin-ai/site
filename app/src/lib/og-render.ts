@@ -4,7 +4,7 @@ import satori, { type Font } from 'satori';
 import sharp from 'sharp';
 import { formatPostDate } from './catalog';
 import { ogMark } from './mark';
-import type { OgCard } from './og';
+import { OG_SIZE, type OgCard } from './og';
 
 export class MissingGlyphError extends Error {
   override readonly name = 'MissingGlyphError';
@@ -13,10 +13,17 @@ export class MissingGlyphError extends Error {
   }
 }
 
-const WIDTH = 1200;
-const HEIGHT = 630;
-
 export const OG_WEBP_QUALITY = 90 as const;
+
+const INK = {
+  background: '#0b0d12',
+  foreground: '#eceae5',
+  accent: '#d5dae1',
+  muted: '#eceae56b',
+} as const;
+
+const FOOTER_MARK = 26;
+const SITE_MARK = 80;
 
 /** Satori reads woff, not woff2. Paths are the packages' public files exports. */
 const FONT_FILES = [
@@ -28,9 +35,8 @@ const FONT_FILES = [
 let fonts: Promise<Font[]> | undefined;
 
 export async function renderOgCard(card: OgCard): Promise<Uint8Array<ArrayBuffer>> {
-  const svg = await satori(cardTree(card), {
-    width: WIDTH,
-    height: HEIGHT,
+  const svg = await satori(card.kind === 'article' ? articleTree(card) : siteTree(card), {
+    ...OG_SIZE,
     fonts: await cardFonts(),
     loadAdditionalAsset: refuseMissingGlyph,
   });
@@ -58,20 +64,19 @@ async function refuseMissingGlyph(_languageCode: string, segment: string): Promi
   throw new MissingGlyphError(segment);
 }
 
-function cardTree(card: OgCard): Parameters<typeof satori>[0] {
-  const mark = ogMark();
+function articleTree(card: Extract<OgCard, { kind: 'article' }>): Parameters<typeof satori>[0] {
   const tree = {
     type: 'div',
     props: {
       lang: card.locale,
       style: {
-        width: WIDTH,
-        height: HEIGHT,
+        width: OG_SIZE.width,
+        height: OG_SIZE.height,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: 80,
-        backgroundColor: '#0b0d12',
+        backgroundColor: INK.background,
       },
       children: [
         {
@@ -84,7 +89,7 @@ function cardTree(card: OgCard): Parameters<typeof satori>[0] {
               fontWeight: 600,
               fontSize: 64,
               lineHeight: 1.25,
-              color: '#eceae5',
+              color: INK.foreground,
               lineClamp: 4,
             },
             children: card.title,
@@ -102,27 +107,11 @@ function cardTree(card: OgCard): Parameters<typeof satori>[0] {
               flexShrink: 0,
             },
             children: [
+              lockup(FOOTER_MARK),
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', alignItems: 'center', gap: 16, color: '#d5dae1' },
-                  children: [
-                    {
-                      type: 'img',
-                      props: {
-                        src: `data:image/svg+xml,${encodeURIComponent(mark.markup)}`,
-                        width: mark.width,
-                        height: mark.height,
-                      },
-                    },
-                    { type: 'div', props: { style: { color: '#d5dae1' }, children: 'koborin.ai' } },
-                  ],
-                },
-              },
-              {
-                type: 'div',
-                props: {
-                  style: { color: 'rgba(236,234,229,0.42)' },
+                  style: { color: INK.muted },
                   children: formatPostDate(card.publishedAt, 'home'),
                 },
               },
@@ -133,4 +122,66 @@ function cardTree(card: OgCard): Parameters<typeof satori>[0] {
     },
   };
   return tree as Parameters<typeof satori>[0];
+}
+
+function siteTree(card: Extract<OgCard, { kind: 'site' }>): Parameters<typeof satori>[0] {
+  const tree = {
+    type: 'div',
+    props: {
+      style: {
+        width: OG_SIZE.width,
+        height: OG_SIZE.height,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 36,
+        backgroundColor: INK.background,
+      },
+      children: [
+        lockup(SITE_MARK),
+        ...(card.tagline
+          ? [
+              {
+                type: 'div',
+                props: {
+                  style: { fontFamily: 'Geist Mono', fontWeight: 400, fontSize: 26, color: INK.muted },
+                  children: card.tagline,
+                },
+              },
+            ]
+          : []),
+      ],
+    },
+  };
+  return tree as Parameters<typeof satori>[0];
+}
+
+function lockup(markHeight: number) {
+  const mark = ogMark(markHeight);
+  return {
+    type: 'div',
+    props: {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: Math.round((markHeight * 16) / FOOTER_MARK),
+        color: INK.accent,
+        fontFamily: 'Geist Mono',
+        fontWeight: 400,
+        fontSize: markHeight,
+      },
+      children: [
+        {
+          type: 'img',
+          props: {
+            src: `data:image/svg+xml,${encodeURIComponent(mark.markup)}`,
+            width: mark.width,
+            height: mark.height,
+          },
+        },
+        { type: 'div', props: { children: 'koborin.ai' } },
+      ],
+    },
+  };
 }

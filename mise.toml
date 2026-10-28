@@ -19,9 +19,10 @@ dir = "infra"
 run = ["dart pub get", "dart analyze", "dart test"]
 
 [tasks."check:automation"]
-description = "Workflows and shell scripts: actionlint, shellcheck, label tests"
+description = "Workflows and shell scripts: actionlint, workflow policy, shellcheck, label tests"
 run = [
   "actionlint",
+  "node app/scripts/workflow-policy.ts",
   "shellcheck .github/scripts/*.sh app/scripts/*.sh",
   "./.github/scripts/test-compute-pr-labels.sh",
 ]

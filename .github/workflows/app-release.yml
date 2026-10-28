@@ -65,15 +65,6 @@ jobs:
         working-directory: app
         run: npx playwright install chromium
 
-      - name: Install image optimization tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y webp imagemagick
-
-      - name: Optimize OG images
-        working-directory: app
-        run: ./scripts/optimize-og-images.sh
-
       - name: Quality checks (oxlint, astro check, Vitest, images)
         working-directory: app
         run: npm run check

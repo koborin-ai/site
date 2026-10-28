@@ -138,7 +138,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Home and about still set `ogImage: /og/koborin-ai-hero.png`. `Head.astro` rewrites that `.png` reference to `.webp`.
    - Pages without a generated card and without `ogImage` fall back to `/og/index.webp`.
    - Inline images stay on `SiteImage` with `variant="inline"`.
-   - `app/scripts/optimize-og-images.sh` converts root-level files in `app/public/og/` to WebP during CI (`app-ci.yml` / `app-release.yml`). It does not write the generated article cards.
+   - `npm run build` runs `app/scripts/optimize-og-images.ts` before `astro build`. It converts `index.png` and `koborin-ai-hero.png` in `app/public/og/` to WebP with sharp, and a missing file fails the build. It does not write the generated article cards.
 6. **Article Dates**:
    - **Published Date**: Set `publishedAt: YYYY-MM-DD` in frontmatter when creating a new article.
    - **Updated Date**: `app/src/lib/last-updated.ts` walks `git log` for the MDX file and skips a commit whose message contains `Updated-Date: ignore`. Put that trailer in the commit message. Squash merges on this repo keep the commit list, so a trailer that exists only in the pull request description does not count. Set `lastUpdated: false` to hide the line. The home pages do.
@@ -458,6 +458,6 @@ Never run `terradart apply` locally. Infra changes go through GitHub Actions onl
 
 ### Optional tooling
 
-- **webp / imagemagick**: Used by `app/scripts/optimize-og-images.sh`, which CI installs via apt. Not required for local dev or `npm run build`.
+- **OG images**: `npm run build` converts the two static OG files with sharp, which `npm ci` installs. The apt `webp` and `imagemagick` packages are no longer used.
 - **Giscus / GA4**: Set `PUBLIC_GISCUS_*` and `PUBLIC_GA_MEASUREMENT_ID` in `app/.env` to mirror production engagement features. The site works without them.
 

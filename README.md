@@ -71,7 +71,7 @@ Node, Dart, actionlint, and shellcheck come from `.tool-versions`. `actions/setu
 ```bash
 curl https://mise.run | sh
 mise install
-npm install --prefix app
+npm ci --prefix app
 npm exec --prefix app -- playwright install chromium
 ```
 

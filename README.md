@@ -185,12 +185,12 @@ For performance, images are automatically converted to WebP format. **Authors ca
 | Image Type | Location | What You Do | What Happens Automatically |
 | --- | --- | --- | --- |
 | Article cards | `/og/<page path>.webp` | Do not add a cover. The build draws the card from the title | WebP, 1200 by 630 |
-| Home and about | `app/public/og/koborin-ai-hero.png` | Set `ogImage: /og/koborin-ai-hero.png` | CI converts to WebP; `Head.astro` rewrites `.png` to `.webp` |
+| Home and about | `app/public/og/koborin-ai-hero.png` | Set `ogImage: /og/koborin-ai-hero.png` | `npm run build` converts to WebP; `Head.astro` rewrites `.png` to `.webp` |
 | Blog images | `app/src/assets/{category}/{article}/` | Place PNG/JPEG in article folder | Astro optimizes to WebP |
 
 Article pages open with the title and the dates. The social card is generated at build time from the title, at `/og/<page path>.webp`. Authors do not add a cover. Home and about still set `ogImage`. Inline images stay on `SiteImage` with `variant="inline"`.
 
-`app/scripts/optimize-og-images.sh` still converts the root-level files in `app/public/og/` during CI. It does not write the generated article cards.
+`npm run build` runs `app/scripts/optimize-og-images.ts` first, which converts `index.png` and `koborin-ai-hero.png` in `app/public/og/` to WebP with sharp. It does not write the generated article cards.
 
 ## Workflow Overview
 

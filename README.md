@@ -1,290 +1,170 @@
 # koborin.ai
 
-Technical proving ground for exploring AI, cloud architecture, and continuous learning.
+<!-- markdownlint-disable MD033 -->
 
-The Astro site is served as Cloudflare Worker static assets. App deploys use wrangler. DNS and the custom domain are a TerraDart `site` stack applied from GitHub Actions.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/mark-lockup-dark.svg">
+  <img alt="koborin.ai" src="./assets/mark-lockup-light.svg" width="233" height="40">
+</picture>
+
+<!-- markdownlint-enable MD033 -->
+
+Personal site and technical proving ground.
+
+The site is an Astro app. Cloudflare Worker `koborin-ai-web` serves the built files as static assets. The only public host is `koborin.ai`.
 
 ## Architecture
 
-The only public host is `koborin.ai`. There is no `dev.koborin.ai`.
+GitHub Actions deploys the app with wrangler. The infra workflows run the terradart CLI on the TerraDart `site` stack. The stack looks up Cloudflare zone `koborin.ai` and attaches the Worker to that hostname. State lives in R2 bucket `koborin-ai-tfstate`, at object `terraform/site/terraform.tfstate`.
+
+`infra/pubspec.yaml` sets `terradart.engine` to `tofu` and pins `terradart_cli` at `0.35.0`. That release uses `tofu` when it is on `PATH`. When `tofu` is not on `PATH`, it downloads OpenTofu 1.13.1. The workflows do not install Terraform or OpenTofu.
 
 ```mermaid
 flowchart LR
-    subgraph GH["GitHub Actions"]
-        APP["app-release"]
-        INFRA["release-infra"]
-    end
+  actions[GitHub Actions]
+  worker[Worker]
+  stack[site stack]
+  zone[Zone]
+  r2[R2]
 
-    subgraph CF["Cloudflare"]
-        DNS["Zone"]
-        WORKER["Worker"]
-        R2["R2 state"]
-    end
-
-    APP -->|"wrangler"| WORKER
-    INFRA -->|"apply"| DNS
-    INFRA -.-> R2
-    DNS -->|"custom domain"| WORKER
+  actions -->|wrangler| worker
+  actions -->|terradart| stack
+  stack -->|lookup| zone
+  stack -->|custom domain| worker
+  stack -->|state| r2
 ```
 
-| Abbreviation | Full Name | Description |
+Names in the diagram:
+
+| Abbreviation | Full name | Description |
 | --- | --- | --- |
 | Worker | [Cloudflare Workers](https://developers.cloudflare.com/workers/) | Serves the static Astro site |
 | Custom domain | [Workers custom domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) | Attaches `koborin.ai` to Worker `koborin-ai-web` |
-| R2 | [Cloudflare R2](https://developers.cloudflare.com/r2/) | Terraform state bucket `koborin-ai-tfstate` |
+| R2 | [Cloudflare R2](https://developers.cloudflare.com/r2/) | Holds the `site` stack state |
 | Wrangler | [Wrangler](https://developers.cloudflare.com/workers/wrangler/) | Uploads `app/dist` |
 
-### Environment matrix
+## Checks and deploys
 
-| Layer | Production (`koborin.ai`) |
-| --- | --- |
-| Runtime | Cloudflare Worker `koborin-ai-web` (static assets) |
-| Access | Public |
-| Content | Same MDX content (no env-specific filtering) |
-| Analytics | GA4 + Giscus on article pages |
+`app/scripts/workflow-policy.ts` checks every workflow file. An action `uses` must be a 40-character SHA with a version comment. Permissions and concurrency must match the rules in that file. The `label` job in `label-pr.yml` is the only workflow job with `pull-requests: write`. That job skips forks.
 
-## CI/CD
+| Workflow | When it runs | What it does |
+| --- | --- | --- |
+| `required-checks.yml` | Pull request `opened`, `synchronize`, or `reopened` | Maps the diff with `app/scripts/required-checks.ts` and calls the area workflows below. The `required-checks` job fails when path detection fails, or when a changed area did not pass. A diff that matches no area passes. |
+| `label-pr.yml` | Pull request `opened`, `synchronize`, `reopened`, or `edited` | Sets labels with `.github/scripts/compute-pr-labels.sh`. Skips a pull request that has the `ignore` label. |
+| `app-ci.yml` | Called when the app area changes | Runs `npm audit --audit-level=critical --omit=dev`, `npm run check`, the production build, and Lighthouse. Scores are report-only. A missing report fails the job. The `lighthouse` artifact is kept for 14 days. |
+| `automation-ci.yml` | Called when the automation area changes | Runs `mise run check:automation` and `mise run check:docs`. |
+| `plan-infra.yml` | Called when the infra area changes, or `workflow_dispatch` | Runs `mise run check:infra`, then `dart run terradart_cli:terradart plan` for the `site` stack. The plan job skips Dependabot and fork pull requests. |
+| `release-infra.yml` | Push to `main` under `infra/`, or `workflow_dispatch` | On `main`, checks the stack, plans, runs `terradart apply --auto-approve`, then plans again and fails unless that plan is empty. |
+| `app-release.yml` | Push to `main` on the path list below, or `workflow_dispatch` | On `main`, writes `app/.env`, runs `npm run check`, builds, and runs `npm run deploy`. Then it calls `smoke-prod.yml`. |
+| `smoke-prod.yml` | After that deploy, Mondays at 04:23 UTC, or `workflow_dispatch` | On `main`, sends a GET for each public route in `app/scripts/routes-baseline.txt` on `https://koborin.ai`. Skips `/pagefind/`, `/_headers`, and `/_redirects`. |
 
-Infrastructure and application deploys are each handled by dedicated GitHub Actions workflows. Cloudflare auth is a scoped API token.
+Lighthouse reads `/`, `/ja/`, `/tech/koborin-ai-architecture/`, and `/ja/tech/koborin-ai-architecture/`, on desktop and mobile.
 
-```mermaid
-flowchart LR
-    subgraph Actions["GitHub Actions"]
-        requiredChecks[required-checks.yml]
-        planInfra[plan-infra.yml]
-        releaseInfra[release-infra.yml]
-        appCI[app-ci.yml]
-        automationCI[automation-ci.yml]
-        appRelease[app-release.yml]
-        smokeProd[smoke-prod.yml]
-    end
+`app-release.yml` runs on a `main` push that changes `app/`, `.tool-versions`, `mise.toml`, `.github/workflows/app-release.yml`, or `.github/workflows/app-ci.yml`.
 
-    subgraph Cloudflare["Cloudflare"]
-        worker[Worker]
-        siteStack[site stack]
-    end
+Node, Dart, actionlint, and shellcheck come from `.tool-versions`. `actions/setup-node` reads that file. Infra and automation workflows install it with `jdx/mise-action`.
 
-    requiredChecks -->|calls| appCI
-    requiredChecks -->|calls| planInfra
-    requiredChecks -->|calls| automationCI
-    planInfra --> siteStack
-    releaseInfra --> siteStack
-    appRelease --> worker
-    appRelease -->|calls| smokeProd
-    smokeProd -->|GET| worker
-```
+## Set up locally
 
-| Workflow | Trigger | Purpose | Notes |
-| --- | --- | --- | --- |
-| `required-checks.yml` | Every PR | Maps changed paths to areas with `app/scripts/required-checks.ts`, calls the area workflows, and reports the `required-checks` job | The one check context to require |
-| `plan-infra.yml` | Called for the infra area, or manual dispatch | `mise run check:infra` + `terradart plan` for the `site` stack | No apply |
-| `release-infra.yml` | `main` infra push or manual dispatch | Applies the `site` stack | Runs only from `main`. State is in R2 |
-| `app-ci.yml` | Called for the app area | Runs `npm run check`, the production build, and Lighthouse on four pages (`lighthouse` artifact) | Blocks merges that break the app. Low Lighthouse scores are report-only |
-| `automation-ci.yml` | Called for the automation area | `mise run check:automation` + `check:docs` (actionlint, workflow policy, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
-| `app-release.yml` | Merge to `main` or `workflow_dispatch` | Runs `npm run check`, builds the static site, runs `wrangler deploy`, then calls `smoke-prod.yml` | Runs only from `main`. Uses `CLOUDFLARE_API_TOKEN` |
-| `smoke-prod.yml` | After each app deploy, weekly, or manual dispatch | Probes the public routes in `app/scripts/routes-baseline.txt` on `https://koborin.ai` | GETs only. Skips `/pagefind/` and `/_headers`. No rollback |
-
-Tool versions for Node, Dart, actionlint, and shellcheck come from `.tool-versions`. `actions/setup-node` reads it through `node-version-file`, and the infra and automation workflows install from it with `jdx/mise-action`. Infra plan and apply do not install Terraform. With no `tofu` on `PATH`, `terradart plan` downloads OpenTofu.
-
-## Tech Stack
-
-- **Frontend**: Astro and TypeScript. Home, article lists, talk lists, and articles share one centred column. Article pages use a wider measure than the home and list pages. Pagefind site search is gone.
-- **Content Management**: MDX stored under `app/src/content/docs/` within git. Frontmatter is validated with Zod in `app/src/content.config.ts`. Drafts can be marked with `draft: true` in frontmatter.
-- **Analytics**: Google Analytics 4 for baseline PV/engagement.
-- **Infrastructure**: TerraDart (Dart) targeting Cloudflare. `terradart plan` and `terradart apply` run OpenTofu on the synthesized JSON. State is in R2.
-- **CI/CD**: GitHub Actions with a Cloudflare API token. `plan-infra.yml` / `release-infra.yml` drive infra; `app-ci.yml` / `app-release.yml` handle the Astro app.
-- **Toolchain**: [mise](https://mise.jdx.dev/) pins Node, Dart, actionlint, and shellcheck for both laptops and CI. OpenTofu comes from `terradart_cli`, not from mise.
-- **Quality gates**: oxlint and `astro check` for the app, Vitest for app unit tests, `dart analyze` + `dart test` for infra, actionlint and shellcheck for the automation, markdownlint for the docs. `mise run check` runs all of it.
-- **LLM Context**: Machine-readable `llms.txt` files for AI assistants. Auto-generated at build time.
-
-## LLM Context Files (llms.txt)
-
-The site provides structured context files for LLMs at `https://koborin.ai/llms.txt`.
-
-| File | Content |
-| --- | --- |
-| `/llms.txt` | Index with links to all variants |
-| `/llms-full.txt` | All English articles (full Markdown) |
-| `/llms-ja-full.txt` | All Japanese articles (full Markdown) |
-| `/llms-tech.txt` | English tech articles only |
-| `/llms-ja-tech.txt` | Japanese tech articles only |
-| `/llms-life.txt` | English life articles only |
-| `/llms-ja-life.txt` | Japanese life articles only |
-
-These files are **auto-generated** at build time from Content Collections. Articles with `draft: true` are excluded. No runtime overhead.
-
-## Repository Layout
-
-```text
-.
-├── .tool-versions                 # Node, Dart, actionlint, shellcheck
-├── mise.toml                      # Repo-wide check tasks
-├── app/                           # Astro application (static)
-│   ├── wrangler.jsonc            # Worker name and dist/ assets
-│   ├── .oxlintrc.json            # oxlint rules for TS and .astro scripts
-│   ├── vitest.config.ts          # Vitest via Astro's getViteConfig
-│   ├── src/
-│   │   ├── assets/               # Images organized by category
-│   │   │   ├── tech/             # Tech article images
-│   │   │   ├── life/             # Life article images
-│   │   │   └── og/               # Open Graph images
-│   │   ├── content/
-│   │   │   └── docs/             # MDX pages: tech/, life/, ja/
-│   │   ├── content.config.ts    # Zod schema for the docs collection
-│   │   ├── data/
-│   │   │   └── site-icons.json   # Hostname to data-URL favicons for link cards
-│   │   ├── plugins/              # Asides, heading anchors, diagrams, and table frames
-│   │   ├── utils/
-│   │   │   ├── llms.ts           # Shared logic for llms.txt generation
-│   │   │   └── llms.test.ts      # Vitest coverage for llms.txt rendering
-│   │   ├── pages/                # Astro endpoints (llms.txt, RSS, article cards)
-│   │   └── styles/
-│   │       ├── prose.css         # Article body: the only stylesheet inside .sl-markdown-content
-│   │       └── custom.css        # Leftover overrides outside the article body
-│   ├── public/
-│   │   ├── _headers               # txt charset, immutable build assets, revalidated font css, security headers
-│   │   ├── apple-touch-icon.png  # Dark mark tiles, written by scripts/render-mark.ts
-│   │   ├── favicon.ico
-│   │   ├── favicon.png
-│   │   ├── favicon.svg
-│   │   ├── og/                   # Open Graph source images
-│   │   └── robots.txt
-│   └── astro.config.ts           # Astro, MDX, sitemap, and Markdown plugins
-├── docs/                          # Architecture notes, contact-flow specs, etc.
-├── infra/                         # TerraDart site stack
-│   ├── bin/infra.dart            # Entry point → tf-out/site/main.tf.json
-│   ├── lib/                      # Stack definitions
-│   │   └── site_stack.dart       # Zone lookup + Workers custom domain
-│   ├── test/                     # dart test coverage for the synth output
-│   └── pubspec.yaml              # TerraDart dependencies
-├── .github/
-│   ├── actionlint.yaml           # Self-hosted runner labels for actionlint
-│   ├── scripts/                  # Shell helpers + their test suite
-│   └── workflows/                # Required checks, infra plan and apply, app deploy, production smoke
-├── README.md                      # This file
-└── AGENTS.md                      # English operations guide for collaborators
-```
-
-### Brand Assets
-
-| Asset | Location | Usage | Notes |
-| --- | --- | --- | --- |
-| B2 mark | `app/src/lib/mark.ts` | Header, favicon tiles, OG footer | The only copy of the geometry |
-| Favicons | `app/src/lib/icons.ts` | `/favicon.ico`, `/favicon.png`, `/favicon.svg`, `/apple-touch-icon.png` | Dark tile for every theme, written by `app/scripts/render-mark.ts` |
-| Hero Image | `app/public/og/koborin-ai-hero.png` | Open Graph image for home and about | Not shown in the page. `Head.astro` rewrites the `.png` reference to `.webp` |
-
-The header mark's size is the `headerMark()` call in `SiteHeader.astro`. Its spacing is the `.mark` rule in `site.css`.
-
-### Image Optimization (Automatic)
-
-For performance, images are automatically converted to WebP format. **Authors can use PNG/JPEG normally** - optimization happens during build/deploy.
-
-| Image Type | Location | What You Do | What Happens Automatically |
-| --- | --- | --- | --- |
-| Article cards | `/og/<page path>.webp` | Do not add a cover. The build draws the card from the title | WebP, 1200 by 630 |
-| Home and about | `app/public/og/koborin-ai-hero.png` | Set `ogImage: /og/koborin-ai-hero.png` | `npm run build` converts to WebP; `Head.astro` rewrites `.png` to `.webp` |
-| Blog images | `app/src/assets/{category}/{article}/` | Place PNG/JPEG in article folder | Astro optimizes to WebP |
-
-Article pages open with the title and the dates. The social card is generated at build time from the title, at `/og/<page path>.webp`. Authors do not add a cover. Home and about still set `ogImage`. Inline images stay on `SiteImage` with `variant="inline"`.
-
-## Workflow Overview
-
-1. **Infra changes**: edit TerraDart stacks → `mise run check:infra` → open PR → GitHub Actions runs `terradart plan` → reviewer approves → merge to `main` runs `terradart apply` for the `site` stack.
-2. **App changes**: edit Astro/MDX → `mise run check` and `npm run build --prefix app` → PR runs `required-checks.yml`, which calls `app-ci.yml` → merge to `main` triggers `app-release.yml`, which runs `npm run check`, builds the static site, runs `wrangler deploy`, and then probes production with `smoke-prod.yml`.
-3. **Content-only updates**: modify MDX under `app/src/content/docs/`, update frontmatter (`title`, `description`), run `mise run check:app`, open PR. Mark drafts with `draft: true` in frontmatter to exclude from production builds.
-
-### Adding New Content
-
-To add a new article or page:
-
-1. **Create MDX file** under `app/src/content/docs/` (or subdirectory for categories):
-
-   ```bash
-   # Single page
-   app/src/content/docs/my-article.mdx
-
-   # Article
-   app/src/content/docs/tech/my-post.mdx
-   ```
-
-2. **Add frontmatter** with required fields:
-
-   ```yaml
-   ---
-   title: My Article Title
-   description: Brief description of the article
-   publishedAt: 2025-01-02
-   ---
-   ```
-
-   - `publishedAt`: Set the publish date manually (YYYY-MM-DD format).
-   - Updated date is automatically extracted from Git history at build time.
-
-3. **Check the lists.** A page with `publishedAt` shows on the home page and on `/blog/` or `/ja/blog/`. Add its public URL to `app/scripts/routes-baseline.txt`.
-
-4. **Build and test** locally before pushing.
-
-## Release Strategy
-
-- Infra applies run `release-infra.yml` for the `site` stack on a `main` push under `infra/`, or on a dispatch from `main`. `infra-v*` tags do not apply.
-- App deploys run `app-release.yml` on a `main` merge under `app/`, or on a dispatch from `main`. The run checks, builds, deploys with `wrangler deploy`, and then probes production.
-- GitHub release notes are generated via `.github/release.yml`. Label each PR with `app`, `infra`, `feature`, `bug`, or `doc` so the notes stay segmented by domain; apply the `ignore` label to omit a PR entirely.
-
-## Local Setup
-
-Tool versions live in `.tool-versions`, so [mise](https://mise.jdx.dev/) is the only prerequisite.
+[mise](https://mise.jdx.dev/) installs the versions in `.tool-versions`. It does not install OpenTofu.
 
 ```bash
-# Install mise once, then provision Node, Dart, actionlint, shellcheck
 curl https://mise.run | sh
 mise install
-
 npm install --prefix app
+npm exec --prefix app -- playwright install chromium
+```
 
-# Run Astro dev server
+Start the dev server:
+
+```bash
 npm run dev --prefix app
+```
 
-# Run every quality gate (app + infra + automation)
+Run every check from the repository root:
+
+```bash
 mise run check
 ```
 
-`mise run check` does not build the site. Run `npm run build --prefix app` for that. Both need Playwright Chromium (`npx playwright install chromium` in `app/`) to render Mermaid diagrams.
+`mise run check` runs the app, infra, automation, and docs checks. It does not build the site. Build with:
 
-## Infrastructure Dev Notes
+```bash
+npm run build --prefix app
+```
 
-- TerraDart stacks are located in `infra/lib/`.
-- From `infra/`, `dart run terradart_cli:terradart plan` synthesizes `tf-out/site/main.tf.json` and plans it with OpenTofu.
-- State is in R2: `koborin-ai-tfstate` / `terraform/site/terraform.tfstate`.
-- Never run `terradart apply` locally. Apply goes through GitHub Actions on `main`.
+App tests and the production build render Mermaid through Playwright Chromium. Install Chromium before `mise run check` or `npm run build`.
 
-### Site Stack
+## Write a page
 
-- **Zone lookup**: `data.cloudflare_zone` for `koborin.ai` (the zone is not created here).
-- **Custom domain**: `cloudflare_workers_custom_domain` attaches Worker `koborin-ai-web` to `koborin.ai`.
-- **Unmanaged DNS**: MX and GitHub organization verification TXT stay in the dashboard.
+Add an article as MDX under `app/src/content/docs/`. English tech articles go in `tech/`. English life articles go in `life/`. Japanese articles go in the matching folder under `ja/`.
 
-## Contact & Analytics Design (planned)
+`tech/my-post.mdx` is served at `/tech/my-post/`. `life/my-post.mdx` is served at `/life/my-post/`. A Japanese file adds the `/ja/` prefix. The writing lists are `/blog/` and `/ja/blog/`. Article URLs stay under `/tech/` and `/life/`.
 
-- Contact form will post to `/api/contact` (Astro API Route) with:
-  - Payload validation (Zod), reCAPTCHA enforcement, structured logging.
-  - Notification via SendGrid or Gmail API.
-- `/api/track` endpoint will receive custom events.
-- GA4 integration via gtag.js (injected at build time via `PUBLIC_GA_MEASUREMENT_ID`).
+`title` and `description` are required. Set `publishedAt` to list the article and to generate its card.
 
-## Environment Variables
+```yaml
+---
+title: My article
+description: One sentence summary.
+publishedAt: 2026-10-28
+---
+```
 
-| Variable | Purpose | Where to Set |
+Set `draft: true` while the page is unfinished. The production build, the home list, the writing list, RSS, and the `llms.txt` files omit drafts. `npm run dev` still renders a draft.
+
+Add the new public URL to `app/scripts/routes-baseline.txt`. The build fails when a baseline URL is missing, or when it emits a URL that `app/scripts/check-routes.ts` does not allow.
+
+Use `SiteImage` for an image file under `app/src/assets/`. Set `variant` to `inline` in an article, `card` on a list, or `thumbnail` for a small image.
+
+The build draws `/og/<page path>.webp` from an article title. Home and about use `/og/koborin-ai-hero.webp`. Every other page uses `/og/index.webp`. The build draws those two cards as well.
+
+## llms.txt
+
+The build writes these files from published pages. Drafts are omitted.
+
+| Path | Contents |
+| --- | --- |
+| `/llms.txt` | Index of the files below |
+| `/llms-full.txt` | Every published English page, with its Markdown |
+| `/llms-ja-full.txt` | Every published Japanese page, with its Markdown |
+| `/llms-tech.txt` | Published English tech articles |
+| `/llms-ja-tech.txt` | Published Japanese tech articles |
+| `/llms-life.txt` | Published English life articles |
+| `/llms-ja-life.txt` | Published Japanese life articles |
+
+## Environment
+
+`app-release.yml` writes GA and Giscus into `app/.env` when those secrets are set.
+
+| Name | Where | What it sets |
 | --- | --- | --- |
-| `GA_MEASUREMENT_ID` | GA4 Measurement ID (e.g., `G-XXXXXXXXXX`) | GitHub Secrets |
-| `GISCUS_REPO_ID` | Giscus repository ID for the comments widget | GitHub Secrets |
-| `GISCUS_CATEGORY_ID` | Giscus discussion category ID | GitHub Secrets |
-| `CLOUDFLARE_API_TOKEN` | Scoped token for wrangler and the Cloudflare provider | GitHub Secrets |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | GitHub Variables |
-| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | State in R2, passed as AWS credentials | GitHub Secrets |
+| `GA_MEASUREMENT_ID` | Secret | `PUBLIC_GA_MEASUREMENT_ID`, when the secret is non-empty |
+| `GISCUS_REPO_ID` | Secret | `PUBLIC_GISCUS_REPO_ID`, when the secret is non-empty |
+| `GISCUS_CATEGORY_ID` | Secret | `PUBLIC_GISCUS_CATEGORY_ID`, written in the same step as the repo id |
+| `CLOUDFLARE_API_TOKEN` | Secret | wrangler deploy, and the Cloudflare provider for plan and apply |
+| `CLOUDFLARE_ACCOUNT_ID` | Variable | Account id for deploy and for the `site` stack |
+| `R2_ACCESS_KEY_ID` | Secret | Passed to the state backend as `AWS_ACCESS_KEY_ID` |
+| `R2_SECRET_ACCESS_KEY` | Secret | Passed to the state backend as `AWS_SECRET_ACCESS_KEY` |
 
-`app-release.yml` writes GA and Giscus values into `app/.env` at build time as `PUBLIC_*`.
+The browser loads GA4 only after `localStorage` key `cookie_consent` is `accepted`. Giscus renders when both public ids are set, except on the home page. A page with `publishedAt` shows Giscus unless `engagement` is `false`. `engagement: true` shows Giscus on any other page.
 
-## Documentation
+## Brand
 
-- `README.md`: quickstart + architectural highlights (this file).
-- `AGENTS.md`: contribution workflow, review checklist, release rules, IaC philosophy.
+| Asset | Source | Served as |
+| --- | --- | --- |
+| Mark | `app/src/lib/mark.ts` | Header lockup, favicon tiles, and the card footer. `assets/mark-lockup-light.svg` and `assets/mark-lockup-dark.svg` use the same paths. |
+| Favicons | `app/src/lib/icons.ts` | `/favicon.ico`, `/favicon.png`, `/favicon.svg`, `/apple-touch-icon.png`. `app/scripts/render-mark.ts` writes the dark tile for every theme. |
+| Home and about card | `app/src/lib/og.ts` | `/og/koborin-ai-hero.webp` |
+| Fallback card | `app/src/lib/og.ts` | `/og/index.webp` |
+
+## Repository
+
+| Path | What it holds |
+| --- | --- |
+| `app/` | Astro site, content, and the Worker asset build |
+| `infra/` | TerraDart `site` stack |
+| `.github/` | Workflows, the label script, and release notes |
+| `assets/` | README lockup SVGs |
+
+`AGENTS.md` is the operations guide. `mise.toml` defines `mise run check`. `.tool-versions` pins Node, Dart, actionlint, and shellcheck.

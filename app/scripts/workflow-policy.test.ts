@@ -56,8 +56,8 @@ describe('auditWorkflows', () => {
   it('rejects a job without its own permissions block', async () => {
     const files = await edited(
       'app-ci.yml',
-      '    permissions:\n      contents: read\n    timeout-minutes: 20',
-      '    timeout-minutes: 20',
+      '    permissions:\n      contents: read\n    timeout-minutes:',
+      '    timeout-minutes:',
     );
     expect(auditWorkflows(files)).toEqual(only('app-ci.yml', 'permission'));
   });

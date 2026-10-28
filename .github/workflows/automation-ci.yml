@@ -3,18 +3,23 @@ name: Automation CI
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   automation:
     name: Workflow, script and doc checks
     runs-on: blacksmith-2vcpu-ubuntu-2404
+    permissions:
+      contents: read
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup toolchain
-        uses: jdx/mise-action@v5
+        uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
 
       # mise-action caches the resolved patch for up to 30 days.
       - name: Use the newest Node.js patch

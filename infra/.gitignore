@@ -1,5 +1,5 @@
-# TerraDart synth output
 tf-out/
+.terradart/
 
 # Terraform working files
 .terraform/

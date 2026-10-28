@@ -73,8 +73,6 @@ async function readDist(pathname: string): Promise<{ file: string; body: Buffer 
   return null;
 }
 
-// Every third-party request, gtag.js and giscus.app included, gets an empty script so the
-// check never reaches the network.
 async function serveDist(context: BrowserContext, origin: Origin, csp: string, measurementId: string | null) {
   await context.route('**/*', async (route) => {
     const url = new URL(route.request().url());

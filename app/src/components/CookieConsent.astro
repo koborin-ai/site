@@ -1,12 +1,4 @@
 ---
-/**
- * Cookie Consent Banner - GDPR compliant cookie consent for Google Analytics
- * 
- * - Shows banner on first visit (no consent stored) and when reopened from the footer
- * - src/lib/consent.ts stores the choice and starts or stops Google Analytics
- * - Bilingual support (English/Japanese based on URL path)
- */
-
 const isJapanese = Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja';
 
 const labels = isJapanese

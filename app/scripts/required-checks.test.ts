@@ -52,7 +52,7 @@ describe('changedAreas', () => {
   });
 
   it('unions the areas of every changed file', () => {
-    expect(changedAreas(['README.md', 'infra/bin/synth.dart'])).toEqual(['infra', 'automation']);
+    expect(changedAreas(['README.md', 'infra/bin/infra.dart'])).toEqual(['infra', 'automation']);
   });
 
   it('selects nothing for an empty change list', () => {

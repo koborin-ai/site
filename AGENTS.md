@@ -13,13 +13,13 @@ This document is a quick guide for any contributors or AI agents that touch the 
 - Astro for MDX content under `app/src/content/docs/`. Home, lists, and articles share one centred column.
 - Cloudflare Workers static assets on `koborin.ai` only. No `dev.koborin.ai`.
 - Infrastructure managed via TerraDart (Dart) with one Terraform root module: `site`.
-- CI/CD and `terraform plan`/`apply` executed only through GitHub Actions using a scoped Cloudflare API token.
+- CI/CD and `terradart plan` / `terradart apply` executed only through GitHub Actions using a scoped Cloudflare API token.
 
 ## Repository Layout
 
 | Path | Purpose |
 | --- | --- |
-| `.tool-versions` | Node, Dart, Terraform, actionlint, and shellcheck versions. The only place they are declared. |
+| `.tool-versions` | Node, Dart, actionlint, and shellcheck versions. The only place they are declared. OpenTofu is not listed. When `tofu` is not on `PATH`, `terradart_cli` 0.35.0 downloads OpenTofu 1.13.1. |
 | `mise.toml` | The `check` task tree that fans out to app, infra, and automation. |
 | `app/` | Astro app (TypeScript, MDX, Vitest). |
 | `app/.oxlintrc.json` | oxlint rules; covers `.ts` and the client `<script>` blocks in `.astro`. |
@@ -51,7 +51,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/src/pages/og/[...slug].webp.ts` | Prerendered endpoint for each article card at `/og/<page path>.webp`. |
 | `infra/` | TerraDart infrastructure (`site` stack). |
 | `infra/lib/site_stack.dart` | Zone lookup and Workers custom domain for `koborin.ai`. |
-| `infra/bin/synth.dart` | Synth entry point. Emits `tf-out/site/main.tf.json` and passes `S3Backend.r2` as the state backend. |
+| `infra/bin/infra.dart` | Entry point. `runStack` writes `tf-out/site/main.tf.json` with `S3Backend.r2`. `terradart plan` and `terradart apply` run it. |
 | `infra/test/` | `dart test` coverage for the synthesized Terraform JSON. |
 | `.github/actionlint.yaml` | Declares the Blacksmith runner labels so actionlint stays clean. |
 | `.github/scripts/` | Shell helpers (`compute-pr-labels.sh`) plus their test suite. |
@@ -59,9 +59,9 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 ## Infrastructure Rules
 
-1. **Plan/Apply**: never run `terraform apply` locally. All infra changes go through GitHub Actions with a scoped Cloudflare API token. Local `terraform plan` after import is OK for verification.
-2. **State backend**: Cloudflare R2 bucket `koborin-ai-tfstate`. Key: `terraform/site/terraform.tfstate`.
-3. **Stacks**: One Terraform root module (`site`) is synthesized via `dart run bin/synth.dart`.
+1. **Plan/Apply**: never run `terradart apply` locally. All infra changes go through GitHub Actions with a scoped Cloudflare API token. A local `terradart plan` is read-only and is OK for verification.
+2. **State backend**: Cloudflare R2 bucket `koborin-ai-tfstate`. Key: `terraform/site/terraform.tfstate`. Do not run `terradart state migrate`.
+3. **Stacks**: One root module (`site`). From `infra/`, `dart run terradart_cli:terradart plan` synthesizes it and plans with the OpenTofu binary that `terradart_cli` downloads.
 4. **Environments**:
 
    - Production host: `koborin.ai` only. There is no `dev.koborin.ai`.
@@ -76,16 +76,17 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 6. **Configuration Management**:
 
-   - Synth reads one environment variable, `CLOUDFLARE_ACCOUNT_ID`. The
-     state bucket and key are constants in `bin/synth.dart`.
-   - Cloudflare credentials stay in GitHub Secrets (`CLOUDFLARE_API_TOKEN`, `R2_*`) and are never baked into synth output.
-   - Site Terraform `variable` blocks stay empty; Terraform rejects `variable: {}`.
+   - The entry point reads one environment variable, `CLOUDFLARE_ACCOUNT_ID`. The
+     state bucket and key are constants in `bin/infra.dart`.
+   - Cloudflare credentials stay in GitHub Secrets (`CLOUDFLARE_API_TOKEN`, `R2_*`) and are never baked into synth output. Plan and apply pass the R2 keys as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+   - Site `variable` blocks stay empty. The encoder omits an empty variable block because Terraform JSON rejects `variable: {}`.
+   - `infra/pubspec.yaml` sets `terradart.engine: tofu` and pins `terradart_cli` to `0.35.0`. With that setting, a `tofu` on `PATH` is used. Otherwise that release downloads OpenTofu 1.13.1, checks the archive SHA-256, and caches the binary. CI does not install Terraform or `tofu`, so the download is what runs.
 
 7. **File Organization**:
 
-   - `infra/bin/synth.dart`: Entry point. Builds the stack, passes `S3Backend.r2` (`terradart_core`) as the state backend, and calls `Stack.writeTo('tf-out/site')`.
+   - `infra/bin/infra.dart`: Entry point. Builds the stack, passes `S3Backend.r2` (`terradart_core`) as the state backend, and calls `runStack`, which writes `tf-out/site`.
    - `infra/lib/site_stack.dart`: Zone lookup and Workers custom domain, both from the `terradart_cloudflare` catalog. Prefer catalog types over hand-written wrappers.
-   - `infra/pubspec.yaml`: TerraDart dependencies (`terradart_core`, `terradart_cloudflare`).
+   - `infra/pubspec.yaml`: TerraDart dependencies (`terradart_core`, `terradart_cloudflare`) and the pinned `terradart_cli`.
 
 ## Application Rules
 
@@ -248,11 +249,11 @@ When adding or updating dependencies (GitHub Actions, npm packages, pub packages
 
 1. **Always check for the latest stable version** before adding a new dependency.
 2. **Use specific major versions** for GitHub Actions (for example `@v7`, not `@main` or `@latest`).
-3. **Prefer version pins from project files** over hardcoded versions in workflows: `.tool-versions` for Node, Dart, Terraform, actionlint, and shellcheck; `package.json` for npm; `pubspec.yaml` for pub.
+3. **Prefer version pins from project files** over hardcoded versions in workflows: `.tool-versions` for Node, Dart, actionlint, and shellcheck; `package.json` for npm; `pubspec.yaml` for pub. OpenTofu is pinned inside the exact `terradart_cli` version.
 4. **Verify compatibility** with existing dependencies before upgrading.
 5. **Document breaking changes** under Risk and manual steps in the PR description when upgrading major versions.
 
-Dependabot covers npm (`app/`), pub (`infra/`), and GitHub Actions. It does not understand `.tool-versions`, so Node, Dart, Terraform, actionlint, and shellcheck are bumped by hand there.
+Dependabot covers npm (`app/`), pub (`infra/`), and GitHub Actions. It does not understand `.tool-versions`, so Node, Dart, actionlint, and shellcheck are bumped by hand there. `terradart_cli` is pinned to an exact version in `infra/pubspec.yaml`. That pin selects the OpenTofu release.
 
 Examples:
 
@@ -265,17 +266,17 @@ Examples:
 - Workflows:
   - `required-checks.yml`: runs on every pull request. Its `changes` job maps the merge diff to the app, infra, and automation areas through `areaPaths` in `app/scripts/required-checks.ts`, and the workflow calls the area workflows below for the areas that changed. Its `required-checks` job is the one check context a ruleset needs. It fails when `changes` did not succeed, when any area job failed or was cancelled, and when a changed area's job was skipped or is missing. A pull request that touches no area passes.
   - `app-ci.yml`: called for the app area. `npm run check` plus `npm audit` and the production build.
-  - `plan-infra.yml`: called for the infra area, or dispatched. The `check` job runs `mise run check:infra` with no secrets, so Dependabot and fork pull requests run it too. The `plan` job runs `terraform plan` for the `site` stack, skips Dependabot and forks, and alone holds the `terraform-state` concurrency group. A failed `check` or `plan` fails `required-checks`.
+  - `plan-infra.yml`: called for the infra area, or dispatched. The `check` job runs `mise run check:infra` with no secrets, so Dependabot and fork pull requests run it too. The `plan` job runs `dart run terradart_cli:terradart plan` for the `site` stack, skips Dependabot and forks, and alone holds the `terraform-state` concurrency group. A failed `check` or `plan` fails `required-checks`.
   - `automation-ci.yml`: called for the automation area. `mise run check:automation` and `mise run check:docs`.
-  - `release-infra.yml`: `mise run check:infra` then authenticated `terraform apply` for the `site` stack, on a `main` push under `infra/` or a dispatch. The job runs only when `github.ref` is `refs/heads/main`.
+  - `release-infra.yml`: `mise run check:infra`, then `dart run terradart_cli:terradart plan` and `dart run terradart_cli:terradart apply --auto-approve` for the `site` stack, on a `main` push under `infra/` or a dispatch. The job runs only when `github.ref` is `refs/heads/main`, in the `production (infra)` environment.
   - `app-release.yml`: `npm run check`, the production build, and `wrangler deploy` for Worker `koborin-ai-web`, then the `smoke` job. The deploy job runs only when `github.ref` is `refs/heads/main`.
   - `smoke-prod.yml`: runs `node scripts/smoke-prod.ts` against `https://koborin.ai` after each app deploy, every Monday at 04:23 UTC, and on dispatch from `main`. It needs no token and no `npm ci`. A failure turns the run red and rolls nothing back.
 - Path filters: pull request path filters do not select checks. Do not add `paths` or `paths-ignore` to a `pull_request` trigger. To change which checks a path runs, edit `areaPaths`. A new area also needs a job with the same id in `required-checks.yml` and an entry in the `required-checks` job's `needs`. `app/scripts/required-checks.test.ts` fails if a filter returns or the job wiring drifts.
-- Toolchain: every workflow takes its versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump versions in `.tool-versions`, never in a workflow.
+- Toolchain: every workflow takes its Node, Dart, actionlint, and shellcheck versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump those versions in `.tool-versions`, never in a workflow. Infra plan and apply do not install Terraform. With no `tofu` on `PATH`, `terradart plan` downloads OpenTofu.
 - Cloudflare auth:
   - Secret: `CLOUDFLARE_API_TOKEN` (scoped to this account and zone).
   - Variable: `CLOUDFLARE_ACCOUNT_ID`.
-  - Terraform state: R2 bucket `koborin-ai-tfstate` via `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`.
+  - State: R2 bucket `koborin-ai-tfstate` via `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`.
 
 ## Release Process
 
@@ -351,7 +352,7 @@ This is the command to reach for. It runs the four `check:*` tasks in `mise.toml
 mise run check:infra  # dart pub get, dart analyze, dart test
 ```
 
-On a pull request, `required-checks.yml` calls `plan-infra.yml`, which also runs `terraform plan`.
+On a pull request, `required-checks.yml` calls `plan-infra.yml`, which also runs `terradart plan`.
 
 ### Application (`app/`)
 
@@ -413,7 +414,7 @@ The main local runtime is the **Astro app** under `app/`. There is no docker-com
 
 ### Toolchain versions
 
-`.tool-versions` at the repository root is the only place versions are declared. The VM image does not ship Dart, Terraform, actionlint, or shellcheck, so install them once per fresh environment:
+`.tool-versions` at the repository root is the only place Node, Dart, actionlint, and shellcheck versions are declared. The VM image does not ship Dart, actionlint, or shellcheck, so install them once per fresh environment. OpenTofu is downloaded by `terradart plan`, not by mise:
 
 ```bash
 curl https://mise.run | sh
@@ -453,7 +454,7 @@ The image may carry a stale browser build; if the build reports a missing execut
 mise run check:infra
 ```
 
-Never run `terraform apply` locally. Infra changes go through GitHub Actions only.
+Never run `terradart apply` locally. Infra changes go through GitHub Actions only.
 
 ### Optional tooling
 

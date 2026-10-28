@@ -1,7 +1,5 @@
 # koborin.ai
 
-![koborin-ai](./app/src/assets/_shared/koborin-ai-header-light.svg)
-
 Technical proving ground for exploring AI, cloud architecture, and continuous learning.
 
 The Astro site is served as Cloudflare Worker static assets. App deploys use wrangler. DNS and the custom domain are a TerraDart `site` stack applied from GitHub Actions.
@@ -127,7 +125,6 @@ These files are **auto-generated** at build time from Content Collections. Artic
 │   ├── vitest.config.ts          # Vitest via Astro's getViteConfig
 │   ├── src/
 │   │   ├── assets/               # Images organized by category
-│   │   │   ├── _shared/          # README banner
 │   │   │   ├── tech/             # Tech article images
 │   │   │   ├── life/             # Life article images
 │   │   │   └── og/               # Open Graph images
@@ -189,8 +186,6 @@ For performance, images are automatically converted to WebP format. **Authors ca
 | Blog images | `app/src/assets/{category}/{article}/` | Place PNG/JPEG in article folder | Astro optimizes to WebP |
 
 Article pages open with the title and the dates. The social card is generated at build time from the title, at `/og/<page path>.webp`. Authors do not add a cover. Home and about still set `ogImage`. Inline images stay on `SiteImage` with `variant="inline"`.
-
-`npm run build` runs `app/scripts/optimize-og-images.ts` first, which converts `index.png` and `koborin-ai-hero.png` in `app/public/og/` to WebP with sharp. It does not write the generated article cards.
 
 ## Workflow Overview
 

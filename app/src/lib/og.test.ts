@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { diffRoutes } from '../../scripts/check-routes.ts';
+import { diffRoutes, readBaseline } from '../../scripts/check-routes.ts';
 import { ogCards, ogImageFor, type OgSource } from './og';
 
 function source(id: string, data: OgSource['data']): OgSource {
@@ -93,5 +93,12 @@ describe('route checker', () => {
     const result = diffRoutes(baseline, [...baseline, ...cardPaths]);
     expect(result.unexpected).toEqual([]);
     expect(result.generated).toEqual(cardPaths);
+  });
+
+  it('lists every shared card in the baseline, so the build fails if one stops being emitted', async () => {
+    const baseline = new Set(await readBaseline());
+    const paths = ogCards([]).map((card) => card.path);
+    expect(paths).not.toEqual([]);
+    expect(paths.filter((path) => !baseline.has(path))).toEqual([]);
   });
 });

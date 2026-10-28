@@ -43,6 +43,8 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `app/scripts/routes-baseline.txt` | Public URLs the production build must still emit. `/pagefind/` is the only allowed omission. |
 | `app/scripts/required-checks.ts` | The only list of pull request path areas (`areaPaths`), and the `required-checks` verdict. Imports `node:` built-ins only, because it runs before `npm ci`. |
 | `app/scripts/smoke-prod.ts` | Probes `koborin.ai` from the route baseline after each app deploy and weekly. Sends GETs only. |
+| `app/scripts/lighthouse-pr.ts` | Serves `app/dist` on `127.0.0.1` with Brotli and runs Lighthouse on four baseline pages. `judgeLighthouse` owns the minimums and the exit code. |
+| `app/scripts/workflow-policy.ts` | One rule per file in `.github/workflows/`: SHA pins, `contents: read` permissions, the fork skip on the label job, and the concurrency groups. Imports `node:` built-ins only. |
 | `app/scripts/subset-noto-sans-jp.ts` | Subsets Noto Sans JP on every build and writes the late-loaded stylesheet. |
 | `app/src/utils/llms.ts` | Shared logic for llms.txt generation. |
 | `app/src/pages/llms*.txt.ts` | Astro endpoints that generate llms.txt files at build time. |
@@ -138,7 +140,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
    - Home and about still set `ogImage: /og/koborin-ai-hero.png`. `Head.astro` rewrites that `.png` reference to `.webp`.
    - Pages without a generated card and without `ogImage` fall back to `/og/index.webp`.
    - Inline images stay on `SiteImage` with `variant="inline"`.
-   - `app/scripts/optimize-og-images.sh` converts root-level files in `app/public/og/` to WebP during CI (`app-ci.yml` / `app-release.yml`). It does not write the generated article cards.
+   - `npm run build` runs `app/scripts/optimize-og-images.ts` before `astro build`. It converts `index.png` and `koborin-ai-hero.png` in `app/public/og/` to WebP with sharp, and a missing file fails the build. It does not write the generated article cards.
 6. **Article Dates**:
    - **Published Date**: Set `publishedAt: YYYY-MM-DD` in frontmatter when creating a new article.
    - **Updated Date**: `app/src/lib/last-updated.ts` walks `git log` for the MDX file and skips a commit whose message contains `Updated-Date: ignore`. Put that trailer in the commit message. Squash merges on this repo keep the commit list, so a trailer that exists only in the pull request description does not count. Set `lastUpdated: false` to hide the line. The home pages do.
@@ -248,7 +250,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 When adding or updating dependencies (GitHub Actions, npm packages, pub packages):
 
 1. **Always check for the latest stable version** before adding a new dependency.
-2. **Use specific major versions** for GitHub Actions (for example `@v7`, not `@main` or `@latest`).
+2. **Pin every external GitHub Action to a full commit SHA** with a trailing `# vX.Y.Z` comment, for example `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`. Local `./.github/workflows/...` calls stay as paths.
 3. **Prefer version pins from project files** over hardcoded versions in workflows: `.tool-versions` for Node, Dart, actionlint, and shellcheck; `package.json` for npm; `pubspec.yaml` for pub. OpenTofu is pinned inside the exact `terradart_cli` version.
 4. **Verify compatibility** with existing dependencies before upgrading.
 5. **Document breaking changes** under Risk and manual steps in the PR description when upgrading major versions.
@@ -257,7 +259,7 @@ Dependabot covers npm (`app/`), pub (`infra/`), and GitHub Actions. It does not 
 
 Examples:
 
-- GitHub Actions: Pin a major version (`actions/setup-node@v7` in the workflows here), not `@main` or `@latest`.
+- GitHub Actions: Pin the commit SHA and keep the version in the comment (`actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0`). Dependabot updates both.
 - npm packages: Use `npm outdated` in `app/`.
 - pub packages: Use `dart pub outdated` in `infra/`.
 
@@ -265,13 +267,14 @@ Examples:
 
 - Workflows:
   - `required-checks.yml`: runs on every pull request. Its `changes` job maps the merge diff to the app, infra, and automation areas through `areaPaths` in `app/scripts/required-checks.ts`, and the workflow calls the area workflows below for the areas that changed. Its `required-checks` job is the one check context a ruleset needs. It fails when `changes` did not succeed, when any area job failed or was cancelled, and when a changed area's job was skipped or is missing. A pull request that touches no area passes.
-  - `app-ci.yml`: called for the app area. `npm run check` plus `npm audit` and the production build.
+  - `app-ci.yml`: called for the app area. `npm run check` plus `npm audit` and the production build, then `app/scripts/lighthouse-pr.ts` over `/`, `/ja/`, and the English and Japanese architecture articles, once per page on desktop and on mobile. It uploads the reports as the `lighthouse` artifact. A score under its minimum is report-only. A missing report (no Chrome, a non-200 page, a null score) fails the app job and so `required-checks`.
   - `plan-infra.yml`: called for the infra area, or dispatched. The `check` job runs `mise run check:infra` with no secrets, so Dependabot and fork pull requests run it too. The `plan` job runs `dart run terradart_cli:terradart plan` for the `site` stack, skips Dependabot and forks, and alone holds the `terraform-state` concurrency group. A failed `check` or `plan` fails `required-checks`.
   - `automation-ci.yml`: called for the automation area. `mise run check:automation` and `mise run check:docs`.
   - `release-infra.yml`: `mise run check:infra`, then `dart run terradart_cli:terradart plan` and `dart run terradart_cli:terradart apply --auto-approve` for the `site` stack, on a `main` push under `infra/` or a dispatch. The job runs only when `github.ref` is `refs/heads/main`, in the `production (infra)` environment.
   - `app-release.yml`: `npm run check`, the production build, and `wrangler deploy` for Worker `koborin-ai-web`, then the `smoke` job. The deploy job runs only when `github.ref` is `refs/heads/main`.
   - `smoke-prod.yml`: runs `node scripts/smoke-prod.ts` against `https://koborin.ai` after each app deploy, every Monday at 04:23 UTC, and on dispatch from `main`. It needs no token and no `npm ci`. A failure turns the run red and rolls nothing back.
 - Path filters: pull request path filters do not select checks. Do not add `paths` or `paths-ignore` to a `pull_request` trigger. To change which checks a path runs, edit `areaPaths`. A new area also needs a job with the same id in `required-checks.yml` and an entry in the `required-checks` job's `needs`. `app/scripts/required-checks.test.ts` fails if a filter returns or the job wiring drifts.
+- Concurrency: `required-checks.yml` and `label-pr.yml` cancel the superseded run of the same pull request. `app-release` and `terraform-state` (apply and the `plan` job) never cancel a run in progress. Called workflows have no group of their own. `mise run check:automation` runs `app/scripts/workflow-policy.ts`, which fails when a pin, a permission block, or a group drifts, and when a workflow file has no rule.
 - Toolchain: every workflow takes its Node, Dart, actionlint, and shellcheck versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump those versions in `.tool-versions`, never in a workflow. Infra plan and apply do not install Terraform. With no `tofu` on `PATH`, `terradart plan` downloads OpenTofu.
 - Cloudflare auth:
   - Secret: `CLOUDFLARE_API_TOKEN` (scoped to this account and zone).
@@ -282,7 +285,7 @@ Examples:
 
 - App deploy and infra apply run only from `main`. A `workflow_dispatch` from any other ref skips the deploy or apply job.
 - `release-infra.yml` applies the `site` stack when a push to `main` touches `infra/**`. To re-apply, dispatch it from `main`. `infra-v*` tags do not apply. The workflow has no tag trigger.
-- `app-release.yml` deploys Worker `koborin-ai-web` when a push to `main` touches its path filter (`app/**`, `content/**`, `.tool-versions`, `mise.toml`, and the two app workflow files), and on `workflow_dispatch` from `main`.
+- `app-release.yml` deploys Worker `koborin-ai-web` when a push to `main` touches its path filter (`app/**`, `.tool-versions`, `mise.toml`, and the two app workflow files), and on `workflow_dispatch` from `main`.
 - GitHub release notes respect `.github/release.yml`. Label every PR with `app`, `infra`, `feature`, `bug`, or `doc` so notes land in the right category; use the `ignore` label when a PR should be excluded entirely.
 
 ## Analytics
@@ -365,6 +368,7 @@ npm run check-images  # Image usage validation
 npm run check         # All four of the above
 npm run build         # Astro build; needs Playwright Chromium
 npm run lint:prose    # textlint over the articles; advisory, see below
+node scripts/lighthouse-pr.ts /tmp/lighthouse  # after npm run build; reports into the given directory
 ```
 
 `npm run build` is not part of `check` because it takes 40 seconds. Run it whenever content, assets, or configuration change.
@@ -383,7 +387,7 @@ Gating on 49 stylistic disagreements would force a rewrite of the author's Japan
 ### Automation (`.github/`)
 
 ```bash
-mise run check:automation  # actionlint, shellcheck, PR label tests
+mise run check:automation  # actionlint, workflow policy, shellcheck, PR label tests
 mise run check:docs        # markdownlint over every tracked .md
 ```
 
@@ -397,7 +401,7 @@ mise run check:docs        # markdownlint over every tracked .md
    - If the change touches a page with `draft: true`, these commands skip it. Also open the page in `npm run dev` and confirm it renders.
 4. Markdown lint is part of `mise run check` (`check:docs`); no separate step.
 5. Fill in every section of `.github/pull_request_template.md`. Put manual Cloudflare, DNS, or repository settings steps, such as edits to the unmanaged MX and TXT records, under Risk and manual steps.
-6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
+6. **Label the PR** — usually automatic via `label-pr.yml`, which skips fork pull requests because their token cannot write labels. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
    - **Domain labels** (one or more):
      - `app` — Changes under `app/`.
      - `infra` — Changes under `infra/`.
@@ -440,7 +444,7 @@ Use **tmux** for long-running processes such as `npm run dev`.
 
 ### Playwright (required for `npm run check` and `npm run build`)
 
-CI installs Chromium for Mermaid diagram rendering during production builds. The Vitest contract test in `app/src/styles/prose.test.ts` renders Mermaid too. After the VM update script runs `npm ci`, run once per fresh environment:
+CI installs Chromium for Mermaid diagram rendering during production builds, and `app/scripts/lighthouse-pr.ts` launches the same binary. The Vitest contract test in `app/src/styles/prose.test.ts` renders Mermaid too. After the VM update script runs `npm ci`, run once per fresh environment:
 
 ```bash
 cd app && npx playwright install chromium
@@ -458,6 +462,6 @@ Never run `terradart apply` locally. Infra changes go through GitHub Actions onl
 
 ### Optional tooling
 
-- **webp / imagemagick**: Used by `app/scripts/optimize-og-images.sh`, which CI installs via apt. Not required for local dev or `npm run build`.
+- **OG images**: `npm run build` converts the two static OG files with sharp, which `npm ci` installs. The apt `webp` and `imagemagick` packages are no longer used.
 - **Giscus / GA4**: Set `PUBLIC_GISCUS_*` and `PUBLIC_GA_MEASUREMENT_ID` in `app/.env` to mirror production engagement features. The site works without them.
 

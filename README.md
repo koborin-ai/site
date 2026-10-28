@@ -81,8 +81,8 @@ flowchart LR
 | `required-checks.yml` | Every PR | Maps changed paths to areas with `app/scripts/required-checks.ts`, calls the area workflows, and reports the `required-checks` job | The one check context to require |
 | `plan-infra.yml` | Called for the infra area, or manual dispatch | `mise run check:infra` + `terradart plan` for the `site` stack | No apply |
 | `release-infra.yml` | `main` infra push or manual dispatch | Applies the `site` stack | Runs only from `main`. State is in R2 |
-| `app-ci.yml` | Called for the app area | Runs `npm run check` and the production build | Blocks merges that break the app |
-| `automation-ci.yml` | Called for the automation area | `mise run check:automation` + `check:docs` (actionlint, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
+| `app-ci.yml` | Called for the app area | Runs `npm run check`, the production build, and Lighthouse on four pages (`lighthouse` artifact) | Blocks merges that break the app. Low Lighthouse scores are report-only |
+| `automation-ci.yml` | Called for the automation area | `mise run check:automation` + `check:docs` (actionlint, workflow policy, shellcheck, label tests, markdownlint) | Guards the automation and the docs |
 | `app-release.yml` | Merge to `main` or `workflow_dispatch` | Runs `npm run check`, builds the static site, runs `wrangler deploy`, then calls `smoke-prod.yml` | Runs only from `main`. Uses `CLOUDFLARE_API_TOKEN` |
 | `smoke-prod.yml` | After each app deploy, weekly, or manual dispatch | Probes the public routes in `app/scripts/routes-baseline.txt` on `https://koborin.ai` | GETs only. Skips `/pagefind/` and `/_headers`. No rollback |
 
@@ -185,12 +185,12 @@ For performance, images are automatically converted to WebP format. **Authors ca
 | Image Type | Location | What You Do | What Happens Automatically |
 | --- | --- | --- | --- |
 | Article cards | `/og/<page path>.webp` | Do not add a cover. The build draws the card from the title | WebP, 1200 by 630 |
-| Home and about | `app/public/og/koborin-ai-hero.png` | Set `ogImage: /og/koborin-ai-hero.png` | CI converts to WebP; `Head.astro` rewrites `.png` to `.webp` |
+| Home and about | `app/public/og/koborin-ai-hero.png` | Set `ogImage: /og/koborin-ai-hero.png` | `npm run build` converts to WebP; `Head.astro` rewrites `.png` to `.webp` |
 | Blog images | `app/src/assets/{category}/{article}/` | Place PNG/JPEG in article folder | Astro optimizes to WebP |
 
 Article pages open with the title and the dates. The social card is generated at build time from the title, at `/og/<page path>.webp`. Authors do not add a cover. Home and about still set `ogImage`. Inline images stay on `SiteImage` with `variant="inline"`.
 
-`app/scripts/optimize-og-images.sh` still converts the root-level files in `app/public/og/` during CI. It does not write the generated article cards.
+`npm run build` runs `app/scripts/optimize-og-images.ts` first, which converts `index.png` and `koborin-ai-hero.png` in `app/public/og/` to WebP with sharp. It does not write the generated article cards.
 
 ## Workflow Overview
 

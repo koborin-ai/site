@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node scripts/subset-noto-sans-jp.ts --out public/fonts && astro dev",
-    "build": "astro build && node scripts/subset-noto-sans-jp.ts && node scripts/check-routes.ts && node scripts/check-csp.ts",
+    "build": "node scripts/optimize-og-images.ts && astro build && node scripts/subset-noto-sans-jp.ts && node scripts/check-routes.ts && node scripts/check-csp.ts",
     "preview": "astro preview",
     "lint": "oxlint",
     "typecheck": "astro check",
@@ -48,7 +48,9 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.3",
+    "chrome-launcher": "1.2.2",
     "fontverter": "^2.0.0",
+    "lighthouse": "13.6.0",
     "oxlint": "^1.80.0",
     "subset-font": "^2.9.0",
     "textlint": "^15.8.0",

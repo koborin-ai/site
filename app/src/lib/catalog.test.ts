@@ -84,7 +84,9 @@ describe('home catalog', () => {
       '2024/12',
     ]);
     expect(homeTalks().map((item) => item.date)).toEqual(['2026/07', '2025/07', '2025/02', '2024/11']);
-    expect(formatTalkDate('2026/07', 'list')).toBe('07月');
+    expect(formatTalkDate('2026/07', 'list', 'ja')).toBe('07月');
+    expect(formatTalkDate('2024/12', 'list', 'en')).toBe('Dec');
+    expect(formatTalkDate('2026/07', 'home', 'en')).toBe('2026/07');
     expect(formatPostDate(new Date('2026-09-22T00:00:00.000Z'), 'list')).toBe('09/22');
   });
 

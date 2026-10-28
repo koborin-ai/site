@@ -29,7 +29,7 @@ function countLabel(count: number): string {
         </span>
       )}
       <span class="meta">
-        {formatTalkDate(talk.date, 'list')}
+        {formatTalkDate(talk.date, 'list', locale)}
         {talk.attendees !== undefined && <span class="talk-count">{countLabel(talk.attendees)}</span>}
       </span>
     </li>

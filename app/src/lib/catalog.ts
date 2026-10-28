@@ -165,6 +165,7 @@ export const talks: readonly Talk[] = [
     date: '2024/12',
     event: { en: 'Genkit Hands-on (Organizer)', ja: 'Genkit ハンズオン（運営）' },
     title: { en: 'Technical supporter', ja: 'テクニカルサポーターとして参加' },
+    href: 'https://gdg-tokyo.connpass.com/event/337045/',
     onHome: false,
     attendees: 45,
   }),
@@ -175,6 +176,7 @@ export const talks: readonly Talk[] = [
       en: 'Orchestrating Firebase and AI: Genkit Architecture Example',
       ja: 'Orchestrating Firebase and AI: Genkit architecture example',
     },
+    href: 'https://docs.google.com/presentation/d/10F2hjzJhdInSuhDQ8G_B2raGz79mzTRIcWU_59Zh5Y8/edit?usp=sharing',
     attendees: 369,
   }),
   talk({
@@ -193,6 +195,7 @@ export const talks: readonly Talk[] = [
       en: 'Retail DX Strategy for Competitive Advantage',
       ja: '競争力を高めるリテール DX 戦略',
     },
+    href: 'https://cloud-ace.jp/event/240619_map-the-way-tokyo/',
     attendees: 75,
   }),
   talk({
@@ -229,6 +232,7 @@ export const talks: readonly Talk[] = [
       en: 'IaC and CI/CD Pipeline Construction in Firebase',
       ja: 'Firebase における IaC と CI/CD パイプライン構築のすゝめ',
     },
+    href: 'https://github.com/nozomi-koborinai/gdg-tokyo-monthly-online-tech-talks-firebase',
     attendees: 200,
   }),
   talk({
@@ -288,8 +292,14 @@ export function formatPostDate(publishedAt: Date, where: 'home' | 'list'): strin
   return where === 'home' ? `${year}/${month}/${day}` : `${month}/${day}`;
 }
 
-export function formatTalkDate(date: string, where: 'home' | 'list'): string {
-  return where === 'home' ? date : `${date.slice(5)}月`;
+export function formatTalkDate(date: string, where: 'home' | 'list', locale: Locale): string {
+  if (where === 'home') return date;
+  if (locale === 'ja') return `${date.slice(5)}月`;
+  const month = Number(date.slice(5, 7));
+  return new Date(Date.UTC(2000, month - 1, 1)).toLocaleDateString('en-US', {
+    month: 'short',
+    timeZone: 'UTC',
+  });
 }
 
 export function groupByYear<T extends { year: number }>(items: readonly T[]): { year: number; items: T[] }[] {

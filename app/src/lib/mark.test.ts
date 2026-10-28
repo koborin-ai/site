@@ -127,6 +127,19 @@ describe('mark', () => {
     expect(hits).toEqual([]);
   });
 
+  it('ships no image in public/ except the rendered icons', async () => {
+    const publicDir = fileURLToPath(new URL('../../public', import.meta.url));
+    const images = filesUnder(publicDir)
+      .map((abs) => ({ rel: `public/${abs.slice(publicDir.length + 1)}`, abs }))
+      .filter(({ rel }) => /\.(png|jpe?g|webp|gif|svg|ico|avif)$/i.test(rel));
+    const strays: string[] = [];
+    for (const { rel, abs } of images) {
+      if (!(await isRenderedIcon(rel, readFileSync(abs)))) strays.push(rel);
+    }
+    expect(strays).toEqual([]);
+    expect(images.map(({ rel }) => rel).toSorted()).toEqual(ICONS.map((icon) => `public/${icon.file}`).toSorted());
+  });
+
   it('uses the dark accent for the tile ink', () => {
     const css = readFileSync(fileURLToPath(new URL('../styles/site.css', import.meta.url)), 'utf8');
     const root = css.slice(0, css.indexOf('html[data-theme'));

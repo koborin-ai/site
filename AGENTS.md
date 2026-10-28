@@ -248,7 +248,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 When adding or updating dependencies (GitHub Actions, npm packages, pub packages):
 
 1. **Always check for the latest stable version** before adding a new dependency.
-2. **Use specific major versions** for GitHub Actions (for example `@v7`, not `@main` or `@latest`).
+2. **Pin every external GitHub Action to a full commit SHA** with a trailing `# vX.Y.Z` comment, for example `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`. Local `./.github/workflows/...` calls stay as paths.
 3. **Prefer version pins from project files** over hardcoded versions in workflows: `.tool-versions` for Node, Dart, actionlint, and shellcheck; `package.json` for npm; `pubspec.yaml` for pub. OpenTofu is pinned inside the exact `terradart_cli` version.
 4. **Verify compatibility** with existing dependencies before upgrading.
 5. **Document breaking changes** under Risk and manual steps in the PR description when upgrading major versions.
@@ -257,7 +257,7 @@ Dependabot covers npm (`app/`), pub (`infra/`), and GitHub Actions. It does not 
 
 Examples:
 
-- GitHub Actions: Pin a major version (`actions/setup-node@v7` in the workflows here), not `@main` or `@latest`.
+- GitHub Actions: Pin the commit SHA and keep the version in the comment (`actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0`). Dependabot updates both.
 - npm packages: Use `npm outdated` in `app/`.
 - pub packages: Use `dart pub outdated` in `infra/`.
 
@@ -397,7 +397,7 @@ mise run check:docs        # markdownlint over every tracked .md
    - If the change touches a page with `draft: true`, these commands skip it. Also open the page in `npm run dev` and confirm it renders.
 4. Markdown lint is part of `mise run check` (`check:docs`); no separate step.
 5. Fill in every section of `.github/pull_request_template.md`. Put manual Cloudflare, DNS, or repository settings steps, such as edits to the unmanaged MX and TXT records, under Risk and manual steps.
-6. **Label the PR** — usually automatic via `label-pr.yml`. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
+6. **Label the PR** — usually automatic via `label-pr.yml`, which skips fork pull requests because their token cannot write labels. Before requesting review, confirm labels match the diff (or add `ignore` to opt out):
    - **Domain labels** (one or more):
      - `app` — Changes under `app/`.
      - `infra` — Changes under `infra/`.

@@ -86,7 +86,7 @@ flowchart LR
 | `app-release.yml` | Merge to `main` or `workflow_dispatch` | Runs `npm run check`, builds the static site, runs `wrangler deploy`, then calls `smoke-prod.yml` | Runs only from `main`. Uses `CLOUDFLARE_API_TOKEN` |
 | `smoke-prod.yml` | After each app deploy, weekly, or manual dispatch | Probes the public routes in `app/scripts/routes-baseline.txt` on `https://koborin.ai` | GETs only. Skips `/pagefind/` and `/_headers`. No rollback |
 
-Tool versions for Node, Dart, actionlint, and shellcheck come from `.tool-versions`. `actions/setup-node` reads it through `node-version-file`, and the infra and automation workflows install from it with `jdx/mise-action`. Infra plan and apply do not install Terraform. `terradart plan` downloads OpenTofu.
+Tool versions for Node, Dart, actionlint, and shellcheck come from `.tool-versions`. `actions/setup-node` reads it through `node-version-file`, and the infra and automation workflows install from it with `jdx/mise-action`. Infra plan and apply do not install Terraform. With no `tofu` on `PATH`, `terradart plan` downloads OpenTofu.
 
 ## Tech Stack
 

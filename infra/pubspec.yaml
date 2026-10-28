@@ -14,8 +14,5 @@ dev_dependencies:
   terradart_cli: 0.35.0
   test: ^1.31.2
 
-# `engine: tofu` makes `terradart` download its pinned OpenTofu when `tofu`
-# is not on PATH, including on a runner that still has `terraform` installed.
-# A state Terraform wrote is planned read-only. The first `apply` rewrites it.
 terradart:
   engine: tofu

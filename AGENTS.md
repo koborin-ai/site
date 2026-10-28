@@ -19,7 +19,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
 | Path | Purpose |
 | --- | --- |
-| `.tool-versions` | Node, Dart, actionlint, and shellcheck versions. The only place they are declared. OpenTofu is not listed. `terradart_cli` 0.35.0 downloads OpenTofu 1.13.1. |
+| `.tool-versions` | Node, Dart, actionlint, and shellcheck versions. The only place they are declared. OpenTofu is not listed. When `tofu` is not on `PATH`, `terradart_cli` 0.35.0 downloads OpenTofu 1.13.1. |
 | `mise.toml` | The `check` task tree that fans out to app, infra, and automation. |
 | `app/` | Astro app (TypeScript, MDX, Vitest). |
 | `app/.oxlintrc.json` | oxlint rules; covers `.ts` and the client `<script>` blocks in `.astro`. |
@@ -80,7 +80,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
      state bucket and key are constants in `bin/infra.dart`.
    - Cloudflare credentials stay in GitHub Secrets (`CLOUDFLARE_API_TOKEN`, `R2_*`) and are never baked into synth output. Plan and apply pass the R2 keys as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
    - Site `variable` blocks stay empty. The encoder omits an empty variable block because Terraform JSON rejects `variable: {}`.
-   - `infra/pubspec.yaml` sets `terradart.engine: tofu` and pins `terradart_cli` to `0.35.0`. That release downloads OpenTofu 1.13.1, checks the archive SHA-256, and caches the binary. CI does not install Terraform.
+   - `infra/pubspec.yaml` sets `terradart.engine: tofu` and pins `terradart_cli` to `0.35.0`. With that setting, a `tofu` on `PATH` is used. Otherwise that release downloads OpenTofu 1.13.1, checks the archive SHA-256, and caches the binary. CI does not install Terraform or `tofu`, so the download is what runs.
 
 7. **File Organization**:
 
@@ -272,7 +272,7 @@ Examples:
   - `app-release.yml`: `npm run check`, the production build, and `wrangler deploy` for Worker `koborin-ai-web`, then the `smoke` job. The deploy job runs only when `github.ref` is `refs/heads/main`.
   - `smoke-prod.yml`: runs `node scripts/smoke-prod.ts` against `https://koborin.ai` after each app deploy, every Monday at 04:23 UTC, and on dispatch from `main`. It needs no token and no `npm ci`. A failure turns the run red and rolls nothing back.
 - Path filters: pull request path filters do not select checks. Do not add `paths` or `paths-ignore` to a `pull_request` trigger. To change which checks a path runs, edit `areaPaths`. A new area also needs a job with the same id in `required-checks.yml` and an entry in the `required-checks` job's `needs`. `app/scripts/required-checks.test.ts` fails if a filter returns or the job wiring drifts.
-- Toolchain: every workflow takes its Node, Dart, actionlint, and shellcheck versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump those versions in `.tool-versions`, never in a workflow. Infra plan and apply do not install Terraform. `terradart plan` downloads OpenTofu.
+- Toolchain: every workflow takes its Node, Dart, actionlint, and shellcheck versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump those versions in `.tool-versions`, never in a workflow. Infra plan and apply do not install Terraform. With no `tofu` on `PATH`, `terradart plan` downloads OpenTofu.
 - Cloudflare auth:
   - Secret: `CLOUDFLARE_API_TOKEN` (scoped to this account and zone).
   - Variable: `CLOUDFLARE_ACCOUNT_ID`.

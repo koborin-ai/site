@@ -1,5 +1,6 @@
-# TerraDart synth output
+# TerraDart synth output and the CLI's local manifest
 tf-out/
+.terradart/
 
 # Terraform working files
 .terraform/

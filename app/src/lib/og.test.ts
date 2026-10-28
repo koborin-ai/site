@@ -58,7 +58,7 @@ describe('ogCards', () => {
       {
         slug: 'koborin-ai-hero',
         path: '/og/koborin-ai-hero.webp',
-        card: { kind: 'site', tagline: 'Personal site and technical proving ground' },
+        card: { kind: 'site', tagline: 'Software engineer. Building tools, thinking about life.' },
       },
       { slug: 'index', path: '/og/index.webp', card: { kind: 'site' } },
     ]);

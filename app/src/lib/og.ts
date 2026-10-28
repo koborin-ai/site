@@ -16,7 +16,7 @@ export type OgCard =
     }
   | {
       readonly kind: 'site';
-      readonly tagline?: 'Personal site and technical proving ground';
+      readonly tagline?: 'Software engineer. Building tools, thinking about life.';
     };
 
 type SiteOgCard = Extract<OgCard, { kind: 'site' }>;
@@ -46,7 +46,7 @@ const SITE_CARDS = {
   home: {
     path: '/og/koborin-ai-hero.webp',
     version: 2,
-    card: { kind: 'site', tagline: 'Personal site and technical proving ground' },
+    card: { kind: 'site', tagline: 'Software engineer. Building tools, thinking about life.' },
   },
   fallback: {
     path: '/og/index.webp',

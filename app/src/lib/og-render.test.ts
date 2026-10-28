@@ -148,7 +148,7 @@ describe('renderOgCard', () => {
 
 describe('renderOgCard for site cards', () => {
   const tolerance = channelToleranceByWebpQuality[OG_WEBP_QUALITY];
-  const hero = renderOgCard({ kind: 'site', tagline: 'Personal site and technical proving ground' });
+  const hero = renderOgCard({ kind: 'site', tagline: 'Software engineer. Building tools, thinking about life.' });
   const fallback = renderOgCard({ kind: 'site' });
 
   it('draws both cards at the size Head advertises', async () => {

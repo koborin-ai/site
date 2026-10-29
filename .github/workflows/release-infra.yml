@@ -45,21 +45,10 @@ jobs:
         run: mise run check:infra
 
       - name: Authenticate to Google Cloud
-        id: gcp
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_SA_EMAIL }}
-          token_format: access_token
-
-      - name: Require the R2 state in GCS
-        working-directory: infra
-        env:
-          TFSTATE_BUCKET: ${{ vars.TFSTATE_BUCKET }}
-          GCS_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: dart run tool/require_state.dart
 
       - name: Plan
         working-directory: infra

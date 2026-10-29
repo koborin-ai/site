@@ -75,22 +75,6 @@ export const projects: readonly Project[] = [
     },
   },
   {
-    name: 'gcp-cost-mcp-server',
-    href: 'https://github.com/nozomi-koborinai/gcp-cost-mcp-server',
-    description: {
-      en: 'An MCP server that lets AI assistants estimate GCP running costs.',
-      ja: 'AI アシスタントから GCP のランニングコストを見積もれる MCP サーバー。',
-    },
-  },
-  {
-    name: 'ableton-osc-mcp',
-    href: 'https://github.com/nozomi-koborinai/ableton-osc-mcp',
-    description: {
-      en: 'An MCP server that drives Ableton Live via AbletonOSC.',
-      ja: 'AbletonOSC 経由で Ableton Live を操作できる MCP サーバー。',
-    },
-  },
-  {
     name: 'jev-spec',
     href: 'https://github.com/nozomi-koborinai/jev-spec',
     description: {

@@ -21,28 +21,20 @@ describe('home catalog', () => {
     expect(projects.map((project) => project.name)).toEqual([
       'TerraDart',
       'contextlint',
-      'gcp-cost-mcp-server',
-      'ableton-osc-mcp',
       'jev-spec',
     ]);
     expect(projects.map((project) => project.href)).toEqual([
       'https://terradart.dev/',
       'https://contextlint.dev/',
-      'https://github.com/nozomi-koborinai/gcp-cost-mcp-server',
-      'https://github.com/nozomi-koborinai/ableton-osc-mcp',
       'https://github.com/nozomi-koborinai/jev-spec',
     ]);
     expect(projects[0]?.description.ja).toBe('Dart のためのタイプセーフな IaC。');
     expect(projects[0]?.description.en).toBe('Type-safe IaC for Dart.');
-    expect(projects[2]?.description.ja).toBe('AI アシスタントから GCP のランニングコストを見積もれる MCP サーバー。');
-    expect(projects[2]?.description.en).toBe('An MCP server that lets AI assistants estimate GCP running costs.');
-    expect(projects[3]?.description.ja).toBe('AbletonOSC 経由で Ableton Live を操作できる MCP サーバー。');
-    expect(projects[3]?.description.en).toBe('An MCP server that drives Ableton Live via AbletonOSC.');
+    expect(projects[2]?.description.ja).toBe('仕様書とコードのずれを、コミットのたびに検出する。');
+    expect(projects[2]?.description.en).toBe('Catch spec drift on every commit.');
     expect(projects.map((project) => project.mark ?? 'none')).toEqual([
       'terradart',
       'contextlint',
-      'none',
-      'none',
       'none',
     ]);
     expect(linkLabel).toEqual({

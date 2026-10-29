@@ -119,6 +119,18 @@ Use `SiteImage` for an image file under `app/src/assets/`. Set `variant` to `inl
 
 The build draws `/og/<page path>.webp` from an article title. Home and about use `/og/koborin-ai-hero.webp`. Every other page uses `/og/index.webp`. The build draws those two cards as well.
 
+## Writing articles
+
+Open two or three published articles in the same category and match them. `life/` is だ・である調. `tech/` is です・ます調.
+
+When you edit a draft the author wrote, keep their wording. Fix typos, broken references, contradictions, and repetition.
+
+Name people, countries, and companies as they are.
+
+Use a short noun phrase for a heading. A bilingual heading uses the form `日本語：English`. Do not put down another project in a heading.
+
+If the article already says something, link to that section instead of repeating it.
+
 ## llms.txt
 
 The build writes these files from published pages. Drafts are omitted.

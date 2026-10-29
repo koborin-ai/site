@@ -36,6 +36,6 @@ TODO
 
 ## Article edits
 
-<!-- Write `n/a` if no file under `app/src/content/docs` changed. Otherwise name each article and say whether its commit message needs the `Updated-Date: ignore` trailer, and whether that commit message has the trailer. A trailer in this PR body does not count. See AGENTS.md, Article Dates. -->
+<!-- Write `n/a` if no file under `app/src/content/docs` changed. Otherwise name each article and say whether its commit message needs the `Updated-Date: ignore` trailer, and whether that commit message has the trailer. A trailer in this PR body does not count. See AGENTS.md. -->
 
 TODO

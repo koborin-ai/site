@@ -41,7 +41,7 @@ const talkGroups = kind === 'talks' ? groupByYear(talks) : [];
   {kind === 'talks' && talkGroups.map((group) => (
     <section class="year">
       <h2>{group.year}</h2>
-      <TalkList talks={group.items} locale={locale} />
+      <TalkList talks={group.items} locale={locale} where="list" />
     </section>
   ))}
   <Footer title={meta.title} showEngagement={false} />

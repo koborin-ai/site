@@ -85,12 +85,14 @@ export const projects: readonly Project[] = [
   },
 ];
 
+export type TalkKind = 'video' | 'slides' | 'event' | 'repo';
+
 export interface Talk {
   date: string;
   year: number;
   event: Record<Locale, string>;
   title: Record<Locale, string>;
-  href?: string;
+  link?: { kind: TalkKind; href: string };
   attendees?: number;
   onHome: boolean;
 }
@@ -99,11 +101,11 @@ function talk(input: {
   date: string;
   event: Record<Locale, string>;
   title: Record<Locale, string>;
-  href?: string;
+  link?: { kind: TalkKind; href: string };
   onHome?: boolean;
   attendees?: number;
 }): Talk {
-  const { date, event, title, href, onHome = true, attendees } = input;
+  const { date, event, title, link, onHome = true, attendees } = input;
   if (attendees !== undefined && (!Number.isInteger(attendees) || attendees < 1)) {
     throw new Error(`${date}: attendee count must be a positive integer`);
   }
@@ -113,7 +115,7 @@ function talk(input: {
     event,
     title,
     onHome,
-    ...(href ? { href } : {}),
+    ...(link ? { link } : {}),
     ...(attendees !== undefined ? { attendees } : {}),
   };
 }
@@ -123,7 +125,7 @@ export const talks: readonly Talk[] = [
     date: '2026/07',
     event: { en: 'FlutterGakkai (10th)', ja: '第10回 FlutterGakkai' },
     title: { en: 'Trying Type-safe IaC with Dart', ja: 'Dart で試す Type-safe IaC' },
-    href: 'https://speakerdeck.com/coborinai/type-safe-iac-for-dart',
+    link: { kind: 'slides', href: 'https://speakerdeck.com/coborinai/type-safe-iac-for-dart' },
     attendees: 56,
   }),
   talk({
@@ -133,7 +135,7 @@ export const talks: readonly Talk[] = [
       en: 'Dart client for Genkit: Official Client for Using Genkit from Flutter',
       ja: 'Dart client for Genkit: Flutter から Genkit を使うための公式クライアント開発',
     },
-    href: 'https://youtu.be/AakdczWQLzY?si=aiuon32lYmJ93TR6',
+    link: { kind: 'video', href: 'https://youtu.be/AakdczWQLzY?si=aiuon32lYmJ93TR6' },
     attendees: 434,
   }),
   talk({
@@ -143,14 +145,14 @@ export const talks: readonly Talk[] = [
       en: 'Accelerating Generative AI App Development with Flutter × Firebase Genkit',
       ja: 'Flutter × Firebase Genkit で加速する生成 AI アプリ開発',
     },
-    href: 'https://www.youtube.com/live/bLub7ytpKBA?si=rkyc3Ca76CVDn8Wa&t=518',
+    link: { kind: 'video', href: 'https://www.youtube.com/live/bLub7ytpKBA?si=rkyc3Ca76CVDn8Wa&t=518' },
     attendees: 191,
   }),
   talk({
     date: '2024/12',
     event: { en: 'Genkit Hands-on (Organizer)', ja: 'Genkit ハンズオン（運営）' },
     title: { en: 'Technical supporter', ja: 'テクニカルサポーターとして参加' },
-    href: 'https://gdg-tokyo.connpass.com/event/337045/',
+    link: { kind: 'event', href: 'https://gdg-tokyo.connpass.com/event/337045/' },
     onHome: false,
     attendees: 45,
   }),
@@ -161,7 +163,7 @@ export const talks: readonly Talk[] = [
       en: 'Orchestrating Firebase and AI: Genkit Architecture Example',
       ja: 'Orchestrating Firebase and AI: Genkit architecture example',
     },
-    href: 'https://docs.google.com/presentation/d/10F2hjzJhdInSuhDQ8G_B2raGz79mzTRIcWU_59Zh5Y8/edit?usp=sharing',
+    link: { kind: 'slides', href: 'https://docs.google.com/presentation/d/10F2hjzJhdInSuhDQ8G_B2raGz79mzTRIcWU_59Zh5Y8/edit?usp=sharing' },
     attendees: 369,
   }),
   talk({
@@ -180,7 +182,7 @@ export const talks: readonly Talk[] = [
       en: 'Retail DX Strategy for Competitive Advantage',
       ja: '競争力を高めるリテール DX 戦略',
     },
-    href: 'https://cloud-ace.jp/event/240619_map-the-way-tokyo/',
+    link: { kind: 'event', href: 'https://cloud-ace.jp/event/240619_map-the-way-tokyo/' },
     attendees: 75,
   }),
   talk({
@@ -217,7 +219,7 @@ export const talks: readonly Talk[] = [
       en: 'IaC and CI/CD Pipeline Construction in Firebase',
       ja: 'Firebase における IaC と CI/CD パイプライン構築のすゝめ',
     },
-    href: 'https://github.com/nozomi-koborinai/gdg-tokyo-monthly-online-tech-talks-firebase',
+    link: { kind: 'repo', href: 'https://github.com/nozomi-koborinai/gdg-tokyo-monthly-online-tech-talks-firebase' },
     attendees: 200,
   }),
   talk({

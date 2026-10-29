@@ -55,8 +55,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 | `infra/` | TerraDart infrastructure (`site` stack). |
 | `infra/lib/site_stack.dart` | Zone lookup and Workers custom domain for `koborin.ai`. |
 | `infra/bin/infra.dart` | Entry point. `runStack` writes `tf-out/site/main.tf.json` with `GcsBackend`. `terradart plan` and `terradart apply` run it. |
-| `infra/tool/` | `state_adopt.dart` compares the R2 state with the GCS state. `adopt_state.dart` (plan job) creates the GCS object from R2 when it is absent. `require_state.dart` (release job) reads both and never writes. Neither writes to R2. |
-| `infra/test/` | `dart test` coverage for the synthesized Terraform JSON and the state adoption rules. |
+| `infra/test/` | `dart test` coverage for the synthesized Terraform JSON. |
 | `.github/actionlint.yaml` | Declares the Blacksmith runner labels so actionlint stays clean. |
 | `.github/scripts/` | Shell helpers (`compute-pr-labels.sh`) plus their test suite. |
 | `.github/workflows/` | CI/CD definitions. `required-checks.yml` is the only `pull_request` entry for app, infra, and automation checks. |
@@ -64,7 +63,7 @@ This document is a quick guide for any contributors or AI agents that touch the 
 ## Infrastructure Rules
 
 1. **Plan/Apply**: never run `terradart apply` locally. All infra changes go through GitHub Actions with a scoped Cloudflare API token. A local `terradart plan` is read-only and is OK for verification.
-2. **State backend**: GCS bucket `koborin-ai-tfstate-n-koborinai`, object `terraform/site/default.tfstate` (prefix `terraform/site`, no workspace). Do not run `terradart state migrate`. The old state stays in R2 bucket `koborin-ai-tfstate` at `terraform/site/terraform.tfstate`, because the adopt and require steps compare GCS against it. Do not delete that object, the bucket, or the `R2_*` secrets.
+2. **State backend**: GCS bucket `koborin-ai-tfstate-n-koborinai`, object `terraform/site/default.tfstate` (prefix `terraform/site`, no workspace). Do not run `terradart state migrate`.
 3. **Stacks**: One root module (`site`). From `infra/`, `dart run terradart_cli:terradart plan` synthesizes it and plans with the OpenTofu binary that `terradart_cli` downloads.
 4. **Environments**:
 
@@ -82,16 +81,14 @@ This document is a quick guide for any contributors or AI agents that touch the 
 
    - The entry point reads one environment variable, `CLOUDFLARE_ACCOUNT_ID`. The
      state bucket and prefix are literals in `bin/infra.dart`, and that literal is the only address OpenTofu reads.
-   - Cloudflare credentials stay in GitHub Secrets (`CLOUDFLARE_API_TOKEN`, `R2_*`) and are never baked into synth output.
+   - Cloudflare credentials stay in GitHub Secrets (`CLOUDFLARE_API_TOKEN`) and are never baked into synth output.
    - Plan and apply reach GCS through Workload Identity Federation. `google-github-actions/auth` reads the variables `GCP_WIF_PROVIDER` and `GCP_SA_EMAIL` and leaves a credentials file that OpenTofu uses. No Google key is stored.
-   - The R2 keys are read only by the adopt step in `plan-infra.yml` and the require step in `release-infra.yml`. Both steps also check `TFSTATE_BUCKET` against the bucket in `bin/infra.dart`.
    - Site `variable` blocks stay empty. The encoder omits an empty variable block because Terraform JSON rejects `variable: {}`.
    - `infra/pubspec.yaml` sets `terradart.engine: tofu` and pins `terradart_cli` to `0.35.0`. With that setting, a `tofu` on `PATH` is used. Otherwise that release downloads OpenTofu 1.13.1, checks the archive SHA-256, and caches the binary. CI does not install Terraform or `tofu`, so the download is what runs.
 
 7. **File Organization**:
 
    - `infra/bin/infra.dart`: Entry point. Builds the stack, passes `GcsBackend` (`terradart_core`) as the state backend, and calls `runStack`, which writes `tf-out/site`.
-   - `infra/tool/state_adopt.dart`: The R2 to GCS adoption rules and their HTTP clients. R2 has a reader only. GCS has a reader and a create that sends `ifGenerationMatch=0`, so the tool never replaces or deletes an object.
    - `infra/lib/site_stack.dart`: Zone lookup and Workers custom domain, both from the `terradart_cloudflare` catalog. Prefer catalog types over hand-written wrappers.
    - `infra/pubspec.yaml`: TerraDart dependencies (`terradart_core`, `terradart_cloudflare`) and the pinned `terradart_cli`.
 
@@ -274,21 +271,20 @@ Examples:
 - Workflows:
   - `required-checks.yml`: runs on every pull request. Its `changes` job maps the merge diff to the app, infra, and automation areas through `areaPaths` in `app/scripts/required-checks.ts`, and the workflow calls the area workflows below for the areas that changed. Its `required-checks` job is the one check context a ruleset needs. It fails when `changes` did not succeed, when any area job failed or was cancelled, and when a changed area's job was skipped or is missing. A pull request that touches no area passes.
   - `app-ci.yml`: called for the app area. `npm run check` plus `npm audit` and the production build, then `app/scripts/lighthouse-pr.ts` over `/`, `/ja/`, and the English and Japanese architecture articles, once per page on desktop and on mobile. It uploads the reports as the `lighthouse` artifact. A score under its minimum is report-only. A missing report (no Chrome, a non-200 page, a null score) fails the app job and so `required-checks`.
-  - `plan-infra.yml`: called for the infra area, or dispatched. The `check` job runs `mise run check:infra` with no secrets, so Dependabot and fork pull requests run it too. The `plan` job authenticates to Google Cloud, runs `dart run tool/adopt_state.dart`, then runs `dart run terradart_cli:terradart plan` for the `site` stack. It skips Dependabot and forks, and alone holds the `terraform-state` concurrency group. The adopt step copies the R2 state into GCS when the GCS object is absent. It passes when GCS holds the R2 lineage at a later serial, or the R2 bytes at the R2 serial, and refuses anything else. A failed `check` or `plan` fails `required-checks`.
+  - `plan-infra.yml`: called for the infra area, or dispatched. The `check` job runs `mise run check:infra` with no secrets, so Dependabot and fork pull requests run it too. The `plan` job authenticates to Google Cloud, then runs `dart run terradart_cli:terradart plan` for the `site` stack. It skips Dependabot and forks, and alone holds the `terraform-state` concurrency group. A failed `check` or `plan` fails `required-checks`.
   - `automation-ci.yml`: called for the automation area. `mise run check:automation` and `mise run check:docs`.
-  - `release-infra.yml`: `mise run check:infra`, then Google Cloud authentication and `dart run tool/require_state.dart`, then `dart run terradart_cli:terradart plan` and `dart run terradart_cli:terradart apply --auto-approve` for the `site` stack, on a `main` push under `infra/` or a dispatch. The require step never writes. It applies the same test as the adopt step, and also refuses when the GCS object is absent. The job runs only when `github.ref` is `refs/heads/main`, in the `production (infra)` environment.
+  - `release-infra.yml`: `mise run check:infra`, then Google Cloud authentication, then `dart run terradart_cli:terradart plan` and `dart run terradart_cli:terradart apply --auto-approve` for the `site` stack, on a `main` push under `infra/` or a dispatch. The job runs only when `github.ref` is `refs/heads/main`, in the `production (infra)` environment.
   - `app-release.yml`: `npm run check`, the production build, and `wrangler deploy` for Worker `koborin-ai-web`, then the `smoke` job. The deploy job runs only when `github.ref` is `refs/heads/main`.
   - `smoke-prod.yml`: runs `node scripts/smoke-prod.ts` against `https://koborin.ai` after each app deploy, every Monday at 04:23 UTC, and on dispatch from `main`. It needs no token and no `npm ci`. A failure turns the run red and rolls nothing back.
 - Path filters: pull request path filters do not select checks. Do not add `paths` or `paths-ignore` to a `pull_request` trigger. To change which checks a path runs, edit `areaPaths`. A new area also needs a job with the same id in `required-checks.yml` and an entry in the `required-checks` job's `needs`. `app/scripts/required-checks.test.ts` fails if a filter returns or the job wiring drifts.
-- Concurrency: `required-checks.yml` and `label-pr.yml` cancel the superseded run of the same pull request. `app-release` and `terraform-state` (apply and the `plan` job) never cancel a run in progress. Called workflows have no group of their own. `mise run check:automation` runs `app/scripts/workflow-policy.ts`, which fails when a pin, a permission block, or a group drifts, and when a workflow file has no rule. A job under `terraform-state` must declare exactly `contents: read` and `id-token: write`, and a job that calls a local workflow must declare what its callee's jobs need, so `required-checks.yml` job `infra` carries `id-token: write` too. Under the lock, the adopt or require step must come before every `terradart` step, and `secrets.R2_` may appear on that step only.
+- Concurrency: `required-checks.yml` and `label-pr.yml` cancel the superseded run of the same pull request. `app-release` and `terraform-state` (apply and the `plan` job) never cancel a run in progress. Called workflows have no group of their own. `mise run check:automation` runs `app/scripts/workflow-policy.ts`, which fails when a pin, a permission block, or a group drifts, and when a workflow file has no rule. A job under `terraform-state` must declare exactly `contents: read` and `id-token: write`, and a job that calls a local workflow must declare what its callee's jobs need, so `required-checks.yml` job `infra` carries `id-token: write` too.
 - Toolchain: every workflow takes its Node, Dart, actionlint, and shellcheck versions from `.tool-versions`. `actions/setup-node` uses `node-version-file: .tool-versions`; the infra and automation workflows use `jdx/mise-action`. Bump those versions in `.tool-versions`, never in a workflow. Infra plan and apply do not install Terraform. With no `tofu` on `PATH`, `terradart plan` downloads OpenTofu.
 - Cloudflare auth:
   - Secret: `CLOUDFLARE_API_TOKEN` (scoped to this account and zone).
   - Variable: `CLOUDFLARE_ACCOUNT_ID`.
 - Google Cloud auth:
-  - Variables: `GCP_WIF_PROVIDER`, `GCP_SA_EMAIL`, and `TFSTATE_BUCKET` (`koborin-ai-tfstate-n-koborinai`).
+  - Variables: `GCP_WIF_PROVIDER` and `GCP_SA_EMAIL`.
   - State: GCS bucket `koborin-ai-tfstate-n-koborinai`, object `terraform/site/default.tfstate`.
-- R2 (adoption source only): bucket `koborin-ai-tfstate`, read with `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` by the adopt and require steps.
 
 ## Release Process
 

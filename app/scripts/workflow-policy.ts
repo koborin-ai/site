@@ -2,9 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const stateScripts = { adopt: 'adopt_state.dart', require: 'require_state.dart' } as const;
-
-type StateLock = { readonly mode: 'never-cancel'; readonly group: 'terraform-state'; readonly stateStep: keyof typeof stateScripts } & (
+type StateLock = { readonly mode: 'never-cancel'; readonly group: 'terraform-state' } & (
   | { readonly at: 'workflow' }
   | { readonly at: 'job'; readonly job: 'plan' }
 );
@@ -37,12 +35,12 @@ const rules: Record<WorkflowName, WorkflowRule> = {
   'app-ci.yml': { concurrency: { mode: 'none' }, forkJob: null },
   'automation-ci.yml': { concurrency: { mode: 'none' }, forkJob: null },
   'plan-infra.yml': {
-    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'job', job: 'plan', stateStep: 'adopt' },
+    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'job', job: 'plan' },
     forkJob: null,
   },
   'app-release.yml': { concurrency: { mode: 'never-cancel', group: 'app-release', at: 'workflow' }, forkJob: null },
   'release-infra.yml': {
-    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'workflow', stateStep: 'require' },
+    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'workflow' },
     forkJob: null,
   },
   'smoke-prod.yml': { concurrency: { mode: 'none' }, forkJob: null },
@@ -62,7 +60,7 @@ type WorkflowSource = { readonly name: string; readonly source: string };
 
 export type PolicyViolation = {
   readonly file: string;
-  readonly rule: 'pin' | 'permission' | 'concurrency' | 'fork' | 'state' | 'unclassified' | 'snippet';
+  readonly rule: 'pin' | 'permission' | 'concurrency' | 'fork' | 'unclassified' | 'snippet';
   readonly message: string;
 };
 
@@ -201,32 +199,6 @@ function expectedScopes(
   return unionScopes([readOnly, ...jobsOf(callee).map((entry) => expectedScopes(callee, entry, jobsOf))]);
 }
 
-function stateProblem(tree: YamlNode, jobs: readonly YamlNode[], lock: StateLock): string | null {
-  const script = stateScripts[lock.stateStep];
-  const command = `dart run tool/${script}`;
-  const allowed = new Set<YamlNode>();
-  for (const job of jobs.filter((entry) => holdsStateLock(lock, entry.key))) {
-    const steps = child(job, 'steps')?.children ?? [];
-    const at = steps.findIndex((step) => child(step, 'run')?.value === command);
-    if (at === -1) return `jobs.${job.key} has no step that runs ${command}`;
-    if (steps.slice(0, at).some((step) => child(step, 'run')?.value.includes('terradart'))) {
-      return `jobs.${job.key} runs terradart before ${command}`;
-    }
-    for (const node of walk(steps[at])) {
-      if (node.value.startsWith('&')) return `jobs.${job.key} defines an anchor in the ${command} step`;
-      allowed.add(node);
-    }
-  }
-  for (const node of walk(tree)) {
-    if (node.value.includes('secrets.R2_') && !allowed.has(node)) {
-      return `secrets.R2_ appears outside the ${command} step`;
-    }
-    const other = Object.values(stateScripts).find((name) => name !== script && node.value.includes(name));
-    if (other !== undefined) return `mentions ${other}`;
-  }
-  return null;
-}
-
 function auditFile(
   file: WorkflowName,
   source: string,
@@ -258,10 +230,6 @@ function auditFile(
       report('permission', `jobs.${job.key}.permissions must be ${describeScopes(expected)}`);
     }
   }
-
-  const lock = stateLockOf(rule.concurrency);
-  const stateViolation = lock === null ? null : stateProblem(tree, jobs, lock);
-  if (stateViolation) report('state', stateViolation);
 
   if (rule.forkJob !== null) {
     const job = jobs.find((entry) => entry.key === rule.forkJob);

@@ -2,10 +2,17 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const stateScripts = { adopt: 'adopt_state.dart', require: 'require_state.dart' } as const;
+
+type StateLock = { readonly mode: 'never-cancel'; readonly group: 'terraform-state'; readonly stateStep: keyof typeof stateScripts } & (
+  | { readonly at: 'workflow' }
+  | { readonly at: 'job'; readonly job: 'plan' }
+);
+
 type ConcurrencyRule =
   | { readonly mode: 'cancel-superseded'; readonly prefix: 'pull-request' | 'label-pr' }
-  | { readonly mode: 'never-cancel'; readonly group: 'app-release' | 'terraform-state'; readonly at: 'workflow' }
-  | { readonly mode: 'never-cancel'; readonly group: 'terraform-state'; readonly at: 'job'; readonly job: 'plan' }
+  | { readonly mode: 'never-cancel'; readonly group: 'app-release'; readonly at: 'workflow' }
+  | StateLock
   | { readonly mode: 'none' };
 
 type WorkflowName =
@@ -30,20 +37,24 @@ const rules: Record<WorkflowName, WorkflowRule> = {
   'app-ci.yml': { concurrency: { mode: 'none' }, forkJob: null },
   'automation-ci.yml': { concurrency: { mode: 'none' }, forkJob: null },
   'plan-infra.yml': {
-    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'job', job: 'plan' },
+    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'job', job: 'plan', stateStep: 'adopt' },
     forkJob: null,
   },
   'app-release.yml': { concurrency: { mode: 'never-cancel', group: 'app-release', at: 'workflow' }, forkJob: null },
   'release-infra.yml': {
-    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'workflow' },
+    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'workflow', stateStep: 'require' },
     forkJob: null,
   },
   'smoke-prod.yml': { concurrency: { mode: 'none' }, forkJob: null },
 };
 
+type Scopes = Readonly<Record<string, 'read' | 'write'>>;
+
 const forkPredicate = 'github.event.pull_request.head.repo.full_name == github.repository';
-const readOnly = { contents: 'read' } as const;
-const forkJobScopes = { contents: 'read', 'pull-requests': 'write' } as const;
+const readOnly: Scopes = { contents: 'read' };
+const forkJobScopes: Scopes = { contents: 'read', 'pull-requests': 'write' };
+const stateJobScopes: Scopes = { contents: 'read', 'id-token': 'write' };
+const localWorkflow = /^\.\/\.github\/workflows\/([^/]+)$/;
 const pinnedUse = /^[\w.-]+\/[\w.-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/;
 const forbiddenKeys = /(?:^|[\s-])(continue-on-error|pull_request_target)\b/;
 
@@ -51,7 +62,7 @@ type WorkflowSource = { readonly name: string; readonly source: string };
 
 export type PolicyViolation = {
   readonly file: string;
-  readonly rule: 'pin' | 'permission' | 'concurrency' | 'fork' | 'unclassified' | 'snippet';
+  readonly rule: 'pin' | 'permission' | 'concurrency' | 'fork' | 'state' | 'unclassified' | 'snippet';
   readonly message: string;
 };
 
@@ -113,13 +124,13 @@ function* walk(node: YamlNode): Generator<YamlNode> {
   }
 }
 
-function describeScopes(scopes: Readonly<Record<string, string>>): string {
+function describeScopes(scopes: Scopes): string {
   return Object.entries(scopes)
     .map(([scope, level]) => `${scope}: ${level}`)
     .join(', ');
 }
 
-function scopesMatch(node: YamlNode | undefined, expected: Readonly<Record<string, string>>): boolean {
+function scopesMatch(node: YamlNode | undefined, expected: Scopes): boolean {
   if (node === undefined || node.value !== '') return false;
   const actual = Object.fromEntries(node.children.map((entry) => [entry.key, entry.value]));
   const keys = Object.keys(expected);
@@ -154,7 +165,73 @@ function concurrencyProblem(where: string, node: YamlNode | undefined, expected:
   return `${where} concurrency must be group ${expected.group} with cancel-in-progress ${expected.cancel}`;
 }
 
-function auditFile(file: WorkflowName, source: string): PolicyViolation[] {
+function stateLockOf(rule: ConcurrencyRule): StateLock | null {
+  return rule.mode === 'never-cancel' && rule.group === 'terraform-state' ? rule : null;
+}
+
+function holdsStateLock(rule: ConcurrencyRule, job: string): boolean {
+  const lock = stateLockOf(rule);
+  return lock !== null && (lock.at === 'workflow' || lock.job === job);
+}
+
+function unionScopes(all: readonly Scopes[]): Scopes {
+  const union: Record<string, 'read' | 'write'> = {};
+  for (const scopes of all) {
+    for (const [scope, level] of Object.entries(scopes)) {
+      if (union[scope] !== 'write') union[scope] = level;
+    }
+  }
+  return union;
+}
+
+/**
+ * GitHub fails a called workflow whose jobs ask for more than the caller job's
+ * token holds, so a caller declares the union of its callee's jobs.
+ */
+function expectedScopes(
+  file: WorkflowName,
+  job: YamlNode,
+  jobsOf: (callee: WorkflowName) => readonly YamlNode[],
+): Scopes {
+  const rule = rules[file];
+  if (job.key === rule.forkJob) return forkJobScopes;
+  if (holdsStateLock(rule.concurrency, job.key)) return stateJobScopes;
+  const callee = localWorkflow.exec(child(job, 'uses')?.value ?? '')?.[1];
+  if (callee === undefined || !isWorkflowName(callee)) return readOnly;
+  return unionScopes([readOnly, ...jobsOf(callee).map((entry) => expectedScopes(callee, entry, jobsOf))]);
+}
+
+function stateProblem(tree: YamlNode, jobs: readonly YamlNode[], lock: StateLock): string | null {
+  const script = stateScripts[lock.stateStep];
+  const command = `dart run tool/${script}`;
+  const allowed = new Set<YamlNode>();
+  for (const job of jobs.filter((entry) => holdsStateLock(lock, entry.key))) {
+    const steps = child(job, 'steps')?.children ?? [];
+    const at = steps.findIndex((step) => child(step, 'run')?.value === command);
+    if (at === -1) return `jobs.${job.key} has no step that runs ${command}`;
+    if (steps.slice(0, at).some((step) => child(step, 'run')?.value.includes('terradart'))) {
+      return `jobs.${job.key} runs terradart before ${command}`;
+    }
+    for (const node of walk(steps[at])) {
+      if (node.value.startsWith('&')) return `jobs.${job.key} defines an anchor in the ${command} step`;
+      allowed.add(node);
+    }
+  }
+  for (const node of walk(tree)) {
+    if (node.value.includes('secrets.R2_') && !allowed.has(node)) {
+      return `secrets.R2_ appears outside the ${command} step`;
+    }
+    const other = Object.values(stateScripts).find((name) => name !== script && node.value.includes(name));
+    if (other !== undefined) return `mentions ${other}`;
+  }
+  return null;
+}
+
+function auditFile(
+  file: WorkflowName,
+  source: string,
+  jobsOf: (callee: WorkflowName) => readonly YamlNode[],
+): PolicyViolation[] {
   const rule = rules[file];
   const tree = parseBlockYaml(source);
   const jobs = child(tree, 'jobs')?.children ?? [];
@@ -176,11 +253,15 @@ function auditFile(file: WorkflowName, source: string): PolicyViolation[] {
     report('permission', `workflow permissions must be ${describeScopes(readOnly)}`);
   }
   for (const job of jobs) {
-    const expected = job.key === rule.forkJob ? forkJobScopes : readOnly;
+    const expected = expectedScopes(file, job, jobsOf);
     if (!scopesMatch(child(job, 'permissions'), expected)) {
       report('permission', `jobs.${job.key}.permissions must be ${describeScopes(expected)}`);
     }
   }
+
+  const lock = stateLockOf(rule.concurrency);
+  const stateViolation = lock === null ? null : stateProblem(tree, jobs, lock);
+  if (stateViolation) report('state', stateViolation);
 
   if (rule.forkJob !== null) {
     const job = jobs.find((entry) => entry.key === rule.forkJob);
@@ -209,10 +290,14 @@ function isWorkflowName(name: string): name is WorkflowName {
 
 export function auditWorkflows(files: readonly WorkflowSource[]): readonly PolicyViolation[] {
   const present = new Set(files.map((file) => file.name));
+  const jobsOf = (callee: WorkflowName) => {
+    const source = files.find((file) => file.name === callee)?.source;
+    return source === undefined ? [] : (child(parseBlockYaml(source), 'jobs')?.children ?? []);
+  };
   return [
     ...files.flatMap((file) =>
       isWorkflowName(file.name)
-        ? auditFile(file.name, file.source)
+        ? auditFile(file.name, file.source, jobsOf)
         : [{ file: file.name, rule: 'unclassified' as const, message: 'has no rule in workflow-policy.ts' }],
     ),
     ...Object.keys(rules)

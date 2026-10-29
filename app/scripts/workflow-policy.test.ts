@@ -22,6 +22,17 @@ async function edited(name: string, from: string, to: string): Promise<Source[]>
   });
 }
 
+async function swapped(name: string, first: string, second: string): Promise<Source[]> {
+  return (await realWorkflows()).map((file) => {
+    if (file.name !== name) return file;
+    const blocks = file.source.split('\n\n');
+    const [a, b] = [first, second].map((text) => blocks.findIndex((block) => block.includes(text)));
+    if (a === -1 || b === -1) throw new Error(`${name} does not contain both ${first} and ${second}`);
+    [blocks[a], blocks[b]] = [blocks[b], blocks[a]];
+    return { name, source: blocks.join('\n\n') };
+  });
+}
+
 function only(file: string, rule: string) {
   return [expect.objectContaining({ file, rule })];
 }
@@ -69,6 +80,72 @@ describe('auditWorkflows', () => {
       '    permissions:\n      contents: read\n      pull-requests: write\n    timeout-minutes: 5\n    outputs:',
     );
     expect(auditWorkflows(files)).toEqual(only('required-checks.yml', 'permission'));
+  });
+
+  it('rejects id-token write on a job outside the state lock, without blaming its caller', async () => {
+    const files = await edited(
+      'app-ci.yml',
+      '    permissions:\n      contents: read\n    timeout-minutes: 30',
+      '    permissions:\n      contents: read\n      id-token: write\n    timeout-minutes: 30',
+    );
+    expect(auditWorkflows(files)).toEqual(only('app-ci.yml', 'permission'));
+  });
+
+  it('rejects a state lock holder without id-token write', async () => {
+    const files = await edited(
+      'plan-infra.yml',
+      '      contents: read\n      id-token: write\n    concurrency:',
+      '      contents: read\n    concurrency:',
+    );
+    expect(auditWorkflows(files)).toEqual(only('plan-infra.yml', 'permission'));
+  });
+
+  it.each([
+    [
+      'drops id-token write while its callee holds the state lock',
+      '      contents: read\n      id-token: write\n    uses: ./.github/workflows/plan-infra.yml',
+      '      contents: read\n    uses: ./.github/workflows/plan-infra.yml',
+    ],
+    [
+      'adds id-token write that its callee never needs',
+      '      contents: read\n    uses: ./.github/workflows/app-ci.yml',
+      '      contents: read\n      id-token: write\n    uses: ./.github/workflows/app-ci.yml',
+    ],
+  ])('rejects a caller job that %s', async (_label, from, to) => {
+    const files = await edited('required-checks.yml', from, to);
+    expect(auditWorkflows(files)).toEqual(only('required-checks.yml', 'permission'));
+  });
+
+  it('rejects a release that plans before it requires the adopted state', async () => {
+    const files = await swapped('release-infra.yml', '- name: Require the R2 state in GCS', '- name: Plan\n');
+    expect(auditWorkflows(files)).toEqual(only('release-infra.yml', 'state'));
+  });
+
+  it('rejects the R2 keys on the plan step', async () => {
+    const files = await edited(
+      'plan-infra.yml',
+      '          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n',
+      '          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}\n',
+    );
+    expect(auditWorkflows(files)).toEqual(only('plan-infra.yml', 'state'));
+  });
+
+  it('rejects a release that can run the adopt tool', async () => {
+    const files = await edited(
+      'release-infra.yml',
+      '        run: dart run tool/require_state.dart\n',
+      '        run: dart run tool/require_state.dart\n\n      - name: Copy\n        working-directory: infra\n        run: dart run tool/adopt_state.dart\n',
+    );
+    expect(auditWorkflows(files)).toEqual(only('release-infra.yml', 'state'));
+  });
+
+  it('rejects an anchor that could carry the R2 keys out of the adopt step', async () => {
+    const files = await edited(
+      'plan-infra.yml',
+      '        env:\n          TFSTATE_BUCKET:',
+      '        env: &state\n          TFSTATE_BUCKET:',
+    );
+    expect(auditWorkflows(files)).toEqual(only('plan-infra.yml', 'state'));
   });
 
   it('rejects a label job that runs on forks', async () => {

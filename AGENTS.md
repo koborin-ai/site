@@ -319,10 +319,10 @@ Examples:
    - `rehype-diagrams.ts` paints diagrams with the `--diagram-*` tokens in `prose.css`. A diagram type without a `PAINT` entry fails the build.
    - **Do not override Mermaid theme in code blocks** - the `--diagram-*` tokens handle theme switching.
    - Keep node labels short to avoid text overlap (especially in `flowchart LR` layouts).
-   - Use simple subgraph labels (avoid long strings like `"Terraform Backend State - R2"`).
+   - Use simple subgraph labels (avoid long strings like `"Terraform Backend State - GCS"`).
 
 6. **Terminology Tables for Abbreviations**:
-   - When using abbreviations in Mermaid diagrams (e.g., Worker, R2), always add a terminology table immediately below the diagram.
+   - When using abbreviations in Mermaid diagrams (e.g., Worker, GCS), always add a terminology table immediately below the diagram.
    - **Format**: Use a Markdown table with columns: `Abbreviation`, `Full Name`, `Description`.
    - **Full Name requirements**:
      - Use the official name from the primary source (vendor documentation).

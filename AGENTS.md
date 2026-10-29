@@ -17,7 +17,6 @@ Astro MDX lives in `app/src/content/docs/`. Home, lists, and articles share one 
 - Call `mdx()` without `optimize: true`. That option writes diagram CSS into `set:html`, and the fills go black.
 - Do not set a Mermaid theme inside a diagram fence. `app/src/plugins/rehype-diagrams.ts` paints with the `--diagram-*` tokens.
 - Under a diagram that uses an abbreviation, add a table with columns Abbreviation, Full Name, and Description. Link the official name. Keep node labels short.
-- Do not add HSTS `preload` to `app/public/_headers`.
 - Leave the zone MX records and the GitHub verification TXT unmanaged. Do not add them to the `site` stack.
 - Never run `terradart apply` locally. A local `terradart plan` is read-only. Apply runs in GitHub Actions.
 - Terraform state is GCS bucket `koborin-ai-tfstate-n-koborinai`, prefix `terraform/site`. Actions use `GCP_WIF_PROVIDER` and `GCP_SA_EMAIL`. Do not run `terradart state migrate`.
@@ -39,6 +38,6 @@ export PATH="$HOME/.local/bin:$PATH"
 mise install
 ```
 
-Run later commands with `mise exec --` so they use those pins.
+Run later commands with `mise exec --` so they use those pins. mise does not install OpenTofu. The pinned `terradart_cli` downloads it when `tofu` is not on `PATH`.
 
 A fresh environment needs `cd app && npx playwright install chromium`. The build renders Mermaid in Chromium. The consent check and Lighthouse launch that same browser. `npm run dev` does not need Chromium. Run `npm run dev` in tmux. The site runs without Giscus or GA4 variables.

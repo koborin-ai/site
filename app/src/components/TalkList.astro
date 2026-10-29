@@ -1,24 +1,42 @@
 ---
-import { formatTalkDate, type Talk } from '../lib/catalog';
+import { formatTalkDate, type Talk, type TalkKind } from '../lib/catalog';
 import type { Locale } from '../lib/docs';
 
 interface Props {
   talks: readonly Talk[];
   locale: Locale;
+  where: 'home' | 'list';
 }
 
-const { talks, locale } = Astro.props;
+const { talks, locale, where } = Astro.props;
+
+const kindLabel: Record<TalkKind, Record<Locale, string>> = {
+  video: { en: 'Video', ja: '動画' },
+  slides: { en: 'Slides', ja: 'スライド' },
+  event: { en: 'Event', ja: 'イベント' },
+  repo: { en: 'Repo', ja: 'リポジトリ' },
+};
 
 function countLabel(count: number): string {
   return locale === 'en' ? `${count} people` : `${count} 人`;
+}
+
+function meta(talk: Talk): string {
+  return [
+    formatTalkDate(talk.date, where, locale),
+    where === 'list' && talk.attendees !== undefined ? countLabel(talk.attendees) : undefined,
+    talk.link ? kindLabel[talk.link.kind][locale] : undefined,
+  ]
+    .filter((part) => part !== undefined)
+    .join(' · ');
 }
 ---
 
 <ul class="quiet-list">
   {talks.map((talk) => (
     <li>
-      {talk.href ? (
-        <a class="row" href={talk.href} target="_blank" rel="noopener noreferrer">
+      {talk.link ? (
+        <a class="row" href={talk.link.href} target="_blank" rel="noopener noreferrer">
           <span class="link-text">{talk.title[locale]}</span>
           <span class="sub">{talk.event[locale]}</span>
         </a>
@@ -28,10 +46,7 @@ function countLabel(count: number): string {
           <span class="sub">{talk.event[locale]}</span>
         </span>
       )}
-      <span class="meta">
-        {formatTalkDate(talk.date, 'list', locale)}
-        {talk.attendees !== undefined && <span class="talk-count">{countLabel(talk.attendees)}</span>}
-      </span>
+      <span class="meta">{meta(talk)}</span>
     </li>
   ))}
 </ul>

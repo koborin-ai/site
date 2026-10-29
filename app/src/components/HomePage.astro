@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import SiteImage from './SiteImage.astro';
 import QuietList from './QuietList.astro';
+import TalkList from './TalkList.astro';
 import TerraDartMark from './TerraDartMark.astro';
 import ProjectList from './ProjectList.astro';
 import bookCover from '../assets/life/reflections-on-2025/book-cover.png';
@@ -59,14 +60,6 @@ const latestTalks = homeTalks();
 
 <section class="block">
   <h2 class="section-label">{sections.talks[locale]}</h2>
-  <QuietList
-    items={latestTalks.map((item) => ({
-      title: item.title[locale],
-      meta: item.event[locale],
-      date: item.date,
-      href: item.href,
-      external: item.href !== undefined,
-    }))}
-  />
+  <TalkList talks={latestTalks} locale={locale} where="home" />
   <a class="more" href={listHref('talks', locale)}>{linkLabel.talks[locale]}</a>
 </section>

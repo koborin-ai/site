@@ -294,12 +294,6 @@ select:focus-visible {
   text-align: right;
 }
 
-.quiet-list .talk-count {
-  display: block;
-  margin-top: 1px;
-  line-height: 1.5;
-}
-
 .sub {
   display: block;
   margin-top: 1px;

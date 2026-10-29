@@ -15,7 +15,9 @@ The site is an Astro app. Cloudflare Worker `koborin-ai-web` serves the built fi
 
 ## Architecture
 
-GitHub Actions deploys the app with wrangler. The infra workflows run the terradart CLI on the TerraDart `site` stack. The stack looks up Cloudflare zone `koborin.ai` and attaches the Worker to that hostname. State lives in R2 bucket `koborin-ai-tfstate`, at object `terraform/site/terraform.tfstate`.
+GitHub Actions deploys the app with wrangler. The infra workflows run the terradart CLI on the TerraDart `site` stack. The stack looks up Cloudflare zone `koborin.ai` and attaches the Worker to that hostname. State lives in GCS bucket `koborin-ai-tfstate-n-koborinai`, at object `terraform/site/default.tfstate`. Plan and apply reach it through Workload Identity Federation, with no stored Google key.
+
+The state used to live in R2 bucket `koborin-ai-tfstate`, at object `terraform/site/terraform.tfstate`. That object and the `R2_*` secrets stay. Before each plan, `plan-infra.yml` copies the R2 object into GCS when GCS has none, and `release-infra.yml` refuses to apply unless GCS already holds it.
 
 `infra/pubspec.yaml` sets `terradart.engine` to `tofu` and pins `terradart_cli` at `0.35.0`. That release uses `tofu` when it is on `PATH`. When `tofu` is not on `PATH`, it downloads OpenTofu 1.13.1. The workflows do not install Terraform or OpenTofu.
 
@@ -25,13 +27,13 @@ flowchart LR
   worker[Worker]
   stack[site stack]
   zone[Zone]
-  r2[R2]
+  gcs[GCS]
 
   actions -->|wrangler| worker
   actions -->|terradart| stack
   stack -->|lookup| zone
   stack -->|custom domain| worker
-  stack -->|state| r2
+  stack -->|state| gcs
 ```
 
 Names in the diagram:
@@ -40,12 +42,12 @@ Names in the diagram:
 | --- | --- | --- |
 | Worker | [Cloudflare Workers](https://developers.cloudflare.com/workers/) | Serves the static Astro site |
 | Custom domain | [Workers custom domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) | Attaches `koborin.ai` to Worker `koborin-ai-web` |
-| R2 | [Cloudflare R2](https://developers.cloudflare.com/r2/) | Holds the `site` stack state |
+| GCS | [Cloud Storage](https://docs.cloud.google.com/storage/docs) | Holds the `site` stack state |
 | Wrangler | [Wrangler](https://developers.cloudflare.com/workers/wrangler/) | Uploads `app/dist` |
 
 ## Checks and deploys
 
-`app/scripts/workflow-policy.ts` checks every workflow file. An action `uses` must be a 40-character SHA with a version comment. Permissions and concurrency must match the rules in that file. The `label` job in `label-pr.yml` is the only workflow job with `pull-requests: write`. That job skips forks.
+`app/scripts/workflow-policy.ts` checks every workflow file. An action `uses` must be a 40-character SHA with a version comment. Permissions and concurrency must match the rules in that file. The `label` job in `label-pr.yml` is the only workflow job with `pull-requests: write`. That job skips forks. Only the jobs that hold the `terraform-state` group, and the `required-checks.yml` job that calls one, get `id-token: write`. A job that holds the group must run its state step before terradart, and no other step may read an `R2_*` secret.
 
 | Workflow | When it runs | What it does |
 | --- | --- | --- |
@@ -53,8 +55,8 @@ Names in the diagram:
 | `label-pr.yml` | Pull request `opened`, `synchronize`, `reopened`, or `edited` | Sets labels with `.github/scripts/compute-pr-labels.sh`. Skips a pull request that has the `ignore` label. |
 | `app-ci.yml` | Called when the app area changes | Runs `npm audit --audit-level=critical --omit=dev`, `npm run check`, the production build, and Lighthouse. Scores are report-only. A missing report fails the job. The `lighthouse` artifact is kept for 14 days. |
 | `automation-ci.yml` | Called when the automation area changes | Runs `mise run check:automation` and `mise run check:docs`. |
-| `plan-infra.yml` | Called when the infra area changes, or `workflow_dispatch` | Runs `mise run check:infra`, then `dart run terradart_cli:terradart plan` for the `site` stack. The plan job skips Dependabot and fork pull requests. |
-| `release-infra.yml` | Push to `main` under `infra/`, or `workflow_dispatch` | On `main`, checks the stack, plans, runs `terradart apply --auto-approve`, then plans again and fails unless that plan is empty. |
+| `plan-infra.yml` | Called when the infra area changes, or `workflow_dispatch` | Runs `mise run check:infra`. The plan job then authenticates to Google Cloud, runs `dart run tool/adopt_state.dart`, and runs `dart run terradart_cli:terradart plan` for the `site` stack. The plan job skips Dependabot and fork pull requests. |
+| `release-infra.yml` | Push to `main` under `infra/`, or `workflow_dispatch` | On `main`, checks the stack, authenticates to Google Cloud, and runs `dart run tool/require_state.dart`. Then it plans, runs `terradart apply --auto-approve`, plans again, and fails unless that plan is empty. |
 | `app-release.yml` | Push to `main` on the path list below, or `workflow_dispatch` | On `main`, writes `app/.env`, runs `npm run check`, builds, and runs `npm run deploy`. Then it calls `smoke-prod.yml`. |
 | `smoke-prod.yml` | After that deploy, Mondays at 04:23 UTC, or `workflow_dispatch` | On `main`, sends a GET for each public route in `app/scripts/routes-baseline.txt` on `https://koborin.ai`. Skips `/pagefind/`, `/_headers`, and `/_redirects`. |
 
@@ -144,8 +146,11 @@ The build writes these files from published pages. Drafts are omitted.
 | `GISCUS_CATEGORY_ID` | Secret | `PUBLIC_GISCUS_CATEGORY_ID`, written in the same step as the repo id |
 | `CLOUDFLARE_API_TOKEN` | Secret | wrangler deploy, and the Cloudflare provider for plan and apply |
 | `CLOUDFLARE_ACCOUNT_ID` | Variable | Account id for deploy and for the `site` stack |
-| `R2_ACCESS_KEY_ID` | Secret | Passed to the state backend as `AWS_ACCESS_KEY_ID` |
-| `R2_SECRET_ACCESS_KEY` | Secret | Passed to the state backend as `AWS_SECRET_ACCESS_KEY` |
+| `GCP_WIF_PROVIDER` | Variable | Workload Identity Federation provider for plan and apply |
+| `GCP_SA_EMAIL` | Variable | Service account that reads and writes the state bucket |
+| `TFSTATE_BUCKET` | Variable | `koborin-ai-tfstate-n-koborinai`. The adopt and require steps fail when it differs from the bucket in `infra/bin/infra.dart` |
+| `R2_ACCESS_KEY_ID` | Secret | Read only by the adopt and require steps, to fetch the old R2 state |
+| `R2_SECRET_ACCESS_KEY` | Secret | Read only by the adopt and require steps, to fetch the old R2 state |
 
 The browser loads GA4 only after `localStorage` key `cookie_consent` is `accepted`. Giscus renders when both public ids are set, except on the home page. A page with `publishedAt` shows Giscus unless `engagement` is `false`. `engagement: true` shows Giscus on any other page.
 
@@ -163,7 +168,7 @@ The browser loads GA4 only after `localStorage` key `cookie_consent` is `accepte
 | Path | What it holds |
 | --- | --- |
 | `app/` | Astro site, content, and the Worker asset build |
-| `infra/` | TerraDart `site` stack |
+| `infra/` | TerraDart `site` stack, and the tool that copies its state from R2 to GCS |
 | `.github/` | Workflows, the label script, and release notes |
 | `assets/` | README lockup SVGs |
 

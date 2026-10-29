@@ -38,6 +38,7 @@ describe('home catalog', () => {
       'none',
     ]);
     expect(linkLabel).toEqual({
+      building: { en: 'More on GitHub ↗', ja: 'ほかは GitHub で ↗' },
       writing: { en: 'All writing →', ja: '記事をすべて →' },
       talks: { en: 'All talks →', ja: '登壇をすべて →' },
     });

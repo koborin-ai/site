@@ -1,5 +1,6 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
+import HomePage from './HomePage.astro';
 import ProjectList from './ProjectList.astro';
 
 const githubPrefix = 'M12 .5a11.5';
@@ -19,22 +20,6 @@ const rows = [
     description: {
       en: 'A semantic linter for AI-era Markdown.',
       ja: 'AI 時代の Markdown のためのセマンティックリンター。',
-    },
-  },
-  {
-    name: 'gcp-cost-mcp-server',
-    href: 'https://github.com/nozomi-koborinai/gcp-cost-mcp-server',
-    description: {
-      en: 'An MCP server that lets AI assistants estimate GCP running costs.',
-      ja: 'AI アシスタントから GCP のランニングコストを見積もれる MCP サーバー。',
-    },
-  },
-  {
-    name: 'ableton-osc-mcp',
-    href: 'https://github.com/nozomi-koborinai/ableton-osc-mcp',
-    description: {
-      en: 'An MCP server that drives Ableton Live via AbletonOSC.',
-      ja: 'AbletonOSC 経由で Ableton Live を操作できる MCP サーバー。',
     },
   },
   {
@@ -111,5 +96,57 @@ describe('ProjectList', () => {
     expect(html).not.toContain('GitHub ↗');
     expect(html).not.toContain('サイト ↗');
     expect(html).not.toContain('class="ph"');
+  });
+});
+
+const origin = 'https://koborin.ai';
+
+const projectHrefs = [
+  'https://terradart.dev/',
+  'https://contextlint.dev/',
+  'https://github.com/nozomi-koborinai/jev-spec',
+] as const;
+
+function buildingSlice(html: string, locale: 'en' | 'ja'): string {
+  const heading = locale === 'en' ? 'Building' : '作っているもの';
+  const start = html.indexOf(heading);
+  if (start < 0) return '';
+  const rest = html.slice(start);
+  const next = rest.indexOf('<h2');
+  return next < 0 ? rest : rest.slice(0, next);
+}
+
+describe('home Building section', () => {
+  let container: Awaited<ReturnType<typeof AstroContainer.create>>;
+
+  beforeAll(async () => {
+    container = await AstroContainer.create({ astroConfig: { site: origin } });
+  });
+
+  it.each(['en', 'ja'] as const)('links the three projects and GitHub from the %s home', async (locale) => {
+    const prefix = locale === 'ja' ? '/ja' : '';
+    const html = await container.renderToString(HomePage, {
+      props: { locale },
+      request: new Request(`${origin}${prefix}/`),
+    });
+    const slice = buildingSlice(html, locale);
+    const items = listItems(slice);
+    expect(items).toHaveLength(3);
+
+    for (const [index, href] of projectHrefs.entries()) {
+      const row = items[index] ?? '';
+      expect(row).toContain(rows[index]?.name);
+      expect(row).toContain(`href="${href}"`);
+    }
+
+    const mores = [...slice.matchAll(/<a\b[^>]*\bclass="more"[^>]*>[\s\S]*?<\/a>/g)].map((match) => match[0]);
+    expect(mores).toHaveLength(1);
+    const more = mores[0] ?? '';
+    expect(more).toContain('href="https://github.com/nozomi-koborinai?tab=repositories"');
+    expect(more).toContain('target="_blank"');
+    expect(more).toContain('rel="noopener noreferrer"');
+    expect(visibleText(more)).toBe(locale === 'en' ? 'More on GitHub ↗' : 'ほかは GitHub で ↗');
+    expect(slice).not.toContain('gcp-cost-mcp-server');
+    expect(slice).not.toContain('ableton-osc-mcp');
   });
 });

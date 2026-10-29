@@ -1,5 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:koborin_ai_infra/site_stack.dart';
-import 'package:terradart_core/terradart_core.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -24,27 +26,37 @@ void main() {
     expect(domain['zone_id'], r'${data.cloudflare_zone.koborin.id}');
   });
 
-  test('site stack addresses state at the R2 site key', () {
-    final stack = SiteStack(
-      accountId: 'acc-test',
-      zoneName: 'koborin.ai',
-      workerName: 'koborin-ai-web',
-      backend: S3Backend.r2(
-        accountId: 'acc-test',
-        bucket: 'koborin-ai-tfstate',
-        key: 'terraform/site/terraform.tfstate',
-      ),
-    );
-    final backend =
-        (((stack.synth().tfJson['terraform'] as Map)['backend'] as Map)['s3']
-            as Map);
+  test(
+    'the entry point keeps state in the GCS site prefix and nothing else',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('infra');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      final manifest = '${temp.path}/manifest.json';
+      final run = await Process.run(
+        Platform.resolvedExecutable,
+        ['run', 'bin/infra.dart'],
+        environment: {
+          'CLOUDFLARE_ACCOUNT_ID': 'acc-test',
+          'TERRADART_MANIFEST': manifest,
+        },
+      );
+      expect(run.exitCode, 0, reason: '${run.stderr}');
 
-    expect(backend['bucket'], 'koborin-ai-tfstate');
-    expect(backend['key'], 'terraform/site/terraform.tfstate');
-    expect(backend['endpoints'], {
-      's3': 'https://acc-test.r2.cloudflarestorage.com',
-    });
-    expect(backend.containsKey('access_key'), isFalse);
-    expect(backend.containsKey('secret_key'), isFalse);
-  });
+      final root =
+          (jsonDecode(File(manifest).readAsStringSync())['roots'] as List)
+                  .single
+              as Map;
+      final tf =
+          jsonDecode(File('${root['dir']}/main.tf.json').readAsStringSync())
+              as Map;
+      expect((tf['terraform'] as Map)['backend'], {
+        'gcs': {
+          'bucket': 'koborin-ai-tfstate-n-koborinai',
+          'prefix': 'terraform/site',
+        },
+      });
+      expect(root['workspace'], isNull);
+      expect(root['backend_config'], isEmpty);
+    },
+  );
 }

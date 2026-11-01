@@ -9,6 +9,7 @@
 /ja/life/anxiety-as-distraction-ai-as-consumption/
 /ja/life/everything-has-meaning/
 /ja/life/keep-building-developer-platforms/
+/ja/life/putting-a-lid-on-thought/
 /ja/life/reflections-on-2025/
 /ja/privacy-policy/
 /ja/rss.xml
@@ -24,6 +25,7 @@
 /life/anxiety-as-distraction-ai-as-consumption/
 /life/everything-has-meaning/
 /life/keep-building-developer-platforms/
+/life/putting-a-lid-on-thought/
 /life/reflections-on-2025/
 /llms-full.txt
 /llms-ja-full.txt

@@ -60,6 +60,7 @@
   },
   "overrides": {
     "fflate": "0.7.5",
-    "katex": "0.18.10"
+    "katex": "0.18.10",
+    "minimatch": "^11.0.9"
   }
 }

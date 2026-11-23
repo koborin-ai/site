@@ -70,6 +70,7 @@ function articleTree(card: Extract<OgCard, { kind: 'article' }>): Parameters<typ
     props: {
       lang: card.locale,
       style: {
+        boxSizing: 'border-box',
         width: OG_SIZE.width,
         height: OG_SIZE.height,
         display: 'flex',
@@ -129,6 +130,7 @@ function siteTree(card: Extract<OgCard, { kind: 'site' }>): Parameters<typeof sa
     type: 'div',
     props: {
       style: {
+        boxSizing: 'border-box',
         width: OG_SIZE.width,
         height: OG_SIZE.height,
         display: 'flex',

@@ -40,8 +40,8 @@ describe('auditWorkflows', () => {
     expect(auditWorkflows(await edited('app-ci.yml', checkoutPin, uses))).toEqual(only('app-ci.yml', 'pin'));
   });
 
-  it.each(['release-infra.yml', 'plan-infra.yml', 'app-release.yml'])(
-    'rejects cancel-in-progress true on the production group in %s',
+  it.each(['release-infra.yml', 'plan-infra.yml', 'app-release.yml', 'dependabot-auto-merge.yml'])(
+    'rejects cancel-in-progress true on the never-cancel group in %s',
     async (name) => {
       const files = await edited(name, 'cancel-in-progress: false', 'cancel-in-progress: true');
       expect(auditWorkflows(files)).toEqual(only(name, 'concurrency'));
@@ -114,6 +114,20 @@ describe('auditWorkflows', () => {
     expect(auditWorkflows(files)).toEqual(only('label-pr.yml', 'fork'));
   });
 
+  it('rejects a dependabot auto-merge job that drops its actor or fork guard', async () => {
+    const files = await edited(
+      'dependabot-auto-merge.yml',
+      "    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository\n",
+      '    if: github.event.pull_request.head.repo.full_name == github.repository\n',
+    );
+    expect(auditWorkflows(files)).toEqual(only('dependabot-auto-merge.yml', 'fork'));
+  });
+
+  it('rejects pull_request_target in a workflow that does not allow it', async () => {
+    const files = await edited('label-pr.yml', '  pull_request:', '  pull_request_target:');
+    expect(auditWorkflows(files)).toEqual(only('label-pr.yml', 'snippet'));
+  });
+
   it('rejects continue-on-error', async () => {
     const files = await edited(
       'app-ci.yml',
@@ -123,11 +137,11 @@ describe('auditWorkflows', () => {
     expect(auditWorkflows(files)).toEqual(only('app-ci.yml', 'snippet'));
   });
 
-  it('rejects a ninth workflow file and a rule whose file is gone', async () => {
+  it('rejects an unclassified workflow file and a rule whose file is gone', async () => {
     const files = await realWorkflows();
-    const ninth = { name: 'lighthouse.yml', source: files.find((file) => file.name === 'app-ci.yml')?.source ?? '' };
+    const extra = { name: 'lighthouse.yml', source: files.find((file) => file.name === 'app-ci.yml')?.source ?? '' };
 
-    expect(auditWorkflows([...files, ninth])).toEqual(only('lighthouse.yml', 'unclassified'));
+    expect(auditWorkflows([...files, extra])).toEqual(only('lighthouse.yml', 'unclassified'));
     expect(auditWorkflows(files.filter((file) => file.name !== 'smoke-prod.yml'))).toEqual(
       only('smoke-prod.yml', 'unclassified'),
     );
@@ -139,7 +153,7 @@ describe('workflow-policy cli', () => {
     const result = spawnSync(process.execPath, [script], { encoding: 'utf8' });
     expect(result.stderr).toBe('');
     expect(result.status).toBe(0);
-    expect(result.stdout).toBe('workflows 8\nviolations 0\n');
+    expect(result.stdout).toBe('workflows 9\nviolations 0\n');
   });
 
   it('imports only node: built-ins, because automation CI runs it without npm ci', async () => {

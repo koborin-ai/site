@@ -1,0 +1,63 @@
+name: Dependabot auto-merge
+
+on:
+  pull_request_target:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  auto-merge:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: write
+      pull-requests: write
+    timeout-minutes: 5
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Enable auto-merge for minor and patch updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+        run: |
+          set -euo pipefail
+
+          # fetch-metadata joins dependency-names with ", ".
+          requires_manual_review() {
+            local comma_bounded_names
+            comma_bounded_names=",$(printf '%s' "$1" | tr -d '[:space:]'),"
+            case "$comma_bounded_names" in
+              *',satori,'*|*',terradart_cli,'*|*',terradart_core,'*|*',terradart_cloudflare,'*)
+                return 0
+                ;;
+            esac
+            return 1
+          }
+
+          if requires_manual_review "$DEPENDENCY_NAMES"; then
+            echo "Manual review required for ${DEPENDENCY_NAMES}."
+            exit 0
+          fi
+
+          state="$(gh pr view "$PR_URL" --json state --jq .state)"
+          if [ "$state" != "OPEN" ]; then
+            echo "Pull request is ${state}."
+            exit 0
+          fi
+          already="$(gh pr view "$PR_URL" --json autoMergeRequest --jq 'if .autoMergeRequest == null then "no" else "yes" end')"
+          if [ "$already" = "yes" ]; then
+            echo "Auto-merge is already enabled."
+            exit 0
+          fi
+          gh pr merge --auto --squash "$PR_URL"

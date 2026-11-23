@@ -10,12 +10,14 @@ type StateLock = { readonly mode: 'never-cancel'; readonly group: 'terraform-sta
 type ConcurrencyRule =
   | { readonly mode: 'cancel-superseded'; readonly prefix: 'pull-request' | 'label-pr' }
   | { readonly mode: 'never-cancel'; readonly group: 'app-release'; readonly at: 'workflow' }
+  | { readonly mode: 'never-cancel-per-pr'; readonly prefix: 'dependabot-auto-merge' }
   | StateLock
   | { readonly mode: 'none' };
 
 type WorkflowName =
   | 'required-checks.yml'
   | 'label-pr.yml'
+  | 'dependabot-auto-merge.yml'
   | 'app-ci.yml'
   | 'automation-ci.yml'
   | 'plan-infra.yml'
@@ -23,35 +25,53 @@ type WorkflowName =
   | 'release-infra.yml'
   | 'smoke-prod.yml';
 
-type WorkflowRule = {
-  readonly concurrency: ConcurrencyRule;
-  /** The one job granted pull-requests write. It must skip forks, whose token is read-only. */
-  readonly forkJob: 'label' | null;
-};
-
-const rules: Record<WorkflowName, WorkflowRule> = {
-  'required-checks.yml': { concurrency: { mode: 'cancel-superseded', prefix: 'pull-request' }, forkJob: null },
-  'label-pr.yml': { concurrency: { mode: 'cancel-superseded', prefix: 'label-pr' }, forkJob: 'label' },
-  'app-ci.yml': { concurrency: { mode: 'none' }, forkJob: null },
-  'automation-ci.yml': { concurrency: { mode: 'none' }, forkJob: null },
-  'plan-infra.yml': {
-    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'job', job: 'plan' },
-    forkJob: null,
-  },
-  'app-release.yml': { concurrency: { mode: 'never-cancel', group: 'app-release', at: 'workflow' }, forkJob: null },
-  'release-infra.yml': {
-    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'workflow' },
-    forkJob: null,
-  },
-  'smoke-prod.yml': { concurrency: { mode: 'none' }, forkJob: null },
-};
-
 type Scopes = Readonly<Record<string, 'read' | 'write'>>;
 
+type PullRequestWriteJob = {
+  readonly job: 'label' | 'auto-merge';
+  readonly scopes: Scopes;
+  readonly predicate: string;
+};
+
+type WorkflowRule = {
+  readonly concurrency: ConcurrencyRule;
+  /** The one job granted pull-requests write. It must guard against forks, whose token is read-only. */
+  readonly prWriteJob: PullRequestWriteJob | null;
+  readonly allowPullRequestTarget?: true;
+};
+
 const forkPredicate = 'github.event.pull_request.head.repo.full_name == github.repository';
+const dependabotPredicate = `github.event.pull_request.user.login == 'dependabot[bot]' && ${forkPredicate}`;
 const readOnly: Scopes = { contents: 'read' };
-const forkJobScopes: Scopes = { contents: 'read', 'pull-requests': 'write' };
+const labelJobScopes: Scopes = { contents: 'read', 'pull-requests': 'write' };
+const autoMergeJobScopes: Scopes = { contents: 'write', 'pull-requests': 'write' };
 const stateJobScopes: Scopes = { contents: 'read', 'id-token': 'write' };
+
+const rules: Record<WorkflowName, WorkflowRule> = {
+  'required-checks.yml': { concurrency: { mode: 'cancel-superseded', prefix: 'pull-request' }, prWriteJob: null },
+  'label-pr.yml': {
+    concurrency: { mode: 'cancel-superseded', prefix: 'label-pr' },
+    prWriteJob: { job: 'label', scopes: labelJobScopes, predicate: forkPredicate },
+  },
+  'dependabot-auto-merge.yml': {
+    concurrency: { mode: 'never-cancel-per-pr', prefix: 'dependabot-auto-merge' },
+    prWriteJob: { job: 'auto-merge', scopes: autoMergeJobScopes, predicate: dependabotPredicate },
+    allowPullRequestTarget: true,
+  },
+  'app-ci.yml': { concurrency: { mode: 'none' }, prWriteJob: null },
+  'automation-ci.yml': { concurrency: { mode: 'none' }, prWriteJob: null },
+  'plan-infra.yml': {
+    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'job', job: 'plan' },
+    prWriteJob: null,
+  },
+  'app-release.yml': { concurrency: { mode: 'never-cancel', group: 'app-release', at: 'workflow' }, prWriteJob: null },
+  'release-infra.yml': {
+    concurrency: { mode: 'never-cancel', group: 'terraform-state', at: 'workflow' },
+    prWriteJob: null,
+  },
+  'smoke-prod.yml': { concurrency: { mode: 'none' }, prWriteJob: null },
+};
+
 const localWorkflow = /^\.\/\.github\/workflows\/([^/]+)$/;
 const pinnedUse = /^[\w.-]+\/[\w.-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/;
 const forbiddenKeys = /(?:^|[\s-])(continue-on-error|pull_request_target)\b/;
@@ -150,6 +170,11 @@ function expectedGroups(rule: ConcurrencyRule): { workflow: ExpectedGroup | null
       return rule.at === 'workflow'
         ? { workflow: { group: rule.group, cancel: 'false' }, jobs: new Map() }
         : { workflow: null, jobs: new Map([[rule.job, { group: rule.group, cancel: 'false' }]]) };
+    case 'never-cancel-per-pr':
+      return {
+        workflow: { group: `${rule.prefix}-\${{ github.event.pull_request.number }}`, cancel: 'false' },
+        jobs: new Map(),
+      };
     case 'none':
       return { workflow: null, jobs: new Map() };
   }
@@ -192,7 +217,7 @@ function expectedScopes(
   jobsOf: (callee: WorkflowName) => readonly YamlNode[],
 ): Scopes {
   const rule = rules[file];
-  if (job.key === rule.forkJob) return forkJobScopes;
+  if (rule.prWriteJob !== null && job.key === rule.prWriteJob.job) return rule.prWriteJob.scopes;
   if (holdsStateLock(rule.concurrency, job.key)) return stateJobScopes;
   const callee = localWorkflow.exec(child(job, 'uses')?.value ?? '')?.[1];
   if (callee === undefined || !isWorkflowName(callee)) return readOnly;
@@ -212,7 +237,9 @@ function auditFile(
 
   for (const [index, line] of source.split('\n').entries()) {
     const forbidden = forbiddenKeys.exec(line.replace(/(^|\s)#.*$/, ''))?.[1];
-    if (forbidden) report('snippet', `line ${index + 1} uses ${forbidden}`);
+    if (forbidden && !(forbidden === 'pull_request_target' && rule.allowPullRequestTarget)) {
+      report('snippet', `line ${index + 1} uses ${forbidden}`);
+    }
   }
 
   for (const node of walk(tree)) {
@@ -231,10 +258,10 @@ function auditFile(
     }
   }
 
-  if (rule.forkJob !== null) {
-    const job = jobs.find((entry) => entry.key === rule.forkJob);
-    if (child(job, 'if')?.value !== forkPredicate) {
-      report('fork', `jobs.${rule.forkJob}.if must be ${forkPredicate}`);
+  if (rule.prWriteJob !== null) {
+    const job = jobs.find((entry) => entry.key === rule.prWriteJob?.job);
+    if (child(job, 'if')?.value !== rule.prWriteJob.predicate) {
+      report('fork', `jobs.${rule.prWriteJob.job}.if must be ${rule.prWriteJob.predicate}`);
     }
   }
 

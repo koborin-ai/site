@@ -6,21 +6,21 @@ import { diffRoutes } from './check-routes.ts';
 describe('diffRoutes', () => {
   it('allows pagefind to disappear and generated og webp to appear', () => {
     const result = diffRoutes(
-      ['/', '/pagefind/pagefind.js', '/tech/foo/'],
-      ['/', '/tech/foo/', '/og/tech/foo.webp'],
+      ['/', '/pagefind/pagefind.js', '/blog/foo/'],
+      ['/', '/blog/foo/', '/og/blog/foo.webp'],
     );
 
     expect(result.missing).toEqual([]);
     expect(result.unexpected).toEqual([]);
     expect(result.droppedSearch).toEqual(['/pagefind/pagefind.js']);
-    expect(result.generated).toEqual(['/og/tech/foo.webp']);
+    expect(result.generated).toEqual(['/og/blog/foo.webp']);
   });
 
   it('fails when a page disappears or an unknown url appears', () => {
-    const result = diffRoutes(['/tech/foo/'], ['/life/new/']);
+    const result = diffRoutes(['/blog/foo/'], ['/blog/new/']);
 
-    expect(result.missing).toEqual(['/tech/foo/']);
-    expect(result.unexpected).toEqual(['/life/new/']);
+    expect(result.missing).toEqual(['/blog/foo/']);
+    expect(result.unexpected).toEqual(['/blog/new/']);
   });
 
   it('allows the list pages and the about pages', () => {

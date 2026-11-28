@@ -1,0 +1,73 @@
+# Legacy category index pages
+/tech /blog/ 301
+/tech/ /blog/ 301
+/life /blog/ 301
+/life/ /blog/ 301
+/ja/tech /ja/blog/ 301
+/ja/tech/ /ja/blog/ 301
+/ja/life /ja/blog/ 301
+/ja/life/ /ja/blog/ 301
+
+# Legacy English tech articles
+/tech/contextlint-introduction /blog/contextlint-introduction/ 301
+/tech/contextlint-introduction/ /blog/contextlint-introduction/ 301
+/tech/contextlint-lsp-and-editor-integration /blog/contextlint-lsp-and-editor-integration/ 301
+/tech/contextlint-lsp-and-editor-integration/ /blog/contextlint-lsp-and-editor-integration/ 301
+/tech/firebase-auth-token-deep-dive /blog/firebase-auth-token-deep-dive/ 301
+/tech/firebase-auth-token-deep-dive/ /blog/firebase-auth-token-deep-dive/ 301
+/tech/genkit-vs-adk /blog/genkit-vs-adk/ 301
+/tech/genkit-vs-adk/ /blog/genkit-vs-adk/ 301
+/tech/jev-spec-introduction /blog/jev-spec-introduction/ 301
+/tech/jev-spec-introduction/ /blog/jev-spec-introduction/ 301
+/tech/koborin-ai-architecture /blog/koborin-ai-architecture/ 301
+/tech/koborin-ai-architecture/ /blog/koborin-ai-architecture/ 301
+/tech/mcp-deep-dive /blog/mcp-deep-dive/ 301
+/tech/mcp-deep-dive/ /blog/mcp-deep-dive/ 301
+/tech/solo-maintainer-cursor-automations /blog/solo-maintainer-cursor-automations/ 301
+/tech/solo-maintainer-cursor-automations/ /blog/solo-maintainer-cursor-automations/ 301
+/tech/stars-digest /blog/stars-digest/ 301
+/tech/stars-digest/ /blog/stars-digest/ 301
+
+# Legacy English life articles
+/life/anxiety-as-distraction-ai-as-consumption /blog/anxiety-as-distraction-ai-as-consumption/ 301
+/life/anxiety-as-distraction-ai-as-consumption/ /blog/anxiety-as-distraction-ai-as-consumption/ 301
+/life/everything-has-meaning /blog/everything-has-meaning/ 301
+/life/everything-has-meaning/ /blog/everything-has-meaning/ 301
+/life/keep-building-developer-platforms /blog/keep-building-developer-platforms/ 301
+/life/keep-building-developer-platforms/ /blog/keep-building-developer-platforms/ 301
+/life/putting-a-lid-on-thought /blog/putting-a-lid-on-thought/ 301
+/life/putting-a-lid-on-thought/ /blog/putting-a-lid-on-thought/ 301
+/life/reflections-on-2025 /blog/reflections-on-2025/ 301
+/life/reflections-on-2025/ /blog/reflections-on-2025/ 301
+
+# Legacy Japanese tech articles
+/ja/tech/contextlint-introduction /ja/blog/contextlint-introduction/ 301
+/ja/tech/contextlint-introduction/ /ja/blog/contextlint-introduction/ 301
+/ja/tech/contextlint-lsp-and-editor-integration /ja/blog/contextlint-lsp-and-editor-integration/ 301
+/ja/tech/contextlint-lsp-and-editor-integration/ /ja/blog/contextlint-lsp-and-editor-integration/ 301
+/ja/tech/firebase-auth-token-deep-dive /ja/blog/firebase-auth-token-deep-dive/ 301
+/ja/tech/firebase-auth-token-deep-dive/ /ja/blog/firebase-auth-token-deep-dive/ 301
+/ja/tech/genkit-vs-adk /ja/blog/genkit-vs-adk/ 301
+/ja/tech/genkit-vs-adk/ /ja/blog/genkit-vs-adk/ 301
+/ja/tech/jev-spec-introduction /ja/blog/jev-spec-introduction/ 301
+/ja/tech/jev-spec-introduction/ /ja/blog/jev-spec-introduction/ 301
+/ja/tech/koborin-ai-architecture /ja/blog/koborin-ai-architecture/ 301
+/ja/tech/koborin-ai-architecture/ /ja/blog/koborin-ai-architecture/ 301
+/ja/tech/mcp-deep-dive /ja/blog/mcp-deep-dive/ 301
+/ja/tech/mcp-deep-dive/ /ja/blog/mcp-deep-dive/ 301
+/ja/tech/solo-maintainer-cursor-automations /ja/blog/solo-maintainer-cursor-automations/ 301
+/ja/tech/solo-maintainer-cursor-automations/ /ja/blog/solo-maintainer-cursor-automations/ 301
+/ja/tech/stars-digest /ja/blog/stars-digest/ 301
+/ja/tech/stars-digest/ /ja/blog/stars-digest/ 301
+
+# Legacy Japanese life articles
+/ja/life/anxiety-as-distraction-ai-as-consumption /ja/blog/anxiety-as-distraction-ai-as-consumption/ 301
+/ja/life/anxiety-as-distraction-ai-as-consumption/ /ja/blog/anxiety-as-distraction-ai-as-consumption/ 301
+/ja/life/everything-has-meaning /ja/blog/everything-has-meaning/ 301
+/ja/life/everything-has-meaning/ /ja/blog/everything-has-meaning/ 301
+/ja/life/keep-building-developer-platforms /ja/blog/keep-building-developer-platforms/ 301
+/ja/life/keep-building-developer-platforms/ /ja/blog/keep-building-developer-platforms/ 301
+/ja/life/putting-a-lid-on-thought /ja/blog/putting-a-lid-on-thought/ 301
+/ja/life/putting-a-lid-on-thought/ /ja/blog/putting-a-lid-on-thought/ 301
+/ja/life/reflections-on-2025 /ja/blog/reflections-on-2025/ 301
+/ja/life/reflections-on-2025/ /ja/blog/reflections-on-2025/ 301

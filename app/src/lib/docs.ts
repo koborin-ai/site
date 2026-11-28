@@ -12,11 +12,32 @@ function barePath(id: string): string {
   return withoutLocale;
 }
 
-/** Public URL for a docs collection id, including the trailing slash Starlight used. */
-export function publicPath(id: string): string {
+function publicBarePath(id: string): string {
   const bare = barePath(id);
+  const category = categoryOf(id);
+  if (!category) return bare;
+  if (bare === category) return 'blog';
+  return `blog/${bare.slice(category.length + 1)}`;
+}
+
+/** Public URL for a docs collection id, unifying tech/ and life/ articles under /blog/. */
+export function publicPath(id: string): string {
+  const bare = publicBarePath(id);
   if (localeOf(id) === 'ja') return bare === '' ? '/ja/' : `/ja/${bare}/`;
   return bare === '' ? '/' : `/${bare}/`;
+}
+
+/** Fails when two docs ids resolve to the same public URL, e.g. a slug shared across tech/ and life/. */
+export function assertUniquePublicPaths(ids: readonly string[]): void {
+  const owners = new Map<string, string>();
+  for (const id of ids) {
+    const url = publicPath(id);
+    const existing = owners.get(url);
+    if (existing !== undefined) {
+      throw new Error(`Duplicate public URL ${url} for "${existing}" and "${id}"`);
+    }
+    owners.set(url, id);
+  }
 }
 
 /** Rest param for `[...slug].astro`. The English home is the route with no slug. */

@@ -172,7 +172,7 @@ describe('talk meta line', () => {
 
   it('leaves writing rows with a bare date', async () => {
     const html = await container.renderToString(QuietList, {
-      props: { items: [{ title: 'Newer', href: '/life/newer/', date: '09/12' }] },
+      props: { items: [{ title: 'Newer', href: '/blog/newer/', date: '09/12' }] },
     });
     expect(listItems(html).map((item) => item.meta)).toEqual(['09/12']);
   });

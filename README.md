@@ -56,9 +56,9 @@ Names in the diagram:
 | `plan-infra.yml` | Called when the infra area changes, or `workflow_dispatch` | Runs `mise run check:infra`. The plan job then authenticates to Google Cloud and runs `dart run terradart_cli:terradart plan` for the `site` stack. The plan job skips Dependabot and fork pull requests. |
 | `release-infra.yml` | Push to `main` under `infra/`, or `workflow_dispatch` | On `main`, checks the stack and authenticates to Google Cloud. Then it plans, runs `terradart apply --auto-approve`, plans again, and fails unless that plan is empty. |
 | `app-release.yml` | Push to `main` on the path list below, or `workflow_dispatch` | On `main`, writes `app/.env`, runs `npm run check`, builds, and runs `npm run deploy`. Then it calls `smoke-prod.yml`. |
-| `smoke-prod.yml` | After that deploy, Mondays at 04:23 UTC, or `workflow_dispatch` | On `main`, sends a GET for each public route in `app/scripts/routes-baseline.txt` on `https://koborin.ai`. Skips `/pagefind/`, `/_headers`, and `/_redirects`. |
+| `smoke-prod.yml` | After that deploy, Mondays at 04:23 UTC, or `workflow_dispatch` | On `main`, sends a GET for each public route in `app/scripts/routes-baseline.txt` and each rule in `app/public/_redirects` on `https://koborin.ai`. Skips `/pagefind/`, `/_headers`, and `/_redirects`. |
 
-Lighthouse reads `/`, `/ja/`, `/tech/koborin-ai-architecture/`, and `/ja/tech/koborin-ai-architecture/`, on desktop and mobile.
+Lighthouse reads `/`, `/ja/`, `/blog/koborin-ai-architecture/`, and `/ja/blog/koborin-ai-architecture/`, on desktop and mobile.
 
 `app-release.yml` runs on a `main` push that changes `app/`, `.tool-versions`, `mise.toml`, `.github/workflows/app-release.yml`, or `.github/workflows/app-ci.yml`.
 
@@ -99,7 +99,7 @@ App tests and the production build render Mermaid through Playwright Chromium. I
 
 Add an article as MDX under `app/src/content/docs/`. English tech articles go in `tech/`. English life articles go in `life/`. Japanese articles go in the matching folder under `ja/`.
 
-`tech/my-post.mdx` is served at `/tech/my-post/`. `life/my-post.mdx` is served at `/life/my-post/`. A Japanese file adds the `/ja/` prefix. The writing lists are `/blog/` and `/ja/blog/`. Article URLs stay under `/tech/` and `/life/`.
+Both `tech/my-post.mdx` and `life/my-post.mdx` are served at `/blog/my-post/`. A Japanese file adds the `/ja/` prefix (`/ja/blog/my-post/`). Slugs must be unique across `tech/` and `life/`. The writing lists are `/blog/` and `/ja/blog/`. Legacy `/tech/` and `/life/` URLs return `301` via `app/public/_redirects`.
 
 `title` and `description` are required. Set `publishedAt` to list the article and to generate its card.
 

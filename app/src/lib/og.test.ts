@@ -20,10 +20,10 @@ const japaneseArticle = source('ja/tech/mcp-deep-dive', {
 
 describe('ogImageFor', () => {
   it('serves an article its card at the page path, with no query', () => {
-    expect(ogImageFor(englishArticle)).toBe('/og/tech/mcp-deep-dive.webp');
-    expect(ogImageFor(japaneseArticle)).toBe('/og/ja/tech/mcp-deep-dive.webp');
+    expect(ogImageFor(englishArticle)).toBe('/og/blog/mcp-deep-dive.webp');
+    expect(ogImageFor(japaneseArticle)).toBe('/og/ja/blog/mcp-deep-dive.webp');
     expect(ogImageFor(source('life/reflections-on-2025', { title: 'Reflections on 2025', publishedAt }))).toBe(
-      '/og/life/reflections-on-2025.webp',
+      '/og/blog/reflections-on-2025.webp',
     );
   });
 
@@ -46,13 +46,13 @@ describe('ogCards', () => {
     const docs = [englishArticle, japaneseArticle, source('index', { title: 'Welcome to koborin.ai' })];
     expect(ogCards(docs)).toEqual([
       {
-        slug: 'tech/mcp-deep-dive',
-        path: '/og/tech/mcp-deep-dive.webp',
+        slug: 'blog/mcp-deep-dive',
+        path: '/og/blog/mcp-deep-dive.webp',
         card: { kind: 'article', title: englishArticle.data.title, locale: 'en', publishedAt },
       },
       {
-        slug: 'ja/tech/mcp-deep-dive',
-        path: '/og/ja/tech/mcp-deep-dive.webp',
+        slug: 'ja/blog/mcp-deep-dive',
+        path: '/og/ja/blog/mcp-deep-dive.webp',
         card: { kind: 'article', title: japaneseArticle.data.title, locale: 'ja', publishedAt },
       },
       {
@@ -86,9 +86,9 @@ describe('route checker', () => {
       .map((line) => line.trim())
       .filter(Boolean);
     const cardPaths = [
-      '/og/tech/mcp-deep-dive.webp',
-      '/og/ja/tech/mcp-deep-dive.webp',
-      '/og/life/reflections-on-2025.webp',
+      '/og/blog/mcp-deep-dive.webp',
+      '/og/ja/blog/mcp-deep-dive.webp',
+      '/og/blog/reflections-on-2025.webp',
     ];
     const result = diffRoutes(baseline, [...baseline, ...cardPaths]);
     expect(result.unexpected).toEqual([]);

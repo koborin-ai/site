@@ -96,7 +96,8 @@ describe('home catalog', () => {
     );
 
     expect(posts.map((post) => post.title)).toEqual(['Newer', 'Older']);
-    expect(posts[0]?.href).toBe('/life/newer/');
+    expect(posts[0]?.href).toBe('/blog/newer/');
+    expect(posts[1]?.href).toBe('/blog/older/');
     expect(groupByYear(posts).map((group) => group.year)).toEqual([2026]);
     expect(listHref('writing', 'ja')).toBe('/ja/blog/');
     expect(listHref('talks', 'en')).toBe('/talks/');

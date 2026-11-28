@@ -6,7 +6,7 @@ Astro MDX lives in `app/src/content/docs/`. Home, lists, and articles share one 
 
 ## Invariants
 
-- A published article keeps its URL under `/tech/` or `/life/` (Japanese pages under `/ja/`). Do not move it to `/blog/`.
+- Published articles live at `/blog/<slug>/` (Japanese pages at `/ja/blog/<slug>/`). Keep the `301` redirects in `app/public/_redirects` for legacy `/tech/` and `/life/` URLs, and keep article slugs unique across `tech/` and `life/`.
 - Add each new public URL to `app/scripts/routes-baseline.txt`. The build fails when a listed URL is missing, or when an unexpected URL appears.
 - `npm run build` skips `draft: true`. Open every draft you touched with `npm run dev`. After you remove `draft: true`, run the build again.
 - Local images in MDX go through `SiteImage`. Do not use a raw `<img>`, or Astro `<Image />` or `<Picture />`, for a file under `app/src/assets/`.

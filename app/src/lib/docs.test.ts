@@ -1,12 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { categoryOf, counterpartId, localeOf, pathsMatch, publicPath, slugParam } from './docs';
+import {
+  assertUniquePublicPaths,
+  categoryOf,
+  counterpartId,
+  localeOf,
+  pathsMatch,
+  publicPath,
+  slugParam,
+} from './docs';
 
 describe('public paths', () => {
-  it('maps collection ids onto the existing public URLs', () => {
+  it('maps collection ids onto unified /blog/ article URLs', () => {
     expect(publicPath('index')).toBe('/');
     expect(publicPath('ja/index')).toBe('/ja/');
-    expect(publicPath('tech/koborin-ai-architecture')).toBe('/tech/koborin-ai-architecture/');
-    expect(publicPath('ja/tech/koborin-ai-architecture')).toBe('/ja/tech/koborin-ai-architecture/');
+    expect(publicPath('tech/koborin-ai-architecture')).toBe('/blog/koborin-ai-architecture/');
+    expect(publicPath('ja/tech/koborin-ai-architecture')).toBe('/ja/blog/koborin-ai-architecture/');
+    expect(publicPath('life/everything-has-meaning')).toBe('/blog/everything-has-meaning/');
+    expect(publicPath('ja/life/everything-has-meaning')).toBe('/ja/blog/everything-has-meaning/');
     expect(publicPath('privacy-policy')).toBe('/privacy-policy/');
     expect(publicPath('ja/privacy-policy')).toBe('/ja/privacy-policy/');
   });
@@ -14,8 +24,20 @@ describe('public paths', () => {
   it('uses an empty rest param only for the English home', () => {
     expect(slugParam('index')).toBeUndefined();
     expect(slugParam('ja/index')).toBe('ja');
-    expect(slugParam('life/everything-has-meaning')).toBe('life/everything-has-meaning');
-    expect(slugParam('ja/life/everything-has-meaning')).toBe('ja/life/everything-has-meaning');
+    expect(slugParam('life/everything-has-meaning')).toBe('blog/everything-has-meaning');
+    expect(slugParam('ja/life/everything-has-meaning')).toBe('ja/blog/everything-has-meaning');
+  });
+
+  it('rejects duplicate public URLs when tech and life share a slug', () => {
+    expect(() =>
+      assertUniquePublicPaths(['tech/same-slug', 'life/same-slug']),
+    ).toThrow('Duplicate public URL /blog/same-slug/');
+    expect(() =>
+      assertUniquePublicPaths(['ja/tech/same-slug', 'ja/life/same-slug']),
+    ).toThrow('Duplicate public URL /ja/blog/same-slug/');
+    expect(() =>
+      assertUniquePublicPaths(['tech/first', 'life/second', 'ja/tech/first', 'ja/life/second']),
+    ).not.toThrow();
   });
 });
 
@@ -39,7 +61,7 @@ describe('locale and category', () => {
 
   it('treats a missing trailing slash as the same path', () => {
     expect(pathsMatch('/ja', '/ja/')).toBe(true);
-    expect(pathsMatch('/tech/stars-digest', '/tech/stars-digest/')).toBe(true);
+    expect(pathsMatch('/blog/stars-digest', '/blog/stars-digest/')).toBe(true);
     expect(pathsMatch('/', '/ja/')).toBe(false);
   });
 });

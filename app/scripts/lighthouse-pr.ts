@@ -9,8 +9,8 @@ import type { Result } from 'lighthouse';
 export const lighthousePaths = [
   '/',
   '/ja/',
-  '/tech/koborin-ai-architecture/',
-  '/ja/tech/koborin-ai-architecture/',
+  '/blog/koborin-ai-architecture/',
+  '/ja/blog/koborin-ai-architecture/',
 ] as const;
 
 export type LighthousePath = (typeof lighthousePaths)[number];

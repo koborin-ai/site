@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { categoryOf, localeOf, publicPath } from '../lib/docs';
 
 export type Lang = 'en' | 'ja';
 export type Category = 'tech' | 'life' | 'all';
@@ -21,20 +22,14 @@ export function renderLlmsContent(
   lang: Lang,
   category: Category
 ): string {
-  const isJa = lang === 'ja';
   const filtered = entries.filter((entry) => {
-    const matchLang = isJa
-      ? entry.id.startsWith('ja/')
-      : !entry.id.startsWith('ja/');
-    if (!matchLang) return false;
+    if (localeOf(entry.id) !== lang) return false;
     if (category === 'all') return true;
-    // Extract category from path: "tech/foo" or "ja/tech/foo"
-    const path = isJa ? entry.id.replace(/^ja\//, '') : entry.id;
-    return path.startsWith(`${category}/`);
+    return categoryOf(entry.id) === category;
   });
 
   const rendered = filtered.map((entry) => {
-    const url = `${SITE_URL}/${entry.id}/`;
+    const url = new URL(publicPath(entry.id), SITE_URL).href;
     return `## ${entry.data.title}\nURL: ${url}\n\n${entry.body}`;
   });
 

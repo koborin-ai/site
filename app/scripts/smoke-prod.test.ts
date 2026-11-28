@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { readBaseline } from './check-routes.ts';
+import { readRedirects } from './redirects.ts';
 import { probesFor, productionOrigin, smoke } from './smoke-prod.ts';
 import type { Probe, SmokeRun } from './smoke-prod.ts';
 
@@ -8,8 +9,8 @@ function page(path: string): Probe {
   return { path, expect: { kind: 'page' } };
 }
 
-function redirect(path: string, to: string): Probe {
-  return { path, expect: { kind: 'redirect', to } };
+function redirect(path: string, to: string, status?: number): Probe {
+  return { path, expect: status === undefined ? { kind: 'redirect', to } : { kind: 'redirect', to, status } };
 }
 
 function fakeRun(reply: (url: URL, attempt: number) => Response | Error) {
@@ -57,28 +58,40 @@ async function problemsFor(probe: Probe, response: () => Response): Promise<read
 }
 
 describe('probesFor', () => {
-  it('derives page and redirect probes from the route baseline', async () => {
-    const probes = probesFor(await readBaseline());
+  it('derives page and redirect probes from the route baseline and _redirects', async () => {
+    const probes = probesFor(await readBaseline(), await readRedirects());
 
     expect(probes).toContainEqual(page('/'));
     expect(probes).toContainEqual(page('/favicon.png'));
     expect(probes).toContainEqual(redirect('/404.html', '/404'));
-    expect(probes).toContainEqual(page('/tech/mcp-deep-dive/'));
-    expect(probes).toContainEqual(redirect('/tech/mcp-deep-dive', '/tech/mcp-deep-dive/'));
-    expect(probes).toContainEqual(redirect('/ja/life/everything-has-meaning', '/ja/life/everything-has-meaning/'));
-    expect(probes.filter((probe) => probe.path === '/_headers')).toEqual([]);
+    expect(probes).toContainEqual(page('/blog/'));
+    expect(probes).toContainEqual(page('/blog/mcp-deep-dive/'));
+    expect(probes).toContainEqual(redirect('/blog/mcp-deep-dive', '/blog/mcp-deep-dive/'));
+    expect(probes).toContainEqual(redirect('/ja/blog/everything-has-meaning', '/ja/blog/everything-has-meaning/'));
+    expect(probes).toContainEqual(redirect('/tech/mcp-deep-dive/', '/blog/mcp-deep-dive/', 301));
+    expect(probes).toContainEqual(redirect('/ja/life/everything-has-meaning/', '/ja/blog/everything-has-meaning/', 301));
+    expect(probes).toContainEqual(redirect('/tech/', '/blog/', 301));
+    expect(probes).toContainEqual(redirect('/ja/life/', '/ja/blog/', 301));
+    expect(probes.filter((probe) => probe.path === '/_headers' || probe.path === '/_redirects')).toEqual([]);
     expect(probes.filter((probe) => probe.path.startsWith('/pagefind/'))).toEqual([]);
-    expect(probes.filter((probe) => ['/ja', '/privacy-policy', ''].includes(probe.path))).toEqual([]);
+    expect(probes.filter((probe) => ['/ja', '/privacy-policy', '/blog', '/ja/blog', ''].includes(probe.path))).toEqual([]);
   });
 
-  it('keeps baseline order and adds the slash redirect only under the article prefixes', () => {
-    expect(probesFor(['/_redirects', '/blog/', '/life/x/', '/ja/tech/y/', '/rss.xml'])).toEqual([
+  it('keeps baseline order and adds the slash redirect only under article paths', () => {
+    expect(
+      probesFor(
+        ['/_redirects', '/blog/', '/ja/blog/', '/blog/x/', '/ja/blog/y/', '/rss.xml'],
+        [{ from: '/tech/x/', to: '/blog/x/', status: 301 }],
+      ),
+    ).toEqual([
       page('/blog/'),
-      page('/life/x/'),
-      redirect('/life/x', '/life/x/'),
-      page('/ja/tech/y/'),
-      redirect('/ja/tech/y', '/ja/tech/y/'),
+      page('/ja/blog/'),
+      page('/blog/x/'),
+      redirect('/blog/x', '/blog/x/'),
+      page('/ja/blog/y/'),
+      redirect('/ja/blog/y', '/ja/blog/y/'),
       page('/rss.xml'),
+      redirect('/tech/x/', '/blog/x/', 301),
     ]);
   });
 });
@@ -87,8 +100,8 @@ describe('smoke judging', () => {
   it('passes an HTML page with both security headers, fetched without following redirects', async () => {
     const { run, fetched } = fakeRun(() => htmlPage());
 
-    expect(await smoke([page('/tech/x/')], run)).toEqual([]);
-    expect(fetched[0]?.url.href).toBe('https://koborin.ai/tech/x/');
+    expect(await smoke([page('/blog/x/')], run)).toEqual([]);
+    expect(fetched[0]?.url.href).toBe('https://koborin.ai/blog/x/');
     expect(fetched[0]?.init.redirect).toBe('manual');
     expect(fetched[0]?.init.method ?? 'GET').toBe('GET');
   });
@@ -116,24 +129,31 @@ describe('smoke judging', () => {
   });
 
   it('fails a page that is not 200', async () => {
-    const problems = await problemsFor(page('/tech/gone/'), () => new Response(null, { status: 404 }));
+    const problems = await problemsFor(page('/blog/gone/'), () => new Response(null, { status: 404 }));
     expect(problems).toEqual(['expected 200, got 404']);
   });
 
   it.each([
-    ['a path', '/tech/x/', 307],
-    ['an absolute URL on the production origin', 'https://koborin.ai/tech/x/', 307],
-    ['a permanent redirect', '/tech/x/', 308],
+    ['a path', '/blog/x/', 307],
+    ['an absolute URL on the production origin', 'https://koborin.ai/blog/x/', 307],
+    ['a permanent redirect', '/blog/x/', 308],
   ])('passes a redirect whose Location is %s', async (_label, location, status) => {
-    expect(await problemsFor(redirect('/tech/x', '/tech/x/'), () => moved(location, status))).toEqual([]);
+    expect(await problemsFor(redirect('/blog/x', '/blog/x/'), () => moved(location, status))).toEqual([]);
+  });
+
+  it('requires exact status when a redirect specifies one', async () => {
+    expect(await problemsFor(redirect('/tech/x/', '/blog/x/', 301), () => moved('/blog/x/', 301))).toEqual([]);
+    expect(await problemsFor(redirect('/tech/x/', '/blog/x/', 301), () => moved('/blog/x/', 302))).toEqual([
+      'expected 301 to /blog/x/, got 302',
+    ]);
   });
 
   it.each([
-    ['https://example.com/tech/x/', 'expected Location /tech/x/, got https://example.com/tech/x/'],
-    ['http://koborin.ai/tech/x/', 'expected Location /tech/x/, got http://koborin.ai/tech/x/'],
-    ['/tech/y/', 'expected Location /tech/x/, got /tech/y/'],
+    ['https://example.com/blog/x/', 'expected Location /blog/x/, got https://example.com/blog/x/'],
+    ['http://koborin.ai/blog/x/', 'expected Location /blog/x/, got http://koborin.ai/blog/x/'],
+    ['/blog/y/', 'expected Location /blog/x/, got /blog/y/'],
   ])('fails a redirect to %s', async (location, problem) => {
-    expect(await problemsFor(redirect('/tech/x', '/tech/x/'), () => moved(location))).toEqual([problem]);
+    expect(await problemsFor(redirect('/blog/x', '/blog/x/'), () => moved(location))).toEqual([problem]);
   });
 
   it('fails a redirect probe that answers 200 or omits Location', async () => {

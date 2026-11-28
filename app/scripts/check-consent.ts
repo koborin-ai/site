@@ -11,7 +11,7 @@ const headersPath = path.join(scriptDir, '..', 'public', '_headers');
 const ID = 'G-CHECK0000';
 const SITE = 'https://koborin.ai';
 const LOCAL = 'http://localhost:4321';
-const ARTICLE = '/tech/koborin-ai-architecture/';
+const ARTICLE = '/blog/koborin-ai-architecture/';
 const MEASUREMENT_META = /<meta name="ga-measurement-id"[^>]*>/g;
 const CONTENT_TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',

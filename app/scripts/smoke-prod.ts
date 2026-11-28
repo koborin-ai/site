@@ -1,5 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { allowedDropPrefix, readBaseline } from './check-routes.ts';
+import { readRedirects, type RedirectRule } from './redirects.ts';
 
 export const productionOrigin = new URL('https://koborin.ai');
 
@@ -8,10 +9,12 @@ const requestTimeoutMs = 10_000;
 
 // Worker asset control files. Cloudflare reads them and never serves them.
 const controlFiles = new Set(['/_headers', '/_redirects']);
-const articlePrefixes = ['/tech/', '/life/', '/ja/tech/', '/ja/life/'] as const;
+const articlePrefixes = ['/blog/', '/ja/blog/'] as const;
 const securityHeaders = ['content-security-policy', 'strict-transport-security'] as const;
 
-export type Expectation = { readonly kind: 'page' } | { readonly kind: 'redirect'; readonly to: string };
+export type Expectation =
+  | { readonly kind: 'page' }
+  | { readonly kind: 'redirect'; readonly to: string; readonly status?: number };
 
 export type Probe = { readonly path: string; readonly expect: Expectation };
 
@@ -34,16 +37,21 @@ export type SmokeRun = {
   readonly log: (line: string) => void;
 };
 
-export function probesFor(baseline: readonly string[]): Probe[] {
-  return baseline.flatMap((path): Probe[] => {
+export function probesFor(baseline: readonly string[], redirects: readonly RedirectRule[] = []): Probe[] {
+  const baselineProbes = baseline.flatMap((path): Probe[] => {
     if (path.startsWith(allowedDropPrefix) || controlFiles.has(path)) return [];
     if (path.endsWith('.html')) {
       return [{ path, expect: { kind: 'redirect', to: path.slice(0, -'.html'.length) } }];
     }
     const page: Probe = { path, expect: { kind: 'page' } };
-    const article = path.endsWith('/') && articlePrefixes.some((prefix) => path.startsWith(prefix));
+    const article =
+      path.endsWith('/') && articlePrefixes.some((prefix) => path.startsWith(prefix) && path.length > prefix.length);
     return article ? [page, { path: path.slice(0, -1), expect: { kind: 'redirect', to: path } }] : [page];
   });
+  const redirectProbes = redirects.map(
+    (rule): Probe => ({ path: rule.from, expect: { kind: 'redirect', to: rule.to, status: rule.status } }),
+  );
+  return [...baselineProbes, ...redirectProbes];
 }
 
 function locationPath(raw: string, requested: URL): string {
@@ -79,7 +87,9 @@ function judge(expect: Expectation, seen: Observation): string[] {
     problems.push(`expected 200, got ${seen.status}`);
   }
   if (expect.kind === 'redirect') {
-    if (seen.status < 300 || seen.status > 399) {
+    if (expect.status !== undefined && seen.status !== expect.status) {
+      problems.push(`expected ${expect.status} to ${expect.to}, got ${seen.status}`);
+    } else if (seen.status < 300 || seen.status > 399) {
       problems.push(`expected 3xx to ${expect.to}, got ${seen.status}`);
     } else if (seen.location !== expect.to) {
       problems.push(`expected Location ${expect.to}, got ${seen.location ?? 'none'}`);
@@ -119,9 +129,9 @@ export async function smoke(probes: readonly Probe[], run: SmokeRun): Promise<Fa
 }
 
 if (import.meta.main) {
-  const baseline = await readBaseline();
-  const probes = probesFor(baseline);
-  process.stdout.write(`baseline ${baseline.length}\nprobes ${probes.length}\n`);
+  const [baseline, redirects] = await Promise.all([readBaseline(), readRedirects()]);
+  const probes = probesFor(baseline, redirects);
+  process.stdout.write(`baseline ${baseline.length}\nredirects ${redirects.length}\nprobes ${probes.length}\n`);
 
   const failures = await smoke(probes, {
     origin: productionOrigin,

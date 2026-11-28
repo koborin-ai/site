@@ -3,7 +3,7 @@ import { readBaseline } from './check-routes.ts';
 import { judgeLighthouse, lighthousePaths } from './lighthouse-pr.ts';
 import type { LighthouseAttempt, LighthousePath } from './lighthouse-pr.ts';
 
-const architecture = '/tech/koborin-ai-architecture/';
+const architecture = '/blog/koborin-ai-architecture/';
 
 function passingAttempts(): LighthouseAttempt[] {
   return lighthousePaths.flatMap((path): LighthouseAttempt[] => [

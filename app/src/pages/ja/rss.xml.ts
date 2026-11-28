@@ -1,23 +1,20 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
 import type { APIContext } from 'astro';
+import { categoryOf, localeOf, publicPath } from '../../lib/docs';
 
 const SITE_URL = 'https://koborin.ai';
 
 /**
  * Generates RSS feed for Japanese articles.
- * Includes ja/tech/ and ja/life/ categories, excludes ja/about-me/.
+ * Includes ja/tech/ and ja/life/ articles, served under /ja/blog/.
  */
 export async function GET(context: APIContext) {
   const docs = await getCollection('docs', ({ data }) => !data.draft);
 
-  // Filter Japanese articles (starting with ja/) and blog categories only
-  const articles = docs.filter((doc) => {
-    const isJapanese = doc.id.startsWith('ja/');
-    const path = doc.id.replace(/^ja\//, '');
-    const isBlogCategory = path.startsWith('tech/') || path.startsWith('life/');
-    return isJapanese && isBlogCategory;
-  });
+  const articles = docs.filter(
+    (doc) => localeOf(doc.id) === 'ja' && categoryOf(doc.id) !== undefined,
+  );
 
   // Sort by publishedAt date (newest first)
   const sortedArticles = articles.toSorted((a, b) => {
@@ -34,7 +31,7 @@ export async function GET(context: APIContext) {
       title: article.data.title,
       description: article.data.description ?? '',
       pubDate: article.data.publishedAt ?? new Date(),
-      link: `${SITE_URL}/${article.id}/`,
+      link: new URL(publicPath(article.id), SITE_URL).href,
     })),
   });
 }

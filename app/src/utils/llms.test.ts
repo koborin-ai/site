@@ -41,8 +41,9 @@ describe('renderLlmsContent', () => {
     expect(output).toMatch(
       /^# koborin\.ai - EN \/ tech\n> Last updated: \d{4}-\d{2}-\d{2}\n\n/
     );
-    expect(output).toContain('URL: https://koborin.ai/tech/astro/');
+    expect(output).toContain('URL: https://koborin.ai/blog/astro/');
     expect(output).toContain('English tech body');
+    expect(renderLlmsContent(entries, 'ja', 'life')).toContain('URL: https://koborin.ai/ja/blog/coffee/');
   });
 
   it('separates multiple entries with a horizontal rule', () => {

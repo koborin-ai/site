@@ -131,7 +131,7 @@ export function categoryNeighbors(
   if (!category) return {};
   const group = nav.find(
     (node): node is NavGroup =>
-      node.type === 'group' && node.items.some((item) => item.href.includes(`/${category}/`)),
+      node.type === 'group' && node.label.toLowerCase() === category,
   );
   if (!group) return {};
   const index = group.items.findIndex((item) => pathsMatch(item.href, currentPath));

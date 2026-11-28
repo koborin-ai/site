@@ -18,10 +18,10 @@ const fixture: SidebarEntry[] = [
 
 describe('sidebar nav', () => {
   it('uses the Japanese label and marks the current article', () => {
-    const nav = buildNav('ja', '/ja/tech/jev-spec-introduction/', drafts, false);
+    const nav = buildNav('ja', '/ja/blog/jev-spec-introduction/', drafts, false);
     const tech = nav.find((node) => node.type === 'group' && node.label === 'Tech');
     if (!tech || tech.type !== 'group') throw new Error('Tech group missing');
-    const jev = tech.items.find((item) => item.href === '/ja/tech/jev-spec-introduction/');
+    const jev = tech.items.find((item) => item.href === '/ja/blog/jev-spec-introduction/');
     expect(jev?.label).toBe('jev-spec を作っている話');
     expect(jev?.current).toBe(true);
     const home = nav.find((node) => node.type === 'link');
@@ -33,36 +33,36 @@ describe('sidebar nav', () => {
     const production = navFromEntries(fixture, 'en', '/', drafts, false);
     const life = production.find((node) => node.type === 'group');
     if (!life || life.type !== 'group') throw new Error('Life group missing');
-    expect(life.items.map((item) => item.href)).toEqual(['/life/everything-has-meaning/']);
+    expect(life.items.map((item) => item.href)).toEqual(['/blog/everything-has-meaning/']);
 
     const dev = navFromEntries(fixture, 'ja', '/ja/', drafts, true);
     const devLife = dev.find((node) => node.type === 'group');
     if (!devLife || devLife.type !== 'group') throw new Error('Life group missing');
     expect(devLife.items[0]).toMatchObject({
-      href: '/ja/life/acknowledging-aging/',
+      href: '/ja/blog/acknowledging-aging/',
       draft: true,
     });
   });
 });
 
 describe('article neighbors', () => {
-  const nav = buildNav('en', '/tech/stars-digest/', drafts, false);
+  const nav = buildNav('en', '/blog/stars-digest/', drafts, false);
 
   it('stays inside the same category and sidebar order', () => {
-    expect(categoryNeighbors(nav, '/tech/stars-digest/', 'tech')).toEqual({
+    expect(categoryNeighbors(nav, '/blog/stars-digest/', 'tech')).toEqual({
       prev: {
         label: 'Cursor Automations for Solo Maintainers',
-        href: '/tech/solo-maintainer-cursor-automations/',
+        href: '/blog/solo-maintainer-cursor-automations/',
       },
       next: {
         label: 'contextlint v0.9 — LSP & VS Code Extension',
-        href: '/tech/contextlint-lsp-and-editor-integration/',
+        href: '/blog/contextlint-lsp-and-editor-integration/',
       },
     });
   });
 
   it('has no next page after the last tech article', () => {
-    expect(categoryNeighbors(nav, '/tech/firebase-auth-token-deep-dive/', 'tech').next).toBeUndefined();
+    expect(categoryNeighbors(nav, '/blog/firebase-auth-token-deep-dive/', 'tech').next).toBeUndefined();
   });
 
   it('gives the home page no neighbors', () => {
@@ -74,15 +74,15 @@ describe('language switch', () => {
   it('links the translated page when it exists', () => {
     const available = new Set(['tech/stars-digest', 'ja/tech/stars-digest', 'index', 'ja/index']);
     expect(alternateHref('tech/stars-digest', available)).toEqual([
-      { locale: 'en', href: '/tech/stars-digest/' },
-      { locale: 'ja', href: '/ja/tech/stars-digest/' },
+      { locale: 'en', href: '/blog/stars-digest/' },
+      { locale: 'ja', href: '/ja/blog/stars-digest/' },
     ]);
   });
 
   it('falls back to the other home when the pair is missing', () => {
     const available = new Set(['tech/stars-digest', 'index', 'ja']);
     expect(alternateHref('tech/stars-digest', available)).toEqual([
-      { locale: 'en', href: '/tech/stars-digest/' },
+      { locale: 'en', href: '/blog/stars-digest/' },
       { locale: 'ja', href: '/ja/' },
     ]);
   });
